@@ -2,7 +2,13 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ToastProvider";
+import { BackButton } from "@/components/shared/back-button";
+import {
+  AddButton,
+  DeleteButton,
+  EditButton,
+} from "@/components/shared/action-icon-buttons";
+import { useToast } from "@/components/app/ToastProvider";
 import {
   createWorkflow,
   updateWorkflow,
@@ -27,6 +33,24 @@ type MetaDraft = {
   key: string;
   rulePrompt: string;
 };
+
+type FieldErrors = {
+  name?: string;
+  filteringPrompt?: string;
+};
+
+function RequiredMark() {
+  return (
+    <span className="ml-0.5 text-danger" aria-hidden>
+      *
+    </span>
+  );
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-sm text-danger">{message}</p>;
+}
 
 function ChevronDownIcon({ className }: { className?: string }) {
   return (
@@ -60,12 +84,14 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     initial?.metadata ?? [],
   );
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [metaDialog, setMetaDialog] = useState<"add" | "edit" | null>(null);
   const [metaEditIndex, setMetaEditIndex] = useState<number | null>(null);
   const [metaDraft, setMetaDraft] = useState<MetaDraft>({
     key: "",
     rulePrompt: "",
   });
+  const [metaKeyError, setMetaKeyError] = useState<string | undefined>();
   const [deletingMetaIndex, setDeletingMetaIndex] = useState<number | null>(
     null,
   );
@@ -73,6 +99,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
   function openAddMeta() {
     setMetaEditIndex(null);
     setMetaDraft({ key: "", rulePrompt: "" });
+    setMetaKeyError(undefined);
     setMetaDialog("add");
   }
 
@@ -83,13 +110,17 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       key: row.key,
       rulePrompt: row.rulePrompt ?? "",
     });
+    setMetaKeyError(undefined);
     setMetaDialog("edit");
   }
 
-  function saveMetaDialog(e: FormEvent) {
+  function applyMetaDialog(e: FormEvent) {
     e.preventDefault();
     const key = metaDraft.key.trim();
-    if (!key) return;
+    if (!key) {
+      setMetaKeyError("Key is required.");
+      return;
+    }
     const rulePrompt = metaDraft.rulePrompt.trim().slice(0, 1024);
     const nextItem: WorkflowMetadataItem = {
       key,
@@ -100,7 +131,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
         item.key.toLowerCase() === key.toLowerCase() && i !== metaEditIndex,
     );
     if (duplicate) {
-      toast("Metadata keys must be unique", "error");
+      setMetaKeyError("Metadata keys must be unique.");
       return;
     }
     if (metaDialog === "edit" && metaEditIndex !== null) {
@@ -115,6 +146,18 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    const nextErrors: FieldErrors = {};
+    if (!name.trim()) {
+      nextErrors.name = "Name is required.";
+    }
+    if (!filteringPrompt.trim()) {
+      nextErrors.filteringPrompt = "Filtering Prompt is required.";
+    }
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
     const payload: WorkflowWritePayload = {
       name: name.trim(),
       description: description.trim() || null,
@@ -122,10 +165,6 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       filteringPrompt: filteringPrompt.trim(),
       metadata,
     };
-    if (!payload.name || !payload.filteringPrompt) {
-      toast("Name and Filtering Prompt are required", "warning");
-      return;
-    }
     setSaving(true);
     const res =
       mode === "edit" && workflowId
@@ -145,24 +184,40 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
 
   return (
     <>
-      <form onSubmit={onSubmit} className="mx-auto flex max-w-3xl flex-col gap-6">
+      <form
+        noValidate
+        onSubmit={onSubmit}
+        className="mx-auto flex max-w-3xl flex-col gap-6"
+      >
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "edit" ? "Edit workflow" : "Add workflow"}
-          </h1>
-          <p className="text-sm text-muted">
+          <div className="flex items-center gap-3">
+            <BackButton href="/workflows" aria-label="Back to workflows" />
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {mode === "edit" ? "Edit workflow" : "Add workflow"}
+            </h1>
+          </div>
+          <p className="pl-12 text-sm text-muted">
             Configure language, filtering, and metadata for this workflow.
           </p>
         </div>
 
         <label className="block space-y-1 text-sm">
-          <span>Name</span>
+          <span>
+            Name
+            <RequiredMark />
+          </span>
           <input
-            required
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (fieldErrors.name) {
+                setFieldErrors((errors) => ({ ...errors, name: undefined }));
+              }
+            }}
+            aria-invalid={Boolean(fieldErrors.name)}
             className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
           />
+          <FieldError message={fieldErrors.name} />
         </label>
 
         <label className="block space-y-1 text-sm">
@@ -195,11 +250,22 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
 
         <div className="space-y-2 text-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span>Filtering Prompt</span>
+            <span>
+              Filtering Prompt
+              <RequiredMark />
+            </span>
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setFilteringPrompt(DEFAULT_FILTERING_PROMPT)}
+                onClick={() => {
+                  setFilteringPrompt(DEFAULT_FILTERING_PROMPT);
+                  if (fieldErrors.filteringPrompt) {
+                    setFieldErrors((errors) => ({
+                      ...errors,
+                      filteringPrompt: undefined,
+                    }));
+                  }
+                }}
                 className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
               >
                 Use Default
@@ -214,25 +280,33 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
             </div>
           </div>
           <textarea
-            required
             value={filteringPrompt}
-            onChange={(e) => setFilteringPrompt(e.target.value)}
+            onChange={(e) => {
+              setFilteringPrompt(e.target.value);
+              if (fieldErrors.filteringPrompt) {
+                setFieldErrors((errors) => ({
+                  ...errors,
+                  filteringPrompt: undefined,
+                }));
+              }
+            }}
             placeholder={FILTERING_PROMPT_PLACEHOLDER}
             rows={4}
+            aria-invalid={Boolean(fieldErrors.filteringPrompt)}
             className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
           />
+          <FieldError message={fieldErrors.filteringPrompt} />
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-medium">Metadata</h2>
-            <button
-              type="button"
-              onClick={openAddMeta}
-              className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
-            >
-              Add
-            </button>
+            <div>
+              <h2 className="text-sm font-medium">Metadata</h2>
+              <p className="text-xs text-muted">
+                Edits stay on this page until you Save the workflow.
+              </p>
+            </div>
+            <AddButton onClick={openAddMeta} />
           </div>
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full min-w-[480px] text-left text-sm">
@@ -262,20 +336,10 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditMeta(index)}
-                            className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
+                          <EditButton onClick={() => openEditMeta(index)} />
+                          <DeleteButton
                             onClick={() => setDeletingMetaIndex(index)}
-                            className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
-                          >
-                            Delete
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -296,12 +360,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
           </button>
           <button
             type="submit"
-            disabled={
-              saving ||
-              name.trim().length === 0 ||
-              filteringPrompt.trim().length === 0
-            }
-            className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
+            className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -311,22 +370,28 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       {metaDialog ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <form
-            onSubmit={saveMetaDialog}
+            noValidate
+            onSubmit={applyMetaDialog}
             className="w-full max-w-md space-y-3 rounded-lg border border-border bg-surface p-4 shadow-lg"
           >
             <h2 className="text-lg font-semibold">
               {metaDialog === "add" ? "Add metadata" : "Edit metadata"}
             </h2>
             <label className="block space-y-1 text-sm">
-              <span>Key</span>
+              <span>
+                Key
+                <RequiredMark />
+              </span>
               <input
-                required
                 value={metaDraft.key}
-                onChange={(e) =>
-                  setMetaDraft((draft) => ({ ...draft, key: e.target.value }))
-                }
+                onChange={(e) => {
+                  setMetaDraft((draft) => ({ ...draft, key: e.target.value }));
+                  if (metaKeyError) setMetaKeyError(undefined);
+                }}
+                aria-invalid={Boolean(metaKeyError)}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
               />
+              <FieldError message={metaKeyError} />
             </label>
             <label className="block space-y-1 text-sm">
               <span>Rule prompt</span>
@@ -352,14 +417,13 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
                 onClick={() => setMetaDialog(null)}
                 className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
               >
-                Cancel
+                Close
               </button>
               <button
                 type="submit"
-                disabled={metaDraft.key.trim().length === 0}
-                className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
+                className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
               >
-                Save
+                Apply
               </button>
             </div>
           </form>
@@ -381,7 +445,8 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
             <div className="space-y-2">
               <h2 className="text-lg font-semibold">Delete metadata</h2>
               <p className="text-sm text-muted">
-                Delete metadata key “{metadata[deletingMetaIndex]?.key}”?
+                Remove metadata key “{metadata[deletingMetaIndex]?.key}” from
+                this form? It is stored only when you Save the workflow.
               </p>
             </div>
             <div className="flex justify-end gap-2">
@@ -390,7 +455,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
                 onClick={() => setDeletingMetaIndex(null)}
                 className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
               >
-                Cancel
+                Close
               </button>
               <button
                 type="button"

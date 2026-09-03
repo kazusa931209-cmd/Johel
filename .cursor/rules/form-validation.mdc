@@ -1,0 +1,38 @@
+---
+description: Form actions stay enabled; required fields use red asterisks and inline errors
+alwaysApply: true
+---
+
+# Form Validation UX
+
+Apply these rules to every form in the web UI (create, edit, dialogs, settings, auth, etc.).
+
+## Rules
+
+1. **Action buttons stay enabled** — Primary form actions such as **Save**, **Add**, **Apply**, **Submit**, and **Create** must remain clickable. Do **not** disable them because required fields are empty or the form is invalid. (Brief in-flight state like “Saving…” is fine; do not use emptiness checks to set `disabled`.)
+
+2. **Required field asterisk** — Every required field’s label must include a red asterisk (`*`) next to the label text (use the project danger/red token, e.g. `text-danger`).
+
+3. **Inline validation on submit** — When the user triggers a form action and required fields are missing or invalid, show a clear error message **below that field**. Do not rely on disabling the button, and do not use a toast for ordinary required-field validation (toasts remain for API call results per documentation rule 9).
+
+## Examples
+
+```tsx
+// ❌ BAD — disable Save when fields are empty
+<button type="submit" disabled={!name.trim() || !prompt.trim()}>Save</button>
+
+// ✅ GOOD — Save always hittable; validate on submit
+<button type="submit">{saving ? "Saving…" : "Save"}</button>
+```
+
+```tsx
+// ✅ Required label + error under the field
+<label className="block space-y-1 text-sm">
+  <span>
+    Name
+    <span className="ml-0.5 text-danger" aria-hidden>*</span>
+  </span>
+  <input value={name} onChange={...} aria-invalid={Boolean(errors.name)} />
+  {errors.name ? <p className="text-sm text-danger">{errors.name}</p> : null}
+</label>
+```

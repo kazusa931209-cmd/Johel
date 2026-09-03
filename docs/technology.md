@@ -44,9 +44,12 @@ User browser (:4041)
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
 - Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`
-- Prisma `User`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
-- Prisma `Setting` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
-- Prisma `Workflow` (per user): `id`, `userId`, `name`, `description?`, `language`, `filteringPrompt`, `metadataJson`, `createdAt`, `updatedAt` (no `usedCount` column)
+- Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
+- Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
+- Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `filteringPrompt`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`)
+- Prisma `WorkflowMetadata` → table `workflowMetadata`: `id`, `workflowId`, `key`, `rulePrompt?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, key)`; cascade delete with workflow
+- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`
+- **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
 ## Frontend (Phase 3)
 
@@ -58,13 +61,15 @@ User browser (:4041)
   - `(auth)` — `/login`, `/register`
   - `(app)` — authenticated shell + placeholder home `/`
 - Session gate: client checks `GET /backend/auth/me` before rendering app routes
+- If a frontend component file exceeds **500 lines**, ask the user before growing it further; prefer splitting into smaller components/hooks
+- Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash) in `components/shared/action-icon-buttons.tsx`
 
 ## Studio shell (Phase 4)
 
 - Layout: top bar + left sidebar + main content (full-height studio chrome)
-- Components: `StudioHeader`, `StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`
+- Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`
 - Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light
-- Toast: top-center; variants success / warning / error / info with theme-aware bg and text tokens (`ToastProvider`). Any user action that calls the API must report the result with a toast.
+- Toast: top-center; variants success / warning / error / info with theme-aware bg and text tokens (`components/app/ToastProvider`). Any user action that calls the API must report the result with a toast.
 - Routes (authenticated):
   - `/` — Workspace / Generate
   - `/workflows` — Workspace / Workflows
@@ -86,12 +91,12 @@ User browser (:4041)
 - `GET /workflows?q=&page=` — page size 10; lean list items (no metadata / filteringPrompt)
 - Each list item includes `used` from a **post-query aggregation** by `workflowId` (not stored on `Workflow`). No usage rows yet → `used` is 0.
 - `GET /workflows/:id` — full detail for the editor (owner only)
-- `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, filteringPrompt, metadata }`
+- `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, filteringPrompt, metadata }`; on write, delete existing `workflowMetadata` rows for the workflow and insert the submitted list
 - Language codes: `en`, `ja`, `zh-TW`, `zh-CN`, `ko` (default `en`)
-- `metadataJson` stores `[{ "key": string, "rulePrompt": string | null }]`; keys unique per workflow; rulePrompt max 1024
+- Metadata lives in `workflowMetadata` (not `metadataJson`); keys unique per workflow; rulePrompt max 1024
 - Default filtering prompt text (Use Default): `Keep only Job & Job post company information`
 - Filtering prompt placeholder: `Process and filter the Job Description.`
-- Web routes: `/workflows` list; `/workflows/new` add; `/workflows/[id]/edit` edit
+- Web routes: `/workflows` list; `/workflows/new` add; `/workflows/[id]/edit` edit; editor has back beside title; footer Cancel/Save persist the whole workflow; metadata edits are local until Save
 
 ## Plans
 

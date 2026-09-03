@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTheme } from "@/components/ThemeProvider";
-import { useToast } from "@/components/ToastProvider";
+import { useTheme } from "@/components/app/ThemeProvider";
+import { useToast } from "@/components/app/ToastProvider";
 import { getSettings, saveSettings } from "@/lib/api";
 import type { Theme } from "@/lib/theme";
 

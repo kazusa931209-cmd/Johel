@@ -27,30 +27,22 @@ type MetadataItem = {
   rulePrompt: string | null;
 };
 
-export const workflowsRoutes = new Hono();
+type WorkflowWithMetadata = {
+  id: string;
+  name: string;
+  description: string | null;
+  language: string;
+  filteringPrompt: string;
+  createdAt: Date;
+  updatedAt: Date;
+  metadata: {
+    key: string;
+    rulePrompt: string | null;
+    sortOrder: number;
+  }[];
+};
 
-function parseMetadataJson(raw: string): MetadataItem[] {
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((item) => {
-        if (!item || typeof item !== "object") return null;
-        const row = item as { key?: unknown; rulePrompt?: unknown };
-        if (typeof row.key !== "string" || !row.key.trim()) return null;
-        return {
-          key: row.key.trim(),
-          rulePrompt:
-            typeof row.rulePrompt === "string" && row.rulePrompt.trim()
-              ? row.rulePrompt.trim()
-              : null,
-        };
-      })
-      .filter((item): item is MetadataItem => item !== null);
-  } catch {
-    return [];
-  }
-}
+export const workflowsRoutes = new Hono();
 
 function normalizeMetadata(
   items: z.infer<typeof writeSchema>["metadata"],
@@ -92,30 +84,44 @@ function toListItem(
   };
 }
 
-function toDetail(
-  row: {
-    id: string;
-    name: string;
-    description: string | null;
-    language: string;
-    filteringPrompt: string;
-    metadataJson: string;
-    createdAt: Date;
-    updatedAt: Date;
-  },
-  used: number,
-) {
+function toDetail(row: WorkflowWithMetadata, used: number) {
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     language: row.language,
     filteringPrompt: row.filteringPrompt,
-    metadata: parseMetadataJson(row.metadataJson),
+    metadata: [...row.metadata]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((item) => ({
+        key: item.key,
+        rulePrompt: item.rulePrompt,
+      })),
     used,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+const metadataInclude = {
+  metadata: { orderBy: { sortOrder: "asc" as const } },
+};
+
+async function replaceMetadata(
+  tx: Prisma.TransactionClient,
+  workflowId: string,
+  items: MetadataItem[],
+) {
+  await tx.workflowMetadata.deleteMany({ where: { workflowId } });
+  if (items.length === 0) return;
+  await tx.workflowMetadata.createMany({
+    data: items.map((item, index) => ({
+      workflowId,
+      key: item.key,
+      rulePrompt: item.rulePrompt,
+      sortOrder: index,
+    })),
+  });
 }
 
 workflowsRoutes.get("/", async (c) => {
@@ -167,6 +173,7 @@ workflowsRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
   const row = await prisma.workflow.findFirst({
     where: { id, userId: user.id },
+    include: metadataInclude,
   });
   if (!row) {
     return c.json({ error: "Not found" }, 404);
@@ -193,15 +200,21 @@ workflowsRoutes.post("/", async (c) => {
     return c.json({ error: metadata.error }, 400);
   }
 
-  const row = await prisma.workflow.create({
-    data: {
-      userId: user.id,
-      name: parsed.data.name,
-      description: parsed.data.description || null,
-      language: parsed.data.language,
-      filteringPrompt: parsed.data.filteringPrompt,
-      metadataJson: JSON.stringify(metadata.value),
-    },
+  const row = await prisma.$transaction(async (tx) => {
+    const created = await tx.workflow.create({
+      data: {
+        userId: user.id,
+        name: parsed.data.name,
+        description: parsed.data.description || null,
+        language: parsed.data.language,
+        filteringPrompt: parsed.data.filteringPrompt,
+      },
+    });
+    await replaceMetadata(tx, created.id, metadata.value);
+    return tx.workflow.findUniqueOrThrow({
+      where: { id: created.id },
+      include: metadataInclude,
+    });
   });
 
   const usedById = await aggregateWorkflowUsed([row.id]);
@@ -233,15 +246,21 @@ workflowsRoutes.put("/:id", async (c) => {
     return c.json({ error: metadata.error }, 400);
   }
 
-  const row = await prisma.workflow.update({
-    where: { id },
-    data: {
-      name: parsed.data.name,
-      description: parsed.data.description || null,
-      language: parsed.data.language,
-      filteringPrompt: parsed.data.filteringPrompt,
-      metadataJson: JSON.stringify(metadata.value),
-    },
+  const row = await prisma.$transaction(async (tx) => {
+    await tx.workflow.update({
+      where: { id },
+      data: {
+        name: parsed.data.name,
+        description: parsed.data.description || null,
+        language: parsed.data.language,
+        filteringPrompt: parsed.data.filteringPrompt,
+      },
+    });
+    await replaceMetadata(tx, id, metadata.value);
+    return tx.workflow.findUniqueOrThrow({
+      where: { id },
+      include: metadataInclude,
+    });
   });
 
   const usedById = await aggregateWorkflowUsed([row.id]);

@@ -1,0 +1,40 @@
+---
+description: Database table names must use camelCase (Prisma @@map)
+alwaysApply: true
+---
+
+# Database Table Names
+
+## Rule
+
+Physical database **table names must be camelCase**, not PascalCase or snake_case.
+
+- Use Prisma `@@map("tableName")` so the SQL table is camelCase even when the Prisma model is PascalCase.
+- Prefer plural or compound names when needed (e.g. `users`, `workflows`, `workflowMetadata`).
+- Do **not** create or rename tables to PascalCase (`User`, `Workflow`).
+
+## SQLite note
+
+SQLite table names are case-insensitive, so `User` and `user` collide. Prefer plural/compound camelCase (`users`, `workflowMetadata`) instead of single-word lowercasing of a PascalCase model name.
+
+## Examples
+
+```prisma
+// ❌ BAD — default PascalCase table "User"
+model User {
+  id String @id
+}
+
+// ✅ GOOD
+model User {
+  id String @id
+  @@map("users")
+}
+
+model WorkflowMetadata {
+  id String @id
+  @@map("workflowMetadata")
+}
+```
+
+Document table name choices in `docs/technology.md` when the schema changes.

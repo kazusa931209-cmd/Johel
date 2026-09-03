@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { WorkflowForm } from "@/components/WorkflowForm";
-import { useToast } from "@/components/ToastProvider";
+import { useToast } from "@/components/app/ToastProvider";
 import { getWorkflow, type WorkflowDetail } from "@/lib/api";
 
 export default function EditWorkflowPage() {

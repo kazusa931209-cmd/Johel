@@ -15,6 +15,9 @@ model User {
   updatedAt    DateTime   @updatedAt
   setting      Setting?
   workflows    Workflow[]
+
+  // SQLite table names are case-insensitive; plural avoids colliding with former PascalCase names.
+  @@map("users")
 }
 
 model Setting {
@@ -25,19 +28,37 @@ model Setting {
   apiKey    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("settings")
 }
 
 model Workflow {
-  id              String   @id @default(cuid())
+  id              String             @id @default(cuid())
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String
   description     String?
-  language        String   @default("en")
-  filteringPrompt String   @default("")
-  metadataJson    String   @default("[]")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  language        String             @default("en")
+  filteringPrompt String             @default("")
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  metadata        WorkflowMetadata[]
 
   @@index([userId])
+  @@map("workflows")
+}
+
+model WorkflowMetadata {
+  id         String   @id @default(cuid())
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  key        String
+  rulePrompt String?
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([workflowId, key])
+  @@index([workflowId])
+  @@map("workflowMetadata")
 }

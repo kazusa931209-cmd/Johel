@@ -83,12 +83,16 @@ Build a customized Resume / CV and résumé writing application.
   * Per-user list: name, optional one-line description, used count, created, updated
   * Keyword filter on name and description; 10 rows per page
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
+  * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
+  * Metadata add/edit/delete is local on the page until Save persists the workflow
   * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean), filtering prompt (required; placeholder reflects Job Description Processing step 1 — “Process and filter the Job Description.”; Use Default fills the default prompt; Reset clears), metadata table (Key required; Rule prompt optional, max 1024)
+  * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Settings**
   * Theme (Dark / Light)
   * **AI Agent**: provider (currently **Cursor AI Agent** only) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.
+* **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon (accessible labels required when icon-only).
 
 ## Phases
 
@@ -122,3 +126,6 @@ These rules apply to **all development phases** and must be followed by Cursor (
 7. **Grow documentation with Phases** — As Phases complete, expand this document (and `docs/technology.md` for technical handling) with the outcomes and any new specifications that resulted from that Phase.
 8. **Archive built Cursor plans** — Once a Cursor plan is built (approved / executed for a phase), store a copy under `docs/plans/`. Prefix the filename with the performed date as `YYYY-MM-DD`, then a short slug (e.g. `docs/plans/2026-09-04-phase-1-technology-stack.md`).
 9. **Toast for API results** — Every user action that triggers an API call must notify the user of the result, and that notice must always be a toast.
+10. **Form validation UX** — Form action buttons (Save, Add, Apply, Submit, and similar) stay enabled. Required field labels show a red asterisk. Missing required fields show an error message below the field when the user attempts the action (not via disabling the button; not via toast for ordinary required-field checks).
+11. **Frontend component size** — If a frontend component file exceeds 500 lines, ask the user whether to optimize or split it before adding substantial new code.
+12. **Action button icons** — **Add** uses a plus icon; **Edit** uses a pencil icon; **Delete** uses a trash icon in red. Icon-only controls need an accessible label.

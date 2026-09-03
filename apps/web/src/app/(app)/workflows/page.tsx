@@ -2,7 +2,12 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ToastProvider";
+import { useToast } from "@/components/app/ToastProvider";
+import {
+  AddButton,
+  DeleteButton,
+  EditButton,
+} from "@/components/shared/action-icon-buttons";
 import { deleteWorkflow, listWorkflows, type Workflow } from "@/lib/api";
 
 function formatDate(iso: string) {
@@ -83,13 +88,10 @@ export default function WorkflowsPage() {
         >
           Search
         </button>
-        <button
-          type="button"
+        <AddButton
           onClick={() => router.push("/workflows/new")}
-          className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
-        >
-          Add
-        </button>
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-accent text-accent-fg hover:opacity-90"
+        />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[720px] text-left text-sm">
@@ -136,20 +138,10 @@ export default function WorkflowsPage() {
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
+                      <EditButton
                         onClick={() => router.push(`/workflows/${row.id}/edit`)}
-                        className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleting(row)}
-                        className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
-                      >
-                        Delete
-                      </button>
+                      />
+                      <DeleteButton onClick={() => setDeleting(row)} />
                     </div>
                   </td>
                 </tr>

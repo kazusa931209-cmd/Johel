@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { StudioHeader } from "@/components/StudioHeader";
-import { StudioSidebar } from "@/components/StudioSidebar";
+import { StudioHeader } from "@/components/app/StudioHeader";
+import { StudioSidebar } from "@/components/app/StudioSidebar";
 import { getMe, type User } from "@/lib/api";
 
 export default function AppLayout({
