@@ -60,3 +60,19 @@ export function login(email: string, password: string) {
 export function logout() {
   return request<{ ok: boolean }>("/auth/logout", { method: "POST" });
 }
+
+export type AiSettings = {
+  provider: "cursor" | null;
+  apiKeyMasked: string | null;
+};
+
+export function getSettings() {
+  return request<AiSettings>("/settings");
+}
+
+export function saveSettings(provider: "cursor", apiKey: string) {
+  return request<AiSettings>("/settings", {
+    method: "PUT",
+    body: JSON.stringify({ provider, apiKey }),
+  });
+}

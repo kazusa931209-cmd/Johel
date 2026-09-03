@@ -12,6 +12,14 @@
   --sidebar: #fafafa;
   --header: #ffffff;
   --danger: #dc2626;
+  --toast-success-bg: #dcfce7;
+  --toast-success-fg: #166534;
+  --toast-warning-bg: #fef9c3;
+  --toast-warning-fg: #854d0e;
+  --toast-error-bg: #fee2e2;
+  --toast-error-fg: #991b1b;
+  --toast-info-bg: #dbeafe;
+  --toast-info-fg: #1e40af;
 }
 
 .dark {
@@ -26,6 +34,14 @@
   --sidebar: #0c0c0e;
   --header: #0c0c0e;
   --danger: #f87171;
+  --toast-success-bg: #14532d;
+  --toast-success-fg: #bbf7d0;
+  --toast-warning-bg: #713f12;
+  --toast-warning-fg: #fef08a;
+  --toast-error-bg: #7f1d1d;
+  --toast-error-fg: #fecaca;
+  --toast-info-bg: #1e3a8a;
+  --toast-info-fg: #bfdbfe;
 }
 
 @theme inline {
@@ -40,6 +56,14 @@
   --color-sidebar: var(--sidebar);
   --color-header: var(--header);
   --color-danger: var(--danger);
+  --color-toast-success-bg: var(--toast-success-bg);
+  --color-toast-success-fg: var(--toast-success-fg);
+  --color-toast-warning-bg: var(--toast-warning-bg);
+  --color-toast-warning-fg: var(--toast-warning-fg);
+  --color-toast-error-bg: var(--toast-error-bg);
+  --color-toast-error-fg: var(--toast-error-fg);
+  --color-toast-info-bg: var(--toast-info-bg);
+  --color-toast-info-fg: var(--toast-info-fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

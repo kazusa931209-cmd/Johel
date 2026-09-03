@@ -17,6 +17,7 @@ Follow `docs/specification.md` and `docs/technology.md` for all work on this pro
 6. **Mark finished Phases** — When a Phase is performed and finished, check it as finished in `docs/specification.md` (e.g. change `[ ]` to `[x]`).
 7. **Grow documentation with Phases** — As Phases complete, expand `docs/specification.md` (and `docs/technology.md` for technical handling) with outcomes and any new specifications from that Phase.
 8. **Archive built Cursor plans** — Once a Cursor plan is built (approved / executed for a phase), store a copy under `docs/plans/`. Prefix the filename with the performed date as `YYYY-MM-DD`, then a short slug (e.g. `docs/plans/2026-09-04-phase-1-technology-stack.md`).
+9. **Toast for API results** — Every user action that triggers an API call must notify the user of the result, and that notice must always be a toast.
 
 ## When changing behavior
 

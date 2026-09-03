@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import { deleteCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
 import {
   COOKIE_NAME,
@@ -8,9 +8,9 @@ import {
   sessionCookieOptions,
   signSessionToken,
   verifyPassword,
-  verifySessionToken,
 } from "../lib/auth.js";
 import { prisma } from "../lib/prisma.js";
+import { requireUser } from "../lib/session.js";
 
 const credentialsSchema = z.object({
   email: z.string().email().max(320),
@@ -68,20 +68,7 @@ authRoutes.post("/logout", (c) => {
 });
 
 authRoutes.get("/me", async (c) => {
-  const token = getCookie(c, COOKIE_NAME);
-  if (!token) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const session = await verifySessionToken(token);
-  if (!session) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { id: true, email: true },
-  });
+  const user = await requireUser(c);
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
   }
