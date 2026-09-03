@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AppHeader } from "@/components/AppHeader";
+import { StudioHeader } from "@/components/StudioHeader";
+import { StudioSidebar } from "@/components/StudioSidebar";
 import { getMe, type User } from "@/lib/api";
 
 export default function AppLayout({
@@ -32,16 +33,19 @@ export default function AppLayout({
 
   if (loading || !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-sm text-zinc-500">
+      <main className="flex min-h-screen items-center justify-center text-sm text-muted">
         Loading…
       </main>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <AppHeader email={user.email} />
-      <div className="mx-auto max-w-3xl px-6 py-8">{children}</div>
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
+      <StudioHeader userName={user.email} />
+      <div className="flex min-h-0 flex-1">
+        <StudioSidebar />
+        <main className="min-w-0 flex-1 overflow-auto p-6">{children}</main>
+      </div>
     </div>
   );
 }

@@ -43,21 +43,21 @@ export default function LoginPage() {
 
   if (checking) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-sm text-zinc-500">
+      <main className="flex min-h-screen items-center justify-center text-sm text-muted">
         Checking session…
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-sm space-y-4 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
+        className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-surface p-6 shadow-sm"
       >
         <div>
           <h1 className="text-xl font-semibold">Log in</h1>
-          <p className="mt-1 text-sm text-zinc-500">Sign in with your email</p>
+          <p className="mt-1 text-sm text-muted">Sign in with your email</p>
         </div>
         <label className="block space-y-1 text-sm">
           <span>Email</span>
@@ -66,7 +66,7 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 outline-none focus:border-zinc-500"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
           />
         </label>
         <label className="block space-y-1 text-sm">
@@ -77,20 +77,20 @@ export default function LoginPage() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 outline-none focus:border-zinc-500"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
           />
         </label>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="text-sm text-danger">{error}</p> : null}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
+          className="w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
-        <p className="text-center text-sm text-zinc-500">
+        <p className="text-center text-sm text-muted">
           No account?{" "}
-          <Link href="/register" className="text-zinc-900 underline">
+          <Link href="/register" className="text-foreground underline">
             Register
           </Link>
         </p>

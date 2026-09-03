@@ -57,6 +57,18 @@ User browser (:4041)
   - `(app)` — authenticated shell + placeholder home `/`
 - Session gate: client checks `GET /backend/auth/me` before rendering app routes
 
+## Studio shell (Phase 4)
+
+- Layout: top bar + left sidebar + main content (full-height studio chrome)
+- Components: `StudioHeader`, `StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`
+- Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light
+- Routes (authenticated):
+  - `/` — Workspace
+  - `/settings` — Settings (theme switch)
+  - `/profile` — Profile (email display)
+- User menu: Profile, Sign out
+- Sidebar: Workspace, Settings
+
 ## Plans
 
 Built Cursor plans for completed work are archived under [`docs/plans/`](./plans/) with a `YYYY-MM-DD-` filename prefix.

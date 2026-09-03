@@ -67,6 +67,17 @@ Build a customized Resume / CV and résumé writing application.
 
 **Requirements Definition → Review → Development → Testing → Repeat**
 
+## User Interface
+
+* The authenticated web UI uses a **studio** layout.
+* **Dark theme** is the default; users can switch between **Dark** and **Light**.
+* **Top header**
+  * Left: project title **JoHEL**
+  * Right: user name with a dropdown containing **Profile** and **Sign out**
+* **Left sidebar** menus:
+  * Workspace
+  * Settings
+
 ## Phases
 
 Phases are listed below as they are defined. Only the current/next Phase is fully specified; later Phases are added when ready.
@@ -77,6 +88,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Standalone API running locally. Stack revised in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-2-backend-foundation.md`](./plans/2026-09-04-phase-2-backend-foundation.md).
 * [x] **Phase 3 — Frontend architecture** — Establish the local web UI structure so users can register, log in, and reach an authenticated app shell. Feature screens (JD, resume, API keys) are deferred.
   * **Outcome (2026-09-04):** Web UI at `apps/web` with auth shell and API proxy. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-3-frontend-architecture.md`](./plans/2026-09-04-phase-3-frontend-architecture.md).
+* [x] **Phase 4 — Studio web shell** — Give the authenticated UI a studio layout: top bar with project title and user menu, left navigation for Workspace and Settings, and a dark-default theme that can switch to light. Feature workflows (JD, resume, API keys) remain deferred; pages are structural shells.
+  * **Outcome (2026-09-04):** Studio shell with JoHEL header, sidebar, and theme toggle. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-4-studio-web-shell.md`](./plans/2026-09-04-phase-4-studio-web-shell.md).
 
 ## Cursor Rules (Documentation Governance)
 
