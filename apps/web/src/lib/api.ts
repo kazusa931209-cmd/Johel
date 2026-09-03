@@ -1,3 +1,15 @@
+import type {
+  WorkflowDetail,
+  WorkflowWritePayload,
+} from "./workflow";
+
+export type {
+  WorkflowDetail,
+  WorkflowLanguage,
+  WorkflowMetadataItem,
+  WorkflowWritePayload,
+} from "./workflow";
+
 export type User = {
   id: string;
   email: string;
@@ -100,17 +112,21 @@ export function listWorkflows(q: string, page: number) {
   return request<WorkflowList>(`/workflows?${params.toString()}`);
 }
 
-export function createWorkflow(name: string, description?: string) {
-  return request<Workflow>("/workflows", {
+export function getWorkflow(id: string) {
+  return request<WorkflowDetail>(`/workflows/${id}`);
+}
+
+export function createWorkflow(payload: WorkflowWritePayload) {
+  return request<WorkflowDetail>("/workflows", {
     method: "POST",
-    body: JSON.stringify({ name, description: description || null }),
+    body: JSON.stringify(payload),
   });
 }
 
-export function updateWorkflow(id: string, name: string, description?: string) {
-  return request<Workflow>(`/workflows/${id}`, {
+export function updateWorkflow(id: string, payload: WorkflowWritePayload) {
+  return request<WorkflowDetail>(`/workflows/${id}`, {
     method: "PUT",
-    body: JSON.stringify({ name, description: description || null }),
+    body: JSON.stringify(payload),
   });
 }
 

@@ -43,10 +43,10 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `PUT/DELETE /workflows/:id`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`
 - Prisma `User`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
-- Prisma `Workflow` (per user): `id`, `userId`, `name`, `description?`, `createdAt`, `updatedAt` (no `usedCount` column)
+- Prisma `Workflow` (per user): `id`, `userId`, `name`, `description?`, `language`, `filteringPrompt`, `metadataJson`, `createdAt`, `updatedAt` (no `usedCount` column)
 
 ## Frontend (Phase 3)
 
@@ -81,11 +81,17 @@ User browser (:4041)
 - Mask derived at read time: first 4 + ` ******** ` + last 4 (e.g. `4F28 ******** 3429`)
 - Full `apiKey` is stored plaintext in SQLite; never returned to the client
 
-## Workflows (Phase 6)
+## Workflows (Phase 6–7)
 
-- `GET /workflows?q=&page=` — page size 10; `q` case-insensitive match on `name` or `description` (`LOWER(...) LIKE`); `{ items, total, page, pageSize }`
+- `GET /workflows?q=&page=` — page size 10; lean list items (no metadata / filteringPrompt)
 - Each list item includes `used` from a **post-query aggregation** by `workflowId` (not stored on `Workflow`). No usage rows yet → `used` is 0.
-- `POST /workflows` `{ name, description? }`; `PUT` / `DELETE /workflows/:id` (owner only)
+- `GET /workflows/:id` — full detail for the editor (owner only)
+- `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, filteringPrompt, metadata }`
+- Language codes: `en`, `ja`, `zh-TW`, `zh-CN`, `ko` (default `en`)
+- `metadataJson` stores `[{ "key": string, "rulePrompt": string | null }]`; keys unique per workflow; rulePrompt max 1024
+- Default filtering prompt text (Use Default): `Keep only Job & Job post company information`
+- Filtering prompt placeholder: `Process and filter the Job Description.`
+- Web routes: `/workflows` list; `/workflows/new` add; `/workflows/[id]/edit` edit
 
 ## Plans
 

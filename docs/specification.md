@@ -82,7 +82,8 @@ Build a customized Resume / CV and résumé writing application.
 * **Workflows**
   * Per-user list: name, optional one-line description, used count, created, updated
   * Keyword filter on name and description; 10 rows per page
-  * Add, edit, and delete workflows
+  * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
+  * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean), filtering prompt (required; placeholder reflects Job Description Processing step 1 — “Process and filter the Job Description.”; Use Default fills the default prompt; Reset clears), metadata table (Key required; Rule prompt optional, max 1024)
 * **Settings**
   * Theme (Dark / Light)
   * **AI Agent**: provider (currently **Cursor AI Agent** only) and the user’s **API key**
@@ -105,6 +106,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Settings persist a per-user Cursor API key (masked on display). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-5-ai-agent-settings.md`](./plans/2026-09-04-phase-5-ai-agent-settings.md).
 * [x] **Phase 6 — Workspace workflows** — Workspace has always-open submenus **Workflows** and **Generate**. Workflows is a per-user list (name, optional description, used count, dates) with keyword filter, pagination, add, edit, and delete.
   * **Outcome (2026-09-04):** Workflows list and Generate placeholder. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-6-workspace-workflows.md`](./plans/2026-09-04-phase-6-workspace-workflows.md).
+* [x] **Phase 7 — Workflow editor** — Creating or editing a workflow uses a dedicated page (not a dialog). The form includes name, optional description, language, filtering prompt, and a metadata key/rule table. Save persists via the API.
+  * **Outcome (2026-09-04):** Dedicated `/workflows/new` and `/workflows/[id]/edit` pages with shared form. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-7-workflow-editor.md`](./plans/2026-09-04-phase-7-workflow-editor.md).
 
 ## Cursor Rules (Documentation Governance)
 

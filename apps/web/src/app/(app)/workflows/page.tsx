@@ -1,20 +1,16 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ToastProvider";
-import {
-  createWorkflow,
-  deleteWorkflow,
-  listWorkflows,
-  updateWorkflow,
-  type Workflow,
-} from "@/lib/api";
+import { deleteWorkflow, listWorkflows, type Workflow } from "@/lib/api";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString();
 }
 
 export default function WorkflowsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
@@ -23,12 +19,7 @@ export default function WorkflowsPage() {
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
-  const [dialog, setDialog] = useState<"add" | "edit" | null>(null);
-  const [editing, setEditing] = useState<Workflow | null>(null);
   const [deleting, setDeleting] = useState<Workflow | null>(null);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [saving, setSaving] = useState(false);
   const [deletingBusy, setDeletingBusy] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -53,44 +44,6 @@ export default function WorkflowsPage() {
   useEffect(() => {
     void load(q, page);
   }, [load, q, page]);
-
-  function openAdd() {
-    setEditing(null);
-    setName("");
-    setDescription("");
-    setDialog("add");
-  }
-
-  function openEdit(row: Workflow) {
-    setEditing(row);
-    setName(row.name);
-    setDescription(row.description ?? "");
-    setDialog("edit");
-  }
-
-  async function onSaveDialog(e: FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    const res =
-      dialog === "edit" && editing
-        ? await updateWorkflow(editing.id, name, description)
-        : await createWorkflow(name, description);
-    setSaving(false);
-    if (res.error || !res.data) {
-      toast(res.error ?? "Save failed", "error");
-      return;
-    }
-    setDialog(null);
-    toast(
-      dialog === "edit" ? "Workflow updated." : "Workflow created.",
-      "success",
-    );
-    void load(q, dialog === "add" ? 1 : page);
-  }
-
-  function openDelete(row: Workflow) {
-    setDeleting(row);
-  }
 
   async function onConfirmDelete() {
     if (!deleting) return;
@@ -132,7 +85,7 @@ export default function WorkflowsPage() {
         </button>
         <button
           type="button"
-          onClick={openAdd}
+          onClick={() => router.push("/workflows/new")}
           className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
         >
           Add
@@ -185,14 +138,14 @@ export default function WorkflowsPage() {
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
-                        onClick={() => openEdit(row)}
+                        onClick={() => router.push(`/workflows/${row.id}/edit`)}
                         className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
-                        onClick={() => openDelete(row)}
+                        onClick={() => setDeleting(row)}
                         className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
                       >
                         Delete
@@ -226,52 +179,6 @@ export default function WorkflowsPage() {
           Next
         </button>
       </div>
-
-      {dialog ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <form
-            onSubmit={onSaveDialog}
-            className="w-full max-w-md space-y-3 rounded-lg border border-border bg-surface p-4 shadow-lg"
-          >
-            <h2 className="text-lg font-semibold">
-              {dialog === "add" ? "Add workflow" : "Edit workflow"}
-            </h2>
-            <label className="block space-y-1 text-sm">
-              <span>Name</span>
-              <input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span>Description</span>
-              <input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
-              />
-            </label>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDialog(null)}
-                className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving || name.trim().length === 0}
-                className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
-              >
-                {saving ? "Saving…" : "Save"}
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
 
       {deleting ? (
         <div
