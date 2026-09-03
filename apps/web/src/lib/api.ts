@@ -76,3 +76,44 @@ export function saveSettings(provider: "cursor", apiKey: string) {
     body: JSON.stringify({ provider, apiKey }),
   });
 }
+
+export type Workflow = {
+  id: string;
+  name: string;
+  description: string | null;
+  used: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WorkflowList = {
+  items: Workflow[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export function listWorkflows(q: string, page: number) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("page", String(page));
+  return request<WorkflowList>(`/workflows?${params.toString()}`);
+}
+
+export function createWorkflow(name: string, description?: string) {
+  return request<Workflow>("/workflows", {
+    method: "POST",
+    body: JSON.stringify({ name, description: description || null }),
+  });
+}
+
+export function updateWorkflow(id: string, name: string, description?: string) {
+  return request<Workflow>(`/workflows/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ name, description: description || null }),
+  });
+}
+
+export function deleteWorkflow(id: string) {
+  return request<{ ok: boolean }>(`/workflows/${id}`, { method: "DELETE" });
+}

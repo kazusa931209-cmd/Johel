@@ -43,9 +43,10 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `PUT/DELETE /workflows/:id`
 - Prisma `User`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
+- Prisma `Workflow` (per user): `id`, `userId`, `name`, `description?`, `createdAt`, `updatedAt` (no `usedCount` column)
 
 ## Frontend (Phase 3)
 
@@ -65,11 +66,12 @@ User browser (:4041)
 - Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light
 - Toast: top-center; variants success / warning / error / info with theme-aware bg and text tokens (`ToastProvider`). Any user action that calls the API must report the result with a toast.
 - Routes (authenticated):
-  - `/` — Workspace
+  - `/` — Workspace / Generate
+  - `/workflows` — Workspace / Workflows
   - `/settings` — Settings (theme + AI Agent)
   - `/profile` — Profile (email display)
 - User menu: Profile, Sign out
-- Sidebar: Workspace, Settings
+- Sidebar: Workspace (submenus Workflows, Generate — always open), Settings
 
 ## AI Agent settings (Phase 5)
 
@@ -78,6 +80,12 @@ User browser (:4041)
 - `PUT /settings` → `{ provider: "cursor", apiKey }` (min 8 chars); upsert; returns `{ provider, apiKeyMasked }`
 - Mask derived at read time: first 4 + ` ******** ` + last 4 (e.g. `4F28 ******** 3429`)
 - Full `apiKey` is stored plaintext in SQLite; never returned to the client
+
+## Workflows (Phase 6)
+
+- `GET /workflows?q=&page=` — page size 10; `q` case-insensitive match on `name` or `description` (`LOWER(...) LIKE`); `{ items, total, page, pageSize }`
+- Each list item includes `used` from a **post-query aggregation** by `workflowId` (not stored on `Workflow`). No usage rows yet → `used` is 0.
+- `POST /workflows` `{ name, description? }`; `PUT` / `DELETE /workflows/:id` (owner only)
 
 ## Plans
 

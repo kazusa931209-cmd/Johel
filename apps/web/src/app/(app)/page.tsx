@@ -1,10 +1,9 @@
-export default function WorkspacePage() {
+export default function GeneratePage() {
   return (
     <section className="space-y-2">
-      <h1 className="text-2xl font-semibold tracking-tight">Workspace</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Generate</h1>
       <p className="text-muted">
-        Your resume workspace will live here. Job Description and resume flows
-        will be added in a later phase.
+        Resume generation from a job description will be added in a later phase.
       </p>
     </section>
   );

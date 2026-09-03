@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
 import { settingsRoutes } from "./routes/settings.js";
+import { workflowsRoutes } from "./routes/workflows.js";
 
 const app = new Hono();
 
@@ -18,6 +19,7 @@ app.use(
 app.route("/health", healthRoutes);
 app.route("/auth", authRoutes);
 app.route("/settings", settingsRoutes);
+app.route("/workflows", workflowsRoutes);
 
 const port = Number(process.env.PORT ?? 4042);
 
