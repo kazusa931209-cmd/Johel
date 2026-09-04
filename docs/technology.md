@@ -86,6 +86,7 @@ User browser (:4041)
   - `/settings` — Settings (theme + AI Agent)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
+- Header also shows `Token Used: {formatTokenUsed(n)}` beside the email (Phase 11; raw count is `0` this phase)
 - Sidebar: Workspace (submenus Profiles, Companies, Experiences, Workflows, Generate — always open), Settings
 
 ## AI Agent settings (Phase 5)
@@ -137,6 +138,16 @@ User browser (:4041)
 - Search `q` across category and description
 - Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
+
+## Generate UI (Phase 11)
+
+- Route `/` gates on existing list totals: at least one profile, company, experience, and workflow; otherwise a centered alert with links (not a toast)
+- Timeline steps (Job active only this phase): Job → PCEW → Verdict → Company → Generate
+- Job UI: Manual / URL / File tabs; Job text max 10,000 chars; URL Load and AI Filter are stubs (toast); File accepts plain `.txt` via `FileReader`
+- Noise Filter: client `applyNoiseFilter` in `apps/web/src/lib/jobNoiseFilter.ts` (strip script/style/tags, decode entities, collapse whitespace); pushes prior text to a rollback stack (max 3)
+- Choose PCEW: dialog loads first page of list APIs; Apply keeps selection in page state only
+- Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …`; raw count static `0` → `0K` this phase
+- Components under `apps/web/src/components/generate/`
 
 ## Plans
 

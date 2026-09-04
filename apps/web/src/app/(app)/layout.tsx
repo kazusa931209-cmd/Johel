@@ -41,7 +41,7 @@ export default function AppLayout({
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <StudioHeader userName={user.email} />
+      <StudioHeader userName={user.email} tokenUsage={0} />
       <div className="flex min-h-0 flex-1">
         <StudioSidebar />
         <main className="min-w-0 flex-1 overflow-auto p-6">{children}</main>

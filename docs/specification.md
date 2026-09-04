@@ -115,7 +115,7 @@ Aligned with the product flow above:
 * **Dark theme** is the default; users can switch between **Dark** and **Light**.
 * **Top header**
   * Left: project title **JoHEL**
-  * Right: user name with a dropdown containing **Profile** and **Sign out**
+  * Right: **Token Used** (compact K / M / G / T, e.g. `0.3K`, `12.5K`, `0.6M`) beside the user email dropdown containing **Profile** and **Sign out**
 * **Left sidebar** menus:
   * Workspace (always-open submenus)
     * Profiles
@@ -166,6 +166,11 @@ Aligned with the product flow above:
   * Metadata add/edit/delete is local on the page until Save persists the workflow
   * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean), filtering prompt (required; placeholder reflects Job Description Processing step 1 — “Process and filter the Job Description.”; Use Default fills the default prompt; Reset clears), metadata table (Key required; Rule prompt optional, max 1024)
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
+* **Generate** (`/`)
+  * Before the flow starts, the page checks that the user has at least one Profile, one Company, one Experience, and one Workflow. If any are missing, a centered alert lists what is missing with links to those Workspace pages
+  * When ready, a timeline shows steps: Job → PCEW → Verdict → Company → Generate (this phase implements Job only; later steps are indicators)
+  * **Job** step: input method tabs URL / File upload / Manual; Job Description textarea (max 10,000 characters); **Noise Filter** (client-side JS cleanup, not AI); **AI Filter** beside it (UI stub this phase); **Rollback** up to 3 previous Job text versions after Noise Filter
+  * **Choose PCEW** opens a dialog to pick Profile, Company, Experience, and Workflow (local selection only this phase; Close X top-right; Apply in footer)
 * **Settings**
   * Theme (Dark / Light)
   * **AI Agent**: provider (currently **Cursor AI Agent** only) and the user’s **API key**
@@ -198,6 +203,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Companies list and editor with `companies` / `companyMetadata`; Experiences placeholder. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-9-workspace-companies.md`](./plans/2026-09-04-phase-9-workspace-companies.md).
 * [x] **Phase 10 — Workspace experiences** — Workspace **Experiences** is a per-user list with search, pagination, add, edit, and delete. Add/edit use dedicated pages; Metadata works like company Metadata (local until Save).
   * **Outcome (2026-09-04):** Experiences list and editor with `experiences` / `experienceMetadata`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-10-workspace-experiences.md`](./plans/2026-09-04-phase-10-workspace-experiences.md).
+* [x] **Phase 11 — Generate UI (Job step)** — Generate gates on Profile/Company/Experience/Workflow; timeline Job → PCEW → Verdict → Company → Generate; Job step with URL/File/Manual, Noise Filter, AI Filter stub, rollback; Choose PCEW dialog; header Token Used (K/M/G/T). UI only.
+  * **Outcome (2026-09-04):** Generate Job UI and prerequisites alert. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-11-generate-ui.md`](./plans/2026-09-04-phase-11-generate-ui.md).
 
 ## Cursor Rules (Documentation Governance)
 
