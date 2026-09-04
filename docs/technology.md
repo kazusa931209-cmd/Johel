@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `filteringPrompt`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`)
@@ -52,7 +52,9 @@ User browser (:4041)
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
 - Prisma `Company` → table `companies` (per user): `id`, `userId`, `name`, `description`, `priority` (1-based integer), `createdAt`, `updatedAt`
 - Prisma `CompanyMetadata` → table `companyMetadata`: `id`, `companyId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(companyId, key)`; cascade delete with company
-- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`
+- Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
+- Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
+- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
 ## Frontend (Phase 3)
@@ -79,7 +81,7 @@ User browser (:4041)
   - `/` — Workspace / Generate
   - `/profiles` — Workspace / Profiles
   - `/companies` — Workspace / Companies
-  - `/experiences` — Workspace / Experiences (placeholder)
+  - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
   - `/settings` — Settings (theme + AI Agent)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
@@ -125,7 +127,16 @@ User browser (:4041)
 - Search `q` across name and description
 - Metadata: `{ key, value }`; keys unique per company; value is a string (may be empty)
 - Web routes: `/companies` list; `/companies/new` add; `/companies/[id]/edit` edit; Metadata UX mirrors workflow Metadata
-- `/experiences` is a placeholder submenu (no experience API in this phase)
+
+## Experiences (Phase 10)
+
+- `GET /experiences?q=&page=` — page size 10; list includes `metadata` for the Metadata column
+- List order: `updatedAt` descending
+- `GET /experiences/:id` — full detail for the editor (owner only)
+- `POST /experiences` / `PUT /experiences/:id` — `{ category, description, metadata }`; on write, delete existing `experienceMetadata` and insert the submitted list
+- Search `q` across category and description
+- Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
+- Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
 
 ## Plans
 

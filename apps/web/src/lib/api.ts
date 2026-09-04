@@ -4,6 +4,7 @@ import type {
 } from "./workflow";
 import type { ProfileDetail, ProfileWritePayload } from "./profile";
 import type { CompanyDetail, CompanyWritePayload } from "./company";
+import type { ExperienceDetail, ExperienceWritePayload } from "./experience";
 
 export type {
   WorkflowDetail,
@@ -23,6 +24,12 @@ export type {
   CompanyMetadataItem,
   CompanyWritePayload,
 } from "./company";
+
+export type {
+  ExperienceDetail,
+  ExperienceMetadataItem,
+  ExperienceWritePayload,
+} from "./experience";
 
 export type User = {
   id: string;
@@ -219,4 +226,40 @@ export function updateCompany(id: string, payload: CompanyWritePayload) {
 
 export function deleteCompany(id: string) {
   return request<{ ok: boolean }>(`/companies/${id}`, { method: "DELETE" });
+}
+
+export type ExperienceList = {
+  items: ExperienceDetail[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export function listExperiences(q: string, page: number) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("page", String(page));
+  return request<ExperienceList>(`/experiences?${params.toString()}`);
+}
+
+export function getExperience(id: string) {
+  return request<ExperienceDetail>(`/experiences/${id}`);
+}
+
+export function createExperience(payload: ExperienceWritePayload) {
+  return request<ExperienceDetail>("/experiences", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateExperience(id: string, payload: ExperienceWritePayload) {
+  return request<ExperienceDetail>(`/experiences/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteExperience(id: string) {
+  return request<{ ok: boolean }>(`/experiences/${id}`, { method: "DELETE" });
 }

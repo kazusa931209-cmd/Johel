@@ -147,7 +147,15 @@ Aligned with the product flow above:
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
-  * Workspace **Experiences** submenu is present; list and editor for this area are defined when that Phase starts
+  * Per-user list: No, Category, Description, Metadata
+  * Keyword filter on category and description; 10 rows per page
+  * List is ordered by most recently updated first
+  * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
+  * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
+  * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience
+  * Metadata add/edit/delete is local on the page until Save persists the experience (same pattern as company Metadata)
+  * Editor fields: category (required; free-text), description (required); metadata table (Key required; Value optional)
+  * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
   * Per-user list: name, optional one-line description, used count, created, updated
@@ -188,6 +196,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Profiles list and editor with `profiles` / `profileLinks`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-8-workspace-profiles.md`](./plans/2026-09-04-phase-8-workspace-profiles.md).
 * [x] **Phase 9 — Workspace companies** — Workspace includes **Companies** (between Profiles and Workflows) and **Experiences** (after Companies). Companies is a per-user list with search, pagination, add, edit, and delete. Add/edit use dedicated pages; Metadata works like workflow Metadata (local until Save). Experiences is a placeholder submenu.
   * **Outcome (2026-09-04):** Companies list and editor with `companies` / `companyMetadata`; Experiences placeholder. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-9-workspace-companies.md`](./plans/2026-09-04-phase-9-workspace-companies.md).
+* [x] **Phase 10 — Workspace experiences** — Workspace **Experiences** is a per-user list with search, pagination, add, edit, and delete. Add/edit use dedicated pages; Metadata works like company Metadata (local until Save).
+  * **Outcome (2026-09-04):** Experiences list and editor with `experiences` / `experienceMetadata`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-10-workspace-experiences.md`](./plans/2026-09-04-phase-10-workspace-experiences.md).
 
 ## Cursor Rules (Documentation Governance)
 
