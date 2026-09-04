@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { isAiProviderId } from "../lib/ai-provider.js";
 import { runAiVerdict, type AiProviderId } from "../lib/ai-verdict/index.js";
 import { prisma } from "../lib/prisma.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
@@ -55,14 +56,14 @@ aiVerdictRoutes.post("/", async (c) => {
     );
   }
 
-  if (setting.provider !== "cursor") {
+  if (!isAiProviderId(setting.provider)) {
     return c.json(
       { error: `Unsupported AI provider: ${setting.provider}` },
       400,
     );
   }
 
-  const provider = setting.provider as AiProviderId;
+  const provider: AiProviderId = setting.provider;
 
   try {
     const result = await runAiVerdict(provider, {

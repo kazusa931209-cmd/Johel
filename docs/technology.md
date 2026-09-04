@@ -20,7 +20,7 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | Database | SQLite via Prisma | On-disk multi-user data; no hosted DB cost |
 | Auth | Email + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP |
 | Secrets / API keys | Per-user **plaintext** `Setting.apiKey` (Phase 5) | Masked on read; encrypt later if needed |
-| LLM | Provider interface; `@cursor/sdk` first (installed in `apps/api`) | Matches Settings Cursor provider; OpenAI / Anthropic adapters later |
+| LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `apps/api` | User-owned keys; Anthropic adapters later |
 | JD ingest (later) | Manual / URL (`fetch` + cheerio) / file (`pdf-parse`, `mammoth`) | No scraping or parse SaaS |
 | Resume export (later) | `docx`; `@react-pdf/renderer` or `pdf-lib` | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
@@ -92,13 +92,15 @@ User browser (:4041)
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
 - Sidebar: Workspace (submenus Profiles, Companies, Experiences, Workflows, Verdict, Generate — always open), Settings
 
-## AI Agent settings (Phase 5)
+## AI Agent settings (Phase 5, 21)
 
-- Provider id: `cursor` (UI label: Cursor AI Agent)
+- Provider ids: `cursor` (UI label: Cursor AI Agent), `openai` (UI label: OpenAI)
 - `GET /settings` → `{ provider, apiKeyMasked }` or both `null` if unset
-- `PUT /settings` → `{ provider: "cursor", apiKey }` (min 8 chars); upsert; returns `{ provider, apiKeyMasked }`
+- `PUT /settings` → `{ provider: "cursor" | "openai", apiKey }` (min 8 chars); upsert; returns `{ provider, apiKeyMasked }`
+- One active provider + one API key per user in `settings`; switching provider requires saving that provider’s key
 - Mask derived at read time: first 4 + ` ******** ` + last 4 (e.g. `4F28 ******** 3429`)
 - Full `apiKey` is stored plaintext in SQLite; never returned to the client
+- Web Settings: enabled provider dropdown; masked key shown only when the selected provider matches the saved provider; Save stays enabled with inline validation on submit; toast on API result
 
 ## Workflows (Phase 6–7)
 
@@ -157,7 +159,7 @@ User browser (:4041)
 
 - `POST /ai-verdict` — body `{ jobDescription }` (1–10,000 chars; client sends noise-filtered text); requires saved Settings provider/apiKey and non-empty `verdicts.verdictPrompt`; system prompt = user Verdict Prompt + extraction rules; returns `{ markdown, usage, tokenUsed }`
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
-- Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`)
+- Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-luna`, reasoning `low`)
 - Markdown output sections (in order): `## Verdict` (each user question as `###` heading + answer paragraph or sub-bullet list), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
 - Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; PCEW renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography`); `AiUsageProvider` refreshes header total after success
 - **Note:** Phase 13 introduced this as `POST /ai-filter`; Phase 19 renamed to `ai-verdict` and wired into Generate Job **Next**
@@ -173,7 +175,7 @@ User browser (:4041)
 ## AI Resume (Phase 20)
 
 - `POST /ai-resume` — body `{ jobDescription, acceptedMarkdown, profileId, companyIds[], experienceIds[], workflowId }`; requires saved Settings provider/apiKey; server loads owned profile/companies/experiences/workflow from DB and assembles generation input; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
-- Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); response parsed as JSON only and validated with Zod from `@johel/resume`
+- Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`
 - Web: `runAiResume` in `apps/web/src/lib/api.ts`; PCEW **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown and downloads DOCX without re-calling AI when inputs are unchanged
 
 ## Resume package (`@johel/resume`, Phase 20)

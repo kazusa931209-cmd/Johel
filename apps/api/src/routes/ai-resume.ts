@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { isAiProviderId } from "../lib/ai-provider.js";
 import { runAiResume, type AiProviderId } from "../lib/ai-resume/index.js";
 import { assembleResumeGenerationInput } from "../lib/resume/assemble-input.js";
 import { prisma } from "../lib/prisma.js";
@@ -50,14 +51,14 @@ aiResumeRoutes.post("/", async (c) => {
     );
   }
 
-  if (setting.provider !== "cursor") {
+  if (!isAiProviderId(setting.provider)) {
     return c.json(
       { error: `Unsupported AI provider: ${setting.provider}` },
       400,
     );
   }
 
-  const provider = setting.provider as AiProviderId;
+  const provider: AiProviderId = setting.provider;
 
   let generationInput;
   try {

@@ -1,6 +1,8 @@
 import type { GeneratedResume } from "@johel/resume";
 
-export type AiProviderId = "cursor";
+import type { AiProviderId } from "../ai-provider.js";
+
+export type { AiProviderId };
 
 export type AiResumeUsage = {
   inputToken: number;

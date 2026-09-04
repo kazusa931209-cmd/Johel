@@ -184,7 +184,7 @@ Aligned with the product flow above:
   * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; footer **Prev** returns to PCEW; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume
 * **Settings**
   * Theme (Dark / Light)
-  * **AI Agent**: provider (currently **Cursor AI Agent** only) and the user’s **API key**
+  * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.
 * **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon; **View** is an eye icon; **Close** is an X (cross) icon (accessible labels required when icon-only).
@@ -234,6 +234,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** `ai-verdict` stack, Job **Next** pipeline, PCEW result panel, Verdict prerequisite. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-19-generate-job-next-pipeline.md`](./plans/2026-09-04-phase-19-generate-job-next-pipeline.md).
 * [x] **Phase 20 — Generate resume step** — PCEW **Next** runs `POST /ai-resume`; store canonical `GeneratedResume` JSON in session; Generate step renders Markdown from JSON and downloads DOCX from JSON.
   * **Outcome (2026-09-04):** `@johel/resume` package, `ai-resume` API, `GenerateGenerateStep`, session resume persistence, DOCX download. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-20-generate-resume.md`](./plans/2026-09-04-phase-20-generate-resume.md).
+* [x] **Phase 21 — Add OpenAI provider** — Settings lets each user choose **Cursor AI Agent** or **OpenAI** and save one API key; Generate Job and PCEW resume generation use the saved provider.
+  * **Outcome (2026-09-05):** OpenAI Responses adapters (`gpt-5.6-luna` for AI Verdict, `gpt-5.6-terra` for AI Resume); Settings provider dropdown enabled. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-21-openai-provider.md`](./plans/2026-09-05-phase-21-openai-provider.md).
 
 ## Cursor Rules (Documentation Governance)
 

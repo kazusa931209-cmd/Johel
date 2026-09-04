@@ -1,12 +1,11 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { AI_PROVIDER_IDS } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
 import { maskApiKey, requireUser } from "../lib/session.js";
 
-const PROVIDER_CURSOR = "cursor";
-
 const putSchema = z.object({
-  provider: z.literal(PROVIDER_CURSOR),
+  provider: z.enum(AI_PROVIDER_IDS),
   apiKey: z.string().min(8).max(4096),
 });
 

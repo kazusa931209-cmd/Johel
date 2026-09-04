@@ -28,8 +28,14 @@ const CURSOR_PROVIDER_NOTES = `Provider notes (Cursor AI Agent):
 - Prefer concise bullet lists under Job and Company sections.
 - Keep the Markdown headings exactly as specified above.`;
 
+const OPENAI_PROVIDER_NOTES = `Provider notes (OpenAI):
+- In the Verdict section, use \`###\` per question followed by the answer (paragraph or sub-bullet list).
+- Prefer concise bullet lists under Job and Company sections.
+- Keep the Markdown headings exactly as specified above.`;
+
 const PROMPTS: Record<AiProviderId, string> = {
   cursor: CURSOR_PROVIDER_NOTES,
+  openai: OPENAI_PROVIDER_NOTES,
 };
 
 export function getAiVerdictSystemPrompt(

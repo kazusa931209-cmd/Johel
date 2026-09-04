@@ -1,4 +1,5 @@
 import { cursorAiVerdictProvider } from "./cursor-provider.js";
+import { openAiVerdictProvider } from "./openai-provider.js";
 import type {
   AiVerdictProviderResult,
   AiVerdictRequest,
@@ -14,6 +15,7 @@ export type {
 
 const providers = {
   cursor: cursorAiVerdictProvider,
+  openai: openAiVerdictProvider,
 } as const;
 
 export async function runAiVerdict(

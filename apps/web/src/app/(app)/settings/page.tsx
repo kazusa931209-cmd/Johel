@@ -4,11 +4,17 @@ import { FormEvent, useEffect, useState } from "react";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { getSettings, saveSettings } from "@/lib/api";
+import type { AiProviderId } from "@/lib/api";
 import type { Theme } from "@/lib/theme";
 
 const OPTIONS: { value: Theme; label: string }[] = [
   { value: "dark", label: "Dark" },
   { value: "light", label: "Light" },
+];
+
+const PROVIDER_OPTIONS: { value: AiProviderId; label: string }[] = [
+  { value: "cursor", label: "Cursor AI Agent" },
+  { value: "openai", label: "OpenAI" },
 ];
 
 function ChevronDownIcon({ className }: { className?: string }) {
@@ -66,20 +72,35 @@ function EyeOffIcon({ className }: { className?: string }) {
   );
 }
 
+type FormErrors = {
+  provider?: string;
+  apiKey?: string;
+};
+
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const [savedProvider, setSavedProvider] = useState<AiProviderId | null>(null);
+  const [provider, setProvider] = useState<AiProviderId>("cursor");
   const [masked, setMasked] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const providerMatchesSaved = savedProvider === provider;
+  const showMaskedKey = providerMatchesSaved && masked;
 
   useEffect(() => {
     let cancelled = false;
     getSettings().then((res) => {
       if (cancelled) return;
       if (res.data) {
+        if (res.data.provider) {
+          setSavedProvider(res.data.provider);
+          setProvider(res.data.provider);
+        }
         setMasked(res.data.apiKeyMasked);
       }
       setLoading(false);
@@ -91,16 +112,31 @@ export default function SettingsPage() {
 
   async function onSave(e: FormEvent) {
     e.preventDefault();
+    const nextErrors: FormErrors = {};
+    if (!provider) {
+      nextErrors.provider = "Provider is required.";
+    }
+    if (apiKey.trim().length < 8) {
+      nextErrors.apiKey = "API key must be at least 8 characters.";
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
     setSaving(true);
-    const res = await saveSettings("cursor", apiKey);
+    const res = await saveSettings(provider, apiKey);
     setSaving(false);
     if (res.error || !res.data) {
       toast(res.error ?? "Save failed", "error");
       return;
     }
+    setSavedProvider(res.data.provider);
+    setProvider(res.data.provider ?? provider);
     setMasked(res.data.apiKeyMasked);
     setApiKey("");
     setShowApiKey(false);
+    setErrors({});
     toast("AI Agent settings saved.", "success");
   }
 
@@ -138,35 +174,61 @@ export default function SettingsPage() {
       >
         <h2 className="text-sm font-medium">AI Agent</h2>
         <label className="block space-y-1 text-sm">
-          <span>Provider</span>
+          <span>
+            Provider
+            <span className="ml-0.5 text-danger" aria-hidden>
+              *
+            </span>
+          </span>
           <div className="relative">
             <select
-              value="cursor"
-              disabled
+              value={provider}
+              onChange={(e) => {
+                setProvider(e.target.value as AiProviderId);
+                setErrors((prev) => ({ ...prev, provider: undefined }));
+              }}
+              aria-invalid={Boolean(errors.provider)}
               className="w-full appearance-none rounded-md border border-border bg-background py-2 pl-3 pr-10 outline-none"
             >
-              <option value="cursor">Cursor AI Agent</option>
+              {PROVIDER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
             <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
           </div>
+          {errors.provider ? (
+            <p className="text-sm text-danger">{errors.provider}</p>
+          ) : null}
         </label>
         <label className="block space-y-1 text-sm">
-          <span>API Key</span>
+          <span>
+            API Key
+            <span className="ml-0.5 text-danger" aria-hidden>
+              *
+            </span>
+          </span>
           {loading ? (
             <p className="text-muted">Loading…</p>
-          ) : masked ? (
+          ) : showMaskedKey ? (
             <p className="font-mono text-sm text-muted">{masked}</p>
           ) : (
-            <p className="text-sm text-muted">No key saved yet.</p>
+            <p className="text-sm text-muted">No key saved yet for this provider.</p>
           )}
           <div className="relative">
             <input
               type={showApiKey ? "text" : "password"}
               autoComplete="off"
-              minLength={8}
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={masked ? "Enter a new key to replace" : "Enter API key"}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                setErrors((prev) => ({ ...prev, apiKey: undefined }));
+              }}
+              placeholder={
+                showMaskedKey ? "Enter a new key to replace" : "Enter API key"
+              }
+              aria-invalid={Boolean(errors.apiKey)}
               className="w-full rounded-md border border-border bg-background py-2 pr-10 pl-3 outline-none focus:border-muted"
             />
             <button
@@ -182,10 +244,13 @@ export default function SettingsPage() {
               )}
             </button>
           </div>
+          {errors.apiKey ? (
+            <p className="text-sm text-danger">{errors.apiKey}</p>
+          ) : null}
         </label>
         <button
           type="submit"
-          disabled={saving || apiKey.trim().length < 8}
+          disabled={saving}
           className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save"}

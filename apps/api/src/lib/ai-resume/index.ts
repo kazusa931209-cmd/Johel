@@ -1,4 +1,5 @@
 import { cursorAiResumeProvider } from "./cursor-provider.js";
+import { openAiResumeProvider } from "./openai-provider.js";
 import type {
   AiResumeProviderResult,
   AiResumeRequest,
@@ -15,6 +16,7 @@ export type {
 
 const providers = {
   cursor: cursorAiResumeProvider,
+  openai: openAiResumeProvider,
 } as const;
 
 export async function runAiResume(

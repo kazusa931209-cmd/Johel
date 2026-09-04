@@ -1,4 +1,5 @@
 import type { ResumeGenerationInput } from "./types.js";
+import type { AiProviderId } from "../ai-provider.js";
 
 const JSON_SCHEMA_DESCRIPTION = `{
   "header": {
@@ -62,11 +63,16 @@ const CURSOR_PROVIDER_NOTES = `Provider notes (Cursor AI Agent):
 - header.name is required.
 - Use workflow metadata rule prompts as additional extraction or emphasis rules when present.`;
 
-export function getAiResumeSystemPrompt(provider: "cursor"): string {
-  if (provider === "cursor") {
-    return `${SHARED_RULES}\n\n${CURSOR_PROVIDER_NOTES}`;
-  }
-  return SHARED_RULES;
+const OPENAI_PROVIDER_NOTES = `Provider notes (OpenAI):
+- experiences must contain at least one item with at least one bullet each.
+- header.name is required.
+- Use workflow metadata rule prompts as additional extraction or emphasis rules when present.
+- Return ONLY valid JSON. Do NOT wrap the answer in a code fence.`;
+
+export function getAiResumeSystemPrompt(provider: AiProviderId): string {
+  const notes =
+    provider === "cursor" ? CURSOR_PROVIDER_NOTES : OPENAI_PROVIDER_NOTES;
+  return `${SHARED_RULES}\n\n${notes}`;
 }
 
 export function buildAiResumeUserPrompt(input: ResumeGenerationInput): string {

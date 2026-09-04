@@ -1,4 +1,6 @@
-export type AiProviderId = "cursor";
+import type { AiProviderId } from "../ai-provider.js";
+
+export type { AiProviderId };
 
 export type AiVerdictUsage = {
   inputToken: number;
