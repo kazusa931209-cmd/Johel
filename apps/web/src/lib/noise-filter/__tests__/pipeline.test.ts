@@ -116,7 +116,7 @@ Golang Engineer`;
     expect(body.length).toBeGreaterThan(5000);
     const result = noiseFilter(body);
     expect(result.text).toContain("Redis");
-    expect(result.diagnostics.length).toBe(7);
+    expect(result.diagnostics.length).toBe(9);
   });
 
   it("BIT Golang Engineer regression fixture", () => {
@@ -154,6 +154,12 @@ Golang Engineer`;
     expect(result.text).not.toContain("[image]");
     expect(result.text).not.toMatch(/^svg$/im);
     expect(result.text).not.toMatch(/Privacy Policy/i);
+    expect(result.text).not.toContain("0xfC5f...69Ad");
+    expect(result.text).not.toMatch(/^DeJob$/m);
+    expect(result.text).not.toMatch(/Blazes New Trials/i);
+    expect(result.text).not.toMatch(/^About Us$/m);
+    expect(result.text).not.toMatch(/^Find Job$/m);
+    expect(result.text).not.toMatch(/View more jobs of BIT/i);
     expect(result.currentLength).toBeLessThan(result.originalLength);
     expect(result.reductionRate).toBeGreaterThan(0);
   });

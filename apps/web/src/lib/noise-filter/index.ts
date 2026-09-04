@@ -5,6 +5,8 @@ import { MarkdownFilter } from "./filters/markdown.filter";
 import { NavigationFilter } from "./filters/navigation.filter";
 import { NormalizeFilter } from "./filters/normalize.filter";
 import { SectionFilter } from "./filters/section.filter";
+import { DeJobFilter } from "./plugins/dejob.filter";
+import { WalletAddressFilter } from "./plugins/wallet-address.filter";
 import { createInitialContext, runPipeline } from "./pipeline";
 import type { NoiseFilter, NoiseFilterResult } from "./types";
 
@@ -15,6 +17,7 @@ export type {
   NoiseFilterResult,
 } from "./types";
 
+/** Core website-agnostic filters only. */
 export function createDefaultFilters(): NoiseFilter[] {
   return [
     new NormalizeFilter(),
@@ -27,18 +30,27 @@ export function createDefaultFilters(): NoiseFilter[] {
   ];
 }
 
-/** Default pipeline plus optional site-specific plugins appended at the end. */
+/** Default site / artifact plugins appended after core filters. */
+export function createDefaultPluginFilters(): NoiseFilter[] {
+  return [new WalletAddressFilter(), new DeJobFilter()];
+}
+
+/** Core + default plugins + optional extra plugins. */
 export function createNoiseFilterPipeline(
   extraFilters: NoiseFilter[] = [],
 ): NoiseFilter[] {
-  return [...createDefaultFilters(), ...extraFilters];
+  return [
+    ...createDefaultFilters(),
+    ...createDefaultPluginFilters(),
+    ...extraFilters,
+  ];
 }
 
 export function noiseFilter(
   raw: string,
   options?: { filters?: NoiseFilter[] },
 ): NoiseFilterResult {
-  const filters = options?.filters ?? createDefaultFilters();
+  const filters = options?.filters ?? createNoiseFilterPipeline();
   const initial = createInitialContext(raw ?? "");
   const final = runPipeline(filters, initial);
   const originalLength = final.metadata.originalLength;

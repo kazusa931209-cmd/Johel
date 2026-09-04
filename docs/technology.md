@@ -154,8 +154,14 @@ User browser (:4041)
 - Public API: `noiseFilter(raw: string)` → `{ text, originalLength, currentLength, reductionRate, diagnostics }`
   - `reductionRate = (originalLength - currentLength) / originalLength` (0 when empty)
   - Each diagnostic: `{ filter, beforeLength, afterLength, removedLength }`
-- Pipeline order: Normalize → HTML → Markdown → Boilerplate → Duplicate → Navigation → Section
-- Filter contract: `{ name, apply(context): context }`; `createNoiseFilterPipeline(extraFilters?)` appends optional site-specific plugins later (DeJob, LinkedIn, etc.) without rewriting core
+- Pipeline order: Normalize → HTML → Markdown → Boilerplate → Duplicate → Navigation → Section → **WalletAddress** → **DeJob** (+ optional extras)
+- Filter contract: `{ name, apply(context): context }`
+  - `createDefaultFilters()` — 7 core filters only
+  - `createDefaultPluginFilters()` — WalletAddress + DeJob
+  - `createNoiseFilterPipeline(extraFilters?)` — core + default plugins + extras
+- Plugins under `plugins/`:
+  - **WalletAddress** — strips full `0x`+40 hex and truncated forms (`0xfC5f...69Ad`)
+  - **DeJob** — whole-line chrome via `dejob.config.ts` (View more jobs of … >, tagline regexp `DeJob Blazes New Trials for Web 3.0`, About Us / Find Job / etc.)
 - Configurable patterns in `config.ts` (boilerplate, navigation exact lines, section headings, footer boundaries)
 - Conservative / loss-aware: line-level and boundary-based removal; never global keyword nuking of technical terms
 - HTML: `node-html-parser` when input looks like HTML; strip script/style/noscript/svg/canvas/iframe/template and comments; regex fallback on parse failure

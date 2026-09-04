@@ -210,8 +210,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Experiences list and editor with `experiences` / `experienceMetadata`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-10-workspace-experiences.md`](./plans/2026-09-04-phase-10-workspace-experiences.md).
 * [x] **Phase 11 — Generate UI (Job step)** — Generate gates on Profile/Company/Experience/Workflow; timeline Job → PCEW → Verdict → Company → Generate; Job step with URL/File/Manual, Noise Filter, AI Filter stub, rollback; Choose PCEW dialog; header Token Used (K/M/G/T). UI only.
   * **Outcome (2026-09-04):** Generate Job UI and prerequisites alert. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-11-generate-ui.md`](./plans/2026-09-04-phase-11-generate-ui.md).
-* [x] **Phase 12 — Noise Filter** — Replace the Phase 11 regex stub with an extensible deterministic Noise Filter pipeline (normalize → HTML → Markdown → boilerplate → duplicate → navigation → section). Preserve job/company information; expose reduction diagnostics; unit tests with Vitest. AI Filter remains a stub.
-  * **Outcome (2026-09-04):** Pipeline under `apps/web/src/lib/noise-filter/`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-12-noise-filter.md`](./plans/2026-09-04-phase-12-noise-filter.md).
+* [x] **Phase 12 — Noise Filter** — Extensible deterministic Noise Filter pipeline (normalize → HTML → Markdown → boilerplate → duplicate → navigation → section) plus default plugins **WalletAddress** and **DeJob**. Preserve job/company information; expose reduction diagnostics; unit tests with Vitest. AI Filter remains a stub.
+  * **Outcome (2026-09-04):** Pipeline under `apps/web/src/lib/noise-filter/` including WalletAddress and DeJob plugins. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-12-noise-filter.md`](./plans/2026-09-04-phase-12-noise-filter.md).
 
 ## Cursor Rules (Documentation Governance)
 
