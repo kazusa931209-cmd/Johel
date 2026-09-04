@@ -56,6 +56,7 @@ export type ResumeGenerationInput = {
 
 export type AiResumeRequest = {
   apiKey: string;
+  generatePrompt: string;
   input: ResumeGenerationInput;
 };
 

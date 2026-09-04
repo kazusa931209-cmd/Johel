@@ -3,15 +3,16 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 
-const VERDICT_PROMPT_MAX = 10_000;
+const PROMPT_MAX = 10_000;
 
 const putSchema = z.object({
-  verdictPrompt: z.string().trim().min(1).max(VERDICT_PROMPT_MAX),
+  verdictPrompt: z.string().trim().min(1).max(PROMPT_MAX),
+  generatePrompt: z.string().trim().min(1).max(PROMPT_MAX),
 });
 
-export const verdictRoutes = new Hono();
+export const promptsRoutes = new Hono();
 
-verdictRoutes.get("/", async (c) => {
+promptsRoutes.get("/", async (c) => {
   const user = await requireUser(c);
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
@@ -21,10 +22,13 @@ verdictRoutes.get("/", async (c) => {
     where: { userId: user.id },
   });
 
-  return c.json({ verdictPrompt: verdict?.verdictPrompt ?? "" });
+  return c.json({
+    verdictPrompt: verdict?.verdictPrompt ?? "",
+    generatePrompt: verdict?.generatePrompt ?? "",
+  });
 });
 
-verdictRoutes.put("/", async (c) => {
+promptsRoutes.put("/", async (c) => {
   const user = await requireUser(c);
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
@@ -35,7 +39,7 @@ verdictRoutes.put("/", async (c) => {
   if (!parsed.success) {
     return c.json(
       {
-        error: `Verdict Prompt is required (max ${VERDICT_PROMPT_MAX} characters).`,
+        error: `Both prompts are required (max ${PROMPT_MAX} characters each).`,
       },
       400,
     );
@@ -46,11 +50,16 @@ verdictRoutes.put("/", async (c) => {
     create: {
       userId: user.id,
       verdictPrompt: parsed.data.verdictPrompt,
+      generatePrompt: parsed.data.generatePrompt,
     },
     update: {
       verdictPrompt: parsed.data.verdictPrompt,
+      generatePrompt: parsed.data.generatePrompt,
     },
   });
 
-  return c.json({ verdictPrompt: verdict.verdictPrompt });
+  return c.json({
+    verdictPrompt: verdict.verdictPrompt,
+    generatePrompt: verdict.generatePrompt,
+  });
 });

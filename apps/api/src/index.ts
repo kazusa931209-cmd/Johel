@@ -12,7 +12,7 @@ import { aiResumeRoutes } from "./routes/ai-resume.js";
 import { aiVerdictRoutes } from "./routes/ai-verdict.js";
 import { resumeRoutes } from "./routes/resume.js";
 import { aiUsageRoutes } from "./routes/ai-usage.js";
-import { verdictRoutes } from "./routes/verdict.js";
+import { promptsRoutes } from "./routes/prompts.js";
 
 const app = new Hono();
 
@@ -35,7 +35,7 @@ app.route("/ai-resume", aiResumeRoutes);
 app.route("/ai-verdict", aiVerdictRoutes);
 app.route("/resume", resumeRoutes);
 app.route("/ai-usage", aiUsageRoutes);
-app.route("/verdict", verdictRoutes);
+app.route("/prompts", promptsRoutes);
 
 const port = Number(process.env.PORT ?? 4042);
 

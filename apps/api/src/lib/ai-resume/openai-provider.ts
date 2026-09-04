@@ -15,7 +15,7 @@ export const openAiResumeProvider: AiResumeProvider = {
   id: "openai",
 
   async run(input: AiResumeRequest): Promise<AiResumeProviderResult> {
-    const instructions = getAiResumeSystemPrompt("openai");
+    const instructions = getAiResumeSystemPrompt("openai", input.generatePrompt);
     const user = buildAiResumeUserPrompt(input.input);
 
     const response = await runOpenAiResumeResponse(

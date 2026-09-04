@@ -18,7 +18,7 @@ import {
   canReuseStoredResume,
 } from "@/lib/generate-session";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
-import { getVerdict, listWorkflows, runAiResume } from "@/lib/api";
+import { getPrompts, listWorkflows, runAiResume } from "@/lib/api";
 
 export default function GeneratePage() {
   const { toast } = useToast();
@@ -41,10 +41,10 @@ export default function GeneratePage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listWorkflows("", 1), getVerdict()]).then(
-      ([workflows, verdict]) => {
+    Promise.all([listWorkflows("", 1), getPrompts()]).then(
+      ([workflows, prompts]) => {
         if (cancelled) return;
-        const errors = [workflows.error, verdict.error].filter(Boolean);
+        const errors = [workflows.error, prompts.error].filter(Boolean);
         if (errors.length > 0) {
           toast(
             errors[0] ?? "Failed to check Generate prerequisites",
@@ -53,7 +53,7 @@ export default function GeneratePage() {
           setLoading(false);
           setMissing([
             { label: "Workflows", href: "/workflows" },
-            { label: "Verdict", href: "/verdict" },
+            { label: "Prompts", href: "/prompts" },
           ]);
           return;
         }
@@ -62,8 +62,11 @@ export default function GeneratePage() {
         if ((workflows.data?.total ?? 0) < 1) {
           nextMissing.push({ label: "Workflows", href: "/workflows" });
         }
-        if (!verdict.data?.verdictPrompt.trim()) {
-          nextMissing.push({ label: "Verdict", href: "/verdict" });
+        if (!prompts.data?.verdictPrompt.trim()) {
+          nextMissing.push({ label: "Verdict Prompt", href: "/prompts" });
+        }
+        if (!prompts.data?.generatePrompt.trim()) {
+          nextMissing.push({ label: "Generate Prompt", href: "/prompts" });
         }
 
         setMissing(nextMissing.length > 0 ? nextMissing : null);

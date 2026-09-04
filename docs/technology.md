@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /verdict`, `PUT /verdict`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /prompts`, `PUT /prompts`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
@@ -56,7 +56,7 @@ User browser (:4041)
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
 - Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
-- Prisma `Verdict` → table `verdicts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `createdAt`, `updatedAt`
+- Prisma `Verdict` → table `verdicts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `createdAt`, `updatedAt`
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowCompanies`, `workflowExperiences`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`, `aiUsage`, `verdicts`
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
@@ -86,12 +86,12 @@ User browser (:4041)
   - `/companies` — Workspace / Companies
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
-  - `/verdict` — Workspace / Verdict
+  - `/prompts` — Workspace / Prompts
   - `/settings` — Settings (theme + AI Agent)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
-- Sidebar: Workspace (submenus Profiles, Companies, Experiences, Workflows, Verdict, Generate — always open), Settings
+- Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows, Prompts — always open), **Run** (Generate — always open), Settings; section labels use normal title case (not all caps)
 
 ## AI Agent settings (Phase 5, 21)
 
@@ -145,7 +145,7 @@ User browser (:4041)
 
 ## Generate UI (Phase 11–20, 22)
 
-- Route `/` gates on at least one workflow and a saved Verdict Prompt; otherwise a centered alert with links (not a toast)
+- Route `/` gates on at least one workflow and saved Verdict Prompt and Generate Prompt; otherwise a centered alert with links (not a toast)
 - Timeline steps: Job → Workflow → Generate
 - Job UI (Manual): Job text max 10,000 chars + **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
 - Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text; fullscreen loading; on success saves `acceptedMarkdown`, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
@@ -165,17 +165,18 @@ User browser (:4041)
 - Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography`); `AiUsageProvider` refreshes header total after success
 - **Note:** Phase 13 introduced this as `POST /ai-filter`; Phase 19 renamed to `ai-verdict` and wired into Generate Job **Next**
 
-## Verdict settings (Phase 18)
+## Prompts settings (Phase 18, 23)
 
-- `GET /verdict` → `{ verdictPrompt: string }` — empty string when no row yet (owner only)
-- `PUT /verdict` → body `{ verdictPrompt }` (trim, min 1, max 10,000 chars); upsert by `userId`; returns `{ verdictPrompt }`
-- Web route `/verdict`: single required Verdict Prompt textarea; Save always enabled; inline validation on submit; toast on API result
-- Client: `getVerdict`, `saveVerdict` in `apps/web/src/lib/api.ts`; placeholder in `apps/web/src/lib/verdict.ts`
-- Prompt consumed by `POST /ai-verdict` (not a separate AI runner)
+- `GET /prompts` → `{ verdictPrompt: string, generatePrompt: string }` — empty strings when no row yet (owner only)
+- `PUT /prompts` → body `{ verdictPrompt, generatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; returns both prompts
+- Web route `/prompts`: Verdict Prompt and Generate Prompt textareas; Save always enabled; inline validation on submit; toast on API result
+- Legacy web route `/verdict` redirects to `/prompts`
+- Client: `getPrompts`, `savePrompts` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
+- Verdict Prompt consumed by `POST /ai-verdict`; Generate Prompt consumed by `POST /ai-resume`
 
-## AI Resume (Phase 20, 22)
+## AI Resume (Phase 20, 22, 23)
 
-- `POST /ai-resume` — body `{ jobDescription, acceptedMarkdown, workflowId }`; requires saved Settings provider/apiKey; server loads the owned workflow (profile, companies, experiences via junction tables) and assembles generation input; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
+- `POST /ai-resume` — body `{ jobDescription, acceptedMarkdown, workflowId }`; requires saved Settings provider/apiKey and non-empty `verdicts.generatePrompt`; server loads the owned workflow (profile, companies, experiences via junction tables) and assembles generation input; system prompt = user Generate Prompt + shared resume rules; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
 - Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`
 - Web: `runAiResume` in `apps/web/src/lib/api.ts`; Workflow **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown and downloads DOCX without re-calling AI when inputs are unchanged
 

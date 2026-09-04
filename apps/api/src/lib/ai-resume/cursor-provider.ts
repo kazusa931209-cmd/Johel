@@ -16,7 +16,7 @@ export const cursorAiResumeProvider: AiResumeProvider = {
   id: "cursor",
 
   async run(input: AiResumeRequest): Promise<AiResumeProviderResult> {
-    const system = getAiResumeSystemPrompt("cursor");
+    const system = getAiResumeSystemPrompt("cursor", input.generatePrompt);
     const user = buildAiResumeUserPrompt(input.input);
     const prompt = `${system}\n\n${user}`;
 

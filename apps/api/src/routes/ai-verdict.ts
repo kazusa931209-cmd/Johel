@@ -37,7 +37,7 @@ aiVerdictRoutes.post("/", async (c) => {
     return c.json(
       {
         error:
-          "Verdict Prompt is not configured. Save your Verdict Prompt on the Verdict page first.",
+          "Verdict Prompt is not configured. Save your prompts on the Prompts page first.",
       },
       400,
     );

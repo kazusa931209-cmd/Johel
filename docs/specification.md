@@ -12,7 +12,7 @@
 * **Companies** — One user can manage **multiple companies** (name, description, priority, and metadata).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
 * **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more companies, one or more shared experiences, and a resume output language.
-* **Verdict** — One saved **Verdict Prompt** per user, used when checking Job Descriptions.
+* **Prompts** — Per-user **Verdict Prompt** and **Generate Prompt**, used when checking Job Descriptions and generating résumés.
 
 ### End-to-end flow
 
@@ -114,12 +114,13 @@ Aligned with the product flow above:
   * Left: project title **JoHEL**
   * Right: **Token Used** (compact K / M / G / T, e.g. `0.3K`, `12.5K`, `0.6M`) beside the user email dropdown containing **Profile** and **Sign out**
 * **Left sidebar** menus:
-  * Workspace (always-open submenus)
+  * **Workspace** (always-open submenus)
     * Profiles
     * Companies
     * Experiences
     * Workflows
-    * Verdict
+    * Prompts
+  * **Run** (always-open submenus)
     * Generate (`/` is Generate)
   * Settings
 * **Profiles**
@@ -167,19 +168,19 @@ Aligned with the product flow above:
   * Save validates inline: one profile, at least one company, at least one experience (not via disabling Save)
   * Detail dialog shows the selected profile, companies, and experiences instead of metadata rules
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
-* **Verdict** (`/verdict`)
-  * One signed-in user maintains **one** Verdict Prompt
-  * Editor fields: Verdict Prompt (required)
-  * **Save** stays enabled; required label shows a red asterisk; empty prompt shows an inline error on Save (not a toast)
+* **Prompts** (`/prompts`)
+  * One signed-in user maintains a **Verdict Prompt** and a **Generate Prompt**
+  * Editor fields: Verdict Prompt (required), Generate Prompt (required)
+  * **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
   * Save and load via the API; toast on API success or failure
-  * The Verdict Prompt is used when checking Job Descriptions (checking is not part of this page)
+  * The Verdict Prompt is used when checking Job Descriptions; the Generate Prompt is used when generating résumés (neither runs on this page)
 * **Generate** (`/`)
-  * Before the flow starts, the page checks that the user has at least one Workflow and a saved **Verdict Prompt**. If any are missing, a centered alert lists what is missing with links to those Workspace pages
+  * Before the flow starts, the page checks that the user has at least one Workflow and saved **Verdict Prompt** and **Generate Prompt**. If any are missing, a centered alert lists what is missing with links to those pages
   * When ready, a timeline shows steps: Job → Workflow → Generate
   * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters) and a **Next** button only; URL and File upload show an info alert that they are not implemented yet and coming soon
   * **Next** on Job (Manual): validates the Job Description (inline error if empty); runs **Noise Filter** silently in the background (textarea unchanged); calls **AI Verdict** with the user’s saved Verdict Prompt plus extraction instructions; fullscreen loading while the request runs; on success persists token usage, saves accepted Markdown, toasts success, and advances to **Workflow**; on failure stays on Job and toasts the error
   * **Workflow** step: read-only **AI Verdict result** Markdown panel at the top (from the accepted Job-step result); then a **Workflow** section with a single-select table (all workflows loaded at once; no search or pagination). Row click selects; View opens read-only workflow detail. Footer **Prev** returns to Job; **Next** stays enabled and validates inline (one workflow selected) before advancing
-  * **Workflow** **Next** runs **AI Resume generation** with the noise-filtered Job Description, accepted AI Verdict Markdown, and selected workflow (profile, companies, and experiences come from that workflow); fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on Workflow and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
+  * **Workflow** **Next** runs **AI Resume generation** with the noise-filtered Job Description, accepted AI Verdict Markdown, selected workflow, and saved Generate Prompt; fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on Workflow and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
   * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, workflow selection, generated resume JSON) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
   * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; footer **Prev** returns to Workflow; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume
 * **Settings**
@@ -238,6 +239,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-05):** OpenAI Responses adapters (`gpt-5.6-luna` for AI Verdict, `gpt-5.6-terra` for AI Resume); Settings provider dropdown enabled. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-21-openai-provider.md`](./plans/2026-09-05-phase-21-openai-provider.md).
 * [x] **Phase 22 — Redefine workflows as PCEW presets** — Workflows bundle one profile, one or more companies, and one or more experiences plus resume output language. Remove workflow metadata. Workflow editor includes PCEW-style pickers. Generate middle step is **Workflow** (workflow-only selection). Prerequisites require Workflow and Verdict only.
   * **Outcome (2026-09-05):** Workflows store PCEW selections; `workflowMetadata` removed; Generate timeline Job → Workflow → Generate. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-22-redefine-workflows.md`](./plans/2026-09-05-phase-22-redefine-workflows.md).
+* [x] **Phase 23 — Refine sidebar and Prompts** — Rename Verdict to **Prompts** (`/prompts`) with Verdict Prompt and Generate Prompt. Sidebar sections **Workspace** and **Run** (Generate under Run); section labels use normal title case.
+  * **Outcome (2026-09-05):** `/prompts` page and API; `generatePrompt` on `verdicts`; Generate prerequisite checks both prompts. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-23-sidebar-prompts.md`](./plans/2026-09-05-phase-23-sidebar-prompts.md).
 
 ## Cursor Rules (Documentation Governance)
 

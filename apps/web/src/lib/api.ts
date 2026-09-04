@@ -133,18 +133,19 @@ export function saveSettings(provider: AiProviderId, apiKey: string) {
   });
 }
 
-export type VerdictSettings = {
+export type PromptSettings = {
   verdictPrompt: string;
+  generatePrompt: string;
 };
 
-export function getVerdict() {
-  return request<VerdictSettings>("/verdict");
+export function getPrompts() {
+  return request<PromptSettings>("/prompts");
 }
 
-export function saveVerdict(verdictPrompt: string) {
-  return request<VerdictSettings>("/verdict", {
+export function savePrompts(payload: PromptSettings) {
+  return request<PromptSettings>("/prompts", {
     method: "PUT",
-    body: JSON.stringify({ verdictPrompt }),
+    body: JSON.stringify(payload),
   });
 }
 

@@ -57,6 +57,20 @@ aiResumeRoutes.post("/", async (c) => {
 
   const provider: AiProviderId = setting.provider;
 
+  const prompts = await prisma.verdict.findUnique({
+    where: { userId: user.id },
+  });
+  const generatePrompt = prompts?.generatePrompt?.trim() ?? "";
+  if (!generatePrompt) {
+    return c.json(
+      {
+        error:
+          "Generate Prompt is not configured. Save your prompts on the Prompts page first.",
+      },
+      400,
+    );
+  }
+
   let generationInput;
   try {
     generationInput = await assembleResumeGenerationInput({
@@ -74,6 +88,7 @@ aiResumeRoutes.post("/", async (c) => {
   try {
     const result = await runAiResume(provider, {
       apiKey: setting.apiKey,
+      generatePrompt,
       input: generationInput,
     });
 
