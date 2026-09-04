@@ -186,6 +186,7 @@ User browser (:4041)
 - `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts`; shared `ResumeDocxStyle` in `docx-builder/styles.ts`
 - `POST /resume/docx` — body `{ resume }` (validated `GeneratedResume`); returns `.docx` attachment; used by Generate **Download**
 - Consumed by API (validation), web (display + download), and Vitest unit tests
+- **DOCX template management** — architecture, default template, style tokens, and extension guide: [`docx-template-management.md`](./docx-template-management.md)
 
 ## Noise Filter (Phase 12)
 
