@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import {
   ChoosePcewDialog,
   type PcewSelection,
 } from "@/components/generate/ChoosePcewDialog";
+import { AiFilterResultDialog } from "@/components/generate/AiFilterResultDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
 import {
   JOB_ROLLBACK_MAX,
   JOB_TEXT_MAX,
   noiseFilter,
 } from "@/lib/jobNoiseFilter";
+import { runAiFilter, type AiFilterUsage } from "@/lib/api";
 
 type InputMethod = "url" | "file" | "manual";
 
@@ -34,10 +37,17 @@ function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
 
 export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
   const { toast } = useToast();
+  const { refreshTokenUsed, setTokenUsed } = useAiUsage();
   const [method, setMethod] = useState<InputMethod>("manual");
   const [jobText, setJobText] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [pcewOpen, setPcewOpen] = useState(false);
+  const [aiFiltering, setAiFiltering] = useState(false);
+  const [aiResult, setAiResult] = useState<{
+    markdown: string;
+    usage: AiFilterUsage;
+  } | null>(null);
+  const [acceptedMarkdown, setAcceptedMarkdown] = useState<string | null>(null);
 
   function setJobTextCapped(value: string) {
     setJobText(value.slice(0, JOB_TEXT_MAX));
@@ -68,8 +78,34 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
     );
   }
 
-  function onAiFilter() {
-    toast("AI Filter will be available in a later phase.", "info");
+  async function onAiFilter() {
+    if (aiFiltering) return;
+    const text = jobText.trim();
+    if (!text) {
+      toast("Enter a Job Description before running AI Filter.", "warning");
+      return;
+    }
+
+    setAiFiltering(true);
+    try {
+      const res = await runAiFilter(text);
+      if (!res.data) {
+        toast(res.error ?? "AI Filter failed.", "error");
+        return;
+      }
+
+      setAiResult({
+        markdown: res.data.markdown,
+        usage: res.data.usage,
+      });
+      setTokenUsed(res.data.tokenUsed);
+      await refreshTokenUsed();
+      toast("AI Filter completed.", "success");
+    } catch {
+      toast("AI Filter failed.", "error");
+    } finally {
+      setAiFiltering(false);
+    }
   }
 
   function onRollback() {
@@ -108,6 +144,13 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
           Choose Profile, Company, Experience, and Workflow when ready.
         </p>
       )}
+
+      {acceptedMarkdown ? (
+        <p className="text-xs text-muted">
+          AI Filter result accepted for this session (Next). Job text is
+          unchanged until you edit it.
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap gap-1 rounded-md border border-border p-1">
         {(
@@ -168,9 +211,10 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
             <button
               type="button"
               onClick={onAiFilter}
-              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
+              disabled={aiFiltering}
+              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted disabled:opacity-40"
             >
-              AI Filter
+              {aiFiltering ? "AI Filter…" : "AI Filter"}
             </button>
             <button
               type="button"
@@ -194,6 +238,43 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
             toast("PCEW selection applied.", "success");
           }}
         />
+      ) : null}
+
+      {aiResult ? (
+        <AiFilterResultDialog
+          markdown={aiResult.markdown}
+          usage={aiResult.usage}
+          onClose={() => setAiResult(null)}
+          onDiscard={() => {
+            setAiResult(null);
+            toast("AI Filter result discarded.", "info");
+          }}
+          onRetry={() => {
+            setAiResult(null);
+            void onAiFilter();
+          }}
+          onNext={() => {
+            setAcceptedMarkdown(aiResult.markdown);
+            setAiResult(null);
+            toast("AI Filter result accepted.", "success");
+          }}
+        />
+      ) : null}
+
+      {aiFiltering ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
+            <p className="text-sm font-medium">Running AI Filter…</p>
+            <p className="mt-1 text-xs text-muted">
+              Please wait. Do not click AI Filter again.
+            </p>
+          </div>
+        </div>
       ) : null}
     </div>
   );

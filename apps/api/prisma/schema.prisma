@@ -18,6 +18,7 @@ model User {
   profiles     Profile[]
   companies    Company[]
   experiences  Experience[]
+  aiUsages     AiUsage[]
 
   // SQLite table names are case-insensitive; plural avoids colliding with former PascalCase names.
   @@map("users")
@@ -158,4 +159,20 @@ model ExperienceMetadata {
   @@unique([experienceId, key])
   @@index([experienceId])
   @@map("experienceMetadata")
+}
+
+model AiUsage {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiProvider       String
+  inputToken       Int
+  outputToken      Int
+  inputTokenUsage  Int
+  outputTokenUsage Int
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("aiUsage")
 }

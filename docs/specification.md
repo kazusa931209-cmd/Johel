@@ -174,7 +174,8 @@ Aligned with the product flow above:
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Profile, one Company, one Experience, and one Workflow. If any are missing, a centered alert lists what is missing with links to those Workspace pages
   * When ready, a timeline shows steps: Job → PCEW → Verdict → Company → Generate (this phase implements Job only; later steps are indicators)
-  * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters), **Noise Filter** (deterministic multi-stage pipeline — not AI), **AI Filter** (UI stub until a later phase), and **Rollback** (up to 3 previous versions); URL and File upload show an info alert that they are not implemented yet and coming soon
+  * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters), **Noise Filter** (deterministic multi-stage pipeline — not AI), **AI Filter** (uses the user’s configured AI Agent Provider to extract Job and Job post Company & contacts as Markdown), and **Rollback** (up to 3 previous versions); URL and File upload show an info alert that they are not implemented yet and coming soon
+  * **AI Filter** shows a fullscreen loading indicator and prevents another AI Filter click until the request finishes. On success, a result dialog renders Markdown output. Backdrop click does not close this dialog. Footer actions: **Discard** (danger), **Retry** (secondary), **Next** (primary). Token usage from each run is persisted and aggregated into the header **Token Used** total
   * **Choose PCEW** opens a dialog to pick Profile, Company, Experience, and Workflow (local selection only this phase; Close X top-right; Apply in footer)
 * **Settings**
   * Theme (Dark / Light)
@@ -212,6 +213,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Generate Job UI and prerequisites alert. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-11-generate-ui.md`](./plans/2026-09-04-phase-11-generate-ui.md).
 * [x] **Phase 12 — Noise Filter** — Extensible deterministic Noise Filter pipeline (normalize → HTML → Markdown → boilerplate → duplicate → navigation → section) plus default plugins **WalletAddress** and **DeJob**. Preserve job/company information; expose reduction diagnostics; unit tests with Vitest. AI Filter remains a stub.
   * **Outcome (2026-09-04):** Pipeline under `apps/web/src/lib/noise-filter/` including WalletAddress and DeJob plugins. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-12-noise-filter.md`](./plans/2026-09-04-phase-12-noise-filter.md).
+* [x] **Phase 13 — AI Filter** — AI Filter calls the configured AI Agent Provider with a provider-specific system prompt; extracts Job and Job post Company & contacts as Markdown; persists token usage in `aiUsage`; result dialog (Discard / Retry / Next, no backdrop dismiss); fullscreen loading; header Token Used aggregates usage.
+  * **Outcome (2026-09-04):** Cursor provider adapter, `POST /ai-filter`, `GET /ai-usage/summary`, Markdown result dialog. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-13-ai-filter.md`](./plans/2026-09-04-phase-13-ai-filter.md).
 
 ## Cursor Rules (Documentation Governance)
 

@@ -8,6 +8,8 @@ import { workflowsRoutes } from "./routes/workflows.js";
 import { profilesRoutes } from "./routes/profiles.js";
 import { companiesRoutes } from "./routes/companies.js";
 import { experiencesRoutes } from "./routes/experiences.js";
+import { aiFilterRoutes } from "./routes/ai-filter.js";
+import { aiUsageRoutes } from "./routes/ai-usage.js";
 
 const app = new Hono();
 
@@ -26,6 +28,8 @@ app.route("/workflows", workflowsRoutes);
 app.route("/profiles", profilesRoutes);
 app.route("/companies", companiesRoutes);
 app.route("/experiences", experiencesRoutes);
+app.route("/ai-filter", aiFilterRoutes);
+app.route("/ai-usage", aiUsageRoutes);
 
 const port = Number(process.env.PORT ?? 4042);
 

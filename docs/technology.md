@@ -20,7 +20,7 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | Database | SQLite via Prisma | On-disk multi-user data; no hosted DB cost |
 | Auth | Email + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP |
 | Secrets / API keys | Per-user **plaintext** `Setting.apiKey` (Phase 5) | Masked on read; encrypt later if needed |
-| LLM (later) | Provider interface; `@cursor/sdk` first | Matches spec; OpenAI / Anthropic adapters later |
+| LLM | Provider interface; `@cursor/sdk` first (installed in `apps/api`) | Matches Settings Cursor provider; OpenAI / Anthropic adapters later |
 | JD ingest (later) | Manual / URL (`fetch` + cheerio) / file (`pdf-parse`, `mammoth`) | No scraping or parse SaaS |
 | Resume export (later) | `docx`; `@react-pdf/renderer` or `pdf-lib` | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-filter`, `GET /ai-usage/summary`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `filteringPrompt`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`)
@@ -54,7 +54,8 @@ User browser (:4041)
 - Prisma `CompanyMetadata` → table `companyMetadata`: `id`, `companyId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(companyId, key)`; cascade delete with company
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
 - Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
-- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`
+- Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `inputTokenUsage`, `outputTokenUsage`, `createdAt`
+- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`, `aiUsage`
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
 ## Frontend (Phase 3)
@@ -69,7 +70,7 @@ User browser (:4041)
 - Session gate: client checks `GET /backend/auth/me` before rendering app routes
 - If a frontend component file exceeds **500 lines**, ask the user before growing it further; prefer splitting into smaller components/hooks
 - Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash), `CloseButton` (X) in `components/shared/action-icon-buttons.tsx`
-- Dialogs use `DetailDialog` (`components/shared/detail-dialog.tsx`) so Close (X) is always in the top-right header; the footer holds only the main action (Apply / Delete). Do not put Close beside that action.
+- Dialogs use `DetailDialog` (`components/shared/detail-dialog.tsx`) so Close (X) is always in the top-right header; the footer holds only the main action (Apply / Delete). Do not put Close beside that action. Optional `dismissOnBackdrop={false}` blocks outer-click dismiss (used by AI Filter result dialog).
 
 ## Studio shell (Phase 4)
 
@@ -86,7 +87,7 @@ User browser (:4041)
   - `/settings` — Settings (theme + AI Agent)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
-- Header also shows `Token Used: {formatTokenUsed(n)}` beside the email (Phase 11; raw count is `0` this phase)
+- Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputTokenUsage + outputTokenUsage`)
 - Sidebar: Workspace (submenus Profiles, Companies, Experiences, Workflows, Generate — always open), Settings
 
 ## AI Agent settings (Phase 5)
@@ -145,8 +146,17 @@ User browser (:4041)
 - Timeline steps (Job active only this phase): Job → PCEW → Verdict → Company → Generate
 - Job UI: Manual / URL / File tabs; Manual has Job text max 10,000 chars, Noise Filter, AI Filter stub, Rollback; URL and File tabs show an info alert (“not implemented yet / coming soon”) instead of inputs
 - Choose PCEW: dialog loads first page of list APIs; Apply keeps selection in page state only
-- Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …`; raw count static `0` → `0K` this phase
+- Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …` from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/`
+
+## AI Filter (Phase 13)
+
+- `POST /ai-filter` — body `{ jobDescription }` (1–10,000 chars); requires saved Settings provider/apiKey; provider-specific system prompt; returns `{ markdown, usage, tokenUsed }`
+- `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputTokenUsage + outputTokenUsage` for the user
+- Provider adapter under `apps/api/src/lib/ai-filter/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); prompt map keyed by provider
+- Markdown-only output with sections `## Job` and `## Job post Company & contacts`; unknowns as `Not found`
+- Token fields: use provider usage when available; otherwise estimate `Math.ceil(text.length / 4)`; this phase stores `inputTokenUsage = inputToken` and `outputTokenUsage = outputToken`
+- Web: fullscreen loading while AI Filter runs; `AiFilterResultDialog` renders Markdown with `react-markdown`; `DetailDialog` supports `dismissOnBackdrop={false}`; footer Discard (danger) / Retry / Next; `AiUsageProvider` refreshes header total after success
 
 ## Noise Filter (Phase 12)
 

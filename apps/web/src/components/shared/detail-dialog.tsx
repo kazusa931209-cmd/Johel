@@ -9,6 +9,7 @@ type DetailDialogProps = {
   children: ReactNode;
   role?: "dialog" | "alertdialog";
   closeDisabled?: boolean;
+  dismissOnBackdrop?: boolean;
   onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
 };
 
@@ -18,6 +19,7 @@ export function DetailDialog({
   children,
   role = "dialog",
   closeDisabled = false,
+  dismissOnBackdrop = true,
   onKeyDown,
 }: DetailDialogProps) {
   function requestClose() {
@@ -29,7 +31,7 @@ export function DetailDialog({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
       role="presentation"
-      onClick={requestClose}
+      onClick={dismissOnBackdrop ? requestClose : undefined}
     >
       <div
         role={role}

@@ -2,9 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AiUsageProvider, useAiUsage } from "@/components/app/AiUsageProvider";
 import { StudioHeader } from "@/components/app/StudioHeader";
 import { StudioSidebar } from "@/components/app/StudioSidebar";
 import { getMe, type User } from "@/lib/api";
+
+function AppShell({
+  user,
+  children,
+}: {
+  user: User;
+  children: React.ReactNode;
+}) {
+  const { tokenUsed } = useAiUsage();
+
+  return (
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
+      <StudioHeader userName={user.email} tokenUsage={tokenUsed} />
+      <div className="flex min-h-0 flex-1">
+        <StudioSidebar />
+        <main className="min-w-0 flex-1 overflow-auto p-6">{children}</main>
+      </div>
+    </div>
+  );
+}
 
 export default function AppLayout({
   children,
@@ -40,12 +61,8 @@ export default function AppLayout({
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <StudioHeader userName={user.email} tokenUsage={0} />
-      <div className="flex min-h-0 flex-1">
-        <StudioSidebar />
-        <main className="min-w-0 flex-1 overflow-auto p-6">{children}</main>
-      </div>
-    </div>
+    <AiUsageProvider>
+      <AppShell user={user}>{children}</AppShell>
+    </AiUsageProvider>
   );
 }

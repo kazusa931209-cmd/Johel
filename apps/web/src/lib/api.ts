@@ -263,3 +263,31 @@ export function updateExperience(id: string, payload: ExperienceWritePayload) {
 export function deleteExperience(id: string) {
   return request<{ ok: boolean }>(`/experiences/${id}`, { method: "DELETE" });
 }
+
+export type AiFilterUsage = {
+  inputToken: number;
+  outputToken: number;
+  inputTokenUsage: number;
+  outputTokenUsage: number;
+};
+
+export type AiFilterResult = {
+  markdown: string;
+  usage: AiFilterUsage;
+  tokenUsed: number;
+};
+
+export type AiUsageSummary = {
+  tokenUsed: number;
+};
+
+export function runAiFilter(jobDescription: string) {
+  return request<AiFilterResult>("/ai-filter", {
+    method: "POST",
+    body: JSON.stringify({ jobDescription }),
+  });
+}
+
+export function getAiUsageSummary() {
+  return request<AiUsageSummary>("/ai-usage/summary");
+}
