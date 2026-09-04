@@ -20,7 +20,7 @@ export function StudioSidebar() {
     pathname === "/settings" || pathname.startsWith("/settings/");
 
   return (
-    <aside className="flex w-52 shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside className="flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar">
       <nav className="flex flex-col gap-1 p-3">
         <div className="px-3 py-2 text-xs font-semibold tracking-wide text-muted uppercase">
           Workspace

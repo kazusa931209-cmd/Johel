@@ -112,7 +112,7 @@ export function GeneratePcewStep({
       {acceptedMarkdown ? (
         <div className="space-y-2">
           <h3 className="text-sm font-medium">AI Verdict result</h3>
-          <div className="max-h-[40vh] overflow-y-auto rounded-md border border-border bg-background px-3 py-3">
+          <div className="rounded-md border border-border bg-background px-3 py-3">
             <AiVerdictMarkdown markdown={acceptedMarkdown} />
           </div>
         </div>
