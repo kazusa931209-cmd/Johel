@@ -173,16 +173,16 @@ Aligned with the product flow above:
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Profile, one Company, one Experience, and one Workflow. If any are missing, a centered alert lists what is missing with links to those Workspace pages
-  * When ready, a timeline shows steps: Job → PCEW → Verdict → Company → Generate (this phase implements Job only; later steps are indicators)
+  * When ready, a timeline shows steps: Job → PCEW → Verdict → Company → Generate
   * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters), **Noise Filter** (deterministic multi-stage pipeline — not AI), **AI Filter** (uses the user’s configured AI Agent Provider to extract Job and Job post Company & contacts as Markdown), and **Rollback** (up to 3 previous versions); URL and File upload show an info alert that they are not implemented yet and coming soon
-  * **AI Filter** shows a fullscreen loading indicator and prevents another AI Filter click until the request finishes. On success, a result dialog renders Markdown output. Backdrop click does not close this dialog. Footer actions: **Discard** (danger), **Retry** (secondary), **Next** (primary). Token usage from each run is persisted and aggregated into the header **Token Used** total
-  * **Choose PCEW** opens a dialog to pick Profile, Company, Experience, and Workflow (local selection only this phase; Close X top-right; Apply in footer)
+  * **AI Filter** shows a fullscreen loading indicator and prevents another AI Filter click until the request finishes. On success, a result dialog renders Markdown output. Backdrop click does not close this dialog. Footer actions: **Discard** (danger), **Retry** (secondary), **Next** (primary). **Next** accepts the result and advances the timeline to **PCEW**. Token usage from each run is persisted and aggregated into the header **Token Used** total
+  * **PCEW** step (Profiles + Companies + Experiences + Workflow): four sections with searchable, paginated tables. **Profile** — single row selection; row click selects; **View** (eye icon) opens a read-only profile detail dialog. **Companies** — multi row selection; row click toggles selection; View opens read-only company detail. **Experiences** — multi row selection; row click toggles selection; View opens read-only experience detail. **Workflow** — single row selection; row click selects; View opens read-only workflow detail. Footer **Prev** returns to Job; **Next** stays enabled and validates inline (one profile, at least one company, at least one experience, one workflow) before advancing
 * **Settings**
   * Theme (Dark / Light)
   * **AI Agent**: provider (currently **Cursor AI Agent** only) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.
-* **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon; **Close** is an X (cross) icon (accessible labels required when icon-only).
+* **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon; **View** is an eye icon; **Close** is an X (cross) icon (accessible labels required when icon-only).
 * **Dialog close** — Every dialog (including confirm dialogs) has a Close (X) control in the **top-right corner**. Close is not placed beside the dialog’s main action (Apply, Delete, and similar).
 
 ## Phases
@@ -215,6 +215,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Pipeline under `apps/web/src/lib/noise-filter/` including WalletAddress and DeJob plugins. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-12-noise-filter.md`](./plans/2026-09-04-phase-12-noise-filter.md).
 * [x] **Phase 13 — AI Filter** — AI Filter calls the configured AI Agent Provider with a provider-specific system prompt; extracts Job and Job post Company & contacts as Markdown; persists token usage in `aiUsage`; result dialog (Discard / Retry / Next, no backdrop dismiss); fullscreen loading; header Token Used aggregates usage.
   * **Outcome (2026-09-04):** Cursor provider adapter, `POST /ai-filter`, `GET /ai-usage/summary`, Markdown result dialog. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-13-ai-filter.md`](./plans/2026-09-04-phase-13-ai-filter.md).
+* [x] **Phase 14 — Generate PCEW step** — PCEW timeline step with Profile (single select), Companies (multi), Experiences (multi), and Workflow (single) tables; row click for selection; View (eye icon) for read-only detail dialogs; Prev / Next with inline validation; AI Filter **Next** advances to PCEW.
+  * **Outcome (2026-09-04):** `GeneratePcewStep`, shared `PcewSection` / `ViewButton`; session selection in page state. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-14-generate-pcew.md`](./plans/2026-09-04-phase-14-generate-pcew.md).
 
 ## Cursor Rules (Documentation Governance)
 
@@ -231,5 +233,5 @@ These rules apply to **all development phases** and must be followed by Cursor (
 9. **Toast for API results** — Every user action that triggers an API call must notify the user of the result, and that notice must always be a toast.
 10. **Form validation UX** — Form action buttons (Save, Add, Apply, Submit, and similar) stay enabled. Required field labels show a red asterisk. Missing required fields show an error message below the field when the user attempts the action (not via disabling the button; not via toast for ordinary required-field checks).
 11. **Frontend component size** — If a frontend component file exceeds 500 lines, ask the user whether to optimize or split it before adding substantial new code.
-12. **Action button icons** — **Add** uses a plus icon; **Edit** uses a pencil icon; **Delete** uses a trash icon in red; **Close** uses an X (cross) icon. Icon-only controls need an accessible label.
+12. **Action button icons** — **Add** uses a plus icon; **Edit** uses a pencil icon; **Delete** uses a trash icon in red; **View** uses an eye icon; **Close** uses an X (cross) icon. Icon-only controls need an accessible label.
 13. **Dialog close placement** — Every dialog has a Close (X) button in the top-right corner. Do not put Close beside the dialog’s main action.

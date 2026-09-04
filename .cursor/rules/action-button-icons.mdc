@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Action Button Icons
 
-Apply to every **Add**, **Edit**, and **Delete** control in the web UI (tables, toolbars, dialogs, cards, etc.).
+Apply to every **Add**, **Edit**, **Delete**, and **View** control in the web UI (tables, toolbars, dialogs, cards, etc.).
 
 ## Rules
 
@@ -15,14 +15,16 @@ Apply to every **Add**, **Edit**, and **Delete** control in the web UI (tables, 
 
 3. **Delete** — Always represented with a **trash** icon in **red** (use the project danger/red token, e.g. `text-danger`). Do not use a neutral-colored trash icon for delete.
 
-4. **Close** — Always represented with an **X (cross)** icon (not text-only “Close” as the sole affordance). Optional accompanying label is fine. Icon-only Close needs `aria-label="Close"`.
+4. **View** — Always represented with an **eye** icon (not text-only “View” as the sole affordance). Optional accompanying label is fine.
 
-5. **Dialog Close placement** — Every dialog (including confirm/alert dialogs) must have a Close (X) control in the **top-right corner**. Do not place Close beside the primary footer action (Apply, Delete, Save, etc.). The footer holds the main action only. Prefer shared `DetailDialog` so this chrome is automatic.
+5. **Close** — Always represented with an **X (cross)** icon (not text-only “Close” as the sole affordance). Optional accompanying label is fine. Icon-only Close needs `aria-label="Close"`.
+
+6. **Dialog Close placement** — Every dialog (including confirm/alert dialogs) must have a Close (X) control in the **top-right corner**. Do not place Close beside the primary footer action (Apply, Delete, Save, etc.). The footer holds the main action only. Prefer shared `DetailDialog` so this chrome is automatic.
 
 ## Guidance
 
 - Prefer shared icon components under `components/shared/` when extracting reusable icons (`CloseButton`, `AddButton`, etc.).
-- Icon-only buttons must have an accessible `aria-label` (e.g. `Add`, `Edit`, `Delete`, `Close`).
+- Icon-only buttons must have an accessible `aria-label` (e.g. `Add`, `Edit`, `Delete`, `View`, `Close`).
 - Confirm dialogs for delete may keep a text **Delete** confirm button; the trigger that opens delete must still use the red trash icon. Dismiss/close is the top-right X (not a footer Close/Cancel beside Delete).
 
 ## Examples

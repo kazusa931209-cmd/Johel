@@ -140,14 +140,15 @@ User browser (:4041)
 - Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
 
-## Generate UI (Phase 11)
+## Generate UI (Phase 11–14)
 
 - Route `/` gates on existing list totals: at least one profile, company, experience, and workflow; otherwise a centered alert with links (not a toast)
-- Timeline steps (Job active only this phase): Job → PCEW → Verdict → Company → Generate
-- Job UI: Manual / URL / File tabs; Manual has Job text max 10,000 chars, Noise Filter, AI Filter stub, Rollback; URL and File tabs show an info alert (“not implemented yet / coming soon”) instead of inputs
-- Choose PCEW: dialog loads first page of list APIs; Apply keeps selection in page state only
+- Timeline steps: Job → PCEW → Verdict → Company → Generate (Job and PCEW interactive; later steps are placeholders)
+- Job UI: Manual / URL / File tabs; Manual has Job text max 10,000 chars, Noise Filter, AI Filter, Rollback; URL and File tabs show an info alert (“not implemented yet / coming soon”) instead of inputs
+- AI Filter **Next** accepts the Markdown result and sets `activeStep` to PCEW
+- PCEW: four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); row click selects/toggles; `ViewButton` (eye icon) opens existing read-only detail dialogs; `validatePcewSelection` on Next; selection kept in page state (`PcewSelection`: `profileId`, `companyIds[]`, `experienceIds[]`, `workflowId`)
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …` from `GET /ai-usage/summary`
-- Components under `apps/web/src/components/generate/`
+- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GeneratePcewStep`, `PcewSection`, `pcew-types`, `usePcewList`)
 
 ## AI Filter (Phase 13)
 

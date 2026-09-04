@@ -3,10 +3,6 @@
 import { useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import {
-  ChoosePcewDialog,
-  type PcewSelection,
-} from "@/components/generate/ChoosePcewDialog";
 import { AiFilterResultDialog } from "@/components/generate/AiFilterResultDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
 import {
@@ -19,8 +15,7 @@ import { runAiFilter, type AiFilterUsage } from "@/lib/api";
 type InputMethod = "url" | "file" | "manual";
 
 type GenerateJobStepProps = {
-  pcew: PcewSelection | null;
-  onPcewChange: (selection: PcewSelection) => void;
+  onAdvanceToPcew: () => void;
 };
 
 function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
@@ -35,13 +30,12 @@ function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
   );
 }
 
-export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
+export function GenerateJobStep({ onAdvanceToPcew }: GenerateJobStepProps) {
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
   const [method, setMethod] = useState<InputMethod>("manual");
   const [jobText, setJobText] = useState("");
   const [history, setHistory] = useState<string[]>([]);
-  const [pcewOpen, setPcewOpen] = useState(false);
   const [aiFiltering, setAiFiltering] = useState(false);
   const [aiResult, setAiResult] = useState<{
     markdown: string;
@@ -123,32 +117,12 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold tracking-tight">Job</h2>
-        <button
-          type="button"
-          onClick={() => setPcewOpen(true)}
-          className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
-        >
-          Choose PCEW
-        </button>
-      </div>
-
-      {pcew ? (
-        <p className="text-xs text-muted">
-          PCEW selected (local only). Profile, Company, Experience, and Workflow
-          IDs are stored for this session.
-        </p>
-      ) : (
-        <p className="text-xs text-muted">
-          Choose Profile, Company, Experience, and Workflow when ready.
-        </p>
-      )}
+      <h2 className="text-lg font-semibold tracking-tight">Job</h2>
 
       {acceptedMarkdown ? (
         <p className="text-xs text-muted">
-          AI Filter result accepted for this session (Next). Job text is
-          unchanged until you edit it.
+          AI Filter result accepted for this session. Continue in the PCEW step or
+          edit the Job Description below.
         </p>
       ) : null}
 
@@ -228,18 +202,6 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
         </>
       ) : null}
 
-      {pcewOpen ? (
-        <ChoosePcewDialog
-          initial={pcew}
-          onClose={() => setPcewOpen(false)}
-          onApply={(selection) => {
-            onPcewChange(selection);
-            setPcewOpen(false);
-            toast("PCEW selection applied.", "success");
-          }}
-        />
-      ) : null}
-
       {aiResult ? (
         <AiFilterResultDialog
           markdown={aiResult.markdown}
@@ -257,6 +219,7 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
             setAcceptedMarkdown(aiResult.markdown);
             setAiResult(null);
             toast("AI Filter result accepted.", "success");
+            onAdvanceToPcew();
           }}
         />
       ) : null}

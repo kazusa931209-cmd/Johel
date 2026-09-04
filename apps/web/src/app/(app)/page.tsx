@@ -6,9 +6,13 @@ import {
   GeneratePrerequisites,
   type MissingPrerequisite,
 } from "@/components/generate/GeneratePrerequisites";
-import { GenerateTimeline } from "@/components/generate/GenerateTimeline";
+import { GenerateTimeline, type GenerateStep } from "@/components/generate/GenerateTimeline";
 import { GenerateJobStep } from "@/components/generate/GenerateJobStep";
-import type { PcewSelection } from "@/components/generate/ChoosePcewDialog";
+import { GeneratePcewStep } from "@/components/generate/GeneratePcewStep";
+import {
+  EMPTY_PCEW_SELECTION,
+  type PcewSelection,
+} from "@/components/generate/pcew-types";
 import {
   listCompanies,
   listExperiences,
@@ -20,7 +24,8 @@ export default function GeneratePage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
-  const [pcew, setPcew] = useState<PcewSelection | null>(null);
+  const [activeStep, setActiveStep] = useState<GenerateStep>("Job");
+  const [pcew, setPcew] = useState<PcewSelection>(EMPTY_PCEW_SELECTION);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,12 +93,40 @@ export default function GeneratePage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Generate</h1>
         <p className="text-sm text-muted">
-          Prepare the Job Description, then choose Profile, Company, Experience,
-          and Workflow.
+          Prepare the Job Description, then choose Profile, Companies,
+          Experiences, and Workflow.
         </p>
       </div>
-      <GenerateTimeline active="Job" />
-      <GenerateJobStep pcew={pcew} onPcewChange={setPcew} />
+      <GenerateTimeline active={activeStep} />
+      {activeStep === "Job" ? (
+        <GenerateJobStep onAdvanceToPcew={() => setActiveStep("PCEW")} />
+      ) : null}
+      {activeStep === "PCEW" ? (
+        <GeneratePcewStep
+          selection={pcew}
+          onSelectionChange={setPcew}
+          onPrev={() => setActiveStep("Job")}
+          onNext={() => {
+            setActiveStep("Verdict");
+            toast("PCEW selection saved for this session.", "success");
+          }}
+        />
+      ) : null}
+      {activeStep === "Verdict" ? (
+        <div className="rounded-lg border border-border px-4 py-8 text-center text-sm text-muted">
+          Verdict step is not implemented yet.
+        </div>
+      ) : null}
+      {activeStep === "Company" ? (
+        <div className="rounded-lg border border-border px-4 py-8 text-center text-sm text-muted">
+          Company step is not implemented yet.
+        </div>
+      ) : null}
+      {activeStep === "Generate" ? (
+        <div className="rounded-lg border border-border px-4 py-8 text-center text-sm text-muted">
+          Generate step is not implemented yet.
+        </div>
+      ) : null}
     </section>
   );
 }

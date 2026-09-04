@@ -1,5 +1,6 @@
 import { ButtonHTMLAttributes } from "react";
 import {
+  EyeIcon,
   PencilIcon,
   PlusIcon,
   TrashIcon,
@@ -89,6 +90,31 @@ export function DeleteButton({
       {...props}
     >
       <TrashIcon className="h-4 w-4" />
+      {showLabel ? <span>{label}</span> : null}
+    </button>
+  );
+}
+
+export function ViewButton({
+  label = "View",
+  showLabel = false,
+  className,
+  ...props
+}: ActionButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={
+        className ??
+        (showLabel
+          ? "inline-flex cursor-default items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-60"
+          : rowActionButtonClass)
+      }
+      {...props}
+    >
+      <EyeIcon className="h-4 w-4" />
       {showLabel ? <span>{label}</span> : null}
     </button>
   );
