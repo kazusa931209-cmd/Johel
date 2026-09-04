@@ -63,8 +63,8 @@ export function GenerateGenerateStep({
     return (
       <div className="space-y-4">
         <div className="rounded-md border border-border bg-background px-4 py-6 text-sm text-muted">
-          No generated resume is available for this session. Go back to PCEW and
-          run resume generation again.
+          No generated resume is available for this session. Go back to Workflow
+          and run resume generation again.
         </div>
         <div className="flex justify-start border-t border-border pt-4">
           <button

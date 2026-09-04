@@ -1,6 +1,6 @@
 "use client";
 
-export const GENERATE_STEPS = ["Job", "PCEW", "Generate"] as const;
+export const GENERATE_STEPS = ["Job", "Workflow", "Generate"] as const;
 
 export type GenerateStep = (typeof GENERATE_STEPS)[number];
 

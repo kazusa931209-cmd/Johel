@@ -13,57 +13,112 @@ const PAGE_SIZE = 10;
 
 const LANGUAGES = ["en", "ja", "zh-TW", "zh-CN", "ko"] as const;
 
-const metadataItemSchema = z.object({
-  key: z.string().trim().min(1).max(200),
-  rulePrompt: z.string().trim().max(1024).optional().nullable(),
-});
-
 const writeSchema = z.object({
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional().nullable(),
   language: z.enum(LANGUAGES),
-  metadata: z.array(metadataItemSchema).max(100),
+  profileId: z.string().trim().min(1),
+  companyIds: z.array(z.string().trim().min(1)).min(1),
+  experienceIds: z.array(z.string().trim().min(1)).min(1),
 });
 
-type MetadataItem = {
-  key: string;
-  rulePrompt: string | null;
-};
-
-type WorkflowWithMetadata = {
+type WorkflowWithRelations = {
   id: string;
   name: string;
   description: string | null;
   language: string;
+  profileId: string | null;
   createdAt: Date;
   updatedAt: Date;
-  metadata: {
-    key: string;
-    rulePrompt: string | null;
-    sortOrder: number;
-  }[];
+  companies: { companyId: string; sortOrder: number }[];
+  experiences: { experienceId: string; sortOrder: number }[];
 };
 
 export const workflowsRoutes = new Hono();
 
-function normalizeMetadata(
-  items: z.infer<typeof writeSchema>["metadata"],
-): { ok: true; value: MetadataItem[] } | { ok: false; error: string } {
-  const normalized: MetadataItem[] = [];
+const relationsInclude = {
+  companies: { orderBy: { sortOrder: "asc" as const } },
+  experiences: { orderBy: { sortOrder: "asc" as const } },
+};
+
+function uniqueIds(ids: string[]): string[] {
   const seen = new Set<string>();
-  for (const item of items) {
-    const key = item.key.trim();
-    const keyLower = key.toLowerCase();
-    if (seen.has(keyLower)) {
-      return { ok: false, error: "Metadata keys must be unique" };
-    }
-    seen.add(keyLower);
-    normalized.push({
-      key,
-      rulePrompt: item.rulePrompt?.trim() ? item.rulePrompt.trim() : null,
+  const result: string[] = [];
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    result.push(id);
+  }
+  return result;
+}
+
+async function validatePcewOwnership(
+  userId: string,
+  profileId: string,
+  companyIds: string[],
+  experienceIds: string[],
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const profile = await prisma.profile.findFirst({
+    where: { id: profileId, userId },
+    select: { id: true },
+  });
+  if (!profile) {
+    return { ok: false, error: "Selected profile was not found." };
+  }
+
+  const companies = await prisma.company.findMany({
+    where: { userId, id: { in: companyIds } },
+    select: { id: true },
+  });
+  if (companies.length !== companyIds.length) {
+    return {
+      ok: false,
+      error: "One or more selected companies were not found.",
+    };
+  }
+
+  const experiences = await prisma.experience.findMany({
+    where: { userId, id: { in: experienceIds } },
+    select: { id: true },
+  });
+  if (experiences.length !== experienceIds.length) {
+    return {
+      ok: false,
+      error: "One or more selected experiences were not found.",
+    };
+  }
+
+  return { ok: true };
+}
+
+async function replaceWorkflowRelations(
+  tx: Prisma.TransactionClient,
+  workflowId: string,
+  companyIds: string[],
+  experienceIds: string[],
+) {
+  await tx.workflowCompany.deleteMany({ where: { workflowId } });
+  await tx.workflowExperience.deleteMany({ where: { workflowId } });
+
+  if (companyIds.length > 0) {
+    await tx.workflowCompany.createMany({
+      data: companyIds.map((companyId, index) => ({
+        workflowId,
+        companyId,
+        sortOrder: index,
+      })),
     });
   }
-  return { ok: true, value: normalized };
+
+  if (experienceIds.length > 0) {
+    await tx.workflowExperience.createMany({
+      data: experienceIds.map((experienceId, index) => ({
+        workflowId,
+        experienceId,
+        sortOrder: index,
+      })),
+    });
+  }
 }
 
 function toListItem(
@@ -86,43 +141,23 @@ function toListItem(
   };
 }
 
-function toDetail(row: WorkflowWithMetadata, used: number) {
+function toDetail(row: WorkflowWithRelations, used: number) {
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     language: row.language,
-    metadata: [...row.metadata]
+    profileId: row.profileId ?? "",
+    companyIds: [...row.companies]
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((item) => ({
-        key: item.key,
-        rulePrompt: item.rulePrompt,
-      })),
+      .map((item) => item.companyId),
+    experienceIds: [...row.experiences]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((item) => item.experienceId),
     used,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
-}
-
-const metadataInclude = {
-  metadata: { orderBy: { sortOrder: "asc" as const } },
-};
-
-async function replaceMetadata(
-  tx: Prisma.TransactionClient,
-  workflowId: string,
-  items: MetadataItem[],
-) {
-  await tx.workflowMetadata.deleteMany({ where: { workflowId } });
-  if (items.length === 0) return;
-  await tx.workflowMetadata.createMany({
-    data: items.map((item, index) => ({
-      workflowId,
-      key: item.key,
-      rulePrompt: item.rulePrompt,
-      sortOrder: index,
-    })),
-  });
 }
 
 workflowsRoutes.get("/", async (c) => {
@@ -178,7 +213,7 @@ workflowsRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
   const row = await prisma.workflow.findFirst({
     where: { id, userId: user.id },
-    include: metadataInclude,
+    include: relationsInclude,
   });
   if (!row) {
     return c.json({ error: "Not found" }, 404);
@@ -200,24 +235,38 @@ workflowsRoutes.post("/", async (c) => {
     return c.json({ error: "Invalid workflow payload" }, 400);
   }
 
-  const metadata = normalizeMetadata(parsed.data.metadata);
-  if (!metadata.ok) {
-    return c.json({ error: metadata.error }, 400);
+  const companyIds = uniqueIds(parsed.data.companyIds);
+  const experienceIds = uniqueIds(parsed.data.experienceIds);
+
+  const ownership = await validatePcewOwnership(
+    user.id,
+    parsed.data.profileId,
+    companyIds,
+    experienceIds,
+  );
+  if (!ownership.ok) {
+    return c.json({ error: ownership.error }, 400);
   }
 
   const row = await prisma.$transaction(async (tx) => {
     const created = await tx.workflow.create({
       data: {
         userId: user.id,
+        profileId: parsed.data.profileId,
         name: parsed.data.name,
         description: parsed.data.description || null,
         language: parsed.data.language,
       },
     });
-    await replaceMetadata(tx, created.id, metadata.value);
+    await replaceWorkflowRelations(
+      tx,
+      created.id,
+      companyIds,
+      experienceIds,
+    );
     return tx.workflow.findUniqueOrThrow({
       where: { id: created.id },
-      include: metadataInclude,
+      include: relationsInclude,
     });
   });
 
@@ -245,24 +294,33 @@ workflowsRoutes.put("/:id", async (c) => {
     return c.json({ error: "Invalid workflow payload" }, 400);
   }
 
-  const metadata = normalizeMetadata(parsed.data.metadata);
-  if (!metadata.ok) {
-    return c.json({ error: metadata.error }, 400);
+  const companyIds = uniqueIds(parsed.data.companyIds);
+  const experienceIds = uniqueIds(parsed.data.experienceIds);
+
+  const ownership = await validatePcewOwnership(
+    user.id,
+    parsed.data.profileId,
+    companyIds,
+    experienceIds,
+  );
+  if (!ownership.ok) {
+    return c.json({ error: ownership.error }, 400);
   }
 
   const row = await prisma.$transaction(async (tx) => {
     await tx.workflow.update({
       where: { id },
       data: {
+        profileId: parsed.data.profileId,
         name: parsed.data.name,
         description: parsed.data.description || null,
         language: parsed.data.language,
       },
     });
-    await replaceMetadata(tx, id, metadata.value);
+    await replaceWorkflowRelations(tx, id, companyIds, experienceIds);
     return tx.workflow.findUniqueOrThrow({
       where: { id },
-      include: metadataInclude,
+      include: relationsInclude,
     });
   });
 

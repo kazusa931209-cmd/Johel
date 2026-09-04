@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**JoHEL** is a customized Resume / CV and résumé writing application. It helps a user combine personal profile data, shared hands-on experience, and a reusable workflow to process a Job Description and generate a tailored résumé.
+**JoHEL** is a customized Resume / CV and résumé writing application. It helps a user combine personal profile data, companies, shared hands-on experience, and a saved workflow preset to process a Job Description and generate a tailored résumé.
 
 ## Product concept
 
@@ -11,26 +11,25 @@
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
 * **Companies** — One user can manage **multiple companies** (name, description, priority, and metadata).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
-* **Workflows** — One user can manage **multiple workflows** (language, metadata extraction rules, and related settings).
+* **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more companies, one or more shared experiences, and a resume output language.
 * **Verdict** — One saved **Verdict Prompt** per user, used when checking Job Descriptions.
 
 ### End-to-end flow
 
 A generation run combines:
 
-**one Profile** + **Shared Experiences** + **one Workflow** → **Job Description** → **Filtering** → **PCEW** → **Generate**
+**one Workflow** (profile + companies + experiences preset) → **Job Description** → **Filtering** → **Workflow** → **Generate**
 
 ```text
-Profile (one of many)
-        \
-Shared Experiences ----→ Job Description → Filtering → PCEW → Generate
-        /
-Workflow (one of many)
+Workflow (one of many; includes Profile + Companies + Experiences)
+        |
+        v
+Job Description → Filtering → Workflow → Generate
 ```
 
 1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
-2. **PCEW** — Choose one profile, one or more companies, one or more shared experiences, and one workflow.
-3. **Generate** — Generate the résumé from the filtered JD and selected inputs.
+2. **Workflow** — Choose one workflow; its saved profile, companies, and experiences are used for generation.
+3. **Generate** — Generate the résumé from the filtered JD and the selected workflow.
 
 ## Deployment
 
@@ -61,16 +60,14 @@ Workflow (one of many)
 
 Aligned with the product flow above:
 
-1. Process and filter the Job Description (using the selected workflow).
-2. Extract the metadata that the user is interested in (workflow metadata rules).
-3. Allow the user to review and confirm the filtered information and extracted metadata.
+1. Process and filter the Job Description.
+2. Run **AI Verdict** using the user’s saved Verdict Prompt and structure relevant job and company information as Markdown.
+3. Allow the user to review the AI Verdict result on the Workflow step.
 4. Generate a Resume based on:
 
-   * Selected profile
-   * Selected companies
-   * Shared experiences
-   * Filtered Job Description / confirmed metadata
-   * Selected workflow settings
+   * The profile, companies, and experiences saved in the selected workflow
+   * Filtered Job Description and accepted AI Verdict Markdown
+   * The workflow’s resume output language
 5. Allow the user to review and edit the generated Resume.
 6. Allow the user to download the final Resume as:
 
@@ -159,13 +156,16 @@ Aligned with the product flow above:
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
+  * Each workflow saves one profile, one or more companies, one or more experiences, and a resume output language
   * Per-user list: name, optional one-line description, used count, created, updated
   * Keyword filter on name and description; 10 rows per page
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
-  * Metadata add/edit/delete is local on the page until Save persists the workflow
-  * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean), metadata table (Key required; Rule prompt optional, max 1024)
+  * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean)
+  * Below the scalar fields, **Profile** (single row selection), **Companies** (multi row selection), and **Experiences** (multi row selection) tables match the Generate Workflow step UX: all items loaded at once; row click selects; View (eye icon) opens read-only detail dialogs
+  * Save validates inline: one profile, at least one company, at least one experience (not via disabling Save)
+  * Detail dialog shows the selected profile, companies, and experiences instead of metadata rules
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Verdict** (`/verdict`)
   * One signed-in user maintains **one** Verdict Prompt
@@ -174,14 +174,14 @@ Aligned with the product flow above:
   * Save and load via the API; toast on API success or failure
   * The Verdict Prompt is used when checking Job Descriptions (checking is not part of this page)
 * **Generate** (`/`)
-  * Before the flow starts, the page checks that the user has at least one Profile, one Company, one Experience, one Workflow, and a saved **Verdict Prompt**. If any are missing, a centered alert lists what is missing with links to those Workspace pages
-  * When ready, a timeline shows steps: Job → PCEW → Generate
+  * Before the flow starts, the page checks that the user has at least one Workflow and a saved **Verdict Prompt**. If any are missing, a centered alert lists what is missing with links to those Workspace pages
+  * When ready, a timeline shows steps: Job → Workflow → Generate
   * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters) and a **Next** button only; URL and File upload show an info alert that they are not implemented yet and coming soon
-  * **Next** on Job (Manual): validates the Job Description (inline error if empty); runs **Noise Filter** silently in the background (textarea unchanged); calls **AI Verdict** (`POST /ai-verdict`) with the user’s saved Verdict Prompt plus extraction instructions; fullscreen loading while the request runs; on success persists token usage, saves accepted Markdown, toasts success, and advances to **PCEW**; on failure stays on Job and toasts the error
-  * **PCEW** step: read-only **AI Verdict result** Markdown panel at the top (from the accepted Job-step result); then Profiles + Companies + Experiences + Workflow sections with tables (all items loaded at once; no search or pagination). **Profile** — single row selection with a checkbox column; row click selects; **View** (eye icon) opens a read-only profile detail dialog. **Companies** — multi row selection with checkboxes; row click toggles selection; View opens read-only company detail. **Experiences** — multi row selection with checkboxes; row click toggles selection; View opens read-only experience detail. **Workflow** — single row selection with checkbox; row click selects; View opens read-only workflow detail. Footer **Prev** returns to Job; **Next** stays enabled and validates inline (one profile, at least one company, at least one experience, one workflow) before advancing
-  * **PCEW** **Next** runs **AI Resume generation** (`POST /ai-resume`) with the noise-filtered Job Description, accepted AI Verdict Markdown, and selected Profile / Companies / Experiences / Workflow; fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on PCEW and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
-  * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, PCEW selection, generated resume JSON) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
-  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; footer **Prev** returns to PCEW; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume
+  * **Next** on Job (Manual): validates the Job Description (inline error if empty); runs **Noise Filter** silently in the background (textarea unchanged); calls **AI Verdict** with the user’s saved Verdict Prompt plus extraction instructions; fullscreen loading while the request runs; on success persists token usage, saves accepted Markdown, toasts success, and advances to **Workflow**; on failure stays on Job and toasts the error
+  * **Workflow** step: read-only **AI Verdict result** Markdown panel at the top (from the accepted Job-step result); then a **Workflow** section with a single-select table (all workflows loaded at once; no search or pagination). Row click selects; View opens read-only workflow detail. Footer **Prev** returns to Job; **Next** stays enabled and validates inline (one workflow selected) before advancing
+  * **Workflow** **Next** runs **AI Resume generation** with the noise-filtered Job Description, accepted AI Verdict Markdown, and selected workflow (profile, companies, and experiences come from that workflow); fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on Workflow and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
+  * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, workflow selection, generated resume JSON) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
+  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; footer **Prev** returns to Workflow; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume
 * **Settings**
   * Theme (Dark / Light)
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
@@ -236,6 +236,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** `@johel/resume` package, `ai-resume` API, `GenerateGenerateStep`, session resume persistence, DOCX download. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-20-generate-resume.md`](./plans/2026-09-04-phase-20-generate-resume.md).
 * [x] **Phase 21 — Add OpenAI provider** — Settings lets each user choose **Cursor AI Agent** or **OpenAI** and save one API key; Generate Job and PCEW resume generation use the saved provider.
   * **Outcome (2026-09-05):** OpenAI Responses adapters (`gpt-5.6-luna` for AI Verdict, `gpt-5.6-terra` for AI Resume); Settings provider dropdown enabled. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-21-openai-provider.md`](./plans/2026-09-05-phase-21-openai-provider.md).
+* [x] **Phase 22 — Redefine workflows as PCEW presets** — Workflows bundle one profile, one or more companies, and one or more experiences plus resume output language. Remove workflow metadata. Workflow editor includes PCEW-style pickers. Generate middle step is **Workflow** (workflow-only selection). Prerequisites require Workflow and Verdict only.
+  * **Outcome (2026-09-05):** Workflows store PCEW selections; `workflowMetadata` removed; Generate timeline Job → Workflow → Generate. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-22-redefine-workflows.md`](./plans/2026-09-05-phase-22-redefine-workflows.md).
 
 ## Cursor Rules (Documentation Governance)
 

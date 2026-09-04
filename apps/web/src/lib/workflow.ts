@@ -8,17 +8,14 @@ export const WORKFLOW_LANGUAGES = [
 
 export type WorkflowLanguage = (typeof WORKFLOW_LANGUAGES)[number]["value"];
 
-export type WorkflowMetadataItem = {
-  key: string;
-  rulePrompt: string | null;
-};
-
 export type WorkflowDetail = {
   id: string;
   name: string;
   description: string | null;
   language: WorkflowLanguage | string;
-  metadata: WorkflowMetadataItem[];
+  profileId: string;
+  companyIds: string[];
+  experienceIds: string[];
   used: number;
   createdAt: string;
   updatedAt: string;
@@ -28,5 +25,7 @@ export type WorkflowWritePayload = {
   name: string;
   description?: string | null;
   language: WorkflowLanguage;
-  metadata: WorkflowMetadataItem[];
+  profileId: string;
+  companyIds: string[];
+  experienceIds: string[];
 };

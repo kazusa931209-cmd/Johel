@@ -10,22 +10,15 @@ import {
 } from "@/components/generate/GeneratePrerequisites";
 import { GenerateTimeline } from "@/components/generate/GenerateTimeline";
 import { GenerateJobStep } from "@/components/generate/GenerateJobStep";
-import { GeneratePcewStep } from "@/components/generate/GeneratePcewStep";
+import { GenerateWorkflowStep } from "@/components/generate/GenerateWorkflowStep";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
-import { validatePcewSelection } from "@/components/generate/pcew-types";
+import { validateWorkflowSelection } from "@/components/generate/pcew-types";
 import {
   buildGenerationInputKey,
   canReuseStoredResume,
 } from "@/lib/generate-session";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
-import {
-  getVerdict,
-  listCompanies,
-  listExperiences,
-  listProfiles,
-  listWorkflows,
-  runAiResume,
-} from "@/lib/api";
+import { getVerdict, listWorkflows, runAiResume } from "@/lib/api";
 
 export default function GeneratePage() {
   const { toast } = useToast();
@@ -39,8 +32,8 @@ export default function GeneratePage() {
     setActiveStep,
     job,
     setJob,
-    pcew,
-    setPcew,
+    workflow,
+    setWorkflow,
     resume,
     generationInputKey,
     setResumeResult,
@@ -48,69 +41,50 @@ export default function GeneratePage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      listProfiles("", 1),
-      listCompanies("", 1),
-      listExperiences("", 1),
-      listWorkflows("", 1),
-      getVerdict(),
-    ]).then(([profiles, companies, experiences, workflows, verdict]) => {
-      if (cancelled) return;
-      const errors = [
-        profiles.error,
-        companies.error,
-        experiences.error,
-        workflows.error,
-        verdict.error,
-      ].filter(Boolean);
-      if (errors.length > 0) {
-        toast(errors[0] ?? "Failed to check Generate prerequisites", "error");
+    Promise.all([listWorkflows("", 1), getVerdict()]).then(
+      ([workflows, verdict]) => {
+        if (cancelled) return;
+        const errors = [workflows.error, verdict.error].filter(Boolean);
+        if (errors.length > 0) {
+          toast(
+            errors[0] ?? "Failed to check Generate prerequisites",
+            "error",
+          );
+          setLoading(false);
+          setMissing([
+            { label: "Workflows", href: "/workflows" },
+            { label: "Verdict", href: "/verdict" },
+          ]);
+          return;
+        }
+
+        const nextMissing: MissingPrerequisite[] = [];
+        if ((workflows.data?.total ?? 0) < 1) {
+          nextMissing.push({ label: "Workflows", href: "/workflows" });
+        }
+        if (!verdict.data?.verdictPrompt.trim()) {
+          nextMissing.push({ label: "Verdict", href: "/verdict" });
+        }
+
+        setMissing(nextMissing.length > 0 ? nextMissing : null);
         setLoading(false);
-        setMissing([
-          { label: "Profiles", href: "/profiles" },
-          { label: "Companies", href: "/companies" },
-          { label: "Experiences", href: "/experiences" },
-          { label: "Workflows", href: "/workflows" },
-          { label: "Verdict", href: "/verdict" },
-        ]);
-        return;
-      }
-
-      const nextMissing: MissingPrerequisite[] = [];
-      if ((profiles.data?.total ?? 0) < 1) {
-        nextMissing.push({ label: "Profiles", href: "/profiles" });
-      }
-      if ((companies.data?.total ?? 0) < 1) {
-        nextMissing.push({ label: "Companies", href: "/companies" });
-      }
-      if ((experiences.data?.total ?? 0) < 1) {
-        nextMissing.push({ label: "Experiences", href: "/experiences" });
-      }
-      if ((workflows.data?.total ?? 0) < 1) {
-        nextMissing.push({ label: "Workflows", href: "/workflows" });
-      }
-      if (!verdict.data?.verdictPrompt.trim()) {
-        nextMissing.push({ label: "Verdict", href: "/verdict" });
-      }
-
-      setMissing(nextMissing.length > 0 ? nextMissing : null);
-      setLoading(false);
-    });
+      },
+    );
     return () => {
       cancelled = true;
     };
   }, [toast]);
 
-  async function onPcewNext() {
+  async function onWorkflowNext() {
     if (generatingResume) return;
 
-    const errors = validatePcewSelection(pcew);
+    const errors = validateWorkflowSelection(workflow);
     if (Object.keys(errors).length > 0) return;
 
-    const inputKey = buildGenerationInputKey(job, pcew);
+    const inputKey = buildGenerationInputKey(job, workflow);
     if (
       canReuseStoredResume(
-        { activeStep, job, pcew, resume, generationInputKey },
+        { activeStep, job, workflow, resume, generationInputKey },
         inputKey,
       )
     ) {
@@ -133,10 +107,7 @@ export default function GeneratePage() {
       const res = await runAiResume({
         jobDescription,
         acceptedMarkdown,
-        profileId: pcew.profileId,
-        companyIds: pcew.companyIds,
-        experienceIds: pcew.experienceIds,
-        workflowId: pcew.workflowId,
+        workflowId: workflow.workflowId,
       });
       if (!res.data) {
         toast(res.error ?? "AI Resume generation failed.", "error");
@@ -172,8 +143,7 @@ export default function GeneratePage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Generate</h1>
         <p className="text-sm text-muted">
-          Prepare the Job Description, then choose Profile, Companies,
-          Experiences, and Workflow.
+          Prepare the Job Description, then choose a workflow preset.
         </p>
       </div>
       <GenerateTimeline active={activeStep} />
@@ -181,23 +151,23 @@ export default function GeneratePage() {
         <GenerateJobStep
           job={job}
           onJobChange={setJob}
-          onAdvanceToPcew={() => setActiveStep("PCEW")}
+          onAdvanceToWorkflow={() => setActiveStep("Workflow")}
         />
       ) : null}
-      {activeStep === "PCEW" ? (
-        <GeneratePcewStep
+      {activeStep === "Workflow" ? (
+        <GenerateWorkflowStep
           acceptedMarkdown={job.acceptedMarkdown}
-          selection={pcew}
+          selection={workflow}
           generating={generatingResume}
-          onSelectionChange={setPcew}
+          onSelectionChange={setWorkflow}
           onPrev={() => setActiveStep("Job")}
-          onNext={onPcewNext}
+          onNext={onWorkflowNext}
         />
       ) : null}
       {activeStep === "Generate" ? (
         <GenerateGenerateStep
           resume={resume}
-          onPrev={() => setActiveStep("PCEW")}
+          onPrev={() => setActiveStep("Workflow")}
         />
       ) : null}
     </section>

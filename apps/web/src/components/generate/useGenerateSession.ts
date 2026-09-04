@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
-import type { PcewSelection } from "@/components/generate/pcew-types";
+import type { WorkflowSelection } from "@/components/generate/pcew-types";
 import { getMe } from "@/lib/api";
 import {
   EMPTY_GENERATE_SESSION,
@@ -63,8 +63,8 @@ export function useGenerateSession() {
     );
   }, []);
 
-  const setPcew = useCallback((pcew: PcewSelection) => {
-    setSession((current) => withoutResume({ ...current, pcew }));
+  const setWorkflow = useCallback((workflow: WorkflowSelection) => {
+    setSession((current) => withoutResume({ ...current, workflow }));
   }, []);
 
   const setResumeResult = useCallback(
@@ -90,8 +90,8 @@ export function useGenerateSession() {
     job: session.job,
     setJob,
     patchJob,
-    pcew: session.pcew,
-    setPcew,
+    workflow: session.workflow,
+    setWorkflow,
     resume: session.resume,
     generationInputKey: session.generationInputKey,
     setResumeResult,

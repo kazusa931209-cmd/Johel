@@ -1,53 +1,39 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
 import { PcewSection } from "@/components/generate/PcewSection";
 import {
-  type PcewFieldErrors,
-  type PcewSelection,
-  validatePcewSelection,
+  type PcewContentFieldErrors,
+  type PcewContentSelection,
 } from "@/components/generate/pcew-types";
 import { ProfileDetailDialog } from "@/components/ProfileDetailDialog";
-import { WorkflowDetailDialog } from "@/components/WorkflowDetailDialog";
 import {
   listCompanies,
   listExperiences,
   listProfiles,
-  listWorkflows,
   type CompanyDetail,
   type ExperienceDetail,
   type ProfileDetail,
-  type Workflow,
 } from "@/lib/api";
 import { formatMetadataCell as formatCompanyMetadata } from "@/lib/company";
 import { formatMetadataCell as formatExperienceMetadata } from "@/lib/experience";
-import { formatLinksCell, fullName } from "@/lib/profile";
+import { fullName } from "@/lib/profile";
 
-type GeneratePcewStepProps = {
-  acceptedMarkdown: string | null;
-  selection: PcewSelection;
-  generating: boolean;
-  onSelectionChange: (selection: PcewSelection) => void;
-  onPrev: () => void;
-  onNext: () => void | Promise<void>;
+type WorkflowPcewPickerProps = {
+  selection: PcewContentSelection;
+  onSelectionChange: (selection: PcewContentSelection) => void;
+  fieldErrors?: PcewContentFieldErrors;
+  onClearError?: (field: keyof PcewContentFieldErrors) => void;
 };
 
-function formatWorkflowDate(iso: string) {
-  return new Date(iso).toLocaleString();
-}
-
-export function GeneratePcewStep({
-  acceptedMarkdown,
+export function WorkflowPcewPicker({
   selection,
-  generating,
   onSelectionChange,
-  onPrev,
-  onNext,
-}: GeneratePcewStepProps) {
-  const [fieldErrors, setFieldErrors] = useState<PcewFieldErrors>({});
+  fieldErrors = {},
+  onClearError,
+}: WorkflowPcewPickerProps) {
   const [viewingProfile, setViewingProfile] = useState<ProfileDetail | null>(
     null,
   );
@@ -56,16 +42,13 @@ export function GeneratePcewStep({
   );
   const [viewingExperience, setViewingExperience] =
     useState<ExperienceDetail | null>(null);
-  const [viewingWorkflow, setViewingWorkflow] = useState<Workflow | null>(null);
 
   const fetchProfiles = useCallback(() => listProfiles("", null), []);
   const fetchCompanies = useCallback(() => listCompanies("", null), []);
   const fetchExperiences = useCallback(() => listExperiences("", null), []);
-  const fetchWorkflows = useCallback(() => listWorkflows("", null), []);
 
-  function clearError(field: keyof PcewFieldErrors) {
-    if (!fieldErrors[field]) return;
-    setFieldErrors((errors) => ({ ...errors, [field]: undefined }));
+  function clearError(field: keyof PcewContentFieldErrors) {
+    onClearError?.(field);
   }
 
   function onProfileSelect(id: string) {
@@ -89,37 +72,8 @@ export function GeneratePcewStep({
     if (next.length > 0) clearError("experienceIds");
   }
 
-  function onWorkflowSelect(id: string) {
-    onSelectionChange({ ...selection, workflowId: id });
-    clearError("workflowId");
-  }
-
-  function handleNext() {
-    const errors = validatePcewSelection(selection);
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
-    void onNext();
-  }
-
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">PCEW</h2>
-        <p className="text-sm text-muted">
-          Choose one profile, one or more companies, one or more experiences,
-          and one workflow.
-        </p>
-      </div>
-
-      {acceptedMarkdown ? (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium">AI Verdict result</h3>
-          <div className="rounded-md border border-border bg-background px-3 py-3">
-            <AiVerdictMarkdown markdown={acceptedMarkdown} />
-          </div>
-        </div>
-      ) : null}
-
       <PcewSection<ProfileDetail>
         title="Profile"
         emptyLabel="No profiles found."
@@ -239,84 +193,6 @@ export function GeneratePcewStep({
           />
         )}
       />
-
-      <PcewSection<Workflow>
-        title="Workflow"
-        emptyLabel="No workflows found."
-        error={fieldErrors.workflowId}
-        selectionMode="single"
-        isSelected={(id) => selection.workflowId === id}
-        onRowSelect={onWorkflowSelect}
-        fetchAll={fetchWorkflows}
-        loadErrorLabel="Failed to load workflows"
-        viewing={viewingWorkflow}
-        onView={setViewingWorkflow}
-        minWidthClass="min-w-[720px]"
-        columns={[
-          {
-            header: "Name",
-            cell: (row) => <span className="font-medium">{row.name}</span>,
-          },
-          {
-            header: "Description",
-            className: "max-w-[220px] truncate text-muted",
-            cell: (row) => row.description ?? "",
-          },
-          {
-            header: "Used",
-            cell: (row) => row.used,
-          },
-          {
-            header: "Created",
-            className: "whitespace-nowrap text-muted",
-            cell: (row) => formatWorkflowDate(row.createdAt),
-          },
-          {
-            header: "Updated",
-            className: "whitespace-nowrap text-muted",
-            cell: (row) => formatWorkflowDate(row.updatedAt),
-          },
-        ]}
-        renderDetailDialog={(row) => (
-          <WorkflowDetailDialog
-            workflowId={row.id}
-            onClose={() => setViewingWorkflow(null)}
-          />
-        )}
-      />
-
-      <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
-        <button
-          type="button"
-          onClick={onPrev}
-          className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-muted"
-        >
-          Prev
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-        >
-          {generating ? "Generating Resume…" : "Next"}
-        </button>
-      </div>
-
-      {generating ? (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
-            <p className="text-sm font-medium">Generating Resume…</p>
-            <p className="mt-1 text-xs text-muted">
-              Please wait while the AI tailors your resume to the job.
-            </p>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

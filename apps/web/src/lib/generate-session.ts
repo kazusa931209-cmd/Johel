@@ -2,8 +2,8 @@ import type { GeneratedResume } from "@johel/resume";
 import { parseGeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import {
-  EMPTY_PCEW_SELECTION,
-  type PcewSelection,
+  EMPTY_WORKFLOW_SELECTION,
+  type WorkflowSelection,
 } from "@/components/generate/pcew-types";
 
 export type GenerateJobInputMethod = "url" | "file" | "manual";
@@ -17,7 +17,7 @@ export type GenerateJobState = {
 export type GenerateSession = {
   activeStep: GenerateStep;
   job: GenerateJobState;
-  pcew: PcewSelection;
+  workflow: WorkflowSelection;
   resume: GeneratedResume | null;
   generationInputKey: string | null;
 };
@@ -33,7 +33,7 @@ export const EMPTY_JOB_STATE: GenerateJobState = {
 export const EMPTY_GENERATE_SESSION: GenerateSession = {
   activeStep: "Job",
   job: EMPTY_JOB_STATE,
-  pcew: EMPTY_PCEW_SELECTION,
+  workflow: EMPTY_WORKFLOW_SELECTION,
   resume: null,
   generationInputKey: null,
 };
@@ -43,11 +43,11 @@ function storageKey(userId: string) {
 }
 
 function normalizeActiveStep(value: unknown): GenerateStep {
-  if (value === "Job" || value === "PCEW" || value === "Generate") {
+  if (value === "Job" || value === "Workflow" || value === "Generate") {
     return value;
   }
-  if (value === "Verdict" || value === "Company") {
-    return "Generate";
+  if (value === "PCEW" || value === "Verdict" || value === "Company") {
+    return "Workflow";
   }
   return "Job";
 }
@@ -56,21 +56,26 @@ function isJobInputMethod(value: unknown): value is GenerateJobInputMethod {
   return value === "url" || value === "file" || value === "manual";
 }
 
-function parsePcewSelection(value: unknown): PcewSelection {
+function parseWorkflowSelection(value: unknown): WorkflowSelection {
   if (!value || typeof value !== "object") {
-    return { ...EMPTY_PCEW_SELECTION };
+    return { ...EMPTY_WORKFLOW_SELECTION };
   }
   const raw = value as Record<string, unknown>;
-  return {
-    profileId: typeof raw.profileId === "string" ? raw.profileId : "",
-    companyIds: Array.isArray(raw.companyIds)
-      ? raw.companyIds.filter((id): id is string => typeof id === "string")
-      : [],
-    experienceIds: Array.isArray(raw.experienceIds)
-      ? raw.experienceIds.filter((id): id is string => typeof id === "string")
-      : [],
-    workflowId: typeof raw.workflowId === "string" ? raw.workflowId : "",
-  };
+  if (typeof raw.workflowId === "string") {
+    return { workflowId: raw.workflowId };
+  }
+  return { ...EMPTY_WORKFLOW_SELECTION };
+}
+
+function parseLegacyWorkflowSelection(value: unknown): WorkflowSelection {
+  if (!value || typeof value !== "object") {
+    return { ...EMPTY_WORKFLOW_SELECTION };
+  }
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.workflowId === "string") {
+    return { workflowId: raw.workflowId };
+  }
+  return { ...EMPTY_WORKFLOW_SELECTION };
 }
 
 function parseJobState(value: unknown): GenerateJobState {
@@ -94,15 +99,12 @@ function parseStoredResume(value: unknown): GeneratedResume | null {
 
 export function buildGenerationInputKey(
   job: GenerateJobState,
-  pcew: PcewSelection,
+  workflow: WorkflowSelection,
 ): string {
   return JSON.stringify({
     jobText: job.jobText.trim(),
     acceptedMarkdown: job.acceptedMarkdown ?? "",
-    profileId: pcew.profileId,
-    companyIds: [...pcew.companyIds].sort(),
-    experienceIds: [...pcew.experienceIds].sort(),
-    workflowId: pcew.workflowId,
+    workflowId: workflow.workflowId,
   });
 }
 
@@ -120,10 +122,14 @@ export function canReuseStoredResume(
 export function parseGenerateSession(value: unknown): GenerateSession | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
+  const workflow =
+    raw.workflow != null
+      ? parseWorkflowSelection(raw.workflow)
+      : parseLegacyWorkflowSelection(raw.pcew);
   return {
     activeStep: normalizeActiveStep(raw.activeStep),
     job: parseJobState(raw.job),
-    pcew: parsePcewSelection(raw.pcew),
+    workflow,
     resume: parseStoredResume(raw.resume),
     generationInputKey:
       typeof raw.generationInputKey === "string"
@@ -137,10 +143,7 @@ export function isGenerateInProgress(session: GenerateSession): boolean {
   if (session.resume) return true;
   if (session.job.acceptedMarkdown) return true;
   if (session.job.jobText.trim()) return true;
-  if (session.pcew.profileId) return true;
-  if (session.pcew.companyIds.length > 0) return true;
-  if (session.pcew.experienceIds.length > 0) return true;
-  if (session.pcew.workflowId) return true;
+  if (session.workflow.workflowId) return true;
   return false;
 }
 

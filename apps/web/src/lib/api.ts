@@ -10,7 +10,6 @@ import { AI_API_TIMEOUT_MS, API_TIMEOUT_MS } from "./api-timeout";
 export type {
   WorkflowDetail,
   WorkflowLanguage,
-  WorkflowMetadataItem,
   WorkflowWritePayload,
 } from "./workflow";
 
@@ -362,9 +361,6 @@ export function runAiVerdict(jobDescription: string) {
 export type AiResumeRequest = {
   jobDescription: string;
   acceptedMarkdown: string;
-  profileId: string;
-  companyIds: string[];
-  experienceIds: string[];
   workflowId: string;
 };
 

@@ -11,7 +11,7 @@ import { runAiVerdict } from "@/lib/api";
 type GenerateJobStepProps = {
   job: GenerateJobState;
   onJobChange: (job: GenerateJobState) => void;
-  onAdvanceToPcew: () => void;
+  onAdvanceToWorkflow: () => void;
 };
 
 function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
@@ -34,7 +34,7 @@ function FieldError({ message }: { message?: string }) {
 export function GenerateJobStep({
   job,
   onJobChange,
-  onAdvanceToPcew,
+  onAdvanceToWorkflow,
 }: GenerateJobStepProps) {
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
@@ -72,7 +72,7 @@ export function GenerateJobStep({
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
       toast("AI Verdict completed.", "success");
-      onAdvanceToPcew();
+      onAdvanceToWorkflow();
     } catch {
       toast("AI Verdict failed.", "error");
     } finally {

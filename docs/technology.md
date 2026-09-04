@@ -46,8 +46,9 @@ User browser (:4041)
 - Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /verdict`, `PUT /verdict`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
-- Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
-- Prisma `WorkflowMetadata` → table `workflowMetadata`: `id`, `workflowId`, `key`, `rulePrompt?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, key)`; cascade delete with workflow
+- Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
+- Prisma `WorkflowCompany` → table `workflowCompanies`: `id`, `workflowId`, `companyId`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, companyId)`; cascade delete with workflow
+- Prisma `WorkflowExperience` → table `workflowExperiences`: `id`, `workflowId`, `experienceId`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, experienceId)`; cascade delete with workflow
 - Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `education?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
 - Prisma `Company` → table `companies` (per user): `id`, `userId`, `name`, `description`, `priority` (1-based integer), `createdAt`, `updatedAt`
@@ -56,7 +57,7 @@ User browser (:4041)
 - Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Verdict` → table `verdicts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `createdAt`, `updatedAt`
-- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`, `aiUsage`, `verdicts`
+- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowCompanies`, `workflowExperiences`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`, `aiUsage`, `verdicts`
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
 ## Frontend (Phase 3)
@@ -102,15 +103,15 @@ User browser (:4041)
 - Full `apiKey` is stored plaintext in SQLite; never returned to the client
 - Web Settings: enabled provider dropdown; masked key shown only when the selected provider matches the saved provider; Save stays enabled with inline validation on submit; toast on API result
 
-## Workflows (Phase 6–7)
+## Workflows (Phase 6–7, 22)
 
-- `GET /workflows?q=&page=` — page size 10; lean list items (no metadata)
+- `GET /workflows?q=&page=` — page size 10; lean list items (name, description, used, dates)
 - Each list item includes `used` from a **post-query aggregation** by `workflowId` (not stored on `Workflow`). No usage rows yet → `used` is 0.
-- `GET /workflows/:id` — full detail for the editor (owner only)
-- `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, metadata }`; on write, delete existing `workflowMetadata` rows for the workflow and insert the submitted list
+- `GET /workflows/:id` — full detail for the editor (owner only): `profileId`, `companyIds[]`, `experienceIds[]`, plus scalar fields
+- `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, profileId, companyIds[], experienceIds[] }`; validates one profile, ≥1 company, ≥1 experience (all owned by user); on write, replaces `workflowCompanies` and `workflowExperiences` junction rows
 - Language codes: `en`, `ja`, `zh-TW`, `zh-CN`, `ko` (default `en`)
-- Metadata lives in `workflowMetadata` (not `metadataJson`); keys unique per workflow; rulePrompt max 1024
-- Web routes: `/workflows` list; `/workflows/new` add; `/workflows/[id]/edit` edit; editor has back beside title; footer Cancel/Save persist the whole workflow; metadata edits are local until Save
+- Web routes: `/workflows` list; `/workflows/new` add; `/workflows/[id]/edit` edit; editor has name/description/language plus shared `WorkflowPcewPicker` (Profile single-select; Companies/Experiences multi-select via `PcewSection`)
+- **Phase 22 migration note:** `workflowMetadata` dropped; existing workflows need profile/companies/experiences re-selected in the editor
 
 ## Profiles (Phase 8)
 
@@ -142,18 +143,18 @@ User browser (:4041)
 - Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
 
-## Generate UI (Phase 11–20)
+## Generate UI (Phase 11–20, 22)
 
-- Route `/` gates on existing list totals: at least one profile, company, experience, workflow, and a saved Verdict Prompt; otherwise a centered alert with links (not a toast)
-- Timeline steps: Job → PCEW → Generate
+- Route `/` gates on at least one workflow and a saved Verdict Prompt; otherwise a centered alert with links (not a toast)
+- Timeline steps: Job → Workflow → Generate
 - Job UI (Manual): Job text max 10,000 chars + **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
-- Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text; fullscreen loading; on success saves `acceptedMarkdown`, refreshes header Token Used, toast, `activeStep` → PCEW; on error stays on Job
-- PCEW: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); loads all items via list APIs with `page=null` (or `limit=null`); checkbox column; row click selects/toggles; `ViewButton` (eye icon); `validatePcewSelection` on Next; **Next** runs `POST /ai-resume` (or reuses stored resume when inputs unchanged), fullscreen loading, then advances to Generate
-- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Prev** → PCEW; **Download** calls `POST /resume/docx` with stored JSON and saves the returned `.docx` (server-side generation; no AI call)
-- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state (`jobText`, `acceptedMarkdown`), PCEW selection, `resume` JSON, and `generationInputKey` fingerprint; changing Job or PCEW clears stored resume
-- List APIs (`GET /profiles`, `/companies`, `/experiences`, `/workflows`): `page=null` or `limit=null` returns all matching items
+- Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text; fullscreen loading; on success saves `acceptedMarkdown`, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
+- Workflow: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then one `PcewSection` workflow table (single-select); loads all workflows via `GET /workflows` with `page=null`; **Next** runs `POST /ai-resume` with `{ jobDescription, acceptedMarkdown, workflowId }` (profile/companies/experiences resolved server-side from the workflow), or reuses stored resume when fingerprint unchanged
+- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Prev** → Workflow; **Download** calls `POST /resume/docx` with stored JSON
+- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId }`, `resume` JSON, and `generationInputKey` fingerprint; legacy `pcew` session keys are parsed for `workflowId`; changing Job or workflow clears stored resume
+- List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
-- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GeneratePcewStep`, `GenerateGenerateStep`, `PcewSection`, `pcew-types`)
+- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowPcewPicker`
 
 ## AI Verdict (Phase 13, 19)
 
@@ -161,7 +162,7 @@ User browser (:4041)
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-luna`, reasoning `low`)
 - Markdown output sections (in order): `## Verdict` (each user question as `###` heading + answer paragraph or sub-bullet list), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
-- Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; PCEW renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography`); `AiUsageProvider` refreshes header total after success
+- Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography`); `AiUsageProvider` refreshes header total after success
 - **Note:** Phase 13 introduced this as `POST /ai-filter`; Phase 19 renamed to `ai-verdict` and wired into Generate Job **Next**
 
 ## Verdict settings (Phase 18)
@@ -172,11 +173,11 @@ User browser (:4041)
 - Client: `getVerdict`, `saveVerdict` in `apps/web/src/lib/api.ts`; placeholder in `apps/web/src/lib/verdict.ts`
 - Prompt consumed by `POST /ai-verdict` (not a separate AI runner)
 
-## AI Resume (Phase 20)
+## AI Resume (Phase 20, 22)
 
-- `POST /ai-resume` — body `{ jobDescription, acceptedMarkdown, profileId, companyIds[], experienceIds[], workflowId }`; requires saved Settings provider/apiKey; server loads owned profile/companies/experiences/workflow from DB and assembles generation input; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
+- `POST /ai-resume` — body `{ jobDescription, acceptedMarkdown, workflowId }`; requires saved Settings provider/apiKey; server loads the owned workflow (profile, companies, experiences via junction tables) and assembles generation input; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
 - Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`
-- Web: `runAiResume` in `apps/web/src/lib/api.ts`; PCEW **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown and downloads DOCX without re-calling AI when inputs are unchanged
+- Web: `runAiResume` in `apps/web/src/lib/api.ts`; Workflow **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown and downloads DOCX without re-calling AI when inputs are unchanged
 
 ## Resume package (`@johel/resume`, Phase 20)
 

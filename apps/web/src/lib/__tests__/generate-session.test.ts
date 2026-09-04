@@ -7,16 +7,13 @@ import {
 
 describe("generate-session resume helpers", () => {
   const baseSession = {
-    activeStep: "PCEW" as const,
+    activeStep: "Workflow" as const,
     job: {
       method: "manual" as const,
       jobText: "Backend role",
       acceptedMarkdown: "## Verdict",
     },
-    pcew: {
-      profileId: "profile-1",
-      companyIds: ["company-2", "company-1"],
-      experienceIds: ["exp-1"],
+    workflow: {
       workflowId: "workflow-1",
     },
     resume: {
@@ -29,22 +26,29 @@ describe("generate-session resume helpers", () => {
   };
 
   it("builds a stable generation input key", () => {
-    const key = buildGenerationInputKey(baseSession.job, baseSession.pcew);
-    const keyAgain = buildGenerationInputKey(baseSession.job, baseSession.pcew);
+    const key = buildGenerationInputKey(baseSession.job, baseSession.workflow);
+    const keyAgain = buildGenerationInputKey(
+      baseSession.job,
+      baseSession.workflow,
+    );
     expect(key).toBe(keyAgain);
-    expect(key).toContain("profile-1");
-    expect(key).toContain("company-1");
-    expect(key).toContain("company-2");
+    expect(key).toContain("workflow-1");
   });
 
   it("reuses stored resume when fingerprint matches", () => {
-    const inputKey = buildGenerationInputKey(baseSession.job, baseSession.pcew);
+    const inputKey = buildGenerationInputKey(
+      baseSession.job,
+      baseSession.workflow,
+    );
     const session = { ...baseSession, generationInputKey: inputKey };
     expect(canReuseStoredResume(session, inputKey)).toBe(true);
   });
 
   it("does not reuse stored resume when fingerprint differs", () => {
-    const inputKey = buildGenerationInputKey(baseSession.job, baseSession.pcew);
+    const inputKey = buildGenerationInputKey(
+      baseSession.job,
+      baseSession.workflow,
+    );
     const session = {
       ...baseSession,
       generationInputKey: "different-key",
@@ -53,12 +57,27 @@ describe("generate-session resume helpers", () => {
   });
 
   it("parses resume from stored session JSON", () => {
-    const inputKey = buildGenerationInputKey(baseSession.job, baseSession.pcew);
+    const inputKey = buildGenerationInputKey(
+      baseSession.job,
+      baseSession.workflow,
+    );
     const parsed = parseGenerateSession({
       ...baseSession,
       generationInputKey: inputKey,
     });
     expect(parsed?.resume?.header.name).toBe("Jane Doe");
     expect(parsed?.generationInputKey).toBe(inputKey);
+  });
+
+  it("parses legacy pcew session shape", () => {
+    const parsed = parseGenerateSession({
+      activeStep: "PCEW",
+      job: baseSession.job,
+      pcew: { workflowId: "workflow-legacy" },
+      resume: null,
+      generationInputKey: null,
+    });
+    expect(parsed?.activeStep).toBe("Workflow");
+    expect(parsed?.workflow.workflowId).toBe("workflow-legacy");
   });
 });

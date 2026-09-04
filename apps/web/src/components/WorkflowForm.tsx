@@ -3,19 +3,19 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton } from "@/components/shared/back-button";
-import { WorkflowMetadataEditor } from "@/components/WorkflowMetadataEditor";
+import { WorkflowPcewPicker } from "@/components/WorkflowPcewPicker";
 import { useToast } from "@/components/app/ToastProvider";
+import {
+  type PcewContentFieldErrors,
+  validatePcewContentSelection,
+} from "@/components/generate/pcew-types";
 import {
   createWorkflow,
   updateWorkflow,
   type WorkflowDetail,
   type WorkflowWritePayload,
 } from "@/lib/api";
-import {
-  WORKFLOW_LANGUAGES,
-  type WorkflowLanguage,
-  type WorkflowMetadataItem,
-} from "@/lib/workflow";
+import { WORKFLOW_LANGUAGES, type WorkflowLanguage } from "@/lib/workflow";
 
 type WorkflowFormProps = {
   mode: "create" | "edit";
@@ -25,7 +25,7 @@ type WorkflowFormProps = {
 
 type FieldErrors = {
   name?: string;
-};
+} & PcewContentFieldErrors;
 
 function RequiredMark() {
   return (
@@ -65,9 +65,11 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
   const [language, setLanguage] = useState<WorkflowLanguage>(
     (initial?.language as WorkflowLanguage) || "en",
   );
-  const [metadata, setMetadata] = useState<WorkflowMetadataItem[]>(
-    initial?.metadata ?? [],
-  );
+  const [pcewSelection, setPcewSelection] = useState({
+    profileId: initial?.profileId ?? "",
+    companyIds: initial?.companyIds ?? [],
+    experienceIds: initial?.experienceIds ?? [],
+  });
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -77,6 +79,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     if (!name.trim()) {
       nextErrors.name = "Name is required.";
     }
+    Object.assign(nextErrors, validatePcewContentSelection(pcewSelection));
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -86,7 +89,9 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       name: name.trim(),
       description: description.trim() || null,
       language,
-      metadata,
+      profileId: pcewSelection.profileId,
+      companyIds: pcewSelection.companyIds,
+      experienceIds: pcewSelection.experienceIds,
     };
     setSaving(true);
     const res =
@@ -105,6 +110,11 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     router.push("/workflows");
   }
 
+  function clearPcewError(field: keyof PcewContentFieldErrors) {
+    if (!fieldErrors[field]) return;
+    setFieldErrors((errors) => ({ ...errors, [field]: undefined }));
+  }
+
   return (
     <form
       noValidate
@@ -119,7 +129,8 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure language and metadata for this workflow.
+          Configure language and choose the profile, companies, and experiences
+          for this workflow preset.
         </p>
       </div>
 
@@ -170,7 +181,12 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
         </div>
       </label>
 
-      <WorkflowMetadataEditor metadata={metadata} onChange={setMetadata} />
+      <WorkflowPcewPicker
+        selection={pcewSelection}
+        onSelectionChange={setPcewSelection}
+        fieldErrors={fieldErrors}
+        onClearError={clearPcewError}
+      />
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button

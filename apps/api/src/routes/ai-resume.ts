@@ -12,9 +12,6 @@ const JOB_TEXT_MAX = 10_000;
 const postSchema = z.object({
   jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX),
   acceptedMarkdown: z.string().trim().min(1).max(JOB_TEXT_MAX),
-  profileId: z.string().trim().min(1),
-  companyIds: z.array(z.string().trim().min(1)).min(1),
-  experienceIds: z.array(z.string().trim().min(1)).min(1),
   workflowId: z.string().trim().min(1),
 });
 
@@ -32,7 +29,7 @@ aiResumeRoutes.post("/", async (c) => {
     return c.json(
       {
         error:
-          "Resume generation input is invalid. Check job, profile, companies, experiences, and workflow selections.",
+          "Resume generation input is invalid. Check job description and workflow selection.",
       },
       400,
     );

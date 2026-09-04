@@ -60,13 +60,11 @@ ${JSON_SCHEMA_DESCRIPTION}`;
 
 const CURSOR_PROVIDER_NOTES = `Provider notes (Cursor AI Agent):
 - experiences must contain at least one item with at least one bullet each.
-- header.name is required.
-- Use workflow metadata rule prompts as additional extraction or emphasis rules when present.`;
+- header.name is required.`;
 
 const OPENAI_PROVIDER_NOTES = `Provider notes (OpenAI):
 - experiences must contain at least one item with at least one bullet each.
 - header.name is required.
-- Use workflow metadata rule prompts as additional extraction or emphasis rules when present.
 - Return ONLY valid JSON. Do NOT wrap the answer in a code fence.`;
 
 export function getAiResumeSystemPrompt(provider: AiProviderId): string {

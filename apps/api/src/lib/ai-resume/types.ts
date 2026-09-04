@@ -43,7 +43,6 @@ export type ResumeGenerationWorkflow = {
   name: string;
   description: string | null;
   language: string;
-  metadata: { key: string; rulePrompt: string | null }[];
 };
 
 export type ResumeGenerationInput = {

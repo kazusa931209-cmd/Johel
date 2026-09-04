@@ -38,33 +38,54 @@ model Setting {
 }
 
 model Workflow {
-  id              String             @id @default(cuid())
+  id              String               @id @default(cuid())
   userId          String
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId       String?
+  profile         Profile?             @relation(fields: [profileId], references: [id], onDelete: SetNull)
   name            String
   description     String?
-  language        String             @default("en")
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  metadata        WorkflowMetadata[]
+  language        String               @default("en")
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  companies       WorkflowCompany[]
+  experiences     WorkflowExperience[]
 
   @@index([userId])
+  @@index([profileId])
   @@map("workflows")
 }
 
-model WorkflowMetadata {
+model WorkflowCompany {
   id         String   @id @default(cuid())
   workflowId String
   workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  key        String
-  rulePrompt String?
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@unique([workflowId, key])
+  @@unique([workflowId, companyId])
   @@index([workflowId])
-  @@map("workflowMetadata")
+  @@index([companyId])
+  @@map("workflowCompanies")
+}
+
+model WorkflowExperience {
+  id           String     @id @default(cuid())
+  workflowId   String
+  workflow     Workflow   @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([workflowId, experienceId])
+  @@index([workflowId])
+  @@index([experienceId])
+  @@map("workflowExperiences")
 }
 
 model Profile {
@@ -81,6 +102,7 @@ model Profile {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   links      ProfileLink[]
+  workflows  Workflow[]
 
   @@index([userId])
   @@map("profiles")
@@ -111,6 +133,7 @@ model Company {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   metadata    CompanyMetadata[]
+  workflows   WorkflowCompany[]
 
   @@index([userId])
   @@index([userId, priority])
@@ -141,6 +164,7 @@ model Experience {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   metadata    ExperienceMetadata[]
+  workflows   WorkflowExperience[]
 
   @@index([userId])
   @@map("experiences")
