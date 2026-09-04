@@ -64,7 +64,7 @@ User browser (:4041)
   - `(app)` — authenticated shell + placeholder home `/`
 - Session gate: client checks `GET /backend/auth/me` before rendering app routes
 - If a frontend component file exceeds **500 lines**, ask the user before growing it further; prefer splitting into smaller components/hooks
-- Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash) in `components/shared/action-icon-buttons.tsx`
+- Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash), `CloseButton` (X) in `components/shared/action-icon-buttons.tsx`
 
 ## Studio shell (Phase 4)
 

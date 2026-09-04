@@ -1,6 +1,8 @@
-# Johel
+# JoHEL
 
-Customized Resume / CV builder (local).
+Local customized Resume / CV builder.
+
+**Concept:** one Profile + Shared Experiences + one Workflow → Job Description → Filtering → Review → Decision → Generate. Each user can manage multiple profiles, shared hands-on experiences, and multiple workflows. Details in [docs/specification.md](docs/specification.md).
 
 ## Docs
 

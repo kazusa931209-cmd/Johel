@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   AddButton,
+  CloseButton,
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
@@ -206,13 +207,7 @@ export function WorkflowMetadataEditor({
               </span>
             </label>
             <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDialog(null)}
-                className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
-              >
-                Close
-              </button>
+              <CloseButton onClick={() => setDialog(null)} />
               <button
                 type="button"
                 onClick={applyDialog}
@@ -245,13 +240,7 @@ export function WorkflowMetadataEditor({
               </p>
             </div>
             <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeletingIndex(null)}
-                className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
-              >
-                Close
-              </button>
+              <CloseButton onClick={() => setDeletingIndex(null)} />
               <button
                 type="button"
                 onClick={() => {

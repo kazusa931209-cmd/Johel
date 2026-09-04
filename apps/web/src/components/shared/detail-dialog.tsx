@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { CloseButton } from "@/components/shared/action-icon-buttons";
 
 type DetailDialogProps = {
   title: string;
@@ -24,13 +25,7 @@ export function DetailDialog({ title, onClose, children }: DetailDialogProps) {
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md border border-border px-2 py-1 text-sm hover:bg-surface-muted"
-          >
-            Close
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <div className="space-y-3 text-sm">{children}</div>
       </div>

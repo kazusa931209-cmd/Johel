@@ -2,7 +2,37 @@
 
 ## Purpose
 
-Build a customized Resume / CV and résumé writing application.
+**JoHEL** is a customized Resume / CV and résumé writing application. It helps a user combine personal profile data, shared hands-on experience, and a reusable workflow to process a Job Description and generate a tailored résumé.
+
+## Product concept
+
+### What the user owns
+
+* **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
+* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
+* **Workflows** — One user can manage **multiple workflows** (language, filtering prompt, metadata extraction rules, and related settings).
+
+### End-to-end flow
+
+A generation run combines:
+
+**one Profile** + **Shared Experiences** + **one Workflow** → **Job Description** → **Filtering** → **Review** → **Decision** (go ahead or not) → **Generate**
+
+```text
+Profile (one of many)
+        \
+Shared Experiences ----→ Job Description → Filtering → Review → Decision → Generate
+        /                                                    │
+Workflow (one of many)                                       ├─ Go ahead → Generate résumé
+                                                             └─ Stop / revise inputs
+```
+
+1. **Select inputs** — Choose one profile, use the user’s shared experiences, and choose one workflow.
+2. **Job Description** — Provide the JD (URL, file, or manual input).
+3. **Filtering** — Apply the workflow’s filtering prompt (and related rules) to the Job Description.
+4. **Review** — User reviews filtered JD content, extracted metadata, and related company information as applicable.
+5. **Decision** — User chooses to **go ahead** or not (stop / revise before generating).
+6. **Generate** — If the user goes ahead, generate the résumé from the reviewed inputs (profile, shared experiences, filtered JD / metadata, and workflow settings).
 
 ## Deployment
 
@@ -16,6 +46,7 @@ Build a customized Resume / CV and résumé writing application.
 
 ## Main Features
 
+* Users manage **multiple profiles**, **shared experiences**, and **multiple workflows**.
 * Users can provide a **Job Description** through:
 
   * URL input
@@ -30,16 +61,22 @@ Build a customized Resume / CV and résumé writing application.
 
 ### Job Description Processing
 
-1. Process and filter the Job Description.
-2. Extract the metadata that the user is interested in.
+Aligned with the product flow above:
+
+1. Process and filter the Job Description (using the selected workflow).
+2. Extract the metadata that the user is interested in (workflow metadata rules).
 3. Allow the user to review and confirm the filtered information and extracted metadata.
 4. Extract information about the company that posted the job and present it to the user for review.
-5. Generate a Resume based on:
+5. User decides whether to **go ahead** with generation or stop / revise.
+6. Generate a Resume based on:
 
-   * Job Description
-   * Company Information
-6. Allow the user to review and edit the generated Resume.
-7. Allow the user to download the final Resume as:
+   * Selected profile
+   * Shared experiences
+   * Filtered Job Description / confirmed metadata
+   * Company information (when available)
+   * Selected workflow settings
+7. Allow the user to review and edit the generated Resume.
+8. Allow the user to download the final Resume as:
 
    * PDF
    * DOCX
@@ -47,6 +84,9 @@ Build a customized Resume / CV and résumé writing application.
 ## Key Metrics / Requirements
 
 * Support **multiple users**.
+* Each user can manage **multiple profiles**.
+* Each user can manage **shared working / hands-on experiences**.
+* Each user can manage **multiple workflows**.
 * Users can manage their own **API keys**.
 * Users can log in using their **email address**.
 * Currently, the application uses a **Cursor API Key**.
@@ -81,6 +121,7 @@ Build a customized Resume / CV and résumé writing application.
     * Generate (`/` is Generate)
   * Settings
 * **Profiles**
+  * One signed-in user can manage **multiple** profiles
   * Per-user list: No, Full Name (first + last), birth date, email, PN, links, residence, education
   * Keyword filter on name parts, email, PN, residence, education; 10 rows per page
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
@@ -89,7 +130,10 @@ Build a customized Resume / CV and résumé writing application.
   * Links add/edit/delete is local on the page until Save persists the profile (same pattern as workflow Metadata)
   * Editor fields: first name (required), last name (required), birth date, email, PN, residence, education (optional); links table (Key required; Value/link optional)
   * Distinct from header menu **Profile** (account email page)
+* **Shared Experiences** (product concept; Workspace UI for this area is defined when that Phase starts)
+  * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
 * **Workflows**
+  * One signed-in user can manage **multiple** workflows
   * Per-user list: name, optional one-line description, used count, created, updated
   * Keyword filter on name and description; 10 rows per page
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
@@ -103,7 +147,7 @@ Build a customized Resume / CV and résumé writing application.
   * **AI Agent**: provider (currently **Cursor AI Agent** only) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.
-* **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon (accessible labels required when icon-only).
+* **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon; **Close** is an X (cross) icon (accessible labels required when icon-only).
 
 ## Phases
 
@@ -141,4 +185,4 @@ These rules apply to **all development phases** and must be followed by Cursor (
 9. **Toast for API results** — Every user action that triggers an API call must notify the user of the result, and that notice must always be a toast.
 10. **Form validation UX** — Form action buttons (Save, Add, Apply, Submit, and similar) stay enabled. Required field labels show a red asterisk. Missing required fields show an error message below the field when the user attempts the action (not via disabling the button; not via toast for ordinary required-field checks).
 11. **Frontend component size** — If a frontend component file exceeds 500 lines, ask the user whether to optimize or split it before adding substantial new code.
-12. **Action button icons** — **Add** uses a plus icon; **Edit** uses a pencil icon; **Delete** uses a trash icon in red. Icon-only controls need an accessible label.
+12. **Action button icons** — **Add** uses a plus icon; **Edit** uses a pencil icon; **Delete** uses a trash icon in red; **Close** uses an X (cross) icon. Icon-only controls need an accessible label.

@@ -15,11 +15,13 @@ Apply to every **Add**, **Edit**, and **Delete** control in the web UI (tables, 
 
 3. **Delete** — Always represented with a **trash** icon in **red** (use the project danger/red token, e.g. `text-danger`). Do not use a neutral-colored trash icon for delete.
 
+4. **Close** — Always represented with an **X (cross)** icon (not text-only “Close” as the sole affordance). Optional accompanying label is fine. Icon-only Close needs `aria-label="Close"`.
+
 ## Guidance
 
-- Prefer shared icon components under `components/shared/` when extracting reusable icons.
-- Icon-only buttons must have an accessible `aria-label` (e.g. `Add`, `Edit`, `Delete`).
-- Confirm dialogs for delete may keep a text **Delete** confirm button; the trigger that opens delete must still use the red trash icon.
+- Prefer shared icon components under `components/shared/` when extracting reusable icons (`CloseButton`, `AddButton`, etc.).
+- Icon-only buttons must have an accessible `aria-label` (e.g. `Add`, `Edit`, `Delete`, `Close`).
+- Confirm dialogs for delete may keep a text **Delete** confirm button; the trigger that opens delete must still use the red trash icon. Dismiss/close controls on dialogs use the X icon (not a text “Close” alone).
 
 ## Examples
 
@@ -31,7 +33,5 @@ Apply to every **Add**, **Edit**, and **Delete** control in the web UI (tables, 
 // ✅ GOOD — icon affordances
 <button type="button" aria-label="Add">/* plus icon */</button>
 <button type="button" aria-label="Edit">/* pencil icon */</button>
-<button type="button" aria-label="Delete" className="text-danger">
-  /* trash icon */
-</button>
+<button type="button" aria-label="Close">/* X cross icon */</button>
 ```
