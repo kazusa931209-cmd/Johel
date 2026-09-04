@@ -30,9 +30,9 @@ export function AiFilterResultDialog({
     >
       <p className="text-xs text-muted">
         Tokens this run:{" "}
-        {formatThousandsSeparated(usage.inputTokenUsage + usage.outputTokenUsage)}{" "}
-        (in {formatThousandsSeparated(usage.inputTokenUsage)} / out{" "}
-        {formatThousandsSeparated(usage.outputTokenUsage)})
+        {formatThousandsSeparated(usage.inputToken + usage.outputToken)}{" "}
+        (in {formatThousandsSeparated(usage.inputToken)} / out{" "}
+        {formatThousandsSeparated(usage.outputToken)})
       </p>
 
       <div className="max-h-[50vh] overflow-y-auto rounded-md border border-border bg-background px-3 py-3">

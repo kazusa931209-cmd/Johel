@@ -54,7 +54,7 @@ User browser (:4041)
 - Prisma `CompanyMetadata` → table `companyMetadata`: `id`, `companyId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(companyId, key)`; cascade delete with company
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
 - Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
-- Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `inputTokenUsage`, `outputTokenUsage`, `createdAt`
+- Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`, `aiUsage`
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
@@ -87,7 +87,7 @@ User browser (:4041)
   - `/settings` — Settings (theme + AI Agent)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
-- Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputTokenUsage + outputTokenUsage`)
+- Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
 - Sidebar: Workspace (submenus Profiles, Companies, Experiences, Workflows, Generate — always open), Settings
 
 ## AI Agent settings (Phase 5)
@@ -152,10 +152,9 @@ User browser (:4041)
 ## AI Filter (Phase 13)
 
 - `POST /ai-filter` — body `{ jobDescription }` (1–10,000 chars); requires saved Settings provider/apiKey; provider-specific system prompt; returns `{ markdown, usage, tokenUsed }`
-- `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputTokenUsage + outputTokenUsage` for the user
+- `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user
 - Provider adapter under `apps/api/src/lib/ai-filter/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); prompt map keyed by provider
 - Markdown-only output with sections `## Job` and `## Job post Company & contacts`; unknowns as `Not found`
-- Token fields: use provider usage when available; otherwise estimate `Math.ceil(text.length / 4)`; this phase stores `inputTokenUsage = inputToken` and `outputTokenUsage = outputToken`
 - Web: fullscreen loading while AI Filter runs; `AiFilterResultDialog` renders Markdown with `react-markdown`; `DetailDialog` supports `dismissOnBackdrop={false}`; footer Discard (danger) / Retry / Next; `AiUsageProvider` refreshes header total after success
 
 ## Noise Filter (Phase 12)

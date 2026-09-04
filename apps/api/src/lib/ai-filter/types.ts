@@ -3,8 +3,8 @@ export type AiProviderId = "cursor";
 export type AiFilterUsage = {
   inputToken: number;
   outputToken: number;
-  inputTokenUsage: number;
-  outputTokenUsage: number;
+  input: string;
+  output: string;
 };
 
 export type AiFilterRequest = {
@@ -44,7 +44,7 @@ export function buildUsage(
   return {
     inputToken,
     outputToken,
-    inputTokenUsage: inputToken,
-    outputTokenUsage: outputToken,
+    input: inputText,
+    output: outputText,
   };
 }

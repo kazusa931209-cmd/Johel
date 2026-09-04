@@ -5,8 +5,8 @@ CREATE TABLE "aiUsage" (
     "aiProvider" TEXT NOT NULL,
     "inputToken" INTEGER NOT NULL,
     "outputToken" INTEGER NOT NULL,
-    "inputTokenUsage" INTEGER NOT NULL,
-    "outputTokenUsage" INTEGER NOT NULL,
+    "input" TEXT NOT NULL,
+    "output" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "aiUsage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );

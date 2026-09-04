@@ -166,10 +166,10 @@ model AiUsage {
   userId           String
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   aiProvider       String
+  input            String
+  output           String
   inputToken       Int
   outputToken      Int
-  inputTokenUsage  Int
-  outputTokenUsage Int
   createdAt        DateTime @default(now())
 
   @@index([userId])

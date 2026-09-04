@@ -267,8 +267,8 @@ export function deleteExperience(id: string) {
 export type AiFilterUsage = {
   inputToken: number;
   outputToken: number;
-  inputTokenUsage: number;
-  outputTokenUsage: number;
+  input: string;
+  output: string;
 };
 
 export type AiFilterResult = {
