@@ -1,22 +1,22 @@
 import { Agent, CursorAgentError } from "@cursor/sdk";
 import type { RunResult } from "@cursor/sdk";
 import {
-  buildAiFilterUserPrompt,
-  getAiFilterSystemPrompt,
+  buildAiVerdictUserPrompt,
+  getAiVerdictSystemPrompt,
 } from "./prompts.js";
 import {
   buildUsage,
-  type AiFilterProvider,
-  type AiFilterRequest,
-  type AiFilterProviderResult,
+  type AiVerdictProvider,
+  type AiVerdictRequest,
+  type AiVerdictProviderResult,
 } from "./types.js";
 
-export const cursorAiFilterProvider: AiFilterProvider = {
+export const cursorAiVerdictProvider: AiVerdictProvider = {
   id: "cursor",
 
-  async run(input: AiFilterRequest): Promise<AiFilterProviderResult> {
-    const system = getAiFilterSystemPrompt("cursor");
-    const user = buildAiFilterUserPrompt(input.jobDescription);
+  async run(input: AiVerdictRequest): Promise<AiVerdictProviderResult> {
+    const system = getAiVerdictSystemPrompt("cursor", input.verdictPrompt);
+    const user = buildAiVerdictUserPrompt(input.jobDescription);
     const prompt = `${system}\n\n${user}`;
 
     try {

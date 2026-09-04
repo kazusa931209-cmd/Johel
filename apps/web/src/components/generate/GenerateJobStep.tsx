@@ -3,15 +3,10 @@
 import { useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { AiFilterResultDialog } from "@/components/generate/AiFilterResultDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
 import type { GenerateJobState } from "@/lib/generate-session";
-import {
-  JOB_ROLLBACK_MAX,
-  JOB_TEXT_MAX,
-  noiseFilter,
-} from "@/lib/jobNoiseFilter";
-import { runAiFilter, type AiFilterUsage } from "@/lib/api";
+import { JOB_TEXT_MAX, noiseFilter } from "@/lib/jobNoiseFilter";
+import { runAiVerdict } from "@/lib/api";
 
 type GenerateJobStepProps = {
   job: GenerateJobState;
@@ -31,6 +26,11 @@ function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
   );
 }
 
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-sm text-danger">{message}</p>;
+}
+
 export function GenerateJobStep({
   job,
   onJobChange,
@@ -38,12 +38,9 @@ export function GenerateJobStep({
 }: GenerateJobStepProps) {
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
-  const { method, jobText, history, acceptedMarkdown } = job;
-  const [aiFiltering, setAiFiltering] = useState(false);
-  const [aiResult, setAiResult] = useState<{
-    markdown: string;
-    usage: AiFilterUsage;
-  } | null>(null);
+  const { method, jobText } = job;
+  const [running, setRunning] = useState(false);
+  const [jobError, setJobError] = useState<string | undefined>();
 
   function updateJob(patch: Partial<GenerateJobState>) {
     onJobChange({ ...job, ...patch });
@@ -53,81 +50,39 @@ export function GenerateJobStep({
     updateJob({ jobText: value.slice(0, JOB_TEXT_MAX) });
   }
 
-  function pushHistory(previous: string) {
-    const next = [...history, previous];
-    updateJob({
-      history:
-        next.length > JOB_ROLLBACK_MAX
-          ? next.slice(next.length - JOB_ROLLBACK_MAX)
-          : next,
-    });
-  }
-
-  function onNoiseFilter() {
-    const result = noiseFilter(jobText);
-    if (result.text === jobText) {
-      toast("No noise to remove.", "info");
-      return;
-    }
-    pushHistory(jobText);
-    setJobTextCapped(result.text);
-    const pct = (result.reductionRate * 100).toFixed(1);
-    toast(
-      `Noise filter applied. Reduced ${pct}% (${formatThousandsSeparated(result.originalLength)} → ${formatThousandsSeparated(result.currentLength)} chars).`,
-      "success",
-    );
-  }
-
-  async function onAiFilter() {
-    if (aiFiltering) return;
+  async function onNext() {
+    if (running) return;
     const text = jobText.trim();
     if (!text) {
-      toast("Enter a Job Description before running AI Filter.", "warning");
+      setJobError("Job Description is required.");
       return;
     }
+    setJobError(undefined);
 
-    setAiFiltering(true);
+    const filtered = noiseFilter(text).text;
+    setRunning(true);
     try {
-      const res = await runAiFilter(text);
+      const res = await runAiVerdict(filtered);
       if (!res.data) {
-        toast(res.error ?? "AI Filter failed.", "error");
+        toast(res.error ?? "AI Verdict failed.", "error");
         return;
       }
 
-      setAiResult({
-        markdown: res.data.markdown,
-        usage: res.data.usage,
-      });
+      updateJob({ acceptedMarkdown: res.data.markdown });
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
-      toast("AI Filter completed.", "success");
+      toast("AI Verdict completed.", "success");
+      onAdvanceToPcew();
     } catch {
-      toast("AI Filter failed.", "error");
+      toast("AI Verdict failed.", "error");
     } finally {
-      setAiFiltering(false);
-    }
-  }
-
-  function onRollback() {
-    if (history.length === 0) return;
-    const next = [...history];
-    const previous = next.pop();
-    if (previous != null) {
-      updateJob({ jobText: previous, history: next });
-      toast("Rolled back to previous version.", "success");
+      setRunning(false);
     }
   }
 
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold tracking-tight">Job</h2>
-
-      {acceptedMarkdown ? (
-        <p className="text-xs text-muted">
-          AI Filter result accepted for this session. Continue in the PCEW step or
-          edit the Job Description below.
-        </p>
-      ) : null}
 
       <div className="flex flex-wrap gap-1 rounded-md border border-border p-1">
         {(
@@ -161,7 +116,10 @@ export function GenerateJobStep({
         <>
           <label className="block space-y-1 text-sm">
             <span className="flex items-center justify-between gap-2">
-              <span>Job Description</span>
+              <span>
+                Job Description
+                <span className="ml-0.5 text-danger" aria-hidden>*</span>
+              </span>
               <span className="text-xs text-muted">
                 {formatThousandsSeparated(jobText.length)}/
                 {formatThousandsSeparated(JOB_TEXT_MAX)}
@@ -169,65 +127,32 @@ export function GenerateJobStep({
             </span>
             <textarea
               value={jobText}
-              onChange={(e) => setJobTextCapped(e.target.value)}
+              onChange={(e) => {
+                setJobTextCapped(e.target.value);
+                if (jobError) setJobError(undefined);
+              }}
               rows={14}
               maxLength={JOB_TEXT_MAX}
               placeholder="Paste or enter the job description…"
+              aria-invalid={Boolean(jobError)}
               className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
             />
+            <FieldError message={jobError} />
           </label>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex justify-end border-t border-border pt-4">
             <button
               type="button"
-              onClick={onNoiseFilter}
-              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
+              onClick={() => void onNext()}
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
             >
-              Noise Filter
-            </button>
-            <button
-              type="button"
-              onClick={onAiFilter}
-              disabled={aiFiltering}
-              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted disabled:opacity-40"
-            >
-              {aiFiltering ? "AI Filter…" : "AI Filter"}
-            </button>
-            <button
-              type="button"
-              onClick={onRollback}
-              disabled={history.length === 0}
-              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted disabled:opacity-40"
-            >
-              Rollback{history.length > 0 ? ` (${history.length})` : ""}
+              {running ? "Running AI Verdict…" : "Next"}
             </button>
           </div>
         </>
       ) : null}
 
-      {aiResult ? (
-        <AiFilterResultDialog
-          markdown={aiResult.markdown}
-          usage={aiResult.usage}
-          onClose={() => setAiResult(null)}
-          onDiscard={() => {
-            setAiResult(null);
-            toast("AI Filter result discarded.", "info");
-          }}
-          onRetry={() => {
-            setAiResult(null);
-            void onAiFilter();
-          }}
-          onNext={() => {
-            updateJob({ acceptedMarkdown: aiResult.markdown });
-            setAiResult(null);
-            toast("AI Filter result accepted.", "success");
-            onAdvanceToPcew();
-          }}
-        />
-      ) : null}
-
-      {aiFiltering ? (
+      {running ? (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
           role="status"
@@ -235,9 +160,9 @@ export function GenerateJobStep({
           aria-busy="true"
         >
           <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
-            <p className="text-sm font-medium">Running AI Filter…</p>
+            <p className="text-sm font-medium">Running AI Verdict…</p>
             <p className="mt-1 text-xs text-muted">
-              Please wait. Do not click AI Filter again.
+              Please wait. Noise filter and AI analysis are in progress.
             </p>
           </div>
         </div>

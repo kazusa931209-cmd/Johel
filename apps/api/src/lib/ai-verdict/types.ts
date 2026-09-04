@@ -1,25 +1,26 @@
 export type AiProviderId = "cursor";
 
-export type AiFilterUsage = {
+export type AiVerdictUsage = {
   inputToken: number;
   outputToken: number;
   input: string;
   output: string;
 };
 
-export type AiFilterRequest = {
+export type AiVerdictRequest = {
   jobDescription: string;
+  verdictPrompt: string;
   apiKey: string;
 };
 
-export type AiFilterProviderResult = {
+export type AiVerdictProviderResult = {
   markdown: string;
-  usage: AiFilterUsage;
+  usage: AiVerdictUsage;
 };
 
-export type AiFilterProvider = {
+export type AiVerdictProvider = {
   id: AiProviderId;
-  run(input: AiFilterRequest): Promise<AiFilterProviderResult>;
+  run(input: AiVerdictRequest): Promise<AiVerdictProviderResult>;
 };
 
 export function estimateTokens(text: string): number {
@@ -31,7 +32,7 @@ export function buildUsage(
   inputText: string,
   outputText: string,
   exact?: { inputToken?: number; outputToken?: number },
-): AiFilterUsage {
+): AiVerdictUsage {
   const inputToken =
     exact?.inputToken != null && Number.isFinite(exact.inputToken)
       ? Math.max(0, Math.round(exact.inputToken))

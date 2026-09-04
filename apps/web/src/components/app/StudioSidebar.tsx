@@ -13,6 +13,8 @@ export function StudioSidebar() {
     pathname === "/experiences" || pathname.startsWith("/experiences/");
   const workflowsActive =
     pathname === "/workflows" || pathname.startsWith("/workflows/");
+  const verdictActive =
+    pathname === "/verdict" || pathname.startsWith("/verdict/");
   const generateActive = pathname === "/";
   const settingsActive =
     pathname === "/settings" || pathname.startsWith("/settings/");
@@ -62,6 +64,16 @@ export function StudioSidebar() {
           }`}
         >
           Workflows
+        </Link>
+        <Link
+          href="/verdict"
+          className={`rounded-md px-3 py-2 pl-6 text-sm transition-colors ${
+            verdictActive
+              ? "bg-surface-muted font-medium text-foreground"
+              : "text-muted hover:bg-surface-muted hover:text-foreground"
+          }`}
+        >
+          Verdict
         </Link>
         <Link
           href="/"

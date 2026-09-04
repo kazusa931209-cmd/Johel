@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { requireUser } from "../lib/session.js";
-import { sumTokenUsed } from "./ai-filter.js";
+import { sumTokenUsed } from "../lib/sum-token-used.js";
 
 export const aiUsageRoutes = new Hono();
 

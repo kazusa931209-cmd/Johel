@@ -9,7 +9,6 @@ export type GenerateJobInputMethod = "url" | "file" | "manual";
 export type GenerateJobState = {
   method: GenerateJobInputMethod;
   jobText: string;
-  history: string[];
   acceptedMarkdown: string | null;
 };
 
@@ -24,7 +23,6 @@ const STORAGE_KEY_PREFIX = "johel:generate-session:";
 export const EMPTY_JOB_STATE: GenerateJobState = {
   method: "manual",
   jobText: "",
-  history: [],
   acceptedMarkdown: null,
 };
 
@@ -77,9 +75,6 @@ function parseJobState(value: unknown): GenerateJobState {
   return {
     method: isJobInputMethod(raw.method) ? raw.method : "manual",
     jobText: typeof raw.jobText === "string" ? raw.jobText : "",
-    history: Array.isArray(raw.history)
-      ? raw.history.filter((item): item is string => typeof item === "string")
-      : [],
     acceptedMarkdown:
       typeof raw.acceptedMarkdown === "string" ? raw.acceptedMarkdown : null,
   };
@@ -99,7 +94,6 @@ export function isGenerateInProgress(session: GenerateSession): boolean {
   if (session.activeStep !== "Job") return true;
   if (session.job.acceptedMarkdown) return true;
   if (session.job.jobText.trim()) return true;
-  if (session.job.history.length > 0) return true;
   if (session.pcew.profileId) return true;
   if (session.pcew.companyIds.length > 0) return true;
   if (session.pcew.experienceIds.length > 0) return true;

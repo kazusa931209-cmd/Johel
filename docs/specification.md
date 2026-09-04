@@ -12,6 +12,7 @@
 * **Companies** — One user can manage **multiple companies** (name, description, priority, and metadata).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
 * **Workflows** — One user can manage **multiple workflows** (language, metadata extraction rules, and related settings).
+* **Verdict** — One saved **Verdict Prompt** per user, used when checking Job Descriptions.
 
 ### End-to-end flow
 
@@ -79,7 +80,7 @@ Aligned with the product flow above:
 #### Filtering layers
 
 * **Noise Filter** — A deterministic preprocessing layer that removes irrelevant web-page noise before AI processing, reducing input size and token usage while preserving meaningful job and company information.
-* **AI Filter** — An AI-based extraction layer that analyzes the cleaned text and identifies and structures the relevant Job and Company information.
+* **AI Filter** — An AI-based **AI Verdict** layer that analyzes the cleaned text using the user’s Verdict Prompt and structures relevant Job, Verdict answers, and Company information as Markdown.
 
 ## Key Metrics / Requirements
 
@@ -121,6 +122,7 @@ Aligned with the product flow above:
     * Companies
     * Experiences
     * Workflows
+    * Verdict
     * Generate (`/` is Generate)
   * Settings
 * **Profiles**
@@ -165,13 +167,19 @@ Aligned with the product flow above:
   * Metadata add/edit/delete is local on the page until Save persists the workflow
   * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean), metadata table (Key required; Rule prompt optional, max 1024)
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
+* **Verdict** (`/verdict`)
+  * One signed-in user maintains **one** Verdict Prompt
+  * Editor fields: Verdict Prompt (required)
+  * **Save** stays enabled; required label shows a red asterisk; empty prompt shows an inline error on Save (not a toast)
+  * Save and load via the API; toast on API success or failure
+  * The Verdict Prompt is used when checking Job Descriptions (checking is not part of this page)
 * **Generate** (`/`)
-  * Before the flow starts, the page checks that the user has at least one Profile, one Company, one Experience, and one Workflow. If any are missing, a centered alert lists what is missing with links to those Workspace pages
+  * Before the flow starts, the page checks that the user has at least one Profile, one Company, one Experience, one Workflow, and a saved **Verdict Prompt**. If any are missing, a centered alert lists what is missing with links to those Workspace pages
   * When ready, a timeline shows steps: Job → PCEW → Generate
-  * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters), **Noise Filter** (deterministic multi-stage pipeline — not AI), **AI Filter** (uses the user’s configured AI Agent Provider to extract Job and Job post Company & contacts as Markdown), and **Rollback** (up to 3 previous versions); URL and File upload show an info alert that they are not implemented yet and coming soon
-  * **AI Filter** shows a fullscreen loading indicator and prevents another AI Filter click until the request finishes. On success, a result dialog renders Markdown output. Backdrop click does not close this dialog. Footer actions: **Discard** (danger), **Retry** (secondary), **Next** (primary). **Next** accepts the result and advances the timeline to **PCEW**. Token usage from each run is persisted and aggregated into the header **Token Used** total
-  * **PCEW** step (Profiles + Companies + Experiences + Workflow): four sections with tables (all items loaded at once; no search or pagination in this step). **Profile** — single row selection with a checkbox column; row click selects; **View** (eye icon) opens a read-only profile detail dialog. **Companies** — multi row selection with checkboxes; row click toggles selection; View opens read-only company detail. **Experiences** — multi row selection with checkboxes; row click toggles selection; View opens read-only experience detail. **Workflow** — single row selection with checkbox; row click selects; View opens read-only workflow detail. Footer **Prev** returns to Job; **Next** stays enabled and validates inline (one profile, at least one company, at least one experience, one workflow) before advancing
-  * An in-progress Generate run (step, Job inputs, accepted AI Filter result, PCEW selection) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
+  * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters) and a **Next** button only; URL and File upload show an info alert that they are not implemented yet and coming soon
+  * **Next** on Job (Manual): validates the Job Description (inline error if empty); runs **Noise Filter** silently in the background (textarea unchanged); calls **AI Verdict** (`POST /ai-verdict`) with the user’s saved Verdict Prompt plus extraction instructions; fullscreen loading while the request runs; on success persists token usage, saves accepted Markdown, toasts success, and advances to **PCEW**; on failure stays on Job and toasts the error
+  * **PCEW** step: read-only **AI Verdict result** Markdown panel at the top (from the accepted Job-step result); then Profiles + Companies + Experiences + Workflow sections with tables (all items loaded at once; no search or pagination). **Profile** — single row selection with a checkbox column; row click selects; **View** (eye icon) opens a read-only profile detail dialog. **Companies** — multi row selection with checkboxes; row click toggles selection; View opens read-only company detail. **Experiences** — multi row selection with checkboxes; row click toggles selection; View opens read-only experience detail. **Workflow** — single row selection with checkbox; row click selects; View opens read-only workflow detail. Footer **Prev** returns to Job; **Next** stays enabled and validates inline (one profile, at least one company, at least one experience, one workflow) before advancing
+  * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, PCEW selection) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
   * **PCEW** **Next** advances to **Generate** (Generate step is not implemented yet)
 * **Settings**
   * Theme (Dark / Light)
@@ -219,6 +227,10 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** `POST /verdict`, `ai-verdict` adapters, `GenerateVerdictStep`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-16-generate-verdict.md`](./plans/2026-09-04-phase-16-generate-verdict.md).
 * [x] **Phase 17 — Generate three steps** — Collapse Generate timeline to Job → PCEW → Generate; remove Verdict and Company steps, the verdict runner, and workflow Verdict Prompt (editor, API, database).
   * **Outcome (2026-09-04):** Three-step timeline; verdict code and `workflows.verdictPrompt` removed. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-17-generate-three-steps.md`](./plans/2026-09-04-phase-17-generate-three-steps.md).
+* [x] **Phase 18 — Workspace Verdict** — Workspace **Verdict** submenu between Workflows and Generate; `/verdict` page with one required Verdict Prompt textarea; one prompt per user persisted in `verdicts`.
+  * **Outcome (2026-09-04):** `GET` / `PUT /verdict`, `/verdict` page, sidebar link. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-18-workspace-verdict.md`](./plans/2026-09-04-phase-18-workspace-verdict.md).
+* [x] **Phase 19 — Generate Job step pipeline** — Job step **Next** only; silent noise filter + `POST /ai-verdict` (renamed from ai-filter) with Verdict Prompt; advance to PCEW; Markdown result at top of PCEW.
+  * **Outcome (2026-09-04):** `ai-verdict` stack, Job **Next** pipeline, PCEW result panel, Verdict prerequisite. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-19-generate-job-next-pipeline.md`](./plans/2026-09-04-phase-19-generate-job-next-pipeline.md).
 
 ## Cursor Rules (Documentation Governance)
 

@@ -1,25 +1,25 @@
-import { cursorAiFilterProvider } from "./cursor-provider.js";
+import { cursorAiVerdictProvider } from "./cursor-provider.js";
 import type {
-  AiFilterProviderResult,
-  AiFilterRequest,
+  AiVerdictProviderResult,
+  AiVerdictRequest,
   AiProviderId,
 } from "./types.js";
 
 export type {
-  AiFilterProviderResult,
-  AiFilterRequest,
-  AiFilterUsage,
+  AiVerdictProviderResult,
+  AiVerdictRequest,
+  AiVerdictUsage,
   AiProviderId,
 } from "./types.js";
 
 const providers = {
-  cursor: cursorAiFilterProvider,
+  cursor: cursorAiVerdictProvider,
 } as const;
 
-export async function runAiFilter(
+export async function runAiVerdict(
   provider: AiProviderId,
-  input: AiFilterRequest,
-): Promise<AiFilterProviderResult> {
+  input: AiVerdictRequest,
+): Promise<AiVerdictProviderResult> {
   const adapter = providers[provider];
   if (!adapter) {
     throw new Error(`Unsupported AI provider: ${provider}`);

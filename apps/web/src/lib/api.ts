@@ -110,6 +110,21 @@ export function saveSettings(provider: "cursor", apiKey: string) {
   });
 }
 
+export type VerdictSettings = {
+  verdictPrompt: string;
+};
+
+export function getVerdict() {
+  return request<VerdictSettings>("/verdict");
+}
+
+export function saveVerdict(verdictPrompt: string) {
+  return request<VerdictSettings>("/verdict", {
+    method: "PUT",
+    body: JSON.stringify({ verdictPrompt }),
+  });
+}
+
 export type Workflow = {
   id: string;
   name: string;
@@ -295,16 +310,16 @@ export function deleteExperience(id: string) {
   return request<{ ok: boolean }>(`/experiences/${id}`, { method: "DELETE" });
 }
 
-export type AiFilterUsage = {
+export type AiVerdictUsage = {
   inputToken: number;
   outputToken: number;
   input: string;
   output: string;
 };
 
-export type AiFilterResult = {
+export type AiVerdictResult = {
   markdown: string;
-  usage: AiFilterUsage;
+  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -312,8 +327,8 @@ export type AiUsageSummary = {
   tokenUsed: number;
 };
 
-export function runAiFilter(jobDescription: string) {
-  return request<AiFilterResult>("/ai-filter", {
+export function runAiVerdict(jobDescription: string) {
+  return request<AiVerdictResult>("/ai-verdict", {
     method: "POST",
     body: JSON.stringify({ jobDescription }),
   });

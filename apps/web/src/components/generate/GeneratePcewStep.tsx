@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
 import { PcewSection } from "@/components/generate/PcewSection";
@@ -26,6 +27,7 @@ import { formatMetadataCell as formatExperienceMetadata } from "@/lib/experience
 import { formatLinksCell, fullName } from "@/lib/profile";
 
 type GeneratePcewStepProps = {
+  acceptedMarkdown: string | null;
   selection: PcewSelection;
   onSelectionChange: (selection: PcewSelection) => void;
   onPrev: () => void;
@@ -37,6 +39,7 @@ function formatWorkflowDate(iso: string) {
 }
 
 export function GeneratePcewStep({
+  acceptedMarkdown,
   selection,
   onSelectionChange,
   onPrev,
@@ -105,6 +108,17 @@ export function GeneratePcewStep({
           and one workflow.
         </p>
       </div>
+
+      {acceptedMarkdown ? (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">AI Verdict result</h3>
+          <div className="max-h-[40vh] overflow-y-auto rounded-md border border-border bg-background px-3 py-3">
+            <div className="prose prose-sm max-w-none dark:prose-invert [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_li]:my-0.5 [&_p]:my-1.5 [&_ul]:my-2">
+              <ReactMarkdown>{acceptedMarkdown}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <PcewSection<ProfileDetail>
         title="Profile"

@@ -19,6 +19,7 @@ model User {
   companies    Company[]
   experiences  Experience[]
   aiUsages     AiUsage[]
+  verdict      Verdict?
 
   // SQLite table names are case-insensitive; plural avoids colliding with former PascalCase names.
   @@map("users")
@@ -174,4 +175,15 @@ model AiUsage {
   @@index([userId])
   @@index([userId, createdAt])
   @@map("aiUsage")
+}
+
+model Verdict {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verdictPrompt String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("verdicts")
 }

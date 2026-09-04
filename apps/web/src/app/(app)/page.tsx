@@ -11,6 +11,7 @@ import { GenerateJobStep } from "@/components/generate/GenerateJobStep";
 import { GeneratePcewStep } from "@/components/generate/GeneratePcewStep";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
 import {
+  getVerdict,
   listCompanies,
   listExperiences,
   listProfiles,
@@ -38,13 +39,15 @@ export default function GeneratePage() {
       listCompanies("", 1),
       listExperiences("", 1),
       listWorkflows("", 1),
-    ]).then(([profiles, companies, experiences, workflows]) => {
+      getVerdict(),
+    ]).then(([profiles, companies, experiences, workflows, verdict]) => {
       if (cancelled) return;
       const errors = [
         profiles.error,
         companies.error,
         experiences.error,
         workflows.error,
+        verdict.error,
       ].filter(Boolean);
       if (errors.length > 0) {
         toast(errors[0] ?? "Failed to check Generate prerequisites", "error");
@@ -54,6 +57,7 @@ export default function GeneratePage() {
           { label: "Companies", href: "/companies" },
           { label: "Experiences", href: "/experiences" },
           { label: "Workflows", href: "/workflows" },
+          { label: "Verdict", href: "/verdict" },
         ]);
         return;
       }
@@ -70,6 +74,9 @@ export default function GeneratePage() {
       }
       if ((workflows.data?.total ?? 0) < 1) {
         nextMissing.push({ label: "Workflows", href: "/workflows" });
+      }
+      if (!verdict.data?.verdictPrompt.trim()) {
+        nextMissing.push({ label: "Verdict", href: "/verdict" });
       }
 
       setMissing(nextMissing.length > 0 ? nextMissing : null);
@@ -111,6 +118,7 @@ export default function GeneratePage() {
       ) : null}
       {activeStep === "PCEW" ? (
         <GeneratePcewStep
+          acceptedMarkdown={job.acceptedMarkdown}
           selection={pcew}
           onSelectionChange={setPcew}
           onPrev={() => setActiveStep("Job")}

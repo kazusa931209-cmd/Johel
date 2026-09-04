@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-filter`, `GET /ai-usage/summary`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `GET /ai-usage/summary`, `GET /verdict`, `PUT /verdict`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
@@ -55,7 +55,8 @@ User browser (:4041)
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
 - Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
-- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`, `aiUsage`
+- Prisma `Verdict` → table `verdicts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `createdAt`, `updatedAt`
+- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`, `aiUsage`, `verdicts`
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
 ## Frontend (Phase 3)
@@ -84,11 +85,12 @@ User browser (:4041)
   - `/companies` — Workspace / Companies
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
+  - `/verdict` — Workspace / Verdict
   - `/settings` — Settings (theme + AI Agent)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
-- Sidebar: Workspace (submenus Profiles, Companies, Experiences, Workflows, Generate — always open), Settings
+- Sidebar: Workspace (submenus Profiles, Companies, Experiences, Workflows, Verdict, Generate — always open), Settings
 
 ## AI Agent settings (Phase 5)
 
@@ -138,25 +140,34 @@ User browser (:4041)
 - Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
 
-## Generate UI (Phase 11–17)
+## Generate UI (Phase 11–19)
 
-- Route `/` gates on existing list totals: at least one profile, company, experience, and workflow; otherwise a centered alert with links (not a toast)
+- Route `/` gates on existing list totals: at least one profile, company, experience, workflow, and a saved Verdict Prompt; otherwise a centered alert with links (not a toast)
 - Timeline steps: Job → PCEW → Generate (Job and PCEW interactive; Generate placeholder)
-- Job UI: Manual / URL / File tabs; Manual has Job text max 10,000 chars, Noise Filter, AI Filter, Rollback; URL and File tabs show an info alert (“not implemented yet / coming soon”) instead of inputs
-- AI Filter **Next** accepts the Markdown result and sets `activeStep` to PCEW
-- PCEW: four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); loads all items via list APIs with `page=null` (or `limit=null`); checkbox column instead of row numbers; row click selects/toggles; `ViewButton` (eye icon) opens existing read-only detail dialogs; `validatePcewSelection` on Next; selection kept in page state (`PcewSelection`: `profileId`, `companyIds[]`, `experienceIds[]`, `workflowId`); table wrappers use `overflow-x-auto overflow-y-hidden` so only the studio main pane scrolls vertically; **Next** advances to Generate
-- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, and PCEW selection; restored after refresh or navigation until the run is cleared or finished; legacy stored steps `Verdict` / `Company` normalize to `Generate` on load
-- List APIs (`GET /profiles`, `/companies`, `/experiences`, `/workflows`): `page=null` or `limit=null` returns all matching items; default pagination unchanged (`page` defaults to 1, page size 10)
-- Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …` from `GET /ai-usage/summary`
+- Job UI (Manual): Job text max 10,000 chars + **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
+- Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text; fullscreen loading; on success saves `acceptedMarkdown`, refreshes header Token Used, toast, `activeStep` → PCEW; on error stays on Job
+- PCEW: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); loads all items via list APIs with `page=null` (or `limit=null`); checkbox column; row click selects/toggles; `ViewButton` (eye icon); `validatePcewSelection` on Next; **Next** advances to Generate
+- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state (`jobText`, `acceptedMarkdown`), and PCEW selection; legacy `history` ignored
+- List APIs (`GET /profiles`, `/companies`, `/experiences`, `/workflows`): `page=null` or `limit=null` returns all matching items
+- Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GeneratePcewStep`, `PcewSection`, `pcew-types`)
 
-## AI Filter (Phase 13)
+## AI Verdict (Phase 13, 19)
 
-- `POST /ai-filter` — body `{ jobDescription }` (1–10,000 chars); requires saved Settings provider/apiKey; provider-specific system prompt; returns `{ markdown, usage, tokenUsed }`
-- `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user
-- Provider adapter under `apps/api/src/lib/ai-filter/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); prompt map keyed by provider
-- Markdown-only output with sections `## Job` and `## Job post Company & contacts`; unknowns as `Not found`
-- Web: fullscreen loading while AI Filter runs; `AiFilterResultDialog` renders Markdown with `react-markdown`; `DetailDialog` supports `dismissOnBackdrop={false}`; footer Discard (danger) / Retry / Next; `AiUsageProvider` refreshes header total after success
+- `POST /ai-verdict` — body `{ jobDescription }` (1–10,000 chars; client sends noise-filtered text); requires saved Settings provider/apiKey and non-empty `verdicts.verdictPrompt`; system prompt = user Verdict Prompt + extraction rules; returns `{ markdown, usage, tokenUsed }`
+- `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
+- Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`)
+- Markdown output sections (in order): `## Verdict` (echo user questions + answers), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
+- Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; PCEW renders result with `react-markdown`; `AiUsageProvider` refreshes header total after success
+- **Note:** Phase 13 introduced this as `POST /ai-filter`; Phase 19 renamed to `ai-verdict` and wired into Generate Job **Next**
+
+## Verdict settings (Phase 18)
+
+- `GET /verdict` → `{ verdictPrompt: string }` — empty string when no row yet (owner only)
+- `PUT /verdict` → body `{ verdictPrompt }` (trim, min 1, max 10,000 chars); upsert by `userId`; returns `{ verdictPrompt }`
+- Web route `/verdict`: single required Verdict Prompt textarea; Save always enabled; inline validation on submit; toast on API result
+- Client: `getVerdict`, `saveVerdict` in `apps/web/src/lib/api.ts`; placeholder in `apps/web/src/lib/verdict.ts`
+- Prompt consumed by `POST /ai-verdict` (not a separate AI runner)
 
 ## Noise Filter (Phase 12)
 
@@ -175,8 +186,8 @@ User browser (:4041)
 - Configurable patterns in `config.ts` (boilerplate, navigation exact lines, section headings, footer boundaries)
 - Conservative / loss-aware: line-level and boundary-based removal; never global keyword nuking of technical terms
 - HTML: `node-html-parser` when input looks like HTML; strip script/style/noscript/svg/canvas/iframe/template and comments; regex fallback on parse failure
-- Compatibility: `apps/web/src/lib/jobNoiseFilter.ts` re-exports `JOB_TEXT_MAX` / `JOB_ROLLBACK_MAX` and `applyNoiseFilter` → `noiseFilter(input).text`
-- Generate Job toast includes reduction % and before→after char counts (via `formatThousandsSeparated`)
+- Compatibility: `apps/web/src/lib/jobNoiseFilter.ts` re-exports `JOB_TEXT_MAX` and `applyNoiseFilter` → `noiseFilter(input).text`
+- Generate Job **Next** runs noise filter silently before `POST /ai-verdict` (no separate Noise Filter button)
 - Tests: Vitest (`pnpm --filter web test`); per-filter unit tests + BIT / Golang Engineer regression fixture under `__tests__/`
 
 ## Plans
