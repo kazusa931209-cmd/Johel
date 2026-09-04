@@ -169,7 +169,7 @@ Aligned with the product flow above:
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Profile, one Company, one Experience, and one Workflow. If any are missing, a centered alert lists what is missing with links to those Workspace pages
   * When ready, a timeline shows steps: Job → PCEW → Verdict → Company → Generate (this phase implements Job only; later steps are indicators)
-  * **Job** step: input method tabs URL / File upload / Manual; Job Description textarea (max 10,000 characters); **Noise Filter** (client-side JS cleanup, not AI); **AI Filter** beside it (UI stub this phase); **Rollback** up to 3 previous Job text versions after Noise Filter
+  * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters), **Noise Filter** (client-side JS cleanup, not AI), **AI Filter** (UI stub this phase), and **Rollback** (up to 3 previous versions); URL and File upload show an info alert that they are not implemented yet and coming soon
   * **Choose PCEW** opens a dialog to pick Profile, Company, Experience, and Workflow (local selection only this phase; Close X top-right; Apply in footer)
 * **Settings**
   * Theme (Dark / Light)

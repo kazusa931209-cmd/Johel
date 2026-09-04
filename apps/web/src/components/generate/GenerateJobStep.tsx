@@ -1,11 +1,12 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import { useState } from "react";
 import { useToast } from "@/components/app/ToastProvider";
 import {
   ChoosePcewDialog,
   type PcewSelection,
 } from "@/components/generate/ChoosePcewDialog";
+import { formatThousandsSeparated } from "@/lib/helper";
 import {
   applyNoiseFilter,
   JOB_ROLLBACK_MAX,
@@ -19,13 +20,22 @@ type GenerateJobStepProps = {
   onPcewChange: (selection: PcewSelection) => void;
 };
 
+function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
+  return (
+    <div
+      role="status"
+      className="rounded-md border border-border bg-toast-info-bg px-3 py-3 text-sm text-toast-info-fg"
+    >
+      <p className="font-medium">{methodLabel} is not implemented yet.</p>
+      <p className="mt-1 opacity-90">It’ll be coming soon…</p>
+    </div>
+  );
+}
+
 export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [method, setMethod] = useState<InputMethod>("manual");
-  const [url, setUrl] = useState("");
   const [jobText, setJobText] = useState("");
-  const [fileError, setFileError] = useState<string | undefined>();
   const [history, setHistory] = useState<string[]>([]);
   const [pcewOpen, setPcewOpen] = useState(false);
 
@@ -69,36 +79,6 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
       }
       return next;
     });
-  }
-
-  function onLoadUrl() {
-    toast("URL fetch will be available in a later phase.", "info");
-  }
-
-  function onFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-
-    const isText =
-      file.type === "text/plain" ||
-      file.type === "" ||
-      file.name.toLowerCase().endsWith(".txt");
-    if (!isText) {
-      setFileError("Only plain text (.txt) files are supported in this phase.");
-      return;
-    }
-    setFileError(undefined);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = typeof reader.result === "string" ? reader.result : "";
-      setJobTextCapped(text);
-      toast("File loaded.", "success");
-    };
-    reader.onerror = () => {
-      setFileError("Failed to read the file.");
-    };
-    reader.readAsText(file);
   }
 
   return (
@@ -148,83 +128,57 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
         ))}
       </div>
 
-      {method === "url" ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-          <label className="block min-w-0 flex-1 space-y-1 text-sm">
-            <span>Job URL</span>
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://…"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+      {method === "url" ? <ComingSoonAlert methodLabel="URL" /> : null}
+      {method === "file" ? (
+        <ComingSoonAlert methodLabel="File upload" />
+      ) : null}
+
+      {method === "manual" ? (
+        <>
+          <label className="block space-y-1 text-sm">
+            <span className="flex items-center justify-between gap-2">
+              <span>Job Description</span>
+              <span className="text-xs text-muted">
+                {formatThousandsSeparated(jobText.length)}/
+                {formatThousandsSeparated(JOB_TEXT_MAX)}
+              </span>
+            </span>
+            <textarea
+              value={jobText}
+              onChange={(e) => setJobTextCapped(e.target.value)}
+              rows={14}
+              maxLength={JOB_TEXT_MAX}
+              placeholder="Paste or enter the job description…"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
             />
           </label>
-          <button
-            type="button"
-            onClick={onLoadUrl}
-            className="mt-0 rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted sm:mt-6"
-          >
-            Load
-          </button>
-        </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onNoiseFilter}
+              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
+            >
+              Noise Filter
+            </button>
+            <button
+              type="button"
+              onClick={onAiFilter}
+              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
+            >
+              AI Filter
+            </button>
+            <button
+              type="button"
+              onClick={onRollback}
+              disabled={history.length === 0}
+              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted disabled:opacity-40"
+            >
+              Rollback{history.length > 0 ? ` (${history.length})` : ""}
+            </button>
+          </div>
+        </>
       ) : null}
-
-      {method === "file" ? (
-        <div className="space-y-1 text-sm">
-          <span className="block">Job file</span>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".txt,text/plain"
-            onChange={onFileChange}
-            className="block w-full text-sm text-muted file:mr-3 file:rounded-md file:border file:border-border file:bg-surface file:px-3 file:py-1.5 file:text-sm file:text-foreground hover:file:bg-surface-muted"
-          />
-          {fileError ? <p className="text-sm text-danger">{fileError}</p> : null}
-        </div>
-      ) : null}
-
-      <label className="block space-y-1 text-sm">
-        <span className="flex items-center justify-between gap-2">
-          <span>Job Description</span>
-          <span className="text-xs text-muted">
-            {jobText.length}/{JOB_TEXT_MAX}
-          </span>
-        </span>
-        <textarea
-          value={jobText}
-          onChange={(e) => setJobTextCapped(e.target.value)}
-          rows={14}
-          maxLength={JOB_TEXT_MAX}
-          placeholder="Paste or enter the job description…"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
-        />
-      </label>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={onNoiseFilter}
-          className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
-        >
-          Noise Filter
-        </button>
-        <button
-          type="button"
-          onClick={onAiFilter}
-          className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
-        >
-          AI Filter
-        </button>
-        <button
-          type="button"
-          onClick={onRollback}
-          disabled={history.length === 0}
-          className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted disabled:opacity-40"
-        >
-          Rollback{history.length > 0 ? ` (${history.length})` : ""}
-        </button>
-      </div>
 
       {pcewOpen ? (
         <ChoosePcewDialog

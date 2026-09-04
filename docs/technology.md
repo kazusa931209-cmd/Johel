@@ -143,7 +143,7 @@ User browser (:4041)
 
 - Route `/` gates on existing list totals: at least one profile, company, experience, and workflow; otherwise a centered alert with links (not a toast)
 - Timeline steps (Job active only this phase): Job → PCEW → Verdict → Company → Generate
-- Job UI: Manual / URL / File tabs; Job text max 10,000 chars; URL Load and AI Filter are stubs (toast); File accepts plain `.txt` via `FileReader`
+- Job UI: Manual / URL / File tabs; Manual has Job text max 10,000 chars, Noise Filter, AI Filter stub, Rollback; URL and File tabs show an info alert (“not implemented yet / coming soon”) instead of inputs
 - Noise Filter: client `applyNoiseFilter` in `apps/web/src/lib/jobNoiseFilter.ts` (strip script/style/tags, decode entities, collapse whitespace); pushes prior text to a rollback stack (max 3)
 - Choose PCEW: dialog loads first page of list APIs; Apply keeps selection in page state only
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …`; raw count static `0` → `0K` this phase

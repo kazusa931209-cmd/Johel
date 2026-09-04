@@ -11,6 +11,7 @@ import {
   DetailField,
   TABLE_ROW_HOVER_CLASS,
 } from "@/components/shared/detail-dialog";
+import { formatThousandsSeparated } from "@/lib/helper";
 import type { WorkflowMetadataItem } from "@/lib/workflow";
 
 type WorkflowMetadataEditorProps = {
@@ -197,7 +198,8 @@ export function WorkflowMetadataEditor({
               className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
             />
             <span className="text-xs text-muted">
-              {draft.rulePrompt.length}/1024
+              {formatThousandsSeparated(draft.rulePrompt.length)}/
+              {formatThousandsSeparated(1024)}
             </span>
           </label>
           <div className="flex justify-end">
