@@ -10,6 +10,7 @@ import {
 } from "@/components/generate/pcew-types";
 import { WorkflowDetailDialog } from "@/components/WorkflowDetailDialog";
 import { listWorkflows, type Workflow } from "@/lib/api";
+import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 
 type GenerateWorkflowStepProps = {
   acceptedMarkdown: string | null;
@@ -44,12 +45,18 @@ export function GenerateWorkflowStep({
     }
   }
 
-  function handleNext() {
+  const handleNext = useCallback(() => {
     const errors = validateWorkflowSelection(selection);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
     void onNext();
-  }
+  }, [onNext, selection]);
+
+  useRegisterGenerateStepNav({
+    onPrev,
+    onNext: handleNext,
+    nextBusy: generating,
+  });
 
   return (
     <div className="space-y-6">
@@ -93,15 +100,6 @@ export function GenerateWorkflowStep({
             cell: (row) => row.description ?? "",
           },
           {
-            header: "Used",
-            cell: (row) => row.used,
-          },
-          {
-            header: "Created",
-            className: "whitespace-nowrap text-muted",
-            cell: (row) => formatWorkflowDate(row.createdAt),
-          },
-          {
             header: "Updated",
             className: "whitespace-nowrap text-muted",
             cell: (row) => formatWorkflowDate(row.updatedAt),
@@ -115,26 +113,9 @@ export function GenerateWorkflowStep({
         )}
       />
 
-      <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
-        <button
-          type="button"
-          onClick={onPrev}
-          className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-muted"
-        >
-          Prev
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-        >
-          {generating ? "Generating Resume…" : "Next"}
-        </button>
-      </div>
-
       {generating ? (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
           role="status"
           aria-live="polite"
           aria-busy="true"

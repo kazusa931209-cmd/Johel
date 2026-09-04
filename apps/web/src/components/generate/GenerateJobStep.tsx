@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { formatThousandsSeparated } from "@/lib/helper";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { JOB_TEXT_MAX, noiseFilter } from "@/lib/jobNoiseFilter";
 import { runAiVerdict } from "@/lib/api";
+import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 
 type GenerateJobStepProps = {
   job: GenerateJobState;
@@ -50,7 +51,7 @@ export function GenerateJobStep({
     updateJob({ jobText: value.slice(0, JOB_TEXT_MAX) });
   }
 
-  async function onNext() {
+  const onNext = useCallback(async () => {
     if (running) return;
     const text = jobText.trim();
     if (!text) {
@@ -78,42 +79,55 @@ export function GenerateJobStep({
     } finally {
       setRunning(false);
     }
-  }
+  }, [
+    job,
+    jobText,
+    onAdvanceToWorkflow,
+    refreshTokenUsed,
+    running,
+    setTokenUsed,
+    toast,
+  ]);
+
+  useRegisterGenerateStepNav({
+    onNext: method === "manual" ? () => void onNext() : undefined,
+    nextBusy: running,
+  });
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold tracking-tight">Job</h2>
+    <>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold tracking-tight">Job</h2>
 
-      <div className="flex flex-wrap gap-1 rounded-md border border-border p-1">
-        {(
-          [
-            ["manual", "Manual"],
-            ["url", "URL"],
-            ["file", "File upload"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => updateJob({ method: id })}
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              method === id
-                ? "bg-surface-muted font-medium text-foreground"
-                : "text-muted hover:text-foreground"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        <div className="flex flex-wrap gap-1 rounded-md border border-border p-1">
+          {(
+            [
+              ["manual", "Manual"],
+              ["url", "URL"],
+              ["file", "File upload"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => updateJob({ method: id })}
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                method === id
+                  ? "bg-surface-muted font-medium text-foreground"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-      {method === "url" ? <ComingSoonAlert methodLabel="URL" /> : null}
-      {method === "file" ? (
-        <ComingSoonAlert methodLabel="File upload" />
-      ) : null}
+        {method === "url" ? <ComingSoonAlert methodLabel="URL" /> : null}
+        {method === "file" ? (
+          <ComingSoonAlert methodLabel="File upload" />
+        ) : null}
 
-      {method === "manual" ? (
-        <>
+        {method === "manual" ? (
           <label className="block space-y-1 text-sm">
             <span className="flex items-center justify-between gap-2">
               <span>
@@ -131,7 +145,7 @@ export function GenerateJobStep({
                 setJobTextCapped(e.target.value);
                 if (jobError) setJobError(undefined);
               }}
-              rows={14}
+              rows={24}
               maxLength={JOB_TEXT_MAX}
               placeholder="Paste or enter the job description…"
               aria-invalid={Boolean(jobError)}
@@ -139,22 +153,12 @@ export function GenerateJobStep({
             />
             <FieldError message={jobError} />
           </label>
-
-          <div className="flex justify-end border-t border-border pt-4">
-            <button
-              type="button"
-              onClick={() => void onNext()}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
-            >
-              {running ? "Running AI Verdict…" : "Next"}
-            </button>
-          </div>
-        </>
-      ) : null}
+        ) : null}
+      </div>
 
       {running ? (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
           role="status"
           aria-live="polite"
           aria-busy="true"
@@ -167,6 +171,6 @@ export function GenerateJobStep({
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }

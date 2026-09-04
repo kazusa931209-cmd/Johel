@@ -110,7 +110,8 @@ User browser (:4041)
 - `GET /workflows/:id` — full detail for the editor (owner only): `profileId`, `companyIds[]`, `experienceIds[]`, plus scalar fields
 - `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, profileId, companyIds[], experienceIds[] }`; validates one profile, ≥1 company, ≥1 experience (all owned by user); on write, replaces `workflowCompanies` and `workflowExperiences` junction rows
 - Language codes: `en`, `ja`, `zh-TW`, `zh-CN`, `ko` (default `en`)
-- Web routes: `/workflows` list; `/workflows/new` add; `/workflows/[id]/edit` edit; editor has name/description/language plus shared `WorkflowPcewPicker` (Profile single-select; Companies/Experiences multi-select via `PcewSection`)
+- Web routes: `/workflows` list (table columns: No, Name, Description, Updated, actions); `/workflows/new` add; `/workflows/[id]/edit` edit; editor has name/description/language plus shared `WorkflowPcewPicker` (Profile single-select; Companies/Experiences multi-select via `PcewSection`)
+- Generate Workflow step workflow table columns: Name, Description, Updated
 - **Phase 22 migration note:** `workflowMetadata` dropped; existing workflows need profile/companies/experiences re-selected in the editor
 
 ## Profiles (Phase 8)
@@ -143,18 +144,20 @@ User browser (:4041)
 - Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
 
-## Generate UI (Phase 11–20, 22)
+## Generate UI (Phase 11–20, 22, 24)
 
 - Route `/` gates on at least one workflow and saved Verdict Prompt and Generate Prompt; otherwise a centered alert with links (not a toast)
 - Timeline steps: Job → Workflow → Generate
-- Job UI (Manual): Job text max 10,000 chars + **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
+- Sticky header: page title + step row (`GenerateStepNavPrevButton` + `GenerateTimeline` + `GenerateStepNavNextButton`) use `sticky top-0` with `-mt-6 pt-6` to cover main padding and prevent content showing through the gap above; `bg-background` and bottom border
+- Step navigation: steps register handlers via `useRegisterGenerateStepNav`; large round controls flank the timeline on the same row
+- Job UI (Manual): Job text max 10,000 chars + right **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
 - Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text; fullscreen loading; on success saves `acceptedMarkdown`, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
 - Workflow: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then one `PcewSection` workflow table (single-select); loads all workflows via `GET /workflows` with `page=null`; **Next** runs `POST /ai-resume` with `{ jobDescription, acceptedMarkdown, workflowId }` (profile/companies/experiences resolved server-side from the workflow), or reuses stored resume when fingerprint unchanged
-- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Prev** → Workflow; **Download** calls `POST /resume/docx` with stored JSON
+- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Previous** → Workflow; **Download** calls `POST /resume/docx` with stored JSON
 - In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId }`, `resume` JSON, and `generationInputKey` fingerprint; legacy `pcew` session keys are parsed for `workflowId`; changing Job or workflow clears stored resume
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
-- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowPcewPicker`
+- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowPcewPicker`
 
 ## AI Verdict (Phase 13, 19)
 

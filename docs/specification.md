@@ -158,7 +158,7 @@ Aligned with the product flow above:
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
   * Each workflow saves one profile, one or more companies, one or more experiences, and a resume output language
-  * Per-user list: name, optional one-line description, used count, created, updated
+  * Per-user list: name, optional one-line description, updated
   * Keyword filter on name and description; 10 rows per page
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
@@ -176,13 +176,13 @@ Aligned with the product flow above:
   * The Verdict Prompt is used when checking Job Descriptions; the Generate Prompt is used when generating résumés (neither runs on this page)
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Workflow and saved **Verdict Prompt** and **Generate Prompt**. If any are missing, a centered alert lists what is missing with links to those pages
-  * When ready, a timeline shows steps: Job → Workflow → Generate
-  * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters) and a **Next** button only; URL and File upload show an info alert that they are not implemented yet and coming soon
-  * **Next** on Job (Manual): validates the Job Description (inline error if empty); runs **Noise Filter** silently in the background (textarea unchanged); calls **AI Verdict** with the user’s saved Verdict Prompt plus extraction instructions; fullscreen loading while the request runs; on success persists token usage, saves accepted Markdown, toasts success, and advances to **Workflow**; on failure stays on Job and toasts the error
-  * **Workflow** step: read-only **AI Verdict result** Markdown panel at the top (from the accepted Job-step result); then a **Workflow** section with a single-select table (all workflows loaded at once; no search or pagination). Row click selects; View opens read-only workflow detail. Footer **Prev** returns to Job; **Next** stays enabled and validates inline (one workflow selected) before advancing
+  * When ready, a timeline shows steps: Job → Workflow → Generate; the page **title**, **timeline**, and round **Previous** / **Next** (or **Download** on the last step) controls share one sticky header row—the timeline sits between the side buttons—and the header stays fixed at the top of the scroll area while step content scrolls beneath
+  * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters); URL and File upload show an info alert that they are not implemented yet and coming soon
+  * **Next** on Job (Manual): the right side button in the sticky step row; validates the Job Description (inline error if empty); runs **Noise Filter** silently in the background (textarea unchanged); calls **AI Verdict** with the user’s saved Verdict Prompt plus extraction instructions; fullscreen loading while the request runs; on success persists token usage, saves accepted Markdown, toasts success, and advances to **Workflow**; on failure stays on Job and toasts the error
+  * **Workflow** step: read-only **AI Verdict result** Markdown panel at the top (from the accepted Job-step result); then a **Workflow** section with a single-select table (all workflows loaded at once; no search or pagination). Row click selects; View opens read-only workflow detail. **Previous** and **Next** in the sticky step row return to Job and advance respectively; **Next** stays enabled and validates inline (one workflow selected) before advancing
   * **Workflow** **Next** runs **AI Resume generation** with the noise-filtered Job Description, accepted AI Verdict Markdown, selected workflow, and saved Generate Prompt; fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on Workflow and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
   * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, workflow selection, generated resume JSON) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
-  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; footer **Prev** returns to Workflow; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume
+  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; **Previous** in the sticky step row returns to Workflow; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume
 * **Settings**
   * Theme (Dark / Light)
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
@@ -241,6 +241,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-05):** Workflows store PCEW selections; `workflowMetadata` removed; Generate timeline Job → Workflow → Generate. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-22-redefine-workflows.md`](./plans/2026-09-05-phase-22-redefine-workflows.md).
 * [x] **Phase 23 — Refine sidebar and Prompts** — Rename Verdict to **Prompts** (`/prompts`) with Verdict Prompt and Generate Prompt. Sidebar sections **Workspace** and **Run** (Generate under Run); section labels use normal title case.
   * **Outcome (2026-09-05):** `/prompts` page and API; `generatePrompt` on `verdicts`; Generate prerequisite checks both prompts. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-23-sidebar-prompts.md`](./plans/2026-09-05-phase-23-sidebar-prompts.md).
+* [x] **Phase 24 — Generate sticky header and side navigation** — Sticky page title and timeline; large round chevron (and download on the last step) controls in side gutters alongside step content.
+  * **Outcome (2026-09-05):** Sticky title + `GenerateTimeline`; `GenerateStepNav` three-column layout with sticky vertically centered side buttons. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-24-generate-side-nav.md`](./plans/2026-09-05-phase-24-generate-side-nav.md).
 
 ## Cursor Rules (Documentation Governance)
 

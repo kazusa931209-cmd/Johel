@@ -11,6 +11,11 @@ import {
 import { GenerateTimeline } from "@/components/generate/GenerateTimeline";
 import { GenerateJobStep } from "@/components/generate/GenerateJobStep";
 import { GenerateWorkflowStep } from "@/components/generate/GenerateWorkflowStep";
+import {
+  GenerateStepNavNextButton,
+  GenerateStepNavPrevButton,
+  GenerateStepNavProvider,
+} from "@/components/generate/GenerateStepNav";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
 import { validateWorkflowSelection } from "@/components/generate/pcew-types";
 import {
@@ -142,37 +147,52 @@ export default function GeneratePage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-4xl flex-col gap-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Generate</h1>
-        <p className="text-sm text-muted">
-          Prepare the Job Description, then choose a workflow preset.
-        </p>
-      </div>
-      <GenerateTimeline active={activeStep} />
-      {activeStep === "Job" ? (
-        <GenerateJobStep
-          job={job}
-          onJobChange={setJob}
-          onAdvanceToWorkflow={() => setActiveStep("Workflow")}
-        />
-      ) : null}
-      {activeStep === "Workflow" ? (
-        <GenerateWorkflowStep
-          acceptedMarkdown={job.acceptedMarkdown}
-          selection={workflow}
-          generating={generatingResume}
-          onSelectionChange={setWorkflow}
-          onPrev={() => setActiveStep("Job")}
-          onNext={onWorkflowNext}
-        />
-      ) : null}
-      {activeStep === "Generate" ? (
-        <GenerateGenerateStep
-          resume={resume}
-          onPrev={() => setActiveStep("Workflow")}
-        />
-      ) : null}
-    </section>
+    <GenerateStepNavProvider>
+      <section className="mx-auto w-full max-w-4xl">
+        <div className="sticky top-[-24] z-10 -mx-6 -mt-6 border-b border-border bg-background px-6 pt-6 pb-4">
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-semibold tracking-tight">
+                Generate
+              </h1>
+              <p className="text-sm text-muted">
+                Prepare the Job Description, then choose a workflow preset.
+              </p>
+            </div>
+            <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-3">
+              <GenerateStepNavPrevButton />
+              <GenerateTimeline active={activeStep} />
+              <GenerateStepNavNextButton />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-6">
+          {activeStep === "Job" ? (
+            <GenerateJobStep
+              job={job}
+              onJobChange={setJob}
+              onAdvanceToWorkflow={() => setActiveStep("Workflow")}
+            />
+          ) : null}
+          {activeStep === "Workflow" ? (
+            <GenerateWorkflowStep
+              acceptedMarkdown={job.acceptedMarkdown}
+              selection={workflow}
+              generating={generatingResume}
+              onSelectionChange={setWorkflow}
+              onPrev={() => setActiveStep("Job")}
+              onNext={onWorkflowNext}
+            />
+          ) : null}
+          {activeStep === "Generate" ? (
+            <GenerateGenerateStep
+              resume={resume}
+              onPrev={() => setActiveStep("Workflow")}
+            />
+          ) : null}
+        </div>
+      </section>
+    </GenerateStepNavProvider>
   );
 }

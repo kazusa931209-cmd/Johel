@@ -106,8 +106,6 @@ export default function WorkflowsPage() {
               <th className="px-3 py-2 font-medium">No</th>
               <th className="px-3 py-2 font-medium">Name</th>
               <th className="px-3 py-2 font-medium">Description</th>
-              <th className="px-3 py-2 font-medium">Used</th>
-              <th className="px-3 py-2 font-medium">Created</th>
               <th className="px-3 py-2 font-medium">Updated</th>
               <th className="px-3 py-2 font-medium" />
             </tr>
@@ -115,13 +113,13 @@ export default function WorkflowsPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-muted">
+                <td colSpan={5} className="px-3 py-8 text-center text-muted">
                   Loading…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-muted">
+                <td colSpan={5} className="px-3 py-8 text-center text-muted">
                   No workflows yet.
                 </td>
               </tr>
@@ -145,10 +143,6 @@ export default function WorkflowsPage() {
                   <td className="px-3 py-2 font-medium">{row.name}</td>
                   <td className="max-w-[220px] truncate px-3 py-2 text-muted">
                     {row.description ?? ""}
-                  </td>
-                  <td className="px-3 py-2">{row.used}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-muted">
-                    {formatDate(row.createdAt)}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-muted">
                     {formatDate(row.updatedAt)}
