@@ -10,7 +10,7 @@ Use exactly these three top-level sections in this order:
 
 ## Verdict
 
-Answer the Verdict instructions above exactly. Echo each question or bullet from those instructions, then write the answer directly below each item (same Markdown list structure as the instructions). Do not invent answers; use "Not found" when the Job Description does not contain enough information.
+Answer the Verdict instructions above exactly. For each question or bullet from those instructions, output a \`###\` heading with the question text, then the answer directly below it. Use a single paragraph for short answers. Use a bullet list (\`-\`) only when the answer has multiple items (e.g. a list of technologies). Do not use top-level \`-\` bullets for questions in this section. Do not invent answers; use "Not found" when the Job Description does not contain enough information.
 
 ## Job
 
@@ -24,7 +24,8 @@ If a field is missing, write "Not found" for that item rather than inventing dat
 Preserve technical terms exactly as written.`;
 
 const CURSOR_PROVIDER_NOTES = `Provider notes (Cursor AI Agent):
-- Prefer concise bullet lists under each section.
+- In the Verdict section, use \`###\` per question followed by the answer (paragraph or sub-bullet list).
+- Prefer concise bullet lists under Job and Company sections.
 - Keep the Markdown headings exactly as specified above.`;
 
 const PROMPTS: Record<AiProviderId, string> = {

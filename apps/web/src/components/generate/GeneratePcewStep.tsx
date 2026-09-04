@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
 import { PcewSection } from "@/components/generate/PcewSection";
@@ -113,9 +113,7 @@ export function GeneratePcewStep({
         <div className="space-y-2">
           <h3 className="text-sm font-medium">AI Verdict result</h3>
           <div className="max-h-[40vh] overflow-y-auto rounded-md border border-border bg-background px-3 py-3">
-            <div className="prose prose-sm max-w-none dark:prose-invert [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_li]:my-0.5 [&_p]:my-1.5 [&_ul]:my-2">
-              <ReactMarkdown>{acceptedMarkdown}</ReactMarkdown>
-            </div>
+            <AiVerdictMarkdown markdown={acceptedMarkdown} />
           </div>
         </div>
       ) : null}

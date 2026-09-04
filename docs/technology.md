@@ -157,8 +157,8 @@ User browser (:4041)
 - `POST /ai-verdict` — body `{ jobDescription }` (1–10,000 chars; client sends noise-filtered text); requires saved Settings provider/apiKey and non-empty `verdicts.verdictPrompt`; system prompt = user Verdict Prompt + extraction rules; returns `{ markdown, usage, tokenUsed }`
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`)
-- Markdown output sections (in order): `## Verdict` (echo user questions + answers), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
-- Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; PCEW renders result with `react-markdown`; `AiUsageProvider` refreshes header total after success
+- Markdown output sections (in order): `## Verdict` (each user question as `###` heading + answer paragraph or sub-bullet list), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
+- Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; PCEW renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography`); `AiUsageProvider` refreshes header total after success
 - **Note:** Phase 13 introduced this as `POST /ai-filter`; Phase 19 renamed to `ai-verdict` and wired into Generate Job **Next**
 
 ## Verdict settings (Phase 18)

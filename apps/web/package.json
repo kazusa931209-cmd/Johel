@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "next": "15.5.25",
     "node-html-parser": "^9.0.3",
     "react": "19.1.0",
