@@ -85,7 +85,7 @@ export function PcewSection<T extends { id: string }>({
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-border">
+      <div className="overflow-x-auto overflow-y-hidden rounded-lg border border-border">
         <table className={`w-full ${minWidthClass} text-left text-sm`}>
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>

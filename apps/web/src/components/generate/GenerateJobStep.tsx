@@ -5,6 +5,7 @@ import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { AiFilterResultDialog } from "@/components/generate/AiFilterResultDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
+import type { GenerateJobState } from "@/lib/generate-session";
 import {
   JOB_ROLLBACK_MAX,
   JOB_TEXT_MAX,
@@ -12,9 +13,9 @@ import {
 } from "@/lib/jobNoiseFilter";
 import { runAiFilter, type AiFilterUsage } from "@/lib/api";
 
-type InputMethod = "url" | "file" | "manual";
-
 type GenerateJobStepProps = {
+  job: GenerateJobState;
+  onJobChange: (job: GenerateJobState) => void;
   onAdvanceToPcew: () => void;
 };
 
@@ -30,30 +31,35 @@ function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
   );
 }
 
-export function GenerateJobStep({ onAdvanceToPcew }: GenerateJobStepProps) {
+export function GenerateJobStep({
+  job,
+  onJobChange,
+  onAdvanceToPcew,
+}: GenerateJobStepProps) {
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
-  const [method, setMethod] = useState<InputMethod>("manual");
-  const [jobText, setJobText] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
+  const { method, jobText, history, acceptedMarkdown } = job;
   const [aiFiltering, setAiFiltering] = useState(false);
   const [aiResult, setAiResult] = useState<{
     markdown: string;
     usage: AiFilterUsage;
   } | null>(null);
-  const [acceptedMarkdown, setAcceptedMarkdown] = useState<string | null>(null);
+
+  function updateJob(patch: Partial<GenerateJobState>) {
+    onJobChange({ ...job, ...patch });
+  }
 
   function setJobTextCapped(value: string) {
-    setJobText(value.slice(0, JOB_TEXT_MAX));
+    updateJob({ jobText: value.slice(0, JOB_TEXT_MAX) });
   }
 
   function pushHistory(previous: string) {
-    setHistory((current) => {
-      const next = [...current, previous];
-      if (next.length > JOB_ROLLBACK_MAX) {
-        return next.slice(next.length - JOB_ROLLBACK_MAX);
-      }
-      return next;
+    const next = [...history, previous];
+    updateJob({
+      history:
+        next.length > JOB_ROLLBACK_MAX
+          ? next.slice(next.length - JOB_ROLLBACK_MAX)
+          : next,
     });
   }
 
@@ -103,16 +109,13 @@ export function GenerateJobStep({ onAdvanceToPcew }: GenerateJobStepProps) {
   }
 
   function onRollback() {
-    setHistory((current) => {
-      if (current.length === 0) return current;
-      const next = [...current];
-      const previous = next.pop();
-      if (previous != null) {
-        setJobText(previous);
-        toast("Rolled back to previous version.", "success");
-      }
-      return next;
-    });
+    if (history.length === 0) return;
+    const next = [...history];
+    const previous = next.pop();
+    if (previous != null) {
+      updateJob({ jobText: previous, history: next });
+      toast("Rolled back to previous version.", "success");
+    }
   }
 
   return (
@@ -137,7 +140,7 @@ export function GenerateJobStep({ onAdvanceToPcew }: GenerateJobStepProps) {
           <button
             key={id}
             type="button"
-            onClick={() => setMethod(id)}
+            onClick={() => updateJob({ method: id })}
             className={`rounded-md px-3 py-1.5 text-sm ${
               method === id
                 ? "bg-surface-muted font-medium text-foreground"
@@ -216,7 +219,7 @@ export function GenerateJobStep({ onAdvanceToPcew }: GenerateJobStepProps) {
             void onAiFilter();
           }}
           onNext={() => {
-            setAcceptedMarkdown(aiResult.markdown);
+            updateJob({ acceptedMarkdown: aiResult.markdown });
             setAiResult(null);
             toast("AI Filter result accepted.", "success");
             onAdvanceToPcew();

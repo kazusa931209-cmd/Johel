@@ -46,7 +46,7 @@ User browser (:4041)
 - Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-filter`, `GET /ai-usage/summary`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
-- Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `filteringPrompt`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`)
+- Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
 - Prisma `WorkflowMetadata` → table `workflowMetadata`: `id`, `workflowId`, `key`, `rulePrompt?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, key)`; cascade delete with workflow
 - Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `education?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
@@ -100,14 +100,12 @@ User browser (:4041)
 
 ## Workflows (Phase 6–7)
 
-- `GET /workflows?q=&page=` — page size 10; lean list items (no metadata / filteringPrompt)
+- `GET /workflows?q=&page=` — page size 10; lean list items (no metadata)
 - Each list item includes `used` from a **post-query aggregation** by `workflowId` (not stored on `Workflow`). No usage rows yet → `used` is 0.
 - `GET /workflows/:id` — full detail for the editor (owner only)
-- `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, filteringPrompt, metadata }`; on write, delete existing `workflowMetadata` rows for the workflow and insert the submitted list
+- `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, metadata }`; on write, delete existing `workflowMetadata` rows for the workflow and insert the submitted list
 - Language codes: `en`, `ja`, `zh-TW`, `zh-CN`, `ko` (default `en`)
 - Metadata lives in `workflowMetadata` (not `metadataJson`); keys unique per workflow; rulePrompt max 1024
-- Default filtering prompt text (Use Default): `Keep only Job & Job post company information`
-- Filtering prompt placeholder: `Process and filter the Job Description.`
 - Web routes: `/workflows` list; `/workflows/new` add; `/workflows/[id]/edit` edit; editor has back beside title; footer Cancel/Save persist the whole workflow; metadata edits are local until Save
 
 ## Profiles (Phase 8)
@@ -140,13 +138,14 @@ User browser (:4041)
 - Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
 
-## Generate UI (Phase 11–14)
+## Generate UI (Phase 11–17)
 
 - Route `/` gates on existing list totals: at least one profile, company, experience, and workflow; otherwise a centered alert with links (not a toast)
-- Timeline steps: Job → PCEW → Verdict → Company → Generate (Job and PCEW interactive; later steps are placeholders)
+- Timeline steps: Job → PCEW → Generate (Job and PCEW interactive; Generate placeholder)
 - Job UI: Manual / URL / File tabs; Manual has Job text max 10,000 chars, Noise Filter, AI Filter, Rollback; URL and File tabs show an info alert (“not implemented yet / coming soon”) instead of inputs
 - AI Filter **Next** accepts the Markdown result and sets `activeStep` to PCEW
-- PCEW: four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); loads all items via list APIs with `page=null` (or `limit=null`); checkbox column instead of row numbers; row click selects/toggles; `ViewButton` (eye icon) opens existing read-only detail dialogs; `validatePcewSelection` on Next; selection kept in page state (`PcewSelection`: `profileId`, `companyIds[]`, `experienceIds[]`, `workflowId`)
+- PCEW: four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); loads all items via list APIs with `page=null` (or `limit=null`); checkbox column instead of row numbers; row click selects/toggles; `ViewButton` (eye icon) opens existing read-only detail dialogs; `validatePcewSelection` on Next; selection kept in page state (`PcewSelection`: `profileId`, `companyIds[]`, `experienceIds[]`, `workflowId`); table wrappers use `overflow-x-auto overflow-y-hidden` so only the studio main pane scrolls vertically; **Next** advances to Generate
+- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, and PCEW selection; restored after refresh or navigation until the run is cleared or finished; legacy stored steps `Verdict` / `Company` normalize to `Generate` on load
 - List APIs (`GET /profiles`, `/companies`, `/experiences`, `/workflows`): `page=null` or `limit=null` returns all matching items; default pagination unchanged (`page` defaults to 1, page size 10)
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …` from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GeneratePcewStep`, `PcewSection`, `pcew-types`)

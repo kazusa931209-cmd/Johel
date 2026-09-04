@@ -7,7 +7,7 @@ CREATE TABLE "new_Workflow" (
     "name" TEXT NOT NULL,
     "description" TEXT,
     "language" TEXT NOT NULL DEFAULT 'en',
-    "filteringPrompt" TEXT NOT NULL DEFAULT '',
+    "verdictPrompt" TEXT NOT NULL DEFAULT '',
     "metadataJson" TEXT NOT NULL DEFAULT '[]',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,

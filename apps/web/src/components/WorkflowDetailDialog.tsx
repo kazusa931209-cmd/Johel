@@ -56,10 +56,6 @@ export function WorkflowDetailDialog({
             label="Language"
             value={languageLabel(detail.language)}
           />
-          <DetailField
-            label="Filtering Prompt"
-            value={detail.filteringPrompt}
-          />
           <DetailField label="Used" value={detail.used} />
           <DetailField
             label="Created"

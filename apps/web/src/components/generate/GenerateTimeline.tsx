@@ -1,12 +1,6 @@
 "use client";
 
-export const GENERATE_STEPS = [
-  "Job",
-  "PCEW",
-  "Verdict",
-  "Company",
-  "Generate",
-] as const;
+export const GENERATE_STEPS = ["Job", "PCEW", "Generate"] as const;
 
 export type GenerateStep = (typeof GENERATE_STEPS)[number];
 
@@ -16,8 +10,11 @@ type GenerateTimelineProps = {
 
 export function GenerateTimeline({ active }: GenerateTimelineProps) {
   return (
-    <nav aria-label="Generate steps" className="w-full overflow-x-auto">
-      <ol className="flex min-w-[520px] items-center gap-1">
+    <nav
+      aria-label="Generate steps"
+      className="w-full overflow-x-auto overflow-y-hidden"
+    >
+      <ol className="flex min-w-[320px] items-center gap-1">
         {GENERATE_STEPS.map((step, index) => {
           const isActive = step === active;
           return (

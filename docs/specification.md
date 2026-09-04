@@ -11,29 +11,25 @@
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
 * **Companies** — One user can manage **multiple companies** (name, description, priority, and metadata).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
-* **Workflows** — One user can manage **multiple workflows** (language, filtering prompt, metadata extraction rules, and related settings).
+* **Workflows** — One user can manage **multiple workflows** (language, metadata extraction rules, and related settings).
 
 ### End-to-end flow
 
 A generation run combines:
 
-**one Profile** + **Shared Experiences** + **one Workflow** → **Job Description** → **Filtering** → **Review** → **Decision** (go ahead or not) → **Generate**
+**one Profile** + **Shared Experiences** + **one Workflow** → **Job Description** → **Filtering** → **PCEW** → **Generate**
 
 ```text
 Profile (one of many)
         \
-Shared Experiences ----→ Job Description → Filtering → Review → Decision → Generate
-        /                                                    │
-Workflow (one of many)                                       ├─ Go ahead → Generate résumé
-                                                             └─ Stop / revise inputs
+Shared Experiences ----→ Job Description → Filtering → PCEW → Generate
+        /
+Workflow (one of many)
 ```
 
-1. **Select inputs** — Choose one profile, use the user’s shared experiences, and choose one workflow.
-2. **Job Description** — Provide the JD (URL, file, or manual input).
-3. **Filtering** — Apply the workflow’s filtering prompt (and related rules) to the Job Description.
-4. **Review** — User reviews filtered JD content, extracted metadata, and related company information as applicable.
-5. **Decision** — User chooses to **go ahead** or not (stop / revise before generating).
-6. **Generate** — If the user goes ahead, generate the résumé from the reviewed inputs (profile, shared experiences, filtered JD / metadata, and workflow settings).
+1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
+2. **PCEW** — Choose one profile, one or more companies, one or more shared experiences, and one workflow.
+3. **Generate** — Generate the résumé from the filtered JD and selected inputs.
 
 ## Deployment
 
@@ -67,17 +63,15 @@ Aligned with the product flow above:
 1. Process and filter the Job Description (using the selected workflow).
 2. Extract the metadata that the user is interested in (workflow metadata rules).
 3. Allow the user to review and confirm the filtered information and extracted metadata.
-4. Extract information about the company that posted the job and present it to the user for review.
-5. User decides whether to **go ahead** with generation or stop / revise.
-6. Generate a Resume based on:
+4. Generate a Resume based on:
 
    * Selected profile
+   * Selected companies
    * Shared experiences
    * Filtered Job Description / confirmed metadata
-   * Company information (when available)
    * Selected workflow settings
-7. Allow the user to review and edit the generated Resume.
-8. Allow the user to download the final Resume as:
+5. Allow the user to review and edit the generated Resume.
+6. Allow the user to download the final Resume as:
 
    * PDF
    * DOCX
@@ -169,14 +163,16 @@ Aligned with the product flow above:
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
   * Metadata add/edit/delete is local on the page until Save persists the workflow
-  * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean), filtering prompt (required; placeholder reflects Job Description Processing step 1 — “Process and filter the Job Description.”; Use Default fills the default prompt; Reset clears), metadata table (Key required; Rule prompt optional, max 1024)
+  * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean), metadata table (Key required; Rule prompt optional, max 1024)
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Profile, one Company, one Experience, and one Workflow. If any are missing, a centered alert lists what is missing with links to those Workspace pages
-  * When ready, a timeline shows steps: Job → PCEW → Verdict → Company → Generate
+  * When ready, a timeline shows steps: Job → PCEW → Generate
   * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters), **Noise Filter** (deterministic multi-stage pipeline — not AI), **AI Filter** (uses the user’s configured AI Agent Provider to extract Job and Job post Company & contacts as Markdown), and **Rollback** (up to 3 previous versions); URL and File upload show an info alert that they are not implemented yet and coming soon
   * **AI Filter** shows a fullscreen loading indicator and prevents another AI Filter click until the request finishes. On success, a result dialog renders Markdown output. Backdrop click does not close this dialog. Footer actions: **Discard** (danger), **Retry** (secondary), **Next** (primary). **Next** accepts the result and advances the timeline to **PCEW**. Token usage from each run is persisted and aggregated into the header **Token Used** total
   * **PCEW** step (Profiles + Companies + Experiences + Workflow): four sections with tables (all items loaded at once; no search or pagination in this step). **Profile** — single row selection with a checkbox column; row click selects; **View** (eye icon) opens a read-only profile detail dialog. **Companies** — multi row selection with checkboxes; row click toggles selection; View opens read-only company detail. **Experiences** — multi row selection with checkboxes; row click toggles selection; View opens read-only experience detail. **Workflow** — single row selection with checkbox; row click selects; View opens read-only workflow detail. Footer **Prev** returns to Job; **Next** stays enabled and validates inline (one profile, at least one company, at least one experience, one workflow) before advancing
+  * An in-progress Generate run (step, Job inputs, accepted AI Filter result, PCEW selection) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
+  * **PCEW** **Next** advances to **Generate** (Generate step is not implemented yet)
 * **Settings**
   * Theme (Dark / Light)
   * **AI Agent**: provider (currently **Cursor AI Agent** only) and the user’s **API key**
@@ -201,7 +197,7 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Settings persist a per-user Cursor API key (masked on display). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-5-ai-agent-settings.md`](./plans/2026-09-04-phase-5-ai-agent-settings.md).
 * [x] **Phase 6 — Workspace workflows** — Workspace has always-open submenus **Workflows** and **Generate**. Workflows is a per-user list (name, optional description, used count, dates) with keyword filter, pagination, add, edit, and delete.
   * **Outcome (2026-09-04):** Workflows list and Generate placeholder. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-6-workspace-workflows.md`](./plans/2026-09-04-phase-6-workspace-workflows.md).
-* [x] **Phase 7 — Workflow editor** — Creating or editing a workflow uses a dedicated page (not a dialog). The form includes name, optional description, language, filtering prompt, and a metadata key/rule table. Save persists via the API.
+* [x] **Phase 7 — Workflow editor** — Creating or editing a workflow uses a dedicated page (not a dialog). The form includes name, optional description, language, verdict prompt, and a metadata key/rule table. Save persists via the API.
   * **Outcome (2026-09-04):** Dedicated `/workflows/new` and `/workflows/[id]/edit` pages with shared form. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-7-workflow-editor.md`](./plans/2026-09-04-phase-7-workflow-editor.md).
 * [x] **Phase 8 — Workspace profiles** — Workspace includes **Profiles** (above Workflows). Per-user profiles list with search, pagination, add, edit, and delete. Add/edit use dedicated pages; Links work like workflow Metadata (local until Save).
   * **Outcome (2026-09-04):** Profiles list and editor with `profiles` / `profileLinks`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-8-workspace-profiles.md`](./plans/2026-09-04-phase-8-workspace-profiles.md).
@@ -217,6 +213,12 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Cursor provider adapter, `POST /ai-filter`, `GET /ai-usage/summary`, Markdown result dialog. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-13-ai-filter.md`](./plans/2026-09-04-phase-13-ai-filter.md).
 * [x] **Phase 14 — Generate PCEW step** — PCEW timeline step with Profile (single select), Companies (multi), Experiences (multi), and Workflow (single) tables; row click for selection; View (eye icon) for read-only detail dialogs; Prev / Next with inline validation; AI Filter **Next** advances to PCEW.
   * **Outcome (2026-09-04):** `GeneratePcewStep`, shared `PcewSection` / `ViewButton`; session selection in page state. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-14-generate-pcew.md`](./plans/2026-09-04-phase-14-generate-pcew.md).
+* [x] **Phase 15 — Generate session persistence** — Remember in-progress Generate run (timeline step, Job state, PCEW selection) across refresh and navigation via per-user `sessionStorage` until the run finishes or is cleared; fix double vertical scrollbar on PCEW.
+  * **Outcome (2026-09-04):** `generate-session.ts`, `useGenerateSession`; PCEW table wrappers use horizontal-only overflow. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-15-generate-session-persistence.md`](./plans/2026-09-04-phase-15-generate-session-persistence.md).
+* [x] **Phase 16 — Generate Verdict step** — Verdict timeline step runs the configured AI Agent with a simple system prompt and an editable session-only Verdict Prompt (initialized from workflow; never writes back); Run / Retry; Prev / Next; persist result and tokens.
+  * **Outcome (2026-09-04):** `POST /verdict`, `ai-verdict` adapters, `GenerateVerdictStep`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-16-generate-verdict.md`](./plans/2026-09-04-phase-16-generate-verdict.md).
+* [x] **Phase 17 — Generate three steps** — Collapse Generate timeline to Job → PCEW → Generate; remove Verdict and Company steps, the verdict runner, and workflow Verdict Prompt (editor, API, database).
+  * **Outcome (2026-09-04):** Three-step timeline; verdict code and `workflows.verdictPrompt` removed. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-17-generate-three-steps.md`](./plans/2026-09-04-phase-17-generate-three-steps.md).
 
 ## Cursor Rules (Documentation Governance)
 

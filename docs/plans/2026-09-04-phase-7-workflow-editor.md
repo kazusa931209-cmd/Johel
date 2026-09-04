@@ -4,9 +4,9 @@
 
 Add to [docs/specification.md](../specification.md):
 
-- **Phase 7 — Workflow editor** — Creating or editing a workflow uses a dedicated page (not a dialog). The form includes name, optional description, language, filtering prompt, and a metadata key/rule table. Save persists via the API.
+- **Phase 7 — Workflow editor** — Creating or editing a workflow uses a dedicated page (not a dialog). The form includes name, optional description, language, verdict prompt, and a metadata key/rule table. Save persists via the API.
 
-Grow Workflows UX bullets: languages listed; filtering prompt default/reset; metadata Key + optional Rule prompt (max 1024).
+Grow Workflows UX bullets: languages listed; verdict prompt default/reset; metadata Key + optional Rule prompt (max 1024).
 
 ## Routes (web)
 
@@ -23,7 +23,7 @@ Grow Workflows UX bullets: languages listed; filtering prompt default/reset; met
 | Name | required string |
 | Description | optional textarea |
 | Language | select; default **English** |
-| Filtering Prompt | required textarea; placeholder `Keep only Job & Job post company information`; **Use Default** fills that text; **Reset** clears the field |
+| Verdict Prompt | required textarea; placeholder `Keep only Job & Job post company information`; **Use Default** fills that text; **Reset** clears the field |
 | Metadata | table: Key (required), Rule prompt (optional, max 1024); Add + Edit + Delete |
 
 Language values (codes → labels):
@@ -39,16 +39,16 @@ Language values (codes → labels):
 Extend Prisma `Workflow` (migrate):
 
 - `language` String (default `en`)
-- `filteringPrompt` String
+- `verdictPrompt` String
 - `metadataJson` String — JSON array `[{ "key": string, "rulePrompt": string | null }]`
 
 Extend write body and responses:
 
-- `POST /workflows` / `PUT /workflows/:id` accept `{ name, description?, language, filteringPrompt, metadata }`
+- `POST /workflows` / `PUT /workflows/:id` accept `{ name, description?, language, verdictPrompt, metadata }`
 - `GET /workflows/:id` — full detail for the edit page (owner only)
-- List `GET /workflows` stays lean (no need to return metadata/filteringPrompt in the table)
+- List `GET /workflows` stays lean (no need to return metadata/verdictPrompt in the table)
 
-Validate: language enum; filteringPrompt min 1; metadata keys non-empty; rulePrompt max 1024; unique keys within one workflow.
+Validate: language enum; verdictPrompt min 1; metadata keys non-empty; rulePrompt max 1024; unique keys within one workflow.
 
 Toast on Save success/error and on edit-page load failure (spec rule 9). Metadata Add/Edit/Delete are local until Save — no toast unless they later call the API.
 

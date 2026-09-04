@@ -22,7 +22,6 @@ const writeSchema = z.object({
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional().nullable(),
   language: z.enum(LANGUAGES),
-  filteringPrompt: z.string().trim().min(1).max(10000),
   metadata: z.array(metadataItemSchema).max(100),
 });
 
@@ -36,7 +35,6 @@ type WorkflowWithMetadata = {
   name: string;
   description: string | null;
   language: string;
-  filteringPrompt: string;
   createdAt: Date;
   updatedAt: Date;
   metadata: {
@@ -94,7 +92,6 @@ function toDetail(row: WorkflowWithMetadata, used: number) {
     name: row.name,
     description: row.description,
     language: row.language,
-    filteringPrompt: row.filteringPrompt,
     metadata: [...row.metadata]
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((item) => ({
@@ -215,7 +212,6 @@ workflowsRoutes.post("/", async (c) => {
         name: parsed.data.name,
         description: parsed.data.description || null,
         language: parsed.data.language,
-        filteringPrompt: parsed.data.filteringPrompt,
       },
     });
     await replaceMetadata(tx, created.id, metadata.value);
@@ -261,7 +257,6 @@ workflowsRoutes.put("/:id", async (c) => {
         name: parsed.data.name,
         description: parsed.data.description || null,
         language: parsed.data.language,
-        filteringPrompt: parsed.data.filteringPrompt,
       },
     });
     await replaceMetadata(tx, id, metadata.value);

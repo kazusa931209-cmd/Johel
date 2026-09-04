@@ -1,10 +1,3 @@
-export const DEFAULT_FILTERING_PROMPT =
-  "Keep only Job & Job post company information";
-
-/** Empty-field hint for Filtering Prompt (Job Description Processing step 1). */
-export const FILTERING_PROMPT_PLACEHOLDER =
-  "Process and filter the Job Description.";
-
 export const WORKFLOW_LANGUAGES = [
   { value: "en", label: "English" },
   { value: "ja", label: "Japanese" },
@@ -25,7 +18,6 @@ export type WorkflowDetail = {
   name: string;
   description: string | null;
   language: WorkflowLanguage | string;
-  filteringPrompt: string;
   metadata: WorkflowMetadataItem[];
   used: number;
   createdAt: string;
@@ -36,6 +28,5 @@ export type WorkflowWritePayload = {
   name: string;
   description?: string | null;
   language: WorkflowLanguage;
-  filteringPrompt: string;
   metadata: WorkflowMetadataItem[];
 };

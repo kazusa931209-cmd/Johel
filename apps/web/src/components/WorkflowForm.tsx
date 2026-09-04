@@ -12,8 +12,6 @@ import {
   type WorkflowWritePayload,
 } from "@/lib/api";
 import {
-  DEFAULT_FILTERING_PROMPT,
-  FILTERING_PROMPT_PLACEHOLDER,
   WORKFLOW_LANGUAGES,
   type WorkflowLanguage,
   type WorkflowMetadataItem,
@@ -27,7 +25,6 @@ type WorkflowFormProps = {
 
 type FieldErrors = {
   name?: string;
-  filteringPrompt?: string;
 };
 
 function RequiredMark() {
@@ -68,9 +65,6 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
   const [language, setLanguage] = useState<WorkflowLanguage>(
     (initial?.language as WorkflowLanguage) || "en",
   );
-  const [filteringPrompt, setFilteringPrompt] = useState(
-    initial?.filteringPrompt ?? "",
-  );
   const [metadata, setMetadata] = useState<WorkflowMetadataItem[]>(
     initial?.metadata ?? [],
   );
@@ -83,9 +77,6 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     if (!name.trim()) {
       nextErrors.name = "Name is required.";
     }
-    if (!filteringPrompt.trim()) {
-      nextErrors.filteringPrompt = "Filtering Prompt is required.";
-    }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -95,7 +86,6 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       name: name.trim(),
       description: description.trim() || null,
       language,
-      filteringPrompt: filteringPrompt.trim(),
       metadata,
     };
     setSaving(true);
@@ -129,7 +119,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure language, filtering, and metadata for this workflow.
+          Configure language and metadata for this workflow.
         </p>
       </div>
 
@@ -179,56 +169,6 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
           <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
         </div>
       </label>
-
-      <div className="space-y-2 text-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span>
-            Filtering Prompt
-            <RequiredMark />
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setFilteringPrompt(DEFAULT_FILTERING_PROMPT);
-                if (fieldErrors.filteringPrompt) {
-                  setFieldErrors((errors) => ({
-                    ...errors,
-                    filteringPrompt: undefined,
-                  }));
-                }
-              }}
-              className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
-            >
-              Use Default
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilteringPrompt("")}
-              className="rounded-md border border-border px-2 py-1 text-xs hover:bg-surface-muted"
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-        <textarea
-          value={filteringPrompt}
-          onChange={(e) => {
-            setFilteringPrompt(e.target.value);
-            if (fieldErrors.filteringPrompt) {
-              setFieldErrors((errors) => ({
-                ...errors,
-                filteringPrompt: undefined,
-              }));
-            }
-          }}
-          placeholder={FILTERING_PROMPT_PLACEHOLDER}
-          rows={4}
-          aria-invalid={Boolean(fieldErrors.filteringPrompt)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
-        />
-        <FieldError message={fieldErrors.filteringPrompt} />
-      </div>
 
       <WorkflowMetadataEditor metadata={metadata} onChange={setMetadata} />
 

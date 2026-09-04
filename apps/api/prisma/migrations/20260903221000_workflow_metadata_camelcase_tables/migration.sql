@@ -51,14 +51,14 @@ CREATE TABLE "new_workflows" (
     "name" TEXT NOT NULL,
     "description" TEXT,
     "language" TEXT NOT NULL DEFAULT 'en',
-    "filteringPrompt" TEXT NOT NULL DEFAULT '',
+    "verdictPrompt" TEXT NOT NULL DEFAULT '',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "workflows_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-INSERT INTO "new_workflows" ("id", "userId", "name", "description", "language", "filteringPrompt", "createdAt", "updatedAt")
-SELECT "id", "userId", "name", "description", "language", "filteringPrompt", "createdAt", "updatedAt"
+INSERT INTO "new_workflows" ("id", "userId", "name", "description", "language", "verdictPrompt", "createdAt", "updatedAt")
+SELECT "id", "userId", "name", "description", "language", "verdictPrompt", "createdAt", "updatedAt"
 FROM "workflows";
 
 DROP TABLE "workflows";
