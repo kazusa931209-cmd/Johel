@@ -25,7 +25,7 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | Resume export (later) | `docx`; `@react-pdf/renderer` or `pdf-lib` | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
 | Package manager | pnpm workspaces | Monorepo (`apps/api`, `apps/web`) |
-| Testing (later) | Vitest + Playwright | Unit / e2e when that work begins |
+| Testing | Vitest (+ Playwright later) | Unit tests for Noise Filter; e2e when that work begins |
 
 ## Architecture sketch
 
@@ -144,10 +144,24 @@ User browser (:4041)
 - Route `/` gates on existing list totals: at least one profile, company, experience, and workflow; otherwise a centered alert with links (not a toast)
 - Timeline steps (Job active only this phase): Job → PCEW → Verdict → Company → Generate
 - Job UI: Manual / URL / File tabs; Manual has Job text max 10,000 chars, Noise Filter, AI Filter stub, Rollback; URL and File tabs show an info alert (“not implemented yet / coming soon”) instead of inputs
-- Noise Filter: client `applyNoiseFilter` in `apps/web/src/lib/jobNoiseFilter.ts` (strip script/style/tags, decode entities, collapse whitespace); pushes prior text to a rollback stack (max 3)
 - Choose PCEW: dialog loads first page of list APIs; Apply keeps selection in page state only
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …`; raw count static `0` → `0K` this phase
 - Components under `apps/web/src/components/generate/`
+
+## Noise Filter (Phase 12)
+
+- Module: `apps/web/src/lib/noise-filter/` — pure TypeScript, synchronous, no network / LLM / DB
+- Public API: `noiseFilter(raw: string)` → `{ text, originalLength, currentLength, reductionRate, diagnostics }`
+  - `reductionRate = (originalLength - currentLength) / originalLength` (0 when empty)
+  - Each diagnostic: `{ filter, beforeLength, afterLength, removedLength }`
+- Pipeline order: Normalize → HTML → Markdown → Boilerplate → Duplicate → Navigation → Section
+- Filter contract: `{ name, apply(context): context }`; `createNoiseFilterPipeline(extraFilters?)` appends optional site-specific plugins later (DeJob, LinkedIn, etc.) without rewriting core
+- Configurable patterns in `config.ts` (boilerplate, navigation exact lines, section headings, footer boundaries)
+- Conservative / loss-aware: line-level and boundary-based removal; never global keyword nuking of technical terms
+- HTML: `node-html-parser` when input looks like HTML; strip script/style/noscript/svg/canvas/iframe/template and comments; regex fallback on parse failure
+- Compatibility: `apps/web/src/lib/jobNoiseFilter.ts` re-exports `JOB_TEXT_MAX` / `JOB_ROLLBACK_MAX` and `applyNoiseFilter` → `noiseFilter(input).text`
+- Generate Job toast includes reduction % and before→after char counts (via `formatThousandsSeparated`)
+- Tests: Vitest (`pnpm --filter web test`); per-filter unit tests + BIT / Golang Engineer regression fixture under `__tests__/`
 
 ## Plans
 

@@ -8,9 +8,9 @@ import {
 } from "@/components/generate/ChoosePcewDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
 import {
-  applyNoiseFilter,
   JOB_ROLLBACK_MAX,
   JOB_TEXT_MAX,
+  noiseFilter,
 } from "@/lib/jobNoiseFilter";
 
 type InputMethod = "url" | "file" | "manual";
@@ -54,14 +54,18 @@ export function GenerateJobStep({ pcew, onPcewChange }: GenerateJobStepProps) {
   }
 
   function onNoiseFilter() {
-    const cleaned = applyNoiseFilter(jobText);
-    if (cleaned === jobText) {
+    const result = noiseFilter(jobText);
+    if (result.text === jobText) {
       toast("No noise to remove.", "info");
       return;
     }
     pushHistory(jobText);
-    setJobTextCapped(cleaned);
-    toast("Noise filter applied.", "success");
+    setJobTextCapped(result.text);
+    const pct = (result.reductionRate * 100).toFixed(1);
+    toast(
+      `Noise filter applied. Reduced ${pct}% (${formatThousandsSeparated(result.originalLength)} → ${formatThousandsSeparated(result.currentLength)} chars).`,
+      "success",
+    );
   }
 
   function onAiFilter() {

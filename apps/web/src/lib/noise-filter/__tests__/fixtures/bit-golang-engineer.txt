@@ -1,0 +1,78 @@
+[Job](https://dejob.ai/job)
+
+[Talent](https://dejob.ai/talent)
+
+[Enterprise Service](https://dejob.ai/enterprise-service/en/)
+
+[Investment](https://www.sanyuanlab.com/)
+
+[image](https://api.dejob.ai/images/default/14.png)
+
+0xfC5f...69Ad
+
+svg
+
+BIT
+
+[BIT](https://www.bit.com/)
+
+Golang Engineer
+
+USD 5,000 – 8,000/month
+
+Salary
+
+Cooperation:
+
+On-site
+
+Full Time
+
+Skills:
+
+支付
+U卡
+web3
+Golang
+Redis
+Kafka
+Kubernetes
+gRPC
+Protobuf
+
+Base:
+
+曼谷/吉隆坡
+Bangkok / Kuala Lumpur
+
+Job Description:
+
+卡支付方向
+
+岗位职责
+
+1、核心业务开发与 Golang 服务建设
+
+2、卡交易链路建设，使用 Redis、Kafka、Kubernetes、gRPC、Protobuf
+
+Job Requirements:
+
+基本条件
+
+1、本科及以上学历
+
+专业技能
+
+1、基础知识扎实，熟悉 Golang、Redis、Kafka、Kubernetes、gRPC、Protobuf
+
+Benefits:
+
+Bonus、体检、商业保险
+
+Company Overview:
+
+BIT is a digital asset financial services platform providing payment and wallet services.
+
+Privacy Policy
+
+Copyright © 2024 DeJob
