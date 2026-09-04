@@ -5,6 +5,7 @@ import type {
 import type { ProfileDetail, ProfileWritePayload } from "./profile";
 import type { CompanyDetail, CompanyWritePayload } from "./company";
 import type { ExperienceDetail, ExperienceWritePayload } from "./experience";
+import { AI_API_TIMEOUT_MS, API_TIMEOUT_MS } from "./api-timeout";
 
 export type {
   WorkflowDetail,
@@ -44,32 +45,53 @@ async function parseJson<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
 }
 
+type RequestOptions = RequestInit & {
+  timeoutMs?: number;
+};
+
 async function request<T>(
   path: string,
-  init?: RequestInit,
+  init?: RequestOptions,
 ): Promise<{ data?: T; error?: string; status: number }> {
-  const res = await fetch(`/backend${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
+  const { timeoutMs = API_TIMEOUT_MS, ...fetchInit } = init ?? {};
 
-  if (res.status === 204) {
-    return { status: res.status };
+  try {
+    const res = await fetch(`/backend${path}`, {
+      ...fetchInit,
+      credentials: "include",
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: {
+        "Content-Type": "application/json",
+        ...(fetchInit.headers ?? {}),
+      },
+    });
+
+    if (res.status === 204) {
+      return { status: res.status };
+    }
+
+    const body = await parseJson<T & ApiError>(res).catch(() => null);
+    if (!res.ok) {
+      return {
+        status: res.status,
+        error:
+          body && "error" in body && body.error ? body.error : "Request failed",
+      };
+    }
+
+    return { status: res.status, data: body as T };
+  } catch (error) {
+    const timedOut =
+      error instanceof Error &&
+      (error.name === "TimeoutError" || error.name === "AbortError");
+    if (timedOut) {
+      return {
+        status: 504,
+        error: "Request timed out. Please try again.",
+      };
+    }
+    return { status: 0, error: "Request failed" };
   }
-
-  const body = await parseJson<T & ApiError>(res).catch(() => null);
-  if (!res.ok) {
-    return {
-      status: res.status,
-      error: body && "error" in body && body.error ? body.error : "Request failed",
-    };
-  }
-
-  return { status: res.status, data: body as T };
 }
 
 export function getMe() {
@@ -331,6 +353,7 @@ export function runAiVerdict(jobDescription: string) {
   return request<AiVerdictResult>("/ai-verdict", {
     method: "POST",
     body: JSON.stringify({ jobDescription }),
+    timeoutMs: AI_API_TIMEOUT_MS,
   });
 }
 
@@ -353,9 +376,51 @@ export function runAiResume(payload: AiResumeRequest) {
   return request<AiResumeResult>("/ai-resume", {
     method: "POST",
     body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
   });
 }
 
 export function getAiUsageSummary() {
   return request<AiUsageSummary>("/ai-usage/summary");
+}
+
+export async function downloadResumeDocx(
+  resume: import("@johel/resume").GeneratedResume,
+): Promise<{ blob?: Blob; fileName?: string; error?: string; status: number }> {
+  try {
+    const res = await fetch("/backend/resume/docx", {
+      method: "POST",
+      credentials: "include",
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      return {
+        status: res.status,
+        error:
+          body && typeof body === "object" && "error" in body && body.error
+            ? String(body.error)
+            : "DOCX download failed.",
+      };
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get("Content-Disposition") ?? "";
+    const match = disposition.match(/filename="([^"]+)"/);
+    const fileName = match?.[1] ?? "resume.docx";
+    return { status: res.status, blob, fileName };
+  } catch (error) {
+    const timedOut =
+      error instanceof Error &&
+      (error.name === "TimeoutError" || error.name === "AbortError");
+    return {
+      status: timedOut ? 504 : 0,
+      error: timedOut
+        ? "Request timed out. Please try again."
+        : "DOCX download failed.",
+    };
+  }
 }

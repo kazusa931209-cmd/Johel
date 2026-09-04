@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `GET /ai-usage/summary`, `GET /verdict`, `PUT /verdict`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /verdict`, `PUT /verdict`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
@@ -63,7 +63,7 @@ User browser (:4041)
 
 - Package: `apps/web`
 - Listen: `http://127.0.0.1:4041`
-- Same-origin proxy: Next.js rewrite `/backend/:path*` → `http://127.0.0.1:4042/:path*`
+- Same-origin proxy: Next.js route handler `/backend/[...path]` → `API_ORIGIN` (default `http://127.0.0.1:4042`); proxy and client fetch timeout **300 seconds** (10× 30s baseline) via `apps/web/src/lib/api-timeout.ts`
 - Client calls `/backend/...` with `credentials: "include"` so the JWT cookie is set on the UI origin
 - Route groups:
   - `(auth)` — `/login`, `/register`
@@ -147,7 +147,7 @@ User browser (:4041)
 - Job UI (Manual): Job text max 10,000 chars + **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
 - Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text; fullscreen loading; on success saves `acceptedMarkdown`, refreshes header Token Used, toast, `activeStep` → PCEW; on error stays on Job
 - PCEW: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); loads all items via list APIs with `page=null` (or `limit=null`); checkbox column; row click selects/toggles; `ViewButton` (eye icon); `validatePcewSelection` on Next; **Next** runs `POST /ai-resume` (or reuses stored resume when inputs unchanged), fullscreen loading, then advances to Generate
-- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Prev** → PCEW; **Download** builds DOCX client-side from stored JSON via `buildResumeDocxBlob` (no AI call)
+- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Prev** → PCEW; **Download** calls `POST /resume/docx` with stored JSON and saves the returned `.docx` (server-side generation; no AI call)
 - In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state (`jobText`, `acceptedMarkdown`), PCEW selection, `resume` JSON, and `generationInputKey` fingerprint; changing Job or PCEW clears stored resume
 - List APIs (`GET /profiles`, `/companies`, `/experiences`, `/workflows`): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
@@ -181,7 +181,8 @@ User browser (:4041)
 - Workspace package: `packages/resume`
 - Canonical model: `GeneratedResume` (Zod schema in `domain/generated-resume.ts`)
 - `resumeToMarkdown(resume)` — deterministic Markdown for web display (main export)
-- `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` loaded separately (avoids bundling `docx` on pages that only need schema/markdown); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts`; shared `ResumeDocxStyle` in `docx-builder/styles.ts`
+- `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts`; shared `ResumeDocxStyle` in `docx-builder/styles.ts`
+- `POST /resume/docx` — body `{ resume }` (validated `GeneratedResume`); returns `.docx` attachment; used by Generate **Download**
 - Consumed by API (validation), web (display + download), and Vitest unit tests
 
 ## Noise Filter (Phase 12)

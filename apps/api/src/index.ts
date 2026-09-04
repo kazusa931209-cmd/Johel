@@ -10,6 +10,7 @@ import { companiesRoutes } from "./routes/companies.js";
 import { experiencesRoutes } from "./routes/experiences.js";
 import { aiResumeRoutes } from "./routes/ai-resume.js";
 import { aiVerdictRoutes } from "./routes/ai-verdict.js";
+import { resumeRoutes } from "./routes/resume.js";
 import { aiUsageRoutes } from "./routes/ai-usage.js";
 import { verdictRoutes } from "./routes/verdict.js";
 
@@ -32,6 +33,7 @@ app.route("/companies", companiesRoutes);
 app.route("/experiences", experiencesRoutes);
 app.route("/ai-resume", aiResumeRoutes);
 app.route("/ai-verdict", aiVerdictRoutes);
+app.route("/resume", resumeRoutes);
 app.route("/ai-usage", aiUsageRoutes);
 app.route("/verdict", verdictRoutes);
 

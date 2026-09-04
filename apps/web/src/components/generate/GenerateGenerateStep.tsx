@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { resumeToMarkdown } from "@johel/resume";
 import type { GeneratedResume } from "@johel/resume";
+import { downloadResumeDocx } from "@/lib/api";
 import { useToast } from "@/components/app/ToastProvider";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 
@@ -34,11 +35,18 @@ export function GenerateGenerateStep({
     if (!resume || downloading) return;
     setDownloading(true);
     try {
-      const { buildResumeDocxBlob } = await import("@johel/resume/docx");
-      const blob = await buildResumeDocxBlob(resume);
-      const url = URL.createObjectURL(blob);
+      const res = await downloadResumeDocx(resume);
+      if (!res.blob) {
+        toast(res.error ?? "DOCX download failed.", "error");
+        return;
+      }
+
+      const url = URL.createObjectURL(res.blob);
       const anchor = document.createElement("a");
-      const baseName = sanitizeFileName(resume.header.name) || "resume";
+      const baseName =
+        res.fileName?.replace(/\.docx$/i, "") ||
+        sanitizeFileName(resume.header.name) ||
+        "resume";
       anchor.href = url;
       anchor.download = `${baseName}.docx`;
       anchor.click();
