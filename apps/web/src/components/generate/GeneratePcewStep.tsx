@@ -29,9 +29,10 @@ import { formatLinksCell, fullName } from "@/lib/profile";
 type GeneratePcewStepProps = {
   acceptedMarkdown: string | null;
   selection: PcewSelection;
+  generating: boolean;
   onSelectionChange: (selection: PcewSelection) => void;
   onPrev: () => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
 };
 
 function formatWorkflowDate(iso: string) {
@@ -41,6 +42,7 @@ function formatWorkflowDate(iso: string) {
 export function GeneratePcewStep({
   acceptedMarkdown,
   selection,
+  generating,
   onSelectionChange,
   onPrev,
   onNext,
@@ -96,7 +98,7 @@ export function GeneratePcewStep({
     const errors = validatePcewSelection(selection);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
-    onNext();
+    void onNext();
   }
 
   return (
@@ -296,9 +298,25 @@ export function GeneratePcewStep({
           onClick={handleNext}
           className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
         >
-          Next
+          {generating ? "Generating Resume…" : "Next"}
         </button>
       </div>
+
+      {generating ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
+            <p className="text-sm font-medium">Generating Resume…</p>
+            <p className="mt-1 text-xs text-muted">
+              Please wait while the AI tailors your resume to the job.
+            </p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

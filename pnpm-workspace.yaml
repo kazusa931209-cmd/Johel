@@ -1,4 +1,5 @@
 packages:
   - apps/*
+  - packages/*
 
 storeDir: /Volumes/Resource/01_Project/04_Job/Projects/02_src/Johel/.pnpm-store

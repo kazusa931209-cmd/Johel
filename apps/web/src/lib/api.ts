@@ -334,6 +334,28 @@ export function runAiVerdict(jobDescription: string) {
   });
 }
 
+export type AiResumeRequest = {
+  jobDescription: string;
+  acceptedMarkdown: string;
+  profileId: string;
+  companyIds: string[];
+  experienceIds: string[];
+  workflowId: string;
+};
+
+export type AiResumeResult = {
+  resume: import("@johel/resume").GeneratedResume;
+  usage: AiVerdictUsage;
+  tokenUsed: number;
+};
+
+export function runAiResume(payload: AiResumeRequest) {
+  return request<AiResumeResult>("/ai-resume", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function getAiUsageSummary() {
   return request<AiUsageSummary>("/ai-usage/summary");
 }

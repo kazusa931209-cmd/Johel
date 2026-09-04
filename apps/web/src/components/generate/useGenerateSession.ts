@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import type { PcewSelection } from "@/components/generate/pcew-types";
 import { getMe } from "@/lib/api";
@@ -12,6 +13,14 @@ import {
   loadGenerateSession,
   saveGenerateSession,
 } from "@/lib/generate-session";
+
+function withoutResume(session: GenerateSession): GenerateSession {
+  return {
+    ...session,
+    resume: null,
+    generationInputKey: null,
+  };
+}
 
 export function useGenerateSession() {
   const [userId, setUserId] = useState<string | null>(null);
@@ -45,16 +54,29 @@ export function useGenerateSession() {
   }, []);
 
   const setJob = useCallback((job: GenerateJobState) => {
-    setSession((current) => ({ ...current, job }));
+    setSession((current) => withoutResume({ ...current, job }));
   }, []);
 
   const patchJob = useCallback((patch: Partial<GenerateJobState>) => {
-    setSession((current) => ({ ...current, job: { ...current.job, ...patch } }));
+    setSession((current) =>
+      withoutResume({ ...current, job: { ...current.job, ...patch } }),
+    );
   }, []);
 
   const setPcew = useCallback((pcew: PcewSelection) => {
-    setSession((current) => ({ ...current, pcew }));
+    setSession((current) => withoutResume({ ...current, pcew }));
   }, []);
+
+  const setResumeResult = useCallback(
+    (resume: GeneratedResume, generationInputKey: string) => {
+      setSession((current) => ({
+        ...current,
+        resume,
+        generationInputKey,
+      }));
+    },
+    [],
+  );
 
   const resetSession = useCallback(() => {
     setSession(EMPTY_GENERATE_SESSION);
@@ -70,6 +92,9 @@ export function useGenerateSession() {
     patchJob,
     pcew: session.pcew,
     setPcew,
+    resume: session.resume,
+    generationInputKey: session.generationInputKey,
+    setResumeResult,
     resetSession,
   };
 }

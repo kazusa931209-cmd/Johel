@@ -1,3 +1,5 @@
+import type { GeneratedResume } from "@johel/resume";
+import { parseGeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import {
   EMPTY_PCEW_SELECTION,
@@ -16,6 +18,8 @@ export type GenerateSession = {
   activeStep: GenerateStep;
   job: GenerateJobState;
   pcew: PcewSelection;
+  resume: GeneratedResume | null;
+  generationInputKey: string | null;
 };
 
 const STORAGE_KEY_PREFIX = "johel:generate-session:";
@@ -30,6 +34,8 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   activeStep: "Job",
   job: EMPTY_JOB_STATE,
   pcew: EMPTY_PCEW_SELECTION,
+  resume: null,
+  generationInputKey: null,
 };
 
 function storageKey(userId: string) {
@@ -80,6 +86,37 @@ function parseJobState(value: unknown): GenerateJobState {
   };
 }
 
+function parseStoredResume(value: unknown): GeneratedResume | null {
+  if (!value || typeof value !== "object") return null;
+  const parsed = parseGeneratedResume(value);
+  return parsed.success ? parsed.data : null;
+}
+
+export function buildGenerationInputKey(
+  job: GenerateJobState,
+  pcew: PcewSelection,
+): string {
+  return JSON.stringify({
+    jobText: job.jobText.trim(),
+    acceptedMarkdown: job.acceptedMarkdown ?? "",
+    profileId: pcew.profileId,
+    companyIds: [...pcew.companyIds].sort(),
+    experienceIds: [...pcew.experienceIds].sort(),
+    workflowId: pcew.workflowId,
+  });
+}
+
+export function canReuseStoredResume(
+  session: GenerateSession,
+  inputKey: string,
+): boolean {
+  return Boolean(
+    session.resume &&
+      session.generationInputKey &&
+      session.generationInputKey === inputKey,
+  );
+}
+
 export function parseGenerateSession(value: unknown): GenerateSession | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
@@ -87,11 +124,17 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
     activeStep: normalizeActiveStep(raw.activeStep),
     job: parseJobState(raw.job),
     pcew: parsePcewSelection(raw.pcew),
+    resume: parseStoredResume(raw.resume),
+    generationInputKey:
+      typeof raw.generationInputKey === "string"
+        ? raw.generationInputKey
+        : null,
   };
 }
 
 export function isGenerateInProgress(session: GenerateSession): boolean {
   if (session.activeStep !== "Job") return true;
+  if (session.resume) return true;
   if (session.job.acceptedMarkdown) return true;
   if (session.job.jobText.trim()) return true;
   if (session.pcew.profileId) return true;
