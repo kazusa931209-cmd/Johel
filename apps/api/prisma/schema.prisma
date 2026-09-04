@@ -15,6 +15,7 @@ model User {
   updatedAt    DateTime   @updatedAt
   setting      Setting?
   workflows    Workflow[]
+  profiles     Profile[]
 
   // SQLite table names are case-insensitive; plural avoids colliding with former PascalCase names.
   @@map("users")
@@ -61,4 +62,38 @@ model WorkflowMetadata {
   @@unique([workflowId, key])
   @@index([workflowId])
   @@map("workflowMetadata")
+}
+
+model Profile {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName  String
+  lastName   String
+  birthDate  String?
+  email      String?
+  pn         String?
+  residence  String?
+  education  String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  links      ProfileLink[]
+
+  @@index([userId])
+  @@map("profiles")
+}
+
+model ProfileLink {
+  id        String   @id @default(cuid())
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  key       String
+  link      String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profileId, key])
+  @@index([profileId])
+  @@map("profileLinks")
 }

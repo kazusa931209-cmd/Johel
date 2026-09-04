@@ -2,6 +2,7 @@ import type {
   WorkflowDetail,
   WorkflowWritePayload,
 } from "./workflow";
+import type { ProfileDetail, ProfileWritePayload } from "./profile";
 
 export type {
   WorkflowDetail,
@@ -9,6 +10,12 @@ export type {
   WorkflowMetadataItem,
   WorkflowWritePayload,
 } from "./workflow";
+
+export type {
+  ProfileDetail,
+  ProfileLinkItem,
+  ProfileWritePayload,
+} from "./profile";
 
 export type User = {
   id: string;
@@ -132,4 +139,40 @@ export function updateWorkflow(id: string, payload: WorkflowWritePayload) {
 
 export function deleteWorkflow(id: string) {
   return request<{ ok: boolean }>(`/workflows/${id}`, { method: "DELETE" });
+}
+
+export type ProfileList = {
+  items: ProfileDetail[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export function listProfiles(q: string, page: number) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("page", String(page));
+  return request<ProfileList>(`/profiles?${params.toString()}`);
+}
+
+export function getProfile(id: string) {
+  return request<ProfileDetail>(`/profiles/${id}`);
+}
+
+export function createProfile(payload: ProfileWritePayload) {
+  return request<ProfileDetail>("/profiles", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateProfile(id: string, payload: ProfileWritePayload) {
+  return request<ProfileDetail>(`/profiles/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteProfile(id: string) {
+  return request<{ ok: boolean }>(`/profiles/${id}`, { method: "DELETE" });
 }

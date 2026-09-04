@@ -76,9 +76,18 @@ Build a customized Resume / CV and résumé writing application.
   * Right: user name with a dropdown containing **Profile** and **Sign out**
 * **Left sidebar** menus:
   * Workspace (always-open submenus)
+    * Profiles
     * Workflows
     * Generate (`/` is Generate)
   * Settings
+* **Profiles**
+  * Per-user list: No, Full Name (first + last), birth date, email, PN, links, residence, education
+  * Keyword filter on name parts, email, PN, residence, education; 10 rows per page
+  * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
+  * Editor pages show a back control beside the title; Cancel and Save apply to the whole profile
+  * Links add/edit/delete is local on the page until Save persists the profile (same pattern as workflow Metadata)
+  * Editor fields: first name (required), last name (required), birth date, email, PN, residence, education (optional); links table (Key required; Value/link optional)
+  * Distinct from header menu **Profile** (account email page)
 * **Workflows**
   * Per-user list: name, optional one-line description, used count, created, updated
   * Keyword filter on name and description; 10 rows per page
@@ -112,6 +121,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Workflows list and Generate placeholder. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-6-workspace-workflows.md`](./plans/2026-09-04-phase-6-workspace-workflows.md).
 * [x] **Phase 7 — Workflow editor** — Creating or editing a workflow uses a dedicated page (not a dialog). The form includes name, optional description, language, filtering prompt, and a metadata key/rule table. Save persists via the API.
   * **Outcome (2026-09-04):** Dedicated `/workflows/new` and `/workflows/[id]/edit` pages with shared form. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-7-workflow-editor.md`](./plans/2026-09-04-phase-7-workflow-editor.md).
+* [x] **Phase 8 — Workspace profiles** — Workspace includes **Profiles** (above Workflows). Per-user profiles list with search, pagination, add, edit, and delete. Add/edit use dedicated pages; Links work like workflow Metadata (local until Save).
+  * **Outcome (2026-09-04):** Profiles list and editor with `profiles` / `profileLinks`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-8-workspace-profiles.md`](./plans/2026-09-04-phase-8-workspace-profiles.md).
 
 ## Cursor Rules (Documentation Governance)
 

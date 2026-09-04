@@ -43,12 +43,14 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `filteringPrompt`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`)
 - Prisma `WorkflowMetadata` → table `workflowMetadata`: `id`, `workflowId`, `key`, `rulePrompt?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, key)`; cascade delete with workflow
-- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`
+- Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `education?`, `createdAt`, `updatedAt`
+- Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
+- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
 ## Frontend (Phase 3)
@@ -72,11 +74,12 @@ User browser (:4041)
 - Toast: top-center; variants success / warning / error / info with theme-aware bg and text tokens (`components/app/ToastProvider`). Any user action that calls the API must report the result with a toast.
 - Routes (authenticated):
   - `/` — Workspace / Generate
+  - `/profiles` — Workspace / Profiles
   - `/workflows` — Workspace / Workflows
   - `/settings` — Settings (theme + AI Agent)
-  - `/profile` — Profile (email display)
+  - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
-- Sidebar: Workspace (submenus Workflows, Generate — always open), Settings
+- Sidebar: Workspace (submenus Profiles, Workflows, Generate — always open), Settings
 
 ## AI Agent settings (Phase 5)
 
@@ -97,6 +100,15 @@ User browser (:4041)
 - Default filtering prompt text (Use Default): `Keep only Job & Job post company information`
 - Filtering prompt placeholder: `Process and filter the Job Description.`
 - Web routes: `/workflows` list; `/workflows/new` add; `/workflows/[id]/edit` edit; editor has back beside title; footer Cancel/Save persist the whole workflow; metadata edits are local until Save
+
+## Profiles (Phase 8)
+
+- `GET /profiles?q=&page=` — page size 10; list includes `links` for the Links column
+- `GET /profiles/:id` — full detail for the editor (owner only)
+- `POST /profiles` / `PUT /profiles/:id` — `{ firstName, lastName, birthDate?, email?, pn?, residence?, education?, links }`; on write, delete existing `profileLinks` and insert the submitted list
+- Search `q` across firstName, lastName, email, pn, residence, education
+- Links: `{ key, link | null }`; keys unique per profile
+- Web routes: `/profiles` list; `/profiles/new` add; `/profiles/[id]/edit` edit; Links UX mirrors workflow Metadata
 
 ## Plans
 

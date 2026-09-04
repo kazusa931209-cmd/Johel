@@ -5,7 +5,10 @@ import { usePathname } from "next/navigation";
 
 export function StudioSidebar() {
   const pathname = usePathname();
-  const workflowsActive = pathname === "/workflows" || pathname.startsWith("/workflows/");
+  const profilesActive =
+    pathname === "/profiles" || pathname.startsWith("/profiles/");
+  const workflowsActive =
+    pathname === "/workflows" || pathname.startsWith("/workflows/");
   const generateActive = pathname === "/";
   const settingsActive =
     pathname === "/settings" || pathname.startsWith("/settings/");
@@ -16,6 +19,16 @@ export function StudioSidebar() {
         <div className="px-3 py-2 text-xs font-semibold tracking-wide text-muted uppercase">
           Workspace
         </div>
+        <Link
+          href="/profiles"
+          className={`rounded-md px-3 py-2 pl-6 text-sm transition-colors ${
+            profilesActive
+              ? "bg-surface-muted font-medium text-foreground"
+              : "text-muted hover:bg-surface-muted hover:text-foreground"
+          }`}
+        >
+          Profiles
+        </Link>
         <Link
           href="/workflows"
           className={`rounded-md px-3 py-2 pl-6 text-sm transition-colors ${
