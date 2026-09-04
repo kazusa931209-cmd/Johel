@@ -146,9 +146,10 @@ User browser (:4041)
 - Timeline steps: Job → PCEW → Verdict → Company → Generate (Job and PCEW interactive; later steps are placeholders)
 - Job UI: Manual / URL / File tabs; Manual has Job text max 10,000 chars, Noise Filter, AI Filter, Rollback; URL and File tabs show an info alert (“not implemented yet / coming soon”) instead of inputs
 - AI Filter **Next** accepts the Markdown result and sets `activeStep` to PCEW
-- PCEW: four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); row click selects/toggles; `ViewButton` (eye icon) opens existing read-only detail dialogs; `validatePcewSelection` on Next; selection kept in page state (`PcewSelection`: `profileId`, `companyIds[]`, `experienceIds[]`, `workflowId`)
+- PCEW: four `PcewSection` tables (profile single-select; companies multi-select; experiences multi-select; workflow single-select); loads all items via list APIs with `page=null` (or `limit=null`); checkbox column instead of row numbers; row click selects/toggles; `ViewButton` (eye icon) opens existing read-only detail dialogs; `validatePcewSelection` on Next; selection kept in page state (`PcewSelection`: `profileId`, `companyIds[]`, `experienceIds[]`, `workflowId`)
+- List APIs (`GET /profiles`, `/companies`, `/experiences`, `/workflows`): `page=null` or `limit=null` returns all matching items; default pagination unchanged (`page` defaults to 1, page size 10)
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` — compact K/M/G/T with one decimal when needed (`0.3K`, `12.5K`, `0.6M`); header shows `Token Used: …` from `GET /ai-usage/summary`
-- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GeneratePcewStep`, `PcewSection`, `pcew-types`, `usePcewList`)
+- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GeneratePcewStep`, `PcewSection`, `pcew-types`)
 
 ## AI Filter (Phase 13)
 

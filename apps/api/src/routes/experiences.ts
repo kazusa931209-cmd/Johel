@@ -3,6 +3,10 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
+import {
+  listResponsePageSize,
+  parseListPagination,
+} from "../lib/list-pagination.js";
 
 const PAGE_SIZE = 10;
 
@@ -106,9 +110,12 @@ experiencesRoutes.get("/", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const page = Math.max(1, Number(c.req.query("page") ?? "1") || 1);
+  const pagination = parseListPagination(
+    c.req.query("page"),
+    c.req.query("limit"),
+    PAGE_SIZE,
+  );
   const q = (c.req.query("q") ?? "").trim();
-  const skip = (page - 1) * PAGE_SIZE;
 
   const searchFilter: Prisma.ExperienceWhereInput = q
     ? {
@@ -130,13 +137,14 @@ experiencesRoutes.get("/", async (c) => {
       where,
       include: metadataInclude,
       orderBy: { updatedAt: "desc" },
-      skip,
-      take: PAGE_SIZE,
+      ...(pagination.skip != null ? { skip: pagination.skip } : {}),
+      ...(pagination.take != null ? { take: pagination.take } : {}),
     }),
   ]);
 
   const items = rows.map((row) => toDetail(row));
-  return c.json({ items, total, page, pageSize: PAGE_SIZE });
+  const pageSize = listResponsePageSize(pagination, total);
+  return c.json({ items, total, page: pagination.page, pageSize });
 });
 
 experiencesRoutes.get("/:id", async (c) => {

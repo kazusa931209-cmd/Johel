@@ -126,10 +126,32 @@ export type WorkflowList = {
   pageSize: number;
 };
 
-export function listWorkflows(q: string, page: number) {
-  const params = new URLSearchParams();
+function appendListParams(
+  params: URLSearchParams,
+  q: string,
+  page?: number | null,
+  limit?: number | null,
+) {
   if (q) params.set("q", q);
-  params.set("page", String(page));
+  if (page === null) {
+    params.set("page", "null");
+  } else if (page != null) {
+    params.set("page", String(page));
+  }
+  if (limit === null) {
+    params.set("limit", "null");
+  } else if (limit != null) {
+    params.set("limit", String(limit));
+  }
+}
+
+export function listWorkflows(
+  q: string,
+  page: number | null = 1,
+  limit?: number | null,
+) {
+  const params = new URLSearchParams();
+  appendListParams(params, q, page, limit);
   return request<WorkflowList>(`/workflows?${params.toString()}`);
 }
 
@@ -162,10 +184,13 @@ export type ProfileList = {
   pageSize: number;
 };
 
-export function listProfiles(q: string, page: number) {
+export function listProfiles(
+  q: string,
+  page: number | null = 1,
+  limit?: number | null,
+) {
   const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  params.set("page", String(page));
+  appendListParams(params, q, page, limit);
   return request<ProfileList>(`/profiles?${params.toString()}`);
 }
 
@@ -199,10 +224,13 @@ export type CompanyList = {
   nextPriority: number;
 };
 
-export function listCompanies(q: string, page: number) {
+export function listCompanies(
+  q: string,
+  page: number | null = 1,
+  limit?: number | null,
+) {
   const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  params.set("page", String(page));
+  appendListParams(params, q, page, limit);
   return request<CompanyList>(`/companies?${params.toString()}`);
 }
 
@@ -235,10 +263,13 @@ export type ExperienceList = {
   pageSize: number;
 };
 
-export function listExperiences(q: string, page: number) {
+export function listExperiences(
+  q: string,
+  page: number | null = 1,
+  limit?: number | null,
+) {
   const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  params.set("page", String(page));
+  appendListParams(params, q, page, limit);
   return request<ExperienceList>(`/experiences?${params.toString()}`);
 }
 

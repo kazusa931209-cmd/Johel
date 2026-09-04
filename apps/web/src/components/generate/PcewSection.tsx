@@ -1,19 +1,18 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { useToast } from "@/components/app/ToastProvider";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
-import { usePcewList } from "@/components/generate/usePcewList";
 
 type Column<T> = {
   header: string;
   className?: string;
-  cell: (row: T, rowNo: number) => ReactNode;
+  cell: (row: T) => ReactNode;
 };
 
 type PcewSectionProps<T extends { id: string }> = {
   title: string;
-  searchPlaceholder: string;
   emptyLabel: string;
   error?: string;
   selectionMode: "single" | "multiple";
@@ -21,16 +20,8 @@ type PcewSectionProps<T extends { id: string }> = {
   onRowSelect: (id: string) => void;
   columns: Column<T>[];
   minWidthClass?: string;
-  fetchPage: (
-    q: string,
-    page: number,
-  ) => Promise<{
-    data?: {
-      items: T[];
-      total: number;
-      page: number;
-      pageSize: number;
-    };
+  fetchAll: () => Promise<{
+    data?: { items: T[] };
     error?: string;
   }>;
   loadErrorLabel: string;
@@ -43,7 +34,6 @@ const SELECTED_ROW_CLASS = "bg-accent-fg text-accent";
 
 export function PcewSection<T extends { id: string }>({
   title,
-  searchPlaceholder,
   emptyLabel,
   error,
   selectionMode,
@@ -51,23 +41,34 @@ export function PcewSection<T extends { id: string }>({
   onRowSelect,
   columns,
   minWidthClass = "min-w-[640px]",
-  fetchPage,
+  fetchAll,
   loadErrorLabel,
   viewing,
   onView,
   renderDetailDialog,
 }: PcewSectionProps<T>) {
-  const {
-    qInput,
-    setQInput,
-    page,
-    setPage,
-    items,
-    pageSize,
-    loading,
-    totalPages,
-    onFilter,
-  } = usePcewList(fetchPage, loadErrorLabel);
+  const { toast } = useToast();
+  const [items, setItems] = useState<T[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchAll().then((res) => {
+      if (cancelled) return;
+      if (res.error || !res.data) {
+        toast(res.error ?? loadErrorLabel, "error");
+        setItems([]);
+        setLoading(false);
+        return;
+      }
+      setItems(res.data.items);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchAll, loadErrorLabel, toast]);
 
   const colSpan = columns.length + 2;
 
@@ -84,27 +85,13 @@ export function PcewSection<T extends { id: string }>({
         )}
       </div>
 
-      <form onSubmit={onFilter} className="flex items-center gap-2">
-        <input
-          type="search"
-          value={qInput}
-          onChange={(e) => setQInput(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
-        />
-        <button
-          type="submit"
-          className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
-        >
-          Search
-        </button>
-      </form>
-
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className={`w-full ${minWidthClass} text-left text-sm`}>
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">No</th>
+              <th className="w-10 px-3 py-2">
+                <span className="sr-only">Select</span>
+              </th>
               {columns.map((column) => (
                 <th
                   key={column.header}
@@ -130,7 +117,7 @@ export function PcewSection<T extends { id: string }>({
                 </td>
               </tr>
             ) : (
-              items.map((row, index) => {
+              items.map((row) => {
                 const selected = isSelected(row.id);
                 return (
                   <tr
@@ -148,15 +135,29 @@ export function PcewSection<T extends { id: string }>({
                       }
                     }}
                   >
-                    <td className="px-3 py-2 text-muted">
-                      {(page - 1) * pageSize + index + 1}
+                    <td
+                      className="px-3 py-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRowSelect(row.id);
+                      }}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        readOnly
+                        tabIndex={-1}
+                        aria-hidden
+                        className="h-4 w-4 rounded border-border"
+                      />
                     </td>
                     {columns.map((column) => (
                       <td
                         key={column.header}
                         className={`px-3 py-2 ${column.className ?? ""}`}
                       >
-                        {column.cell(row, (page - 1) * pageSize + index + 1)}
+                        {column.cell(row)}
                       </td>
                     ))}
                     <td
@@ -174,28 +175,6 @@ export function PcewSection<T extends { id: string }>({
             )}
           </tbody>
         </table>
-      </div>
-
-      <div className="flex items-center justify-end gap-2 text-sm text-muted">
-        <span>
-          Page {page} of {totalPages}
-        </span>
-        <button
-          type="button"
-          disabled={page <= 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
-        >
-          Prev
-        </button>
-        <button
-          type="button"
-          disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
-        >
-          Next
-        </button>
       </div>
 
       {error ? <p className="text-sm text-danger">{error}</p> : null}

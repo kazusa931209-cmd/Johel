@@ -53,22 +53,10 @@ export function GeneratePcewStep({
     useState<ExperienceDetail | null>(null);
   const [viewingWorkflow, setViewingWorkflow] = useState<Workflow | null>(null);
 
-  const fetchProfiles = useCallback(
-    (q: string, page: number) => listProfiles(q, page),
-    [],
-  );
-  const fetchCompanies = useCallback(
-    (q: string, page: number) => listCompanies(q, page),
-    [],
-  );
-  const fetchExperiences = useCallback(
-    (q: string, page: number) => listExperiences(q, page),
-    [],
-  );
-  const fetchWorkflows = useCallback(
-    (q: string, page: number) => listWorkflows(q, page),
-    [],
-  );
+  const fetchProfiles = useCallback(() => listProfiles("", null), []);
+  const fetchCompanies = useCallback(() => listCompanies("", null), []);
+  const fetchExperiences = useCallback(() => listExperiences("", null), []);
+  const fetchWorkflows = useCallback(() => listWorkflows("", null), []);
 
   function clearError(field: keyof PcewFieldErrors) {
     if (!fieldErrors[field]) return;
@@ -120,13 +108,12 @@ export function GeneratePcewStep({
 
       <PcewSection<ProfileDetail>
         title="Profile"
-        searchPlaceholder="Search name, email, PN, residence, education"
         emptyLabel="No profiles found."
         error={fieldErrors.profileId}
         selectionMode="single"
         isSelected={(id) => selection.profileId === id}
         onRowSelect={onProfileSelect}
-        fetchPage={fetchProfiles}
+        fetchAll={fetchProfiles}
         loadErrorLabel="Failed to load profiles"
         viewing={viewingProfile}
         onView={setViewingProfile}
@@ -165,13 +152,12 @@ export function GeneratePcewStep({
 
       <PcewSection<CompanyDetail>
         title="Companies"
-        searchPlaceholder="Search name, description"
         emptyLabel="No companies found."
         error={fieldErrors.companyIds}
         selectionMode="multiple"
         isSelected={(id) => selection.companyIds.includes(id)}
         onRowSelect={onCompanySelect}
-        fetchPage={fetchCompanies}
+        fetchAll={fetchCompanies}
         loadErrorLabel="Failed to load companies"
         viewing={viewingCompany}
         onView={setViewingCompany}
@@ -207,13 +193,12 @@ export function GeneratePcewStep({
 
       <PcewSection<ExperienceDetail>
         title="Experiences"
-        searchPlaceholder="Search category, description"
         emptyLabel="No experiences found."
         error={fieldErrors.experienceIds}
         selectionMode="multiple"
         isSelected={(id) => selection.experienceIds.includes(id)}
         onRowSelect={onExperienceSelect}
-        fetchPage={fetchExperiences}
+        fetchAll={fetchExperiences}
         loadErrorLabel="Failed to load experiences"
         viewing={viewingExperience}
         onView={setViewingExperience}
@@ -243,13 +228,12 @@ export function GeneratePcewStep({
 
       <PcewSection<Workflow>
         title="Workflow"
-        searchPlaceholder="Search name or description"
         emptyLabel="No workflows found."
         error={fieldErrors.workflowId}
         selectionMode="single"
         isSelected={(id) => selection.workflowId === id}
         onRowSelect={onWorkflowSelect}
-        fetchPage={fetchWorkflows}
+        fetchAll={fetchWorkflows}
         loadErrorLabel="Failed to load workflows"
         viewing={viewingWorkflow}
         onView={setViewingWorkflow}
