@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   AddButton,
-  CloseButton,
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
@@ -160,100 +159,82 @@ export function WorkflowMetadataEditor({
       ) : null}
 
       {dialog ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-md space-y-3 rounded-lg border border-border bg-surface p-4 shadow-lg"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                applyDialog();
+        <DetailDialog
+          title={dialog === "add" ? "Add metadata" : "Edit metadata"}
+          onClose={() => setDialog(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              applyDialog();
+            }
+          }}
+        >
+          <label className="block space-y-1 text-sm">
+            <span>
+              Key
+              <RequiredMark />
+            </span>
+            <input
+              value={draft.key}
+              onChange={(e) => {
+                setDraft((d) => ({ ...d, key: e.target.value }));
+                if (keyError) setKeyError(undefined);
+              }}
+              aria-invalid={Boolean(keyError)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            />
+            <FieldError message={keyError} />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>Rule prompt</span>
+            <textarea
+              maxLength={1024}
+              value={draft.rulePrompt}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, rulePrompt: e.target.value }))
               }
-            }}
-          >
-            <h2 className="text-lg font-semibold">
-              {dialog === "add" ? "Add metadata" : "Edit metadata"}
-            </h2>
-            <label className="block space-y-1 text-sm">
-              <span>
-                Key
-                <RequiredMark />
-              </span>
-              <input
-                value={draft.key}
-                onChange={(e) => {
-                  setDraft((d) => ({ ...d, key: e.target.value }));
-                  if (keyError) setKeyError(undefined);
-                }}
-                aria-invalid={Boolean(keyError)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
-              />
-              <FieldError message={keyError} />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span>Rule prompt</span>
-              <textarea
-                maxLength={1024}
-                value={draft.rulePrompt}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, rulePrompt: e.target.value }))
-                }
-                rows={4}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
-              />
-              <span className="text-xs text-muted">
-                {draft.rulePrompt.length}/1024
-              </span>
-            </label>
-            <div className="flex justify-end gap-2">
-              <CloseButton onClick={() => setDialog(null)} />
-              <button
-                type="button"
-                onClick={applyDialog}
-                className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
-              >
-                Apply
-              </button>
-            </div>
+              rows={4}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            />
+            <span className="text-xs text-muted">
+              {draft.rulePrompt.length}/1024
+            </span>
+          </label>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={applyDialog}
+              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
+            >
+              Apply
+            </button>
           </div>
-        </div>
+        </DetailDialog>
       ) : null}
 
       {deletingIndex !== null ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          role="presentation"
-          onClick={() => setDeletingIndex(null)}
+        <DetailDialog
+          title="Delete metadata"
+          role="alertdialog"
+          onClose={() => setDeletingIndex(null)}
         >
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-4 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Delete metadata</h2>
-              <p className="text-sm text-muted">
-                Remove metadata key “{metadata[deletingIndex]?.key}” from this
-                form? It is stored only when you Save the workflow.
-              </p>
-            </div>
-            <div className="flex justify-end gap-2">
-              <CloseButton onClick={() => setDeletingIndex(null)} />
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(metadata.filter((_, i) => i !== deletingIndex));
-                  setDeletingIndex(null);
-                }}
-                className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg"
-              >
-                Delete
-              </button>
-            </div>
+          <p className="text-muted">
+            Remove metadata key “{metadata[deletingIndex]?.key}” from this form?
+            It is stored only when you Save the workflow.
+          </p>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                onChange(metadata.filter((_, i) => i !== deletingIndex));
+                setDeletingIndex(null);
+              }}
+              className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg"
+            >
+              Delete
+            </button>
           </div>
-        </div>
+        </DetailDialog>
       ) : null}
     </div>
   );

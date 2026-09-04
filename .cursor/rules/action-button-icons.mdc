@@ -17,11 +17,13 @@ Apply to every **Add**, **Edit**, and **Delete** control in the web UI (tables, 
 
 4. **Close** — Always represented with an **X (cross)** icon (not text-only “Close” as the sole affordance). Optional accompanying label is fine. Icon-only Close needs `aria-label="Close"`.
 
+5. **Dialog Close placement** — Every dialog (including confirm/alert dialogs) must have a Close (X) control in the **top-right corner**. Do not place Close beside the primary footer action (Apply, Delete, Save, etc.). The footer holds the main action only. Prefer shared `DetailDialog` so this chrome is automatic.
+
 ## Guidance
 
 - Prefer shared icon components under `components/shared/` when extracting reusable icons (`CloseButton`, `AddButton`, etc.).
 - Icon-only buttons must have an accessible `aria-label` (e.g. `Add`, `Edit`, `Delete`, `Close`).
-- Confirm dialogs for delete may keep a text **Delete** confirm button; the trigger that opens delete must still use the red trash icon. Dismiss/close controls on dialogs use the X icon (not a text “Close” alone).
+- Confirm dialogs for delete may keep a text **Delete** confirm button; the trigger that opens delete must still use the red trash icon. Dismiss/close is the top-right X (not a footer Close/Cancel beside Delete).
 
 ## Examples
 
@@ -34,4 +36,21 @@ Apply to every **Add**, **Edit**, and **Delete** control in the web UI (tables, 
 <button type="button" aria-label="Add">/* plus icon */</button>
 <button type="button" aria-label="Edit">/* pencil icon */</button>
 <button type="button" aria-label="Close">/* X cross icon */</button>
+```
+
+```tsx
+// ❌ BAD — Close beside the main action
+<div className="flex justify-end gap-2">
+  <CloseButton onClick={onClose} />
+  <button type="button">Apply</button>
+</div>
+
+// ✅ GOOD — Close in the dialog header; footer is the main action
+<div className="flex items-start justify-between">
+  <h2>Add metadata</h2>
+  <CloseButton onClick={onClose} />
+</div>
+<div className="flex justify-end">
+  <button type="button">Apply</button>
+</div>
 ```

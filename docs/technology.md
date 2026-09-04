@@ -43,14 +43,16 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `name`, `description?`, `language`, `filteringPrompt`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`)
 - Prisma `WorkflowMetadata` → table `workflowMetadata`: `id`, `workflowId`, `key`, `rulePrompt?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, key)`; cascade delete with workflow
 - Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `education?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
-- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`
+- Prisma `Company` → table `companies` (per user): `id`, `userId`, `name`, `description`, `priority` (1-based integer), `createdAt`, `updatedAt`
+- Prisma `CompanyMetadata` → table `companyMetadata`: `id`, `companyId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(companyId, key)`; cascade delete with company
+- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowMetadata`, `profiles`, `profileLinks`, `companies`, `companyMetadata`
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
 ## Frontend (Phase 3)
@@ -65,6 +67,7 @@ User browser (:4041)
 - Session gate: client checks `GET /backend/auth/me` before rendering app routes
 - If a frontend component file exceeds **500 lines**, ask the user before growing it further; prefer splitting into smaller components/hooks
 - Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash), `CloseButton` (X) in `components/shared/action-icon-buttons.tsx`
+- Dialogs use `DetailDialog` (`components/shared/detail-dialog.tsx`) so Close (X) is always in the top-right header; the footer holds only the main action (Apply / Delete). Do not put Close beside that action.
 
 ## Studio shell (Phase 4)
 
@@ -75,11 +78,13 @@ User browser (:4041)
 - Routes (authenticated):
   - `/` — Workspace / Generate
   - `/profiles` — Workspace / Profiles
+  - `/companies` — Workspace / Companies
+  - `/experiences` — Workspace / Experiences (placeholder)
   - `/workflows` — Workspace / Workflows
   - `/settings` — Settings (theme + AI Agent)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
-- Sidebar: Workspace (submenus Profiles, Workflows, Generate — always open), Settings
+- Sidebar: Workspace (submenus Profiles, Companies, Experiences, Workflows, Generate — always open), Settings
 
 ## AI Agent settings (Phase 5)
 
@@ -109,6 +114,18 @@ User browser (:4041)
 - Search `q` across firstName, lastName, email, pn, residence, education
 - Links: `{ key, link | null }`; keys unique per profile
 - Web routes: `/profiles` list; `/profiles/new` add; `/profiles/[id]/edit` edit; Links UX mirrors workflow Metadata
+
+## Companies (Phase 9)
+
+- `GET /companies?q=&page=` — page size 10; list includes `metadata` for the Metadata column and `nextPriority` (max existing priority for the user + 1, or 1)
+- List order: `priority` ascending, then `name` ascending
+- `GET /companies/:id` — full detail for the editor (owner only)
+- `POST /companies` / `PUT /companies/:id` — `{ name, description, priority?, metadata }`; on write, delete existing `companyMetadata` and insert the submitted list
+- If `priority` is omitted on create, the API assigns `nextPriority`; on update, omitted priority keeps the existing value
+- Search `q` across name and description
+- Metadata: `{ key, value }`; keys unique per company; value is a string (may be empty)
+- Web routes: `/companies` list; `/companies/new` add; `/companies/[id]/edit` edit; Metadata UX mirrors workflow Metadata
+- `/experiences` is a placeholder submenu (no experience API in this phase)
 
 ## Plans
 

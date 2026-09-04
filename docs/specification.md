@@ -9,6 +9,7 @@
 ### What the user owns
 
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
+* **Companies** — One user can manage **multiple companies** (name, description, priority, and metadata).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
 * **Workflows** — One user can manage **multiple workflows** (language, filtering prompt, metadata extraction rules, and related settings).
 
@@ -46,7 +47,7 @@ Workflow (one of many)                                       ├─ Go ahead →
 
 ## Main Features
 
-* Users manage **multiple profiles**, **shared experiences**, and **multiple workflows**.
+* Users manage **multiple profiles**, **companies**, **shared experiences**, and **multiple workflows**.
 * Users can provide a **Job Description** through:
 
   * URL input
@@ -85,6 +86,7 @@ Aligned with the product flow above:
 
 * Support **multiple users**.
 * Each user can manage **multiple profiles**.
+* Each user can manage **multiple companies**.
 * Each user can manage **shared working / hands-on experiences**.
 * Each user can manage **multiple workflows**.
 * Users can manage their own **API keys**.
@@ -117,6 +119,8 @@ Aligned with the product flow above:
 * **Left sidebar** menus:
   * Workspace (always-open submenus)
     * Profiles
+    * Companies
+    * Experiences
     * Workflows
     * Generate (`/` is Generate)
   * Settings
@@ -130,8 +134,20 @@ Aligned with the product flow above:
   * Links add/edit/delete is local on the page until Save persists the profile (same pattern as workflow Metadata)
   * Editor fields: first name (required), last name (required), birth date, email, PN, residence, education (optional); links table (Key required; Value/link optional)
   * Distinct from header menu **Profile** (account email page)
-* **Shared Experiences** (product concept; Workspace UI for this area is defined when that Phase starts)
+* **Companies**
+  * One signed-in user can manage **multiple** companies
+  * Per-user list: No, Company Name, Description, Metadata, Priority
+  * Keyword filter on name and description; 10 rows per page
+  * List is ordered by Priority (1 is first), then Company Name
+  * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
+  * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
+  * Editor pages show a back control beside the title; Cancel and Save apply to the whole company
+  * Metadata add/edit/delete is local on the page until Save persists the company (same pattern as workflow Metadata and profile Links)
+  * Editor fields: company name (required), description (required), priority (required; 1-based integer; new companies default to the next number for that user); metadata table (Key required; Value optional)
+  * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
+* **Shared Experiences**
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
+  * Workspace **Experiences** submenu is present; list and editor for this area are defined when that Phase starts
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
   * Per-user list: name, optional one-line description, used count, created, updated
@@ -148,6 +164,7 @@ Aligned with the product flow above:
   * A saved API key is shown only in part (first and last four characters), never in full
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.
 * **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon; **Close** is an X (cross) icon (accessible labels required when icon-only).
+* **Dialog close** — Every dialog (including confirm dialogs) has a Close (X) control in the **top-right corner**. Close is not placed beside the dialog’s main action (Apply, Delete, and similar).
 
 ## Phases
 
@@ -169,6 +186,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-04):** Dedicated `/workflows/new` and `/workflows/[id]/edit` pages with shared form. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-7-workflow-editor.md`](./plans/2026-09-04-phase-7-workflow-editor.md).
 * [x] **Phase 8 — Workspace profiles** — Workspace includes **Profiles** (above Workflows). Per-user profiles list with search, pagination, add, edit, and delete. Add/edit use dedicated pages; Links work like workflow Metadata (local until Save).
   * **Outcome (2026-09-04):** Profiles list and editor with `profiles` / `profileLinks`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-8-workspace-profiles.md`](./plans/2026-09-04-phase-8-workspace-profiles.md).
+* [x] **Phase 9 — Workspace companies** — Workspace includes **Companies** (between Profiles and Workflows) and **Experiences** (after Companies). Companies is a per-user list with search, pagination, add, edit, and delete. Add/edit use dedicated pages; Metadata works like workflow Metadata (local until Save). Experiences is a placeholder submenu.
+  * **Outcome (2026-09-04):** Companies list and editor with `companies` / `companyMetadata`; Experiences placeholder. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-04-phase-9-workspace-companies.md`](./plans/2026-09-04-phase-9-workspace-companies.md).
 
 ## Cursor Rules (Documentation Governance)
 
@@ -186,3 +205,4 @@ These rules apply to **all development phases** and must be followed by Cursor (
 10. **Form validation UX** — Form action buttons (Save, Add, Apply, Submit, and similar) stay enabled. Required field labels show a red asterisk. Missing required fields show an error message below the field when the user attempts the action (not via disabling the button; not via toast for ordinary required-field checks).
 11. **Frontend component size** — If a frontend component file exceeds 500 lines, ask the user whether to optimize or split it before adding substantial new code.
 12. **Action button icons** — **Add** uses a plus icon; **Edit** uses a pencil icon; **Delete** uses a trash icon in red; **Close** uses an X (cross) icon. Icon-only controls need an accessible label.
+13. **Dialog close placement** — Every dialog has a Close (X) button in the top-right corner. Do not put Close beside the dialog’s main action.

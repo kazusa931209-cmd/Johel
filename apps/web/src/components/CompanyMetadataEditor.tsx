@@ -11,16 +11,16 @@ import {
   DetailField,
   TABLE_ROW_HOVER_CLASS,
 } from "@/components/shared/detail-dialog";
-import type { ProfileLinkItem } from "@/lib/profile";
+import type { CompanyMetadataItem } from "@/lib/company";
 
-type ProfileLinksEditorProps = {
-  links: ProfileLinkItem[];
-  onChange: (links: ProfileLinkItem[]) => void;
+type CompanyMetadataEditorProps = {
+  metadata: CompanyMetadataItem[];
+  onChange: (metadata: CompanyMetadataItem[]) => void;
 };
 
-type LinkDraft = {
+type MetaDraft = {
   key: string;
-  link: string;
+  value: string;
 };
 
 function FieldError({ message }: { message?: string }) {
@@ -36,28 +36,28 @@ function RequiredMark() {
   );
 }
 
-export function ProfileLinksEditor({
-  links,
+export function CompanyMetadataEditor({
+  metadata,
   onChange,
-}: ProfileLinksEditorProps) {
+}: CompanyMetadataEditorProps) {
   const [dialog, setDialog] = useState<"add" | "edit" | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [draft, setDraft] = useState<LinkDraft>({ key: "", link: "" });
+  const [draft, setDraft] = useState<MetaDraft>({ key: "", value: "" });
   const [keyError, setKeyError] = useState<string | undefined>();
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
-  const [viewing, setViewing] = useState<ProfileLinkItem | null>(null);
+  const [viewing, setViewing] = useState<CompanyMetadataItem | null>(null);
 
   function openAdd() {
     setEditIndex(null);
-    setDraft({ key: "", link: "" });
+    setDraft({ key: "", value: "" });
     setKeyError(undefined);
     setDialog("add");
   }
 
   function openEdit(index: number) {
-    const row = links[index];
+    const row = metadata[index];
     setEditIndex(index);
-    setDraft({ key: row.key, link: row.link ?? "" });
+    setDraft({ key: row.key, value: row.value });
     setKeyError(undefined);
     setDialog("edit");
   }
@@ -68,22 +68,22 @@ export function ProfileLinksEditor({
       setKeyError("Key is required.");
       return;
     }
-    const nextItem: ProfileLinkItem = {
+    const nextItem: CompanyMetadataItem = {
       key,
-      link: draft.link.trim() || null,
+      value: draft.value.trim(),
     };
-    const duplicate = links.some(
+    const duplicate = metadata.some(
       (item, i) =>
         item.key.toLowerCase() === key.toLowerCase() && i !== editIndex,
     );
     if (duplicate) {
-      setKeyError("Link keys must be unique.");
+      setKeyError("Metadata keys must be unique.");
       return;
     }
     if (dialog === "edit" && editIndex !== null) {
-      onChange(links.map((row, i) => (i === editIndex ? nextItem : row)));
+      onChange(metadata.map((row, i) => (i === editIndex ? nextItem : row)));
     } else {
-      onChange([...links, nextItem]);
+      onChange([...metadata, nextItem]);
     }
     setDialog(null);
   }
@@ -92,9 +92,9 @@ export function ProfileLinksEditor({
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-medium">Links</h2>
+          <h2 className="text-sm font-medium">Metadata</h2>
           <p className="text-xs text-muted">
-            Edits stay on this page until you Save the profile.
+            Edits stay on this page until you Save the company.
           </p>
         </div>
         <AddButton onClick={openAdd} />
@@ -109,14 +109,14 @@ export function ProfileLinksEditor({
             </tr>
           </thead>
           <tbody>
-            {links.length === 0 ? (
+            {metadata.length === 0 ? (
               <tr>
                 <td colSpan={3} className="px-3 py-6 text-center text-muted">
-                  No links yet.
+                  No metadata yet.
                 </td>
               </tr>
             ) : (
-              links.map((row, index) => (
+              metadata.map((row, index) => (
                 <tr
                   key={`${row.key}-${index}`}
                   className={TABLE_ROW_HOVER_CLASS}
@@ -131,7 +131,7 @@ export function ProfileLinksEditor({
                 >
                   <td className="px-3 py-2 font-medium">{row.key}</td>
                   <td className="max-w-[280px] truncate px-3 py-2 text-muted">
-                    {row.link ?? ""}
+                    {row.value}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"
@@ -151,15 +151,15 @@ export function ProfileLinksEditor({
       </div>
 
       {viewing ? (
-        <DetailDialog title="Link detail" onClose={() => setViewing(null)}>
+        <DetailDialog title="Metadata detail" onClose={() => setViewing(null)}>
           <DetailField label="Key" value={viewing.key} />
-          <DetailField label="Value" value={viewing.link} />
+          <DetailField label="Value" value={viewing.value} />
         </DetailDialog>
       ) : null}
 
       {dialog ? (
         <DetailDialog
-          title={dialog === "add" ? "Add link" : "Edit link"}
+          title={dialog === "add" ? "Add metadata" : "Edit metadata"}
           onClose={() => setDialog(null)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -187,9 +187,9 @@ export function ProfileLinksEditor({
           <label className="block space-y-1 text-sm">
             <span>Value</span>
             <input
-              value={draft.link}
+              value={draft.value}
               onChange={(e) =>
-                setDraft((d) => ({ ...d, link: e.target.value }))
+                setDraft((d) => ({ ...d, value: e.target.value }))
               }
               className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
             />
@@ -208,19 +208,19 @@ export function ProfileLinksEditor({
 
       {deletingIndex !== null ? (
         <DetailDialog
-          title="Delete link"
+          title="Delete metadata"
           role="alertdialog"
           onClose={() => setDeletingIndex(null)}
         >
           <p className="text-muted">
-            Remove link key “{links[deletingIndex]?.key}” from this form? It is
-            stored only when you Save the profile.
+            Remove metadata key “{metadata[deletingIndex]?.key}” from this form?
+            It is stored only when you Save the company.
           </p>
           <div className="flex justify-end">
             <button
               type="button"
               onClick={() => {
-                onChange(links.filter((_, i) => i !== deletingIndex));
+                onChange(metadata.filter((_, i) => i !== deletingIndex));
                 setDeletingIndex(null);
               }}
               className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg"

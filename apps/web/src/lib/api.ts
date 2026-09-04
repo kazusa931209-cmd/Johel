@@ -3,6 +3,7 @@ import type {
   WorkflowWritePayload,
 } from "./workflow";
 import type { ProfileDetail, ProfileWritePayload } from "./profile";
+import type { CompanyDetail, CompanyWritePayload } from "./company";
 
 export type {
   WorkflowDetail,
@@ -16,6 +17,12 @@ export type {
   ProfileLinkItem,
   ProfileWritePayload,
 } from "./profile";
+
+export type {
+  CompanyDetail,
+  CompanyMetadataItem,
+  CompanyWritePayload,
+} from "./company";
 
 export type User = {
   id: string;
@@ -175,4 +182,41 @@ export function updateProfile(id: string, payload: ProfileWritePayload) {
 
 export function deleteProfile(id: string) {
   return request<{ ok: boolean }>(`/profiles/${id}`, { method: "DELETE" });
+}
+
+export type CompanyList = {
+  items: CompanyDetail[];
+  total: number;
+  page: number;
+  pageSize: number;
+  nextPriority: number;
+};
+
+export function listCompanies(q: string, page: number) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("page", String(page));
+  return request<CompanyList>(`/companies?${params.toString()}`);
+}
+
+export function getCompany(id: string) {
+  return request<CompanyDetail>(`/companies/${id}`);
+}
+
+export function createCompany(payload: CompanyWritePayload) {
+  return request<CompanyDetail>("/companies", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateCompany(id: string, payload: CompanyWritePayload) {
+  return request<CompanyDetail>(`/companies/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteCompany(id: string) {
+  return request<{ ok: boolean }>(`/companies/${id}`, { method: "DELETE" });
 }

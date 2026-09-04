@@ -6,6 +6,7 @@ import { healthRoutes } from "./routes/health.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { workflowsRoutes } from "./routes/workflows.js";
 import { profilesRoutes } from "./routes/profiles.js";
+import { companiesRoutes } from "./routes/companies.js";
 
 const app = new Hono();
 
@@ -22,6 +23,7 @@ app.route("/auth", authRoutes);
 app.route("/settings", settingsRoutes);
 app.route("/workflows", workflowsRoutes);
 app.route("/profiles", profilesRoutes);
+app.route("/companies", companiesRoutes);
 
 const port = Number(process.env.PORT ?? 4042);
 

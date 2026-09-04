@@ -7,6 +7,10 @@ export function StudioSidebar() {
   const pathname = usePathname();
   const profilesActive =
     pathname === "/profiles" || pathname.startsWith("/profiles/");
+  const companiesActive =
+    pathname === "/companies" || pathname.startsWith("/companies/");
+  const experiencesActive =
+    pathname === "/experiences" || pathname.startsWith("/experiences/");
   const workflowsActive =
     pathname === "/workflows" || pathname.startsWith("/workflows/");
   const generateActive = pathname === "/";
@@ -28,6 +32,26 @@ export function StudioSidebar() {
           }`}
         >
           Profiles
+        </Link>
+        <Link
+          href="/companies"
+          className={`rounded-md px-3 py-2 pl-6 text-sm transition-colors ${
+            companiesActive
+              ? "bg-surface-muted font-medium text-foreground"
+              : "text-muted hover:bg-surface-muted hover:text-foreground"
+          }`}
+        >
+          Companies
+        </Link>
+        <Link
+          href="/experiences"
+          className={`rounded-md px-3 py-2 pl-6 text-sm transition-colors ${
+            experiencesActive
+              ? "bg-surface-muted font-medium text-foreground"
+              : "text-muted hover:bg-surface-muted hover:text-foreground"
+          }`}
+        >
+          Experiences
         </Link>
         <Link
           href="/workflows"

@@ -12,36 +12,37 @@ import {
   DetailDialog,
   TABLE_ROW_HOVER_CLASS,
 } from "@/components/shared/detail-dialog";
-import { WorkflowDetailDialog } from "@/components/WorkflowDetailDialog";
-import { deleteWorkflow, listWorkflows, type Workflow } from "@/lib/api";
+import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
+import {
+  deleteCompany,
+  listCompanies,
+  type CompanyDetail,
+} from "@/lib/api";
+import { formatMetadataCell } from "@/lib/company";
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString();
-}
-
-export default function WorkflowsPage() {
+export default function CompaniesPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const [items, setItems] = useState<Workflow[]>([]);
+  const [items, setItems] = useState<CompanyDetail[]>([]);
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState<Workflow | null>(null);
+  const [deleting, setDeleting] = useState<CompanyDetail | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
-  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<CompanyDetail | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const load = useCallback(
     async (nextQ: string, nextPage: number) => {
       setLoading(true);
-      const res = await listWorkflows(nextQ, nextPage);
+      const res = await listCompanies(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
-        toast(res.error ?? "Failed to load workflows", "error");
+        toast(res.error ?? "Failed to load companies", "error");
         return;
       }
       setItems(res.data.items);
@@ -59,14 +60,14 @@ export default function WorkflowsPage() {
   async function onConfirmDelete() {
     if (!deleting) return;
     setDeletingBusy(true);
-    const res = await deleteWorkflow(deleting.id);
+    const res = await deleteCompany(deleting.id);
     setDeletingBusy(false);
     if (res.error) {
       toast(res.error, "error");
       return;
     }
     setDeleting(null);
-    toast("Workflow deleted.", "success");
+    toast("Company deleted.", "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     void load(q, nextPage);
   }
@@ -79,13 +80,13 @@ export default function WorkflowsPage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Workflows</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Companies</h1>
       <form onSubmit={onFilter} className="flex items-center gap-2">
         <input
           type="search"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
-          placeholder="Search name or description"
+          placeholder="Search name, description"
           className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
         />
         <button
@@ -95,7 +96,7 @@ export default function WorkflowsPage() {
           Search
         </button>
         <AddButton
-          onClick={() => router.push("/workflows/new")}
+          onClick={() => router.push("/companies/new")}
           className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-accent text-accent-fg hover:opacity-90"
         />
       </form>
@@ -104,25 +105,24 @@ export default function WorkflowsPage() {
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
-              <th className="px-3 py-2 font-medium">Name</th>
+              <th className="px-3 py-2 font-medium">Company Name</th>
               <th className="px-3 py-2 font-medium">Description</th>
-              <th className="px-3 py-2 font-medium">Used</th>
-              <th className="px-3 py-2 font-medium">Created</th>
-              <th className="px-3 py-2 font-medium">Updated</th>
+              <th className="px-3 py-2 font-medium">Metadata</th>
+              <th className="px-3 py-2 font-medium">Priority</th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-muted">
+                <td colSpan={6} className="px-3 py-8 text-center text-muted">
                   Loading…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-muted">
-                  No workflows yet.
+                <td colSpan={6} className="px-3 py-8 text-center text-muted">
+                  No companies yet.
                 </td>
               </tr>
             ) : (
@@ -131,11 +131,11 @@ export default function WorkflowsPage() {
                   key={row.id}
                   className={TABLE_ROW_HOVER_CLASS}
                   tabIndex={0}
-                  onClick={() => setViewingId(row.id)}
+                  onClick={() => setViewing(row)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      setViewingId(row.id);
+                      setViewing(row);
                     }
                   }}
                 >
@@ -143,15 +143,14 @@ export default function WorkflowsPage() {
                     {(page - 1) * pageSize + index + 1}
                   </td>
                   <td className="px-3 py-2 font-medium">{row.name}</td>
-                  <td className="max-w-[220px] truncate px-3 py-2 text-muted">
-                    {row.description ?? ""}
+                  <td className="max-w-[280px] truncate px-3 py-2 text-muted">
+                    {row.description}
                   </td>
-                  <td className="px-3 py-2">{row.used}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-muted">
-                    {formatDate(row.createdAt)}
+                  <td className="max-w-[180px] truncate px-3 py-2 text-muted">
+                    {formatMetadataCell(row.metadata)}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-muted">
-                    {formatDate(row.updatedAt)}
+                    {row.priority}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"
@@ -161,7 +160,7 @@ export default function WorkflowsPage() {
                     <div className="flex justify-end gap-2">
                       <EditButton
                         onClick={() =>
-                          router.push(`/workflows/${row.id}/edit`)
+                          router.push(`/companies/${row.id}/edit`)
                         }
                       />
                       <DeleteButton onClick={() => setDeleting(row)} />
@@ -195,22 +194,22 @@ export default function WorkflowsPage() {
         </button>
       </div>
 
-      {viewingId ? (
-        <WorkflowDetailDialog
-          workflowId={viewingId}
-          onClose={() => setViewingId(null)}
+      {viewing ? (
+        <CompanyDetailDialog
+          company={viewing}
+          onClose={() => setViewing(null)}
         />
       ) : null}
 
       {deleting ? (
         <DetailDialog
-          title="Delete workflow"
+          title="Delete company"
           role="alertdialog"
           closeDisabled={deletingBusy}
           onClose={() => setDeleting(null)}
         >
           <p className="text-muted">
-            Delete workflow “{deleting.name}”? This cannot be undone.
+            Delete company “{deleting.name}”? This cannot be undone.
           </p>
           <div className="flex justify-end">
             <button

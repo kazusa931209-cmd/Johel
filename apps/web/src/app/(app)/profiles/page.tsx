@@ -8,7 +8,10 @@ import {
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
-import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
+import {
+  DetailDialog,
+  TABLE_ROW_HOVER_CLASS,
+} from "@/components/shared/detail-dialog";
 import { ProfileDetailDialog } from "@/components/ProfileDetailDialog";
 import {
   deleteProfile,
@@ -213,51 +216,28 @@ export default function ProfilesPage() {
       ) : null}
 
       {deleting ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          role="presentation"
-          onClick={() => {
-            if (!deletingBusy) setDeleting(null);
-          }}
+        <DetailDialog
+          title="Delete profile"
+          role="alertdialog"
+          closeDisabled={deletingBusy}
+          onClose={() => setDeleting(null)}
         >
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="delete-profile-title"
-            aria-describedby="delete-profile-desc"
-            className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-4 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="space-y-2">
-              <h2 id="delete-profile-title" className="text-lg font-semibold">
-                Delete profile
-              </h2>
-              <p id="delete-profile-desc" className="text-sm text-muted">
-                Delete profile “
-                {fullName(deleting.firstName, deleting.lastName)}”? This cannot
-                be undone.
-              </p>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                disabled={deletingBusy}
-                onClick={() => setDeleting(null)}
-                className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted disabled:opacity-60"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={deletingBusy}
-                onClick={() => void onConfirmDelete()}
-                className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg disabled:opacity-60"
-              >
-                {deletingBusy ? "Deleting…" : "Delete"}
-              </button>
-            </div>
+          <p className="text-muted">
+            Delete profile “
+            {fullName(deleting.firstName, deleting.lastName)}”? This cannot be
+            undone.
+          </p>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              disabled={deletingBusy}
+              onClick={() => void onConfirmDelete()}
+              className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg disabled:opacity-60"
+            >
+              {deletingBusy ? "Deleting…" : "Delete"}
+            </button>
           </div>
-        </div>
+        </DetailDialog>
       ) : null}
     </section>
   );

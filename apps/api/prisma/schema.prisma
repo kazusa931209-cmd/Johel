@@ -16,6 +16,7 @@ model User {
   setting      Setting?
   workflows    Workflow[]
   profiles     Profile[]
+  companies    Company[]
 
   // SQLite table names are case-insensitive; plural avoids colliding with former PascalCase names.
   @@map("users")
@@ -96,4 +97,35 @@ model ProfileLink {
   @@unique([profileId, key])
   @@index([profileId])
   @@map("profileLinks")
+}
+
+model Company {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String
+  priority    Int
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  metadata    CompanyMetadata[]
+
+  @@index([userId])
+  @@index([userId, priority])
+  @@map("companies")
+}
+
+model CompanyMetadata {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  key       String
+  value     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, key])
+  @@index([companyId])
+  @@map("companyMetadata")
 }
