@@ -8,6 +8,8 @@ import {
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
+import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
+import { WorkflowDetailDialog } from "@/components/WorkflowDetailDialog";
 import { deleteWorkflow, listWorkflows, type Workflow } from "@/lib/api";
 
 function formatDate(iso: string) {
@@ -26,6 +28,7 @@ export default function WorkflowsPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<Workflow | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
+  const [viewingId, setViewingId] = useState<string | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -121,7 +124,18 @@ export default function WorkflowsPage() {
               </tr>
             ) : (
               items.map((row, index) => (
-                <tr key={row.id} className="border-b border-border last:border-0">
+                <tr
+                  key={row.id}
+                  className={TABLE_ROW_HOVER_CLASS}
+                  tabIndex={0}
+                  onClick={() => setViewingId(row.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setViewingId(row.id);
+                    }
+                  }}
+                >
                   <td className="px-3 py-2 text-muted">
                     {(page - 1) * pageSize + index + 1}
                   </td>
@@ -136,10 +150,16 @@ export default function WorkflowsPage() {
                   <td className="whitespace-nowrap px-3 py-2 text-muted">
                     {formatDate(row.updatedAt)}
                   </td>
-                  <td className="px-3 py-2">
+                  <td
+                    className="cursor-default px-3 py-2"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
                     <div className="flex justify-end gap-2">
                       <EditButton
-                        onClick={() => router.push(`/workflows/${row.id}/edit`)}
+                        onClick={() =>
+                          router.push(`/workflows/${row.id}/edit`)
+                        }
                       />
                       <DeleteButton onClick={() => setDeleting(row)} />
                     </div>
@@ -171,6 +191,13 @@ export default function WorkflowsPage() {
           Next
         </button>
       </div>
+
+      {viewingId ? (
+        <WorkflowDetailDialog
+          workflowId={viewingId}
+          onClose={() => setViewingId(null)}
+        />
+      ) : null}
 
       {deleting ? (
         <div

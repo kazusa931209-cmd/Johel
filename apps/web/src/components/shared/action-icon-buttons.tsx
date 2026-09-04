@@ -12,6 +12,8 @@ type ActionButtonProps = Omit<
 const iconButtonClass =
   "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border hover:bg-surface-muted disabled:opacity-60";
 
+const rowActionButtonClass = `${iconButtonClass} cursor-default`;
+
 export function AddButton({
   label = "Add",
   showLabel = false,
@@ -51,8 +53,8 @@ export function EditButton({
       className={
         className ??
         (showLabel
-          ? "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-60"
-          : iconButtonClass)
+          ? "inline-flex cursor-default items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-60"
+          : rowActionButtonClass)
       }
       {...props}
     >
@@ -76,8 +78,8 @@ export function DeleteButton({
       className={
         className ??
         (showLabel
-          ? "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm text-danger hover:bg-surface-muted disabled:opacity-60"
-          : `${iconButtonClass} text-danger`)
+          ? "inline-flex cursor-default items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm text-danger hover:bg-surface-muted disabled:opacity-60"
+          : `${rowActionButtonClass} text-danger`)
       }
       {...props}
     >

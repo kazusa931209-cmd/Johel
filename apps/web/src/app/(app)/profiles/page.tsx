@@ -8,6 +8,8 @@ import {
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
+import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
+import { ProfileDetailDialog } from "@/components/ProfileDetailDialog";
 import {
   deleteProfile,
   listProfiles,
@@ -27,6 +29,7 @@ export default function ProfilesPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<ProfileDetail | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
+  const [viewing, setViewing] = useState<ProfileDetail | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -124,7 +127,18 @@ export default function ProfilesPage() {
               </tr>
             ) : (
               items.map((row, index) => (
-                <tr key={row.id} className="border-b border-border last:border-0">
+                <tr
+                  key={row.id}
+                  className={TABLE_ROW_HOVER_CLASS}
+                  tabIndex={0}
+                  onClick={() => setViewing(row)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setViewing(row);
+                    }
+                  }}
+                >
                   <td className="px-3 py-2 text-muted">
                     {(page - 1) * pageSize + index + 1}
                   </td>
@@ -149,10 +163,16 @@ export default function ProfilesPage() {
                   <td className="max-w-[160px] truncate px-3 py-2 text-muted">
                     {row.education ?? ""}
                   </td>
-                  <td className="px-3 py-2">
+                  <td
+                    className="cursor-default px-3 py-2"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
                     <div className="flex justify-end gap-2">
                       <EditButton
-                        onClick={() => router.push(`/profiles/${row.id}/edit`)}
+                        onClick={() =>
+                          router.push(`/profiles/${row.id}/edit`)
+                        }
                       />
                       <DeleteButton onClick={() => setDeleting(row)} />
                     </div>
@@ -184,6 +204,13 @@ export default function ProfilesPage() {
           Next
         </button>
       </div>
+
+      {viewing ? (
+        <ProfileDetailDialog
+          profile={viewing}
+          onClose={() => setViewing(null)}
+        />
+      ) : null}
 
       {deleting ? (
         <div

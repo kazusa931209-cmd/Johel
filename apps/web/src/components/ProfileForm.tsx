@@ -202,7 +202,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
 
       <ProfileLinksEditor links={links} onChange={setLinks} />
 
-      <div className="sticky bottom-0 flex justify-end gap-2 border-t border-border bg-background/95 py-4 backdrop-blur">
+      <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
           type="button"
           onClick={() => router.push("/profiles")}

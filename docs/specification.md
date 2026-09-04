@@ -83,6 +83,7 @@ Build a customized Resume / CV and résumé writing application.
 * **Profiles**
   * Per-user list: No, Full Name (first + last), birth date, email, PN, links, residence, education
   * Keyword filter on name parts, email, PN, residence, education; 10 rows per page
+  * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole profile
   * Links add/edit/delete is local on the page until Save persists the profile (same pattern as workflow Metadata)
@@ -91,6 +92,7 @@ Build a customized Resume / CV and résumé writing application.
 * **Workflows**
   * Per-user list: name, optional one-line description, used count, created, updated
   * Keyword filter on name and description; 10 rows per page
+  * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
   * Metadata add/edit/delete is local on the page until Save persists the workflow
