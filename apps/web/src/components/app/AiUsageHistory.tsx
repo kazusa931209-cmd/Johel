@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/app/ToastProvider";
 import { Drawer } from "@/components/shared/drawer";
-import {
-  DetailField,
-  TABLE_ROW_HOVER_CLASS,
-} from "@/components/shared/detail-dialog";
+import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { HistoryIcon } from "@/components/shared/icons";
 import {
   formatAiProvider,
@@ -21,7 +18,32 @@ import {
 } from "@/lib/api";
 
 const fabClass =
-  "fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-surface shadow-lg transition-colors hover:bg-surface-muted";
+  "fixed bottom-8 right-12 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-surface shadow-lg transition-colors hover:bg-surface-muted";
+
+function AiUsageTextSection({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  const text = value.trim() ? value : "—";
+
+  return (
+    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-background">
+      <div className="shrink-0 border-b border-border bg-surface-muted px-3 py-2">
+        <h3 className="text-xs font-medium tracking-wide text-muted uppercase">
+          {label}
+        </h3>
+      </div>
+      <div className="max-h-[min(40vh,24rem)] overflow-auto p-3">
+        <div className="whitespace-pre-wrap break-words text-sm text-foreground">
+          {text}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function AiUsageDetailDrawer({
   detail,
@@ -47,9 +69,9 @@ function AiUsageDetailDrawer({
         {loading ? (
           <p className="text-sm text-muted">Loading…</p>
         ) : detail ? (
-          <div className="space-y-4 text-sm">
-            <DetailField label="Input" value={detail.input} />
-            <DetailField label="Output" value={detail.output} />
+          <div className="flex flex-col gap-4 text-sm">
+            <AiUsageTextSection label="Input" value={detail.input} />
+            <AiUsageTextSection label="Output" value={detail.output} />
           </div>
         ) : null}
       </div>

@@ -8,6 +8,7 @@ Local customized Resume / CV builder.
 
 - [Specification](docs/specification.md)
 - [Technology](docs/technology.md)
+- [Docker deployment](docs/docker.md)
 - [Plans](docs/plans/)
 
 ## Run locally
@@ -22,3 +23,14 @@ pnpm dev:web                             # http://127.0.0.1:4041
 ```
 
 Open `http://127.0.0.1:4041` — register or log in. Browser calls go to `/backend/*`, rewritten to the API.
+
+## Run with Docker Desktop
+
+One image (API + web). See **[docs/docker.md](docs/docker.md)** for Case A (this Mac) and Case B (another Mac on the LAN).
+
+```bash
+cp .env.example .env   # set JWT_SECRET
+docker compose up -d --build
+```
+
+Open `http://127.0.0.1:4041` or `http://<host-lan-ip>:4041` from other devices on the LAN.

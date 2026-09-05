@@ -123,7 +123,7 @@ export default function PromptsPage() {
                 }
               }}
               placeholder={VERDICT_PROMPT_PLACEHOLDER}
-              rows={8}
+              rows={12}
               aria-invalid={Boolean(fieldErrors.verdictPrompt)}
               className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
             />
@@ -151,7 +151,7 @@ export default function PromptsPage() {
                 }
               }}
               placeholder={GENERATE_PROMPT_PLACEHOLDER}
-              rows={8}
+              rows={48}
               aria-invalid={Boolean(fieldErrors.generatePrompt)}
               className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
             />
@@ -179,7 +179,7 @@ export default function PromptsPage() {
                 }
               }}
               placeholder={EVALUATE_PROMPT_PLACEHOLDER}
-              rows={8}
+              rows={16}
               aria-invalid={Boolean(fieldErrors.evaluatePrompt)}
               className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
             />

@@ -34,7 +34,8 @@ Job Description → Filtering → Workflow → Generate → Evaluate
 
 ## Deployment
 
-* Local deployment
+* Local deployment (development: `pnpm dev:api` + `pnpm dev:web`)
+* **Docker Desktop** — one combined image (API + web). Port **4041** is published so other devices on the LAN can use the app. The container may run on **this machine** or **another machine** on the LAN; the **database stays on whichever machine runs the container** when the image is replaced. See [`docs/docker.md`](./docker.md).
 
 ## Requirements
 
@@ -263,6 +264,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-06):** `companies.priority` column dropped; company list ordered by name; editors and detail dialogs simplified. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-31-remove-company-priority.md`](./plans/2026-09-06-phase-31-remove-company-priority.md).
 * [x] **Phase 32 — AI Usage History drawer** — Fixed bottom-right history button opens a right-side usage table drawer (100 rows per page); row click opens a nested drawer with input and output text; backdrop dismiss closes the topmost drawer.
   * **Outcome (2026-09-06):** `GET /ai-usage` list and `GET /ai-usage/:id` detail; global FAB and nested drawers on the authenticated shell. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-32-ai-usage-history.md`](./plans/2026-09-06-phase-32-ai-usage-history.md).
+* [x] **Phase 33 — Docker Environment** — One Docker image contains API and web together. Run on **Docker Desktop** (Apple Silicon); publish port **4041** so other LAN devices can use the app. Database persists on the host that runs the container when the image is updated.
+  * **Outcome (2026-09-06):** `Dockerfile`, `docker-compose.yml`, and [`docs/docker.md`](./docker.md) (Case A: local Desktop; Case B: other device Desktop). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-33-docker-environment.md`](./plans/2026-09-06-phase-33-docker-environment.md).
 
 ## Cursor Rules (Documentation Governance)
 

@@ -40,7 +40,8 @@ app.route("/ai-usage", aiUsageRoutes);
 app.route("/prompts", promptsRoutes);
 
 const port = Number(process.env.PORT ?? 4042);
+const hostname = process.env.HOST ?? "127.0.0.1";
 
-serve({ fetch: app.fetch, hostname: "127.0.0.1", port }, (info) => {
-  console.log(`API listening on http://127.0.0.1:${info.port}`);
+serve({ fetch: app.fetch, hostname, port }, (info) => {
+  console.log(`API listening on http://${hostname}:${info.port}`);
 });
