@@ -34,6 +34,7 @@ import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
   getGenerationProcess,
   getPrompts,
+  getWorkflowGenerationFingerprint,
   listWorkflows,
   runAiEvaluate,
   runAiResume,
@@ -162,7 +163,23 @@ export default function GeneratePage() {
     const errors = validateWorkflowSelection(workflow);
     if (Object.keys(errors).length > 0) return;
 
-    const inputKey = buildGenerationInputKey(job, workflow);
+    const fingerprintRes = await getWorkflowGenerationFingerprint(
+      workflow.workflowId,
+    );
+    if (!fingerprintRes.data?.fingerprint) {
+      toast(
+        fingerprintRes.error ??
+          "Failed to load workflow content for resume generation.",
+        "error",
+      );
+      return;
+    }
+
+    const inputKey = buildGenerationInputKey(
+      job,
+      workflow,
+      fingerprintRes.data.fingerprint,
+    );
     if (
       canReuseStoredResume(
         {
@@ -224,6 +241,31 @@ export default function GeneratePage() {
     if (!resume || !generationInputKey) {
       toast(
         "No generated resume is available. Go back to Workflow and run generation first.",
+        "error",
+      );
+      return;
+    }
+
+    const fingerprintRes = await getWorkflowGenerationFingerprint(
+      workflow.workflowId,
+    );
+    if (!fingerprintRes.data?.fingerprint) {
+      toast(
+        fingerprintRes.error ??
+          "Failed to load workflow content for evaluation.",
+        "error",
+      );
+      return;
+    }
+
+    const currentInputKey = buildGenerationInputKey(
+      job,
+      workflow,
+      fingerprintRes.data.fingerprint,
+    );
+    if (currentInputKey !== generationInputKey) {
+      toast(
+        "Workflow content changed. Go back to Workflow to regenerate your resume.",
         "error",
       );
       return;

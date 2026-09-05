@@ -215,6 +215,12 @@ export function getWorkflow(id: string) {
   return request<WorkflowDetail>(`/workflows/${id}`);
 }
 
+export function getWorkflowGenerationFingerprint(workflowId: string) {
+  return request<{ fingerprint: string }>(
+    `/workflows/${workflowId}/generation-fingerprint`,
+  );
+}
+
 export function createWorkflow(payload: WorkflowWritePayload) {
   return request<WorkflowDetail>("/workflows", {
     method: "POST",

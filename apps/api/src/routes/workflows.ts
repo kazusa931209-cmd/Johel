@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 import { aggregateWorkflowUsed } from "../lib/workflowUsed.js";
+import { buildWorkflowGenerationFingerprint } from "../lib/resume/generation-fingerprint.js";
 import {
   listResponsePageSize,
   parseListPagination,
@@ -202,6 +203,33 @@ workflowsRoutes.get("/", async (c) => {
   const pageSize = listResponsePageSize(pagination, total);
 
   return c.json({ items, total, page: pagination.page, pageSize });
+});
+
+workflowsRoutes.get("/:id/generation-fingerprint", async (c) => {
+  const user = await requireUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const id = c.req.param("id");
+  const existing = await prisma.workflow.findFirst({
+    where: { id, userId: user.id },
+    select: { id: true },
+  });
+  if (!existing) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  try {
+    const fingerprint = await buildWorkflowGenerationFingerprint(user.id, id);
+    return c.json({ fingerprint });
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Workflow generation fingerprint could not be loaded.";
+    return c.json({ error: message }, 400);
+  }
 });
 
 workflowsRoutes.get("/:id", async (c) => {

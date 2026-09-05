@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildGenerationInputKey,
   buildVerdictInputKey,
+  canReuseStoredResume,
   canReuseStoredVerdict,
   EMPTY_GENERATE_SESSION,
   EMPTY_JOB_STATE,
   parseGenerateSession,
 } from "../generate-session";
+import { EMPTY_WORKFLOW_SELECTION } from "@/components/generate/pcew-types";
 
 describe("generate-session verdict cache", () => {
   it("builds verdict input key from noise-filtered job text", () => {
@@ -98,5 +101,53 @@ describe("generate-session verdict cache", () => {
 
   it("treats empty session as not in progress", () => {
     expect(EMPTY_GENERATE_SESSION.verdictInputKey).toBeNull();
+  });
+});
+
+describe("generate-session resume cache", () => {
+  const job = {
+    ...EMPTY_JOB_STATE,
+    jobText: "Engineer role",
+    acceptedMarkdown: "# Verdict",
+  };
+  const workflow = {
+    ...EMPTY_WORKFLOW_SELECTION,
+    workflowId: "wf-1",
+    workflowName: "Backend",
+  };
+
+  it("includes workflow content fingerprint in generation input key", () => {
+    const key = buildGenerationInputKey(job, workflow, "fp-v1");
+    expect(key).toContain("fp-v1");
+    expect(key).toContain("wf-1");
+  });
+
+  it("does not reuse stored resume when fingerprint changes", () => {
+    const storedKey = buildGenerationInputKey(job, workflow, "fp-v1");
+    const currentKey = buildGenerationInputKey(job, workflow, "fp-v2");
+    expect(
+      canReuseStoredResume(
+        {
+          ...EMPTY_GENERATE_SESSION,
+          job,
+          workflow,
+          generationInputKey: storedKey,
+          resume: {
+            header: {
+              name: "Jane Doe",
+              title: "Engineer",
+              contact: { email: "jane@example.com" },
+            },
+            summary: "Summary",
+            skills: [],
+            experience: [],
+            education: [],
+            projects: [],
+            certifications: [],
+          },
+        },
+        currentKey,
+      ),
+    ).toBe(false);
   });
 });

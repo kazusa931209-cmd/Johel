@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /prompts`, `PUT /prompts`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /prompts`, `PUT /prompts`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
@@ -154,7 +154,7 @@ User browser (:4041)
 - Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
 
-## Generate UI (Phase 11–20, 22, 24, 25, 26, 27)
+## Generate UI (Phase 11–20, 22, 24, 25, 26, 27, 28)
 
 - Route `/` gates on at least one workflow and saved Generate Prompt; Verdict Prompt required only when `doVerdict`; Evaluate Prompt required only when `doEvaluate`; otherwise a centered alert with links (not a toast)
 - Timeline steps: Job → Workflow → Generate, plus **Evaluate** when `doEvaluate` is true
@@ -162,11 +162,11 @@ User browser (:4041)
 - Step navigation: steps register handlers via `useRegisterGenerateStepNav`; large round controls flank the timeline on the same row
 - Job UI (Manual): Job text max 10,000 chars + right **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
 - Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text when `doVerdict` and inputs changed, or reuses stored verdict when `verdictInputKey` matches; fullscreen loading; on success saves `acceptedMarkdown` + `verdictInputKey`, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
-- Workflow: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then one `PcewSection` workflow table (single-select); loads all workflows via `GET /workflows` with `page=null`; **Next** runs `POST /ai-resume` with `{ jobDescription, acceptedMarkdown, workflowId }` (profile/companies/experiences resolved server-side from the workflow), or reuses stored resume when fingerprint unchanged
-- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Previous** → Workflow; **Next** runs `POST /ai-evaluate` with noise-filtered `jobDescription` and stored `resume`, or reuses stored evaluation when fingerprint unchanged; fullscreen loading while evaluating; **Download** on this step when `doEvaluate` is false
+- Workflow: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then one `PcewSection` workflow table (single-select); loads all workflows via `GET /workflows` with `page=null`; **Next** fetches `GET /workflows/:id/generation-fingerprint`, builds `generationInputKey` including that fingerprint, then runs `POST /ai-resume` or reuses stored resume when job + workflow + PCE content are unchanged
+- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Previous** → Workflow; **Next** fetches workflow fingerprint and blocks with an error toast if PCE changed since resume generation; otherwise runs `POST /ai-evaluate` or reuses stored evaluation when fingerprint matches; fullscreen loading while evaluating; **Download** on this step when `doEvaluate` is false
 - Evaluate: `GenerateEvaluateStep` renders evaluation Markdown via `AiVerdictMarkdown`; **Previous** → Generate; **Download** calls `POST /resume/docx` with stored JSON
 - One Generate **process** spans Job through DOCX download; session persists after download until **New** or until Settings **Process** flags change (Do Verdict / Do Evaluate saved with different values)
-- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId, workflowName? }`, `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint, `evaluationMarkdown`, and `evaluationInputKey`; legacy `pcew` session keys are parsed for `workflowId`; changing Job text clears verdict, resume, and evaluation; changing workflow clears resume and evaluation
+- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId, workflowName? }`, `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + workflow id + server PCE fingerprint), `evaluationMarkdown`, and `evaluationInputKey`; legacy `pcew` session keys are parsed for `workflowId`; changing Job text clears verdict, resume, and evaluation; changing workflow clears resume and evaluation; editing linked Profile / Companies / Experiences changes the server fingerprint so resume and evaluation are regenerated on next forward navigation
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowPcewPicker`
@@ -189,9 +189,10 @@ User browser (:4041)
 - Client: `getPrompts`, `savePrompts` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
 - Verdict Prompt consumed by `POST /ai-verdict`; Generate Prompt consumed by `POST /ai-resume`; Evaluate Prompt consumed by `POST /ai-evaluate`
 
-## AI Resume (Phase 20, 22, 23)
+## AI Resume (Phase 20, 22, 23, 28)
 
 - `POST /ai-resume` — body `{ jobDescription, acceptedMarkdown, workflowId }`; requires saved Settings provider/apiKey and non-empty `prompts.generatePrompt`; server loads the owned workflow (profile, companies, experiences via junction tables) and assembles generation input; system prompt = user Generate Prompt + shared resume rules; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
+- `GET /workflows/:id/generation-fingerprint` — returns `{ fingerprint }` where `fingerprint` is a stable JSON string of the assembled profile, companies, experiences, and workflow fields (same source as `assembleResumeGenerationInput`, excluding job text); used by Generate to detect PCE edits without re-running AI on unchanged content
 - Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`
 - Web: `runAiResume` in `apps/web/src/lib/api.ts`; Workflow **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown; Evaluate step downloads DOCX without re-calling AI when inputs are unchanged
 

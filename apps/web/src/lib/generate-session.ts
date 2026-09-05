@@ -137,11 +137,13 @@ export function canReuseStoredVerdict(
 export function buildGenerationInputKey(
   job: GenerateJobState,
   workflow: WorkflowSelection,
+  workflowContentFingerprint: string,
 ): string {
   return JSON.stringify({
     jobText: job.jobText.trim(),
     acceptedMarkdown: job.acceptedMarkdown ?? "",
     workflowId: workflow.workflowId,
+    workflowContentFingerprint,
   });
 }
 

@@ -251,6 +251,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-05):** `generationProcess` table, `GET/PUT /settings/process`, dynamic timeline, conditional prompt prerequisites. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-26-generation-process.md`](./plans/2026-09-05-phase-26-generation-process.md).
 * [x] **Phase 27 — Generate process session handling** — One Generate process runs Job through DOCX download; going back then forward reuses cached AI results when inputs are unchanged; **New** resets to a blank Job step; saving changed **Do Verdict** or **Do Evaluate** in Settings resets Generate; DOCX downloads use a date-prefixed filename including workflow name.
   * **Outcome (2026-09-05):** Verdict result caching, **New** header control, settings-driven session reset, `YYYY-MM-DD-{name}-{workflow}.docx` naming. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-27-generate-process-session.md`](./plans/2026-09-05-phase-27-generate-process-session.md).
+* [x] **Phase 28 — Invalidate Generate cache on PCE changes** — When Profile, Companies, Experiences, or workflow composition linked to the selected workflow change, Workflow **Next** regenerates the resume and Generate **Next** re-evaluates; unchanged PCE still reuses cached AI results.
+  * **Outcome (2026-09-05):** `GET /workflows/:id/generation-fingerprint`, workflow content fingerprint in `generationInputKey`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-28-pce-cache-invalidation.md`](./plans/2026-09-05-phase-28-pce-cache-invalidation.md).
 
 ## Cursor Rules (Documentation Governance)
 
