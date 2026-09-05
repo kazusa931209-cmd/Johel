@@ -1,112 +1,102 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildGenerationInputKey,
-  canReuseStoredEvaluation,
-  canReuseStoredResume,
+  buildVerdictInputKey,
+  canReuseStoredVerdict,
+  EMPTY_GENERATE_SESSION,
+  EMPTY_JOB_STATE,
   parseGenerateSession,
 } from "../generate-session";
 
-describe("generate-session resume helpers", () => {
-  const baseSession = {
-    activeStep: "Workflow" as const,
-    job: {
-      method: "manual" as const,
-      jobText: "Backend role",
-      acceptedMarkdown: "## Verdict",
-    },
-    workflow: {
-      workflowId: "workflow-1",
-    },
-    resume: {
-      header: { name: "Jane Doe" },
-      experiences: [
-        { company: "Acme", title: "Engineer", bullets: ["Built APIs"] },
-      ],
-    },
-    generationInputKey: null as string | null,
-    evaluationMarkdown: null as string | null,
-    evaluationInputKey: null as string | null,
-  };
-
-  it("builds a stable generation input key", () => {
-    const key = buildGenerationInputKey(baseSession.job, baseSession.workflow);
-    const keyAgain = buildGenerationInputKey(
-      baseSession.job,
-      baseSession.workflow,
-    );
-    expect(key).toBe(keyAgain);
-    expect(key).toContain("workflow-1");
-  });
-
-  it("reuses stored resume when fingerprint matches", () => {
-    const inputKey = buildGenerationInputKey(
-      baseSession.job,
-      baseSession.workflow,
-    );
-    const session = { ...baseSession, generationInputKey: inputKey };
-    expect(canReuseStoredResume(session, inputKey)).toBe(true);
-  });
-
-  it("does not reuse stored resume when fingerprint differs", () => {
-    const inputKey = buildGenerationInputKey(
-      baseSession.job,
-      baseSession.workflow,
-    );
-    const session = {
-      ...baseSession,
-      generationInputKey: "different-key",
-    };
-    expect(canReuseStoredResume(session, inputKey)).toBe(false);
-  });
-
-  it("reuses stored evaluation when fingerprint matches", () => {
-    const inputKey = buildGenerationInputKey(
-      baseSession.job,
-      baseSession.workflow,
-    );
-    const session = {
-      ...baseSession,
-      evaluationMarkdown: "## ATS Score\n\n85/100",
-      evaluationInputKey: inputKey,
-    };
-    expect(canReuseStoredEvaluation(session, inputKey)).toBe(true);
-  });
-
-  it("does not reuse stored evaluation when fingerprint differs", () => {
-    const inputKey = buildGenerationInputKey(
-      baseSession.job,
-      baseSession.workflow,
-    );
-    const session = {
-      ...baseSession,
-      evaluationMarkdown: "## ATS Score\n\n85/100",
-      evaluationInputKey: "different-key",
-    };
-    expect(canReuseStoredEvaluation(session, inputKey)).toBe(false);
-  });
-
-  it("parses resume from stored session JSON", () => {
-    const inputKey = buildGenerationInputKey(
-      baseSession.job,
-      baseSession.workflow,
-    );
-    const parsed = parseGenerateSession({
-      ...baseSession,
-      generationInputKey: inputKey,
+describe("generate-session verdict cache", () => {
+  it("builds verdict input key from noise-filtered job text", () => {
+    const key = buildVerdictInputKey({
+      ...EMPTY_JOB_STATE,
+      jobText: "  Senior Engineer role  ",
     });
-    expect(parsed?.resume?.header.name).toBe("Jane Doe");
-    expect(parsed?.generationInputKey).toBe(inputKey);
+    expect(key).toContain("Senior Engineer role");
   });
 
-  it("parses legacy pcew session shape", () => {
-    const parsed = parseGenerateSession({
-      activeStep: "PCEW",
-      job: baseSession.job,
-      pcew: { workflowId: "workflow-legacy" },
-      resume: null,
-      generationInputKey: null,
+  it("reuses stored verdict when keys match", () => {
+    const inputKey = buildVerdictInputKey({
+      ...EMPTY_JOB_STATE,
+      jobText: "Engineer",
+      acceptedMarkdown: "# Verdict",
     });
-    expect(parsed?.activeStep).toBe("Workflow");
-    expect(parsed?.workflow.workflowId).toBe("workflow-legacy");
+    expect(
+      canReuseStoredVerdict(
+        {
+          job: {
+            ...EMPTY_JOB_STATE,
+            jobText: "Engineer",
+            acceptedMarkdown: "# Verdict",
+          },
+          verdictInputKey: inputKey,
+        },
+        inputKey,
+      ),
+    ).toBe(true);
+  });
+
+  it("does not reuse stored verdict when key differs", () => {
+    const inputKey = buildVerdictInputKey({
+      ...EMPTY_JOB_STATE,
+      jobText: "Engineer",
+      acceptedMarkdown: "# Verdict",
+    });
+    expect(
+      canReuseStoredVerdict(
+        {
+          job: {
+            ...EMPTY_JOB_STATE,
+            jobText: "Engineer",
+            acceptedMarkdown: "# Verdict",
+          },
+          verdictInputKey: inputKey,
+        },
+        buildVerdictInputKey({
+          ...EMPTY_JOB_STATE,
+          jobText: "Different role",
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("derives verdict input key for legacy stored sessions", () => {
+    const parsed = parseGenerateSession({
+      activeStep: "Workflow",
+      job: {
+        method: "manual",
+        jobText: "Engineer",
+        acceptedMarkdown: "# Verdict",
+      },
+      workflow: { workflowId: "wf-1" },
+    });
+    expect(parsed?.verdictInputKey).toBeTruthy();
+    expect(
+      canReuseStoredVerdict(
+        {
+          job: parsed!.job,
+          verdictInputKey: parsed!.verdictInputKey,
+        },
+        buildVerdictInputKey(parsed!.job),
+      ),
+    ).toBe(true);
+  });
+
+  it("parses workflow name from stored session", () => {
+    const parsed = parseGenerateSession({
+      activeStep: "Job",
+      job: EMPTY_JOB_STATE,
+      workflow: { workflowId: "wf-1", workflowName: "Senior Backend" },
+      verdictInputKey: null,
+    });
+    expect(parsed?.workflow).toEqual({
+      workflowId: "wf-1",
+      workflowName: "Senior Backend",
+    });
+  });
+
+  it("treats empty session as not in progress", () => {
+    expect(EMPTY_GENERATE_SESSION.verdictInputKey).toBeNull();
   });
 });

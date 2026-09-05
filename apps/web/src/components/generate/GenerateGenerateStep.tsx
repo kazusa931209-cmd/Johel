@@ -5,9 +5,12 @@ import { resumeToMarkdown } from "@johel/resume";
 import type { GeneratedResume } from "@johel/resume";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
+import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
 
 type GenerateGenerateStepProps = {
   resume: GeneratedResume | null;
+  workflowName?: string;
+  doEvaluate: boolean;
   evaluating: boolean;
   onPrev: () => void;
   onNext: () => void | Promise<void>;
@@ -15,10 +18,13 @@ type GenerateGenerateStepProps = {
 
 export function GenerateGenerateStep({
   resume,
+  workflowName,
+  doEvaluate,
   evaluating,
   onPrev,
   onNext,
 }: GenerateGenerateStepProps) {
+  const { onDownload, downloading } = useResumeDocxDownload(resume, workflowName);
   const markdown = useMemo(
     () => (resume ? resumeToMarkdown(resume) : ""),
     [resume],
@@ -30,8 +36,10 @@ export function GenerateGenerateStep({
 
   useRegisterGenerateStepNav({
     onPrev,
-    onNext: resume ? handleNext : undefined,
+    onNext: resume && doEvaluate ? handleNext : undefined,
+    onDownload: resume && !doEvaluate ? () => void onDownload() : undefined,
     nextBusy: evaluating,
+    downloadBusy: downloading,
   });
 
   if (!resume) {

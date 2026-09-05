@@ -38,8 +38,8 @@ export function GenerateWorkflowStep({
 
   const fetchWorkflows = useCallback(() => listWorkflows("", null), []);
 
-  function onWorkflowSelect(id: string) {
-    onSelectionChange({ workflowId: id });
+  function onWorkflowSelect(id: string, row: Workflow) {
+    onSelectionChange({ workflowId: id, workflowName: row.name });
     if (fieldErrors.workflowId) {
       setFieldErrors((errors) => ({ ...errors, workflowId: undefined }));
     }

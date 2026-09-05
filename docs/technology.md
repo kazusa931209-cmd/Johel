@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /prompts`, `PUT /prompts`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `GET/POST /workflows`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /prompts`, `PUT /prompts`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
@@ -57,7 +57,8 @@ User browser (:4041)
 - Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
-- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `workflows`, `workflowCompanies`, `workflowExperiences`, `profiles`, `profileLinks`, `companies`, `companyMetadata`, `experiences`, `experienceMetadata`, `aiUsage`, `prompts`
+- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `createdAt`, `updatedAt`; defaults both `true`
+- SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
 ## Frontend (Phase 3)
@@ -103,6 +104,15 @@ User browser (:4041)
 - Full `apiKey` is stored plaintext in SQLite; never returned to the client
 - Web Settings: enabled provider dropdown; masked key shown only when the selected provider matches the saved provider; Save stays enabled with inline validation on submit; toast on API result
 
+## Process settings (Phase 26)
+
+- `GET /settings/process` → `{ doVerdict, doEvaluate }` (defaults both `true` when no row)
+- `PUT /settings/process` → `{ doVerdict, doEvaluate }`; upsert by `userId`; returns saved values
+- Web Settings **Process** section: **Do Verdict** and **Do Evaluate** checkboxes; Save always enabled; toast on API result
+- Generate reads process settings on load; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
+- When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel; `POST /ai-resume` receives `acceptedMarkdown: ""`
+- When `doEvaluate` is false: timeline is Job → Workflow → Generate; Generate **Download** is last-step action; Evaluate step hidden; stored `activeStep: "Evaluate"` normalizes to Generate on load
+
 ## Workflows (Phase 6–7, 22)
 
 - `GET /workflows?q=&page=` — page size 10; lean list items (name, description, used, dates)
@@ -144,18 +154,19 @@ User browser (:4041)
 - Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
 
-## Generate UI (Phase 11–20, 22, 24, 25)
+## Generate UI (Phase 11–20, 22, 24, 25, 26, 27)
 
-- Route `/` gates on at least one workflow and saved Verdict Prompt, Generate Prompt, and Evaluate Prompt; otherwise a centered alert with links (not a toast)
-- Timeline steps: Job → Workflow → Generate → Evaluate
-- Sticky header: page title + step row (`GenerateStepNavPrevButton` + `GenerateTimeline` + `GenerateStepNavNextButton`) use `sticky top-0` with `-mt-6 pt-6` to cover main padding and prevent content showing through the gap above; `bg-background` and bottom border
+- Route `/` gates on at least one workflow and saved Generate Prompt; Verdict Prompt required only when `doVerdict`; Evaluate Prompt required only when `doEvaluate`; otherwise a centered alert with links (not a toast)
+- Timeline steps: Job → Workflow → Generate, plus **Evaluate** when `doEvaluate` is true
+- Sticky header: page title row includes **New** (plus icon + label) to reset the in-progress Generate session to a blank Job step; step row (`GenerateStepNavPrevButton` + `GenerateTimeline` + `GenerateStepNavNextButton`) uses `sticky top-0` with `-mt-6 pt-6` to cover main padding and prevent content showing through the gap above; `bg-background` and bottom border
 - Step navigation: steps register handlers via `useRegisterGenerateStepNav`; large round controls flank the timeline on the same row
 - Job UI (Manual): Job text max 10,000 chars + right **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
-- Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text; fullscreen loading; on success saves `acceptedMarkdown`, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
+- Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text when `doVerdict` and inputs changed, or reuses stored verdict when `verdictInputKey` matches; fullscreen loading; on success saves `acceptedMarkdown` + `verdictInputKey`, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
 - Workflow: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then one `PcewSection` workflow table (single-select); loads all workflows via `GET /workflows` with `page=null`; **Next** runs `POST /ai-resume` with `{ jobDescription, acceptedMarkdown, workflowId }` (profile/companies/experiences resolved server-side from the workflow), or reuses stored resume when fingerprint unchanged
-- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Previous** → Workflow; **Next** runs `POST /ai-evaluate` with noise-filtered `jobDescription` and stored `resume`, or reuses stored evaluation when fingerprint unchanged; fullscreen loading while evaluating
+- Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Previous** → Workflow; **Next** runs `POST /ai-evaluate` with noise-filtered `jobDescription` and stored `resume`, or reuses stored evaluation when fingerprint unchanged; fullscreen loading while evaluating; **Download** on this step when `doEvaluate` is false
 - Evaluate: `GenerateEvaluateStep` renders evaluation Markdown via `AiVerdictMarkdown`; **Previous** → Generate; **Download** calls `POST /resume/docx` with stored JSON
-- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId }`, `resume` JSON, `generationInputKey` fingerprint, `evaluationMarkdown`, and `evaluationInputKey`; legacy `pcew` session keys are parsed for `workflowId`; changing Job or workflow clears stored resume and evaluation
+- One Generate **process** spans Job through DOCX download; session persists after download until **New** or until Settings **Process** flags change (Do Verdict / Do Evaluate saved with different values)
+- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId, workflowName? }`, `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint, `evaluationMarkdown`, and `evaluationInputKey`; legacy `pcew` session keys are parsed for `workflowId`; changing Job text clears verdict, resume, and evaluation; changing workflow clears resume and evaluation
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowPcewPicker`
@@ -195,8 +206,9 @@ User browser (:4041)
 - Workspace package: `packages/resume`
 - Canonical model: `GeneratedResume` (Zod schema in `domain/generated-resume.ts`)
 - `resumeToMarkdown(resume)` — deterministic Markdown for web display (main export)
+- `buildResumeDocxFileName(resume, workflowName?, date?)` — `YYYY-MM-DD-{name}-{workflow}.docx` using sanitized segments and local calendar date
 - `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts`; shared `ResumeDocxStyle` in `docx-builder/styles.ts`
-- `POST /resume/docx` — body `{ resume }` (validated `GeneratedResume`); returns `.docx` attachment; used by Evaluate **Download**
+- `POST /resume/docx` — body `{ resume, workflowName? }` (validated `GeneratedResume`); returns `.docx` attachment named via `buildResumeDocxFileName`; used by Generate/Evaluate **Download**
 - Consumed by API (validation), web (display + download), and Vitest unit tests
 - **DOCX template management** — architecture, default template, style tokens, and extension guide: [`docx-template-management.md`](./docx-template-management.md)
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
+import { AddButton } from "@/components/shared/action-icon-buttons";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
 import {
@@ -24,8 +25,24 @@ import {
   canReuseStoredEvaluation,
   canReuseStoredResume,
 } from "@/lib/generate-session";
+import {
+  getAdjacentGenerateStep,
+  getGenerateSteps,
+  normalizeGenerateActiveStep,
+} from "@/lib/generate-steps";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
-import { getPrompts, listWorkflows, runAiEvaluate, runAiResume } from "@/lib/api";
+import {
+  getGenerationProcess,
+  getPrompts,
+  listWorkflows,
+  runAiEvaluate,
+  runAiResume,
+} from "@/lib/api";
+
+const DEFAULT_PROCESS = {
+  doVerdict: true,
+  doEvaluate: true,
+};
 
 export default function GeneratePage() {
   const { toast } = useToast();
@@ -33,7 +50,9 @@ export default function GeneratePage() {
   const [loading, setLoading] = useState(true);
   const [generatingResume, setGeneratingResume] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
+  const [verdictRunning, setVerdictRunning] = useState(false);
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
+  const [processSettings, setProcessSettings] = useState(DEFAULT_PROCESS);
   const {
     ready: sessionReady,
     activeStep,
@@ -42,20 +61,44 @@ export default function GeneratePage() {
     setJob,
     workflow,
     setWorkflow,
+    verdictInputKey,
+    setVerdictResult,
     resume,
     generationInputKey,
     setResumeResult,
     evaluationMarkdown,
     evaluationInputKey,
     setEvaluationResult,
+    resetSession,
   } = useGenerateSession();
+
+  const processBusy = verdictRunning || generatingResume || evaluating;
+
+  const visibleSteps = useMemo(
+    () => getGenerateSteps(processSettings.doEvaluate),
+    [processSettings.doEvaluate],
+  );
+
+  const normalizedActiveStep = useMemo(
+    () => normalizeGenerateActiveStep(activeStep, processSettings.doEvaluate),
+    [activeStep, processSettings.doEvaluate],
+  );
+
+  useEffect(() => {
+    if (!sessionReady) return;
+    if (normalizedActiveStep !== activeStep) {
+      setActiveStep(normalizedActiveStep);
+    }
+  }, [activeStep, normalizedActiveStep, sessionReady, setActiveStep]);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listWorkflows("", 1), getPrompts()]).then(
-      ([workflows, prompts]) => {
+    Promise.all([listWorkflows("", 1), getPrompts(), getGenerationProcess()]).then(
+      ([workflows, prompts, process]) => {
         if (cancelled) return;
-        const errors = [workflows.error, prompts.error].filter(Boolean);
+        const errors = [workflows.error, prompts.error, process.error].filter(
+          Boolean,
+        );
         if (errors.length > 0) {
           toast(
             errors[0] ?? "Failed to check Generate prerequisites",
@@ -69,17 +112,23 @@ export default function GeneratePage() {
           return;
         }
 
+        const nextProcess = {
+          doVerdict: process.data?.doVerdict ?? DEFAULT_PROCESS.doVerdict,
+          doEvaluate: process.data?.doEvaluate ?? DEFAULT_PROCESS.doEvaluate,
+        };
+        setProcessSettings(nextProcess);
+
         const nextMissing: MissingPrerequisite[] = [];
         if ((workflows.data?.total ?? 0) < 1) {
           nextMissing.push({ label: "Workflows", href: "/workflows" });
         }
-        if (!prompts.data?.verdictPrompt.trim()) {
+        if (nextProcess.doVerdict && !prompts.data?.verdictPrompt.trim()) {
           nextMissing.push({ label: "Verdict Prompt", href: "/prompts" });
         }
         if (!prompts.data?.generatePrompt.trim()) {
           nextMissing.push({ label: "Generate Prompt", href: "/prompts" });
         }
-        if (!prompts.data?.evaluatePrompt.trim()) {
+        if (nextProcess.doEvaluate && !prompts.data?.evaluatePrompt.trim()) {
           nextMissing.push({ label: "Evaluate Prompt", href: "/prompts" });
         }
 
@@ -92,6 +141,21 @@ export default function GeneratePage() {
     };
   }, [toast]);
 
+  function goToStep(step: typeof activeStep) {
+    setActiveStep(step);
+  }
+
+  function goToAdjacentStep(direction: "prev" | "next") {
+    const next = getAdjacentGenerateStep(
+      visibleSteps,
+      normalizedActiveStep,
+      direction,
+    );
+    if (next) {
+      setActiveStep(next);
+    }
+  }
+
   async function onWorkflowNext() {
     if (generatingResume) return;
 
@@ -102,9 +166,10 @@ export default function GeneratePage() {
     if (
       canReuseStoredResume(
         {
-          activeStep,
+          activeStep: normalizedActiveStep,
           job,
           workflow,
+          verdictInputKey,
           resume,
           generationInputKey,
           evaluationMarkdown,
@@ -117,8 +182,10 @@ export default function GeneratePage() {
       return;
     }
 
-    const acceptedMarkdown = job.acceptedMarkdown?.trim();
-    if (!acceptedMarkdown) {
+    const acceptedMarkdown = processSettings.doVerdict
+      ? job.acceptedMarkdown?.trim()
+      : "";
+    if (processSettings.doVerdict && !acceptedMarkdown) {
       toast(
         "AI Verdict result is missing. Go back to Job and run analysis first.",
         "error",
@@ -131,7 +198,7 @@ export default function GeneratePage() {
     try {
       const res = await runAiResume({
         jobDescription,
-        acceptedMarkdown,
+        acceptedMarkdown: acceptedMarkdown ?? "",
         workflowId: workflow.workflowId,
       });
       if (!res.data) {
@@ -166,9 +233,10 @@ export default function GeneratePage() {
     if (
       canReuseStoredEvaluation(
         {
-          activeStep,
+          activeStep: normalizedActiveStep,
           job,
           workflow,
+          verdictInputKey,
           resume,
           generationInputKey,
           evaluationMarkdown,
@@ -220,52 +288,72 @@ export default function GeneratePage() {
         <div className="sticky top-[-24] z-10 -mx-6 -mt-6 border-b border-border bg-background px-6 pt-6 pb-4">
           <div className="space-y-4">
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Generate
-              </h1>
+              <div className="flex items-center justify-between gap-3">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  Generate
+                </h1>
+                <AddButton
+                  showLabel
+                  label="New"
+                  onClick={resetSession}
+                  disabled={processBusy}
+                />
+              </div>
               <p className="text-sm text-muted">
                 Prepare the Job Description, then choose a workflow preset.
               </p>
             </div>
             <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-3">
               <GenerateStepNavPrevButton />
-              <GenerateTimeline active={activeStep} />
+              <GenerateTimeline
+                active={normalizedActiveStep}
+                steps={visibleSteps}
+              />
               <GenerateStepNavNextButton />
             </div>
           </div>
         </div>
 
         <div className="pt-6">
-          {activeStep === "Job" ? (
+          {normalizedActiveStep === "Job" ? (
             <GenerateJobStep
               job={job}
+              verdictInputKey={verdictInputKey}
+              doVerdict={processSettings.doVerdict}
               onJobChange={setJob}
-              onAdvanceToWorkflow={() => setActiveStep("Workflow")}
+              onVerdictResult={setVerdictResult}
+              onAdvanceToWorkflow={() => goToStep("Workflow")}
+              onRunningChange={setVerdictRunning}
             />
           ) : null}
-          {activeStep === "Workflow" ? (
+          {normalizedActiveStep === "Workflow" ? (
             <GenerateWorkflowStep
-              acceptedMarkdown={job.acceptedMarkdown}
+              acceptedMarkdown={
+                processSettings.doVerdict ? job.acceptedMarkdown : null
+              }
               selection={workflow}
               generating={generatingResume}
               onSelectionChange={setWorkflow}
-              onPrev={() => setActiveStep("Job")}
+              onPrev={() => goToAdjacentStep("prev")}
               onNext={onWorkflowNext}
             />
           ) : null}
-          {activeStep === "Generate" ? (
+          {normalizedActiveStep === "Generate" ? (
             <GenerateGenerateStep
               resume={resume}
+              workflowName={workflow.workflowName}
+              doEvaluate={processSettings.doEvaluate}
               evaluating={evaluating}
-              onPrev={() => setActiveStep("Workflow")}
+              onPrev={() => goToAdjacentStep("prev")}
               onNext={onGenerateNext}
             />
           ) : null}
-          {activeStep === "Evaluate" ? (
+          {processSettings.doEvaluate && normalizedActiveStep === "Evaluate" ? (
             <GenerateEvaluateStep
               resume={resume}
+              workflowName={workflow.workflowName}
               evaluationMarkdown={evaluationMarkdown}
-              onPrev={() => setActiveStep("Generate")}
+              onPrev={() => goToAdjacentStep("prev")}
             />
           ) : null}
         </div>

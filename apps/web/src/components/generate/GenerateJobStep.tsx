@@ -4,15 +4,23 @@ import { useCallback, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { formatThousandsSeparated } from "@/lib/helper";
-import type { GenerateJobState } from "@/lib/generate-session";
+import {
+  buildVerdictInputKey,
+  canReuseStoredVerdict,
+  type GenerateJobState,
+} from "@/lib/generate-session";
 import { JOB_TEXT_MAX, noiseFilter } from "@/lib/jobNoiseFilter";
 import { runAiVerdict } from "@/lib/api";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 
 type GenerateJobStepProps = {
   job: GenerateJobState;
+  verdictInputKey: string | null;
+  doVerdict: boolean;
   onJobChange: (job: GenerateJobState) => void;
+  onVerdictResult: (markdown: string, verdictInputKey: string) => void;
   onAdvanceToWorkflow: () => void;
+  onRunningChange?: (running: boolean) => void;
 };
 
 function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
@@ -34,8 +42,12 @@ function FieldError({ message }: { message?: string }) {
 
 export function GenerateJobStep({
   job,
+  verdictInputKey,
+  doVerdict,
   onJobChange,
+  onVerdictResult,
   onAdvanceToWorkflow,
+  onRunningChange,
 }: GenerateJobStepProps) {
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
@@ -51,6 +63,14 @@ export function GenerateJobStep({
     updateJob({ jobText: value.slice(0, JOB_TEXT_MAX) });
   }
 
+  const setRunningState = useCallback(
+    (next: boolean) => {
+      setRunning(next);
+      onRunningChange?.(next);
+    },
+    [onRunningChange],
+  );
+
   const onNext = useCallback(async () => {
     if (running) return;
     const text = jobText.trim();
@@ -61,7 +81,22 @@ export function GenerateJobStep({
     setJobError(undefined);
 
     const filtered = noiseFilter(text).text;
-    setRunning(true);
+
+    if (!doVerdict) {
+      updateJob({ acceptedMarkdown: null });
+      onAdvanceToWorkflow();
+      return;
+    }
+
+    const inputKey = buildVerdictInputKey(job);
+    if (
+      canReuseStoredVerdict({ job, verdictInputKey }, inputKey)
+    ) {
+      onAdvanceToWorkflow();
+      return;
+    }
+
+    setRunningState(true);
     try {
       const res = await runAiVerdict(filtered);
       if (!res.data) {
@@ -69,7 +104,7 @@ export function GenerateJobStep({
         return;
       }
 
-      updateJob({ acceptedMarkdown: res.data.markdown });
+      onVerdictResult(res.data.markdown, inputKey);
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
       toast("AI Verdict completed.", "success");
@@ -77,16 +112,20 @@ export function GenerateJobStep({
     } catch {
       toast("AI Verdict failed.", "error");
     } finally {
-      setRunning(false);
+      setRunningState(false);
     }
   }, [
+    doVerdict,
     job,
     jobText,
     onAdvanceToWorkflow,
+    onVerdictResult,
     refreshTokenUsed,
     running,
+    setRunningState,
     setTokenUsed,
     toast,
+    verdictInputKey,
   ]);
 
   useRegisterGenerateStepNav({

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { buildResumeDocxBuffer } from "@johel/resume/docx";
-import { generatedResumeSchema, isNonEmptyResume } from "@johel/resume";
+import { buildResumeDocxFileName, generatedResumeSchema, isNonEmptyResume } from "@johel/resume";
 import { requireUser } from "../lib/session.js";
 
 const DOCX_MEDIA_TYPE =
@@ -9,16 +9,8 @@ const DOCX_MEDIA_TYPE =
 
 const postSchema = z.object({
   resume: generatedResumeSchema,
+  workflowName: z.string().trim().max(200).optional(),
 });
-
-function sanitizeFileName(name: string): string {
-  const sanitized = name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return sanitized || "resume";
-}
 
 export const resumeRoutes = new Hono();
 
@@ -41,7 +33,10 @@ resumeRoutes.post("/docx", async (c) => {
 
   try {
     const buffer = await buildResumeDocxBuffer(resume);
-    const fileName = `${sanitizeFileName(resume.header.name)}.docx`;
+    const fileName = buildResumeDocxFileName(
+      resume,
+      parsed.data.workflowName,
+    );
     return c.body(buffer, 200, {
       "Content-Type": DOCX_MEDIA_TYPE,
       "Content-Disposition": `attachment; filename="${fileName}"`,

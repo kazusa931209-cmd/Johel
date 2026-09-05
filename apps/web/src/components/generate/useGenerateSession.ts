@@ -24,6 +24,21 @@ function withoutResume(session: GenerateSession): GenerateSession {
   };
 }
 
+function applyJobUpdate(
+  current: GenerateSession,
+  job: GenerateJobState,
+): GenerateSession {
+  const jobTextChanged = job.jobText !== current.job.jobText;
+  const nextJob = jobTextChanged
+    ? { ...job, acceptedMarkdown: null }
+    : job;
+  return withoutResume({
+    ...current,
+    job: nextJob,
+    verdictInputKey: jobTextChanged ? null : current.verdictInputKey,
+  });
+}
+
 export function useGenerateSession() {
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -56,18 +71,31 @@ export function useGenerateSession() {
   }, []);
 
   const setJob = useCallback((job: GenerateJobState) => {
-    setSession((current) => withoutResume({ ...current, job }));
+    setSession((current) => applyJobUpdate(current, job));
   }, []);
 
   const patchJob = useCallback((patch: Partial<GenerateJobState>) => {
     setSession((current) =>
-      withoutResume({ ...current, job: { ...current.job, ...patch } }),
+      applyJobUpdate(current, { ...current.job, ...patch }),
     );
   }, []);
 
   const setWorkflow = useCallback((workflow: WorkflowSelection) => {
     setSession((current) => withoutResume({ ...current, workflow }));
   }, []);
+
+  const setVerdictResult = useCallback(
+    (acceptedMarkdown: string, verdictInputKey: string) => {
+      setSession((current) =>
+        withoutResume({
+          ...current,
+          job: { ...current.job, acceptedMarkdown },
+          verdictInputKey,
+        }),
+      );
+    },
+    [],
+  );
 
   const setResumeResult = useCallback(
     (resume: GeneratedResume, generationInputKey: string) => {
@@ -100,6 +128,7 @@ export function useGenerateSession() {
 
   return {
     ready,
+    userId,
     activeStep: session.activeStep,
     setActiveStep,
     job: session.job,
@@ -107,6 +136,8 @@ export function useGenerateSession() {
     patchJob,
     workflow: session.workflow,
     setWorkflow,
+    verdictInputKey: session.verdictInputKey,
+    setVerdictResult,
     resume: session.resume,
     generationInputKey: session.generationInputKey,
     setResumeResult,

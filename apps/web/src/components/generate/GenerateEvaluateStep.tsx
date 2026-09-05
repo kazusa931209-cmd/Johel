@@ -1,61 +1,24 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import type { GeneratedResume } from "@johel/resume";
-import { downloadResumeDocx } from "@/lib/api";
-import { useToast } from "@/components/app/ToastProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
+import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
 
 type GenerateEvaluateStepProps = {
   resume: GeneratedResume | null;
+  workflowName?: string;
   evaluationMarkdown: string | null;
   onPrev: () => void;
 };
 
-function sanitizeFileName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 export function GenerateEvaluateStep({
   resume,
+  workflowName,
   evaluationMarkdown,
   onPrev,
 }: GenerateEvaluateStepProps) {
-  const { toast } = useToast();
-  const [downloading, setDownloading] = useState(false);
-
-  const onDownload = useCallback(async () => {
-    if (!resume || downloading) return;
-    setDownloading(true);
-    try {
-      const res = await downloadResumeDocx(resume);
-      if (!res.blob) {
-        toast(res.error ?? "DOCX download failed.", "error");
-        return;
-      }
-
-      const url = URL.createObjectURL(res.blob);
-      const anchor = document.createElement("a");
-      const baseName =
-        res.fileName?.replace(/\.docx$/i, "") ||
-        sanitizeFileName(resume.header.name) ||
-        "resume";
-      anchor.href = url;
-      anchor.download = `${baseName}.docx`;
-      anchor.click();
-      URL.revokeObjectURL(url);
-      toast("Resume downloaded.", "success");
-    } catch {
-      toast("DOCX download failed.", "error");
-    } finally {
-      setDownloading(false);
-    }
-  }, [downloading, resume, toast]);
+  const { onDownload, downloading } = useResumeDocxDownload(resume, workflowName);
 
   useRegisterGenerateStepNav({
     onPrev,

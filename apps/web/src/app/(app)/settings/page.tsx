@@ -3,7 +3,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { getSettings, saveSettings } from "@/lib/api";
+import { getSettings, getGenerationProcess, getMe, saveGenerationProcess, saveSettings } from "@/lib/api";
+import { clearGenerateSession } from "@/lib/generate-session";
 import type { AiProviderId } from "@/lib/api";
 import type { Theme } from "@/lib/theme";
 
@@ -88,6 +89,13 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [doVerdict, setDoVerdict] = useState(true);
+  const [doEvaluate, setDoEvaluate] = useState(true);
+  const [savedDoVerdict, setSavedDoVerdict] = useState(true);
+  const [savedDoEvaluate, setSavedDoEvaluate] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [processLoading, setProcessLoading] = useState(true);
+  const [processSaving, setProcessSaving] = useState(false);
 
   const providerMatchesSaved = savedProvider === provider;
   const showMaskedKey = providerMatchesSaved && masked;
@@ -104,6 +112,20 @@ export default function SettingsPage() {
         setMasked(res.data.apiKeyMasked);
       }
       setLoading(false);
+    });
+    getGenerationProcess().then((res) => {
+      if (cancelled) return;
+      if (res.data) {
+        setDoVerdict(res.data.doVerdict);
+        setDoEvaluate(res.data.doEvaluate);
+        setSavedDoVerdict(res.data.doVerdict);
+        setSavedDoEvaluate(res.data.doEvaluate);
+      }
+      setProcessLoading(false);
+    });
+    getMe().then((res) => {
+      if (cancelled) return;
+      setUserId(res.data?.id ?? null);
     });
     return () => {
       cancelled = true;
@@ -140,6 +162,28 @@ export default function SettingsPage() {
     toast("AI Agent settings saved.", "success");
   }
 
+  async function onSaveProcess(e: FormEvent) {
+    e.preventDefault();
+    setProcessSaving(true);
+    const res = await saveGenerationProcess({ doVerdict, doEvaluate });
+    setProcessSaving(false);
+    if (res.error || !res.data) {
+      toast(res.error ?? "Save failed.", "error");
+      return;
+    }
+    setDoVerdict(res.data.doVerdict);
+    setDoEvaluate(res.data.doEvaluate);
+    const processChanged =
+      res.data.doVerdict !== savedDoVerdict ||
+      res.data.doEvaluate !== savedDoEvaluate;
+    if (processChanged && userId) {
+      clearGenerateSession(userId);
+    }
+    setSavedDoVerdict(res.data.doVerdict);
+    setSavedDoEvaluate(res.data.doEvaluate);
+    toast("Process settings saved.", "success");
+  }
+
   return (
     <section className="space-y-6">
       <div className="space-y-2">
@@ -168,6 +212,45 @@ export default function SettingsPage() {
           })}
         </div>
       </div>
+      <form
+        onSubmit={onSaveProcess}
+        className="max-w-md space-y-3 rounded-lg border border-border bg-surface p-4"
+      >
+        <h2 className="text-sm font-medium">Process</h2>
+        <p className="text-sm text-muted">
+          Choose which AI steps run during Generate.
+        </p>
+        {processLoading ? (
+          <p className="text-sm text-muted">Loading…</p>
+        ) : (
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={doVerdict}
+                onChange={(e) => setDoVerdict(e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <span>Do Verdict</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={doEvaluate}
+                onChange={(e) => setDoEvaluate(e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <span>Do Evaluate</span>
+            </label>
+          </div>
+        )}
+        <button
+          type="submit"
+          className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
+        >
+          {processSaving ? "Saving…" : "Save"}
+        </button>
+      </form>
       <form
         onSubmit={onSave}
         className="max-w-md space-y-3 rounded-lg border border-border bg-surface p-4"

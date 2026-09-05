@@ -11,16 +11,17 @@ export type GenerateStep = (typeof GENERATE_STEPS)[number];
 
 type GenerateTimelineProps = {
   active: GenerateStep;
+  steps: readonly GenerateStep[];
 };
 
-export function GenerateTimeline({ active }: GenerateTimelineProps) {
+export function GenerateTimeline({ active, steps }: GenerateTimelineProps) {
   return (
     <nav
       aria-label="Generate steps"
       className="w-full overflow-x-auto overflow-y-hidden"
     >
       <ol className="flex min-w-[320px] items-center gap-1">
-        {GENERATE_STEPS.map((step, index) => {
+        {steps.map((step, index) => {
           const isActive = step === active;
           return (
             <li key={step} className="flex min-w-0 flex-1 items-center gap-1">
@@ -43,7 +44,7 @@ export function GenerateTimeline({ active }: GenerateTimelineProps) {
                 </span>
                 <span>{step}</span>
               </div>
-              {index < GENERATE_STEPS.length - 1 ? (
+              {index < steps.length - 1 ? (
                 <span
                   className="hidden h-px w-4 shrink-0 bg-border sm:block"
                   aria-hidden

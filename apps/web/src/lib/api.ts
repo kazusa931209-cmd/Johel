@@ -133,6 +133,22 @@ export function saveSettings(provider: AiProviderId, apiKey: string) {
   });
 }
 
+export type GenerationProcessSettings = {
+  doVerdict: boolean;
+  doEvaluate: boolean;
+};
+
+export function getGenerationProcess() {
+  return request<GenerationProcessSettings>("/settings/process");
+}
+
+export function saveGenerationProcess(payload: GenerationProcessSettings) {
+  return request<GenerationProcessSettings>("/settings/process", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export type PromptSettings = {
   verdictPrompt: string;
   generatePrompt: string;
@@ -405,6 +421,7 @@ export function getAiUsageSummary() {
 
 export async function downloadResumeDocx(
   resume: import("@johel/resume").GeneratedResume,
+  workflowName?: string,
 ): Promise<{ blob?: Blob; fileName?: string; error?: string; status: number }> {
   try {
     const res = await fetch("/backend/resume/docx", {
@@ -412,7 +429,7 @@ export async function downloadResumeDocx(
       credentials: "include",
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume }),
+      body: JSON.stringify({ resume, workflowName }),
     });
 
     if (!res.ok) {

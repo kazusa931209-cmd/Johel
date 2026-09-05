@@ -34,6 +34,7 @@ export function validatePcewContentSelection(
 
 export type WorkflowSelection = {
   workflowId: string;
+  workflowName?: string;
 };
 
 export const EMPTY_WORKFLOW_SELECTION: WorkflowSelection = {

@@ -17,7 +17,7 @@ type PcewSectionProps<T extends { id: string }> = {
   error?: string;
   selectionMode: "single" | "multiple";
   isSelected: (id: string) => boolean;
-  onRowSelect: (id: string) => void;
+  onRowSelect: (id: string, row: T) => void;
   columns: Column<T>[];
   minWidthClass?: string;
   fetchAll: () => Promise<{
@@ -127,11 +127,11 @@ export function PcewSection<T extends { id: string }>({
                     }`}
                     tabIndex={0}
                     aria-selected={selected}
-                    onClick={() => onRowSelect(row.id)}
+                    onClick={() => onRowSelect(row.id, row)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        onRowSelect(row.id);
+                        onRowSelect(row.id, row);
                       }
                     }}
                   >
@@ -139,7 +139,7 @@ export function PcewSection<T extends { id: string }>({
                       className="px-3 py-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onRowSelect(row.id);
+                        onRowSelect(row.id, row);
                       }}
                       onKeyDown={(e) => e.stopPropagation()}
                     >

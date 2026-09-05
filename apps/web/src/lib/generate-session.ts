@@ -5,6 +5,7 @@ import {
   EMPTY_WORKFLOW_SELECTION,
   type WorkflowSelection,
 } from "@/components/generate/pcew-types";
+import { noiseFilter } from "@/lib/jobNoiseFilter";
 
 export type GenerateJobInputMethod = "url" | "file" | "manual";
 
@@ -18,6 +19,7 @@ export type GenerateSession = {
   activeStep: GenerateStep;
   job: GenerateJobState;
   workflow: WorkflowSelection;
+  verdictInputKey: string | null;
   resume: GeneratedResume | null;
   generationInputKey: string | null;
   evaluationMarkdown: string | null;
@@ -36,6 +38,7 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   activeStep: "Job",
   job: EMPTY_JOB_STATE,
   workflow: EMPTY_WORKFLOW_SELECTION,
+  verdictInputKey: null,
   resume: null,
   generationInputKey: null,
   evaluationMarkdown: null,
@@ -71,7 +74,11 @@ function parseWorkflowSelection(value: unknown): WorkflowSelection {
   }
   const raw = value as Record<string, unknown>;
   if (typeof raw.workflowId === "string") {
-    return { workflowId: raw.workflowId };
+    return {
+      workflowId: raw.workflowId,
+      workflowName:
+        typeof raw.workflowName === "string" ? raw.workflowName : undefined,
+    };
   }
   return { ...EMPTY_WORKFLOW_SELECTION };
 }
@@ -82,7 +89,11 @@ function parseLegacyWorkflowSelection(value: unknown): WorkflowSelection {
   }
   const raw = value as Record<string, unknown>;
   if (typeof raw.workflowId === "string") {
-    return { workflowId: raw.workflowId };
+    return {
+      workflowId: raw.workflowId,
+      workflowName:
+        typeof raw.workflowName === "string" ? raw.workflowName : undefined,
+    };
   }
   return { ...EMPTY_WORKFLOW_SELECTION };
 }
@@ -104,6 +115,23 @@ function parseStoredResume(value: unknown): GeneratedResume | null {
   if (!value || typeof value !== "object") return null;
   const parsed = parseGeneratedResume(value);
   return parsed.success ? parsed.data : null;
+}
+
+export function buildVerdictInputKey(job: GenerateJobState): string {
+  return JSON.stringify({
+    jobText: noiseFilter(job.jobText.trim()).text,
+  });
+}
+
+export function canReuseStoredVerdict(
+  session: Pick<GenerateSession, "job" | "verdictInputKey">,
+  inputKey: string,
+): boolean {
+  return Boolean(
+    session.job.acceptedMarkdown &&
+      session.verdictInputKey &&
+      session.verdictInputKey === inputKey,
+  );
 }
 
 export function buildGenerationInputKey(
@@ -146,10 +174,17 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
     raw.workflow != null
       ? parseWorkflowSelection(raw.workflow)
       : parseLegacyWorkflowSelection(raw.pcew);
+  const job = parseJobState(raw.job);
+  let verdictInputKey =
+    typeof raw.verdictInputKey === "string" ? raw.verdictInputKey : null;
+  if (job.acceptedMarkdown && !verdictInputKey) {
+    verdictInputKey = buildVerdictInputKey(job);
+  }
   return {
     activeStep: normalizeActiveStep(raw.activeStep),
-    job: parseJobState(raw.job),
+    job,
     workflow,
+    verdictInputKey,
     resume: parseStoredResume(raw.resume),
     generationInputKey:
       typeof raw.generationInputKey === "string"
