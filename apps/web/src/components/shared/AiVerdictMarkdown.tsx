@@ -8,7 +8,7 @@ export function AiVerdictMarkdown({ markdown }: AiVerdictMarkdownProps) {
   return (
     <div
       className={[
-        "prose prose-sm max-w-none dark:prose-invert",
+        "prose prose-sm max-w-none",
         "[&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-2",
         "[&_h2]:text-base [&_h2]:font-semibold",
         "[&_h2:first-child]:mt-0",

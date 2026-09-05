@@ -2,6 +2,10 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { isAiProviderId } from "../lib/ai-provider.js";
 import { runAiVerdict, type AiProviderId } from "../lib/ai-verdict/index.js";
+import {
+  getUsePromptOptimizationAi,
+  optimizeInstruction,
+} from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
@@ -66,9 +70,33 @@ aiVerdictRoutes.post("/", async (c) => {
   const provider: AiProviderId = setting.provider;
 
   try {
+    const usePromptOptimizationAi = await getUsePromptOptimizationAi(user.id);
+    const { instruction: optimizedVerdictPrompt, rewriteUsage } =
+      await optimizeInstruction({
+        userId: user.id,
+        kind: "verdict",
+        originalPrompt: verdictPrompt,
+        provider,
+        apiKey: setting.apiKey,
+        usePromptOptimizationAi,
+      });
+
+    if (rewriteUsage) {
+      await prisma.aiUsage.create({
+        data: {
+          userId: user.id,
+          aiProvider: provider,
+          inputToken: rewriteUsage.inputToken,
+          outputToken: rewriteUsage.outputToken,
+          input: rewriteUsage.input,
+          output: rewriteUsage.output,
+        },
+      });
+    }
+
     const result = await runAiVerdict(provider, {
       jobDescription: parsed.data.jobDescription,
-      verdictPrompt,
+      verdictPrompt: optimizedVerdictPrompt,
       apiKey: setting.apiKey,
     });
 

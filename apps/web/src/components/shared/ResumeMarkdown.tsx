@@ -8,7 +8,7 @@ export function ResumeMarkdown({ markdown }: ResumeMarkdownProps) {
   return (
     <div
       className={[
-        "prose prose-sm max-w-none dark:prose-invert",
+        "prose prose-sm max-w-none",
         "[&_h1]:mb-1 [&_h1]:text-xl [&_h1]:font-semibold",
         "[&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:border-b [&_h2]:border-border [&_h2]:pb-1",
         "[&_h2]:text-base [&_h2]:font-semibold",

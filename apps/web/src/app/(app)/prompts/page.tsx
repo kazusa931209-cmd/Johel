@@ -90,7 +90,7 @@ export default function PromptsPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="mx-auto w-full max-w-3xl space-y-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Prompts</h1>
         <p className="text-muted">
@@ -101,7 +101,7 @@ export default function PromptsPage() {
       <form
         noValidate
         onSubmit={onSave}
-        className="max-w-2xl space-y-4 rounded-lg border border-border bg-surface p-4"
+        className="space-y-4 rounded-lg border border-border bg-surface p-4"
       >
         <label className="block space-y-1 text-sm">
           <span>

@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { getSettings, getGenerationProcess, getMe, saveGenerationProcess, saveSettings } from "@/lib/api";
+import { getSettings, getGenerationProcess, getMe, getPromptOptimizationSettings, saveGenerationProcess, savePromptOptimizationSettings, saveSettings } from "@/lib/api";
 import { clearGenerateSession } from "@/lib/generate-session";
 import type { AiProviderId } from "@/lib/api";
 import type { Theme } from "@/lib/theme";
@@ -96,6 +96,13 @@ export default function SettingsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [processLoading, setProcessLoading] = useState(true);
   const [processSaving, setProcessSaving] = useState(false);
+  const [usePromptOptimizationAi, setUsePromptOptimizationAi] = useState(true);
+  const [savedUsePromptOptimizationAi, setSavedUsePromptOptimizationAi] =
+    useState(true);
+  const [promptOptimizationLoading, setPromptOptimizationLoading] =
+    useState(true);
+  const [promptOptimizationSaving, setPromptOptimizationSaving] =
+    useState(false);
 
   const providerMatchesSaved = savedProvider === provider;
   const showMaskedKey = providerMatchesSaved && masked;
@@ -122,6 +129,14 @@ export default function SettingsPage() {
         setSavedDoEvaluate(res.data.doEvaluate);
       }
       setProcessLoading(false);
+    });
+    getPromptOptimizationSettings().then((res) => {
+      if (cancelled) return;
+      if (res.data) {
+        setUsePromptOptimizationAi(res.data.usePromptOptimizationAi);
+        setSavedUsePromptOptimizationAi(res.data.usePromptOptimizationAi);
+      }
+      setPromptOptimizationLoading(false);
     });
     getMe().then((res) => {
       if (cancelled) return;
@@ -184,13 +199,34 @@ export default function SettingsPage() {
     toast("Process settings saved.", "success");
   }
 
+  async function onSavePromptOptimization(e: FormEvent) {
+    e.preventDefault();
+    setPromptOptimizationSaving(true);
+    const res = await savePromptOptimizationSettings({
+      usePromptOptimizationAi,
+    });
+    setPromptOptimizationSaving(false);
+    if (res.error || !res.data) {
+      toast(res.error ?? "Save failed.", "error");
+      return;
+    }
+    setUsePromptOptimizationAi(res.data.usePromptOptimizationAi);
+    const settingChanged =
+      res.data.usePromptOptimizationAi !== savedUsePromptOptimizationAi;
+    if (settingChanged && userId) {
+      clearGenerateSession(userId);
+    }
+    setSavedUsePromptOptimizationAi(res.data.usePromptOptimizationAi);
+    toast("Prompt optimization settings saved.", "success");
+  }
+
   return (
-    <section className="space-y-6">
+    <section className="mx-auto w-full max-w-3xl space-y-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-muted">Appearance and account preferences.</p>
       </div>
-      <div className="max-w-md space-y-3 rounded-lg border border-border bg-surface p-4">
+      <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
         <h2 className="text-sm font-medium">Theme</h2>
         <div className="flex gap-2">
           {OPTIONS.map((option) => {
@@ -214,7 +250,7 @@ export default function SettingsPage() {
       </div>
       <form
         onSubmit={onSaveProcess}
-        className="max-w-md space-y-3 rounded-lg border border-border bg-surface p-4"
+        className="space-y-3 rounded-lg border border-border bg-surface p-4"
       >
         <h2 className="text-sm font-medium">Process</h2>
         <p className="text-sm text-muted">
@@ -252,8 +288,36 @@ export default function SettingsPage() {
         </button>
       </form>
       <form
+        onSubmit={onSavePromptOptimization}
+        className="space-y-3 rounded-lg border border-border bg-surface p-4"
+      >
+        <h2 className="text-sm font-medium">Prompt Optimization</h2>
+        <p className="text-sm text-muted">
+          Improve saved prompts before AI Verdict, Generate, and Evaluate run.
+        </p>
+        {promptOptimizationLoading ? (
+          <p className="text-sm text-muted">Loading…</p>
+        ) : (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={usePromptOptimizationAi}
+              onChange={(e) => setUsePromptOptimizationAi(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            <span>Use prompt optimization using AI</span>
+          </label>
+        )}
+        <button
+          type="submit"
+          className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
+        >
+          {promptOptimizationSaving ? "Saving…" : "Save"}
+        </button>
+      </form>
+      <form
         onSubmit={onSave}
-        className="max-w-md space-y-3 rounded-lg border border-border bg-surface p-4"
+        className="space-y-3 rounded-lg border border-border bg-surface p-4"
       >
         <h2 className="text-sm font-medium">AI Agent</h2>
         <label className="block space-y-1 text-sm">

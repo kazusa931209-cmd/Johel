@@ -11,20 +11,32 @@ import {
 import { EMPTY_WORKFLOW_SELECTION } from "@/components/generate/pcew-types";
 
 describe("generate-session verdict cache", () => {
+  const promptContext = {
+    verdictPrompt: "Check fit",
+    usePromptOptimizationAi: true,
+  };
+
   it("builds verdict input key from noise-filtered job text", () => {
-    const key = buildVerdictInputKey({
-      ...EMPTY_JOB_STATE,
-      jobText: "  Senior Engineer role  ",
-    });
+    const key = buildVerdictInputKey(
+      {
+        ...EMPTY_JOB_STATE,
+        jobText: "  Senior Engineer role  ",
+      },
+      promptContext,
+    );
     expect(key).toContain("Senior Engineer role");
+    expect(key).toContain("usePromptOptimizationAi");
   });
 
   it("reuses stored verdict when keys match", () => {
-    const inputKey = buildVerdictInputKey({
-      ...EMPTY_JOB_STATE,
-      jobText: "Engineer",
-      acceptedMarkdown: "# Verdict",
-    });
+    const inputKey = buildVerdictInputKey(
+      {
+        ...EMPTY_JOB_STATE,
+        jobText: "Engineer",
+        acceptedMarkdown: "# Verdict",
+      },
+      promptContext,
+    );
     expect(
       canReuseStoredVerdict(
         {
@@ -41,11 +53,14 @@ describe("generate-session verdict cache", () => {
   });
 
   it("does not reuse stored verdict when key differs", () => {
-    const inputKey = buildVerdictInputKey({
-      ...EMPTY_JOB_STATE,
-      jobText: "Engineer",
-      acceptedMarkdown: "# Verdict",
-    });
+    const inputKey = buildVerdictInputKey(
+      {
+        ...EMPTY_JOB_STATE,
+        jobText: "Engineer",
+        acceptedMarkdown: "# Verdict",
+      },
+      promptContext,
+    );
     expect(
       canReuseStoredVerdict(
         {
@@ -56,10 +71,13 @@ describe("generate-session verdict cache", () => {
           },
           verdictInputKey: inputKey,
         },
-        buildVerdictInputKey({
-          ...EMPTY_JOB_STATE,
-          jobText: "Different role",
-        }),
+        buildVerdictInputKey(
+          {
+            ...EMPTY_JOB_STATE,
+            jobText: "Different role",
+          },
+          promptContext,
+        ),
       ),
     ).toBe(false);
   });
@@ -81,7 +99,10 @@ describe("generate-session verdict cache", () => {
           job: parsed!.job,
           verdictInputKey: parsed!.verdictInputKey,
         },
-        buildVerdictInputKey(parsed!.job),
+        buildVerdictInputKey(parsed!.job, {
+          verdictPrompt: "",
+          usePromptOptimizationAi: true,
+        }),
       ),
     ).toBe(true);
   });
@@ -115,16 +136,31 @@ describe("generate-session resume cache", () => {
     workflowId: "wf-1",
     workflowName: "Backend",
   };
+  const promptContext = {
+    generatePrompt: "Generate a resume",
+    usePromptOptimizationAi: true,
+  };
 
   it("includes workflow content fingerprint in generation input key", () => {
-    const key = buildGenerationInputKey(job, workflow, "fp-v1");
+    const key = buildGenerationInputKey(job, workflow, "fp-v1", promptContext);
     expect(key).toContain("fp-v1");
     expect(key).toContain("wf-1");
+    expect(key).toContain("generatePromptHash");
   });
 
   it("does not reuse stored resume when fingerprint changes", () => {
-    const storedKey = buildGenerationInputKey(job, workflow, "fp-v1");
-    const currentKey = buildGenerationInputKey(job, workflow, "fp-v2");
+    const storedKey = buildGenerationInputKey(
+      job,
+      workflow,
+      "fp-v1",
+      promptContext,
+    );
+    const currentKey = buildGenerationInputKey(
+      job,
+      workflow,
+      "fp-v2",
+      promptContext,
+    );
     expect(
       canReuseStoredResume(
         {

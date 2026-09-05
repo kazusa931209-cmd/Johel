@@ -163,7 +163,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
               }));
             }
           }}
-          rows={4}
+          rows={24}
           aria-invalid={Boolean(fieldErrors.description)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />

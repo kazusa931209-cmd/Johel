@@ -16,6 +16,8 @@ import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNa
 type GenerateJobStepProps = {
   job: GenerateJobState;
   verdictInputKey: string | null;
+  verdictPrompt: string;
+  usePromptOptimizationAi: boolean;
   doVerdict: boolean;
   onJobChange: (job: GenerateJobState) => void;
   onVerdictResult: (markdown: string, verdictInputKey: string) => void;
@@ -43,6 +45,8 @@ function FieldError({ message }: { message?: string }) {
 export function GenerateJobStep({
   job,
   verdictInputKey,
+  verdictPrompt,
+  usePromptOptimizationAi,
   doVerdict,
   onJobChange,
   onVerdictResult,
@@ -88,7 +92,10 @@ export function GenerateJobStep({
       return;
     }
 
-    const inputKey = buildVerdictInputKey(job);
+    const inputKey = buildVerdictInputKey(job, {
+      verdictPrompt,
+      usePromptOptimizationAi,
+    });
     if (
       canReuseStoredVerdict({ job, verdictInputKey }, inputKey)
     ) {
@@ -125,7 +132,9 @@ export function GenerateJobStep({
     setRunningState,
     setTokenUsed,
     toast,
+    usePromptOptimizationAi,
     verdictInputKey,
+    verdictPrompt,
   ]);
 
   useRegisterGenerateStepNav({

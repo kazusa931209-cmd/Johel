@@ -149,6 +149,23 @@ export function saveGenerationProcess(payload: GenerationProcessSettings) {
   });
 }
 
+export type PromptOptimizationSettings = {
+  usePromptOptimizationAi: boolean;
+};
+
+export function getPromptOptimizationSettings() {
+  return request<PromptOptimizationSettings>("/settings/prompt-optimization");
+}
+
+export function savePromptOptimizationSettings(
+  payload: PromptOptimizationSettings,
+) {
+  return request<PromptOptimizationSettings>("/settings/prompt-optimization", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export type PromptSettings = {
   verdictPrompt: string;
   generatePrompt: string;

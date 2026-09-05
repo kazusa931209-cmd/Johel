@@ -170,6 +170,7 @@ Aligned with the product flow above:
   * Detail dialog shows the selected profile, companies, and experiences instead of metadata rules
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Prompts** (`/prompts`)
+  * Page content is centered in a readable column
   * One signed-in user maintains a **Verdict Prompt**, a **Generate Prompt**, and an **Evaluate Prompt**
   * Editor fields: Verdict Prompt (required), Generate Prompt (required), Evaluate Prompt (required)
   * **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
@@ -185,8 +186,10 @@ Aligned with the product flow above:
   * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; **Previous** in the sticky step row returns to Workflow; when **Do Evaluate** is enabled, **Next** runs **AI Evaluate** with the noise-filtered Job Description, stored resume, and saved Evaluate Prompt, fullscreen loading while evaluation runs, persists token usage, stores the evaluation Markdown, toasts success, and advances to **Evaluate**; when **Do Evaluate** is disabled, **Download** exports the stored resume JSON to a `.docx` file; on evaluation failure stays on Generate and toasts the error; if the same resume already has a stored evaluation in this session, **Next** reuses it without calling the AI again
   * **Evaluate** step (only when **Do Evaluate** is enabled): shows the AI evaluation as Markdown; **Previous** returns to Generate; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume or re-running evaluation
 * **Settings**
+  * Page content is centered in a readable column
   * Theme (Dark / Light)
   * **Process**: **Do Verdict** and **Do Evaluate** checkboxes (both default on); Save persists per user; controls which optional AI steps run during Generate
+  * **Prompt Optimization**: **Use prompt optimization using AI** checkbox (default on); Save persists per user; when off, AI Verdict, Generate, and Evaluate skip the optional AI rewrite of saved prompts (deterministic prompt compile still runs)
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.
@@ -253,6 +256,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-05):** Verdict result caching, **New** header control, settings-driven session reset, `YYYY-MM-DD-{name}-{workflow}.docx` naming. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-27-generate-process-session.md`](./plans/2026-09-05-phase-27-generate-process-session.md).
 * [x] **Phase 28 — Invalidate Generate cache on PCE changes** — When Profile, Companies, Experiences, or workflow composition linked to the selected workflow change, Workflow **Next** regenerates the resume and Generate **Next** re-evaluates; unchanged PCE still reuses cached AI results.
   * **Outcome (2026-09-05):** `GET /workflows/:id/generation-fingerprint`, workflow content fingerprint in `generationInputKey`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-28-pce-cache-invalidation.md`](./plans/2026-09-05-phase-28-pce-cache-invalidation.md).
+* [x] **Phase 29 — Prompt Optimization** — Before AI Verdict, Generate, and Evaluate run, compile each saved user prompt deterministically and optionally rewrite it with AI (cached by prompt hash). Settings **Prompt Optimization** section with **Use prompt optimization using AI** (default on). Saved prompts on the Prompts page are unchanged; codebase const system prompts are unchanged. Generate cache keys include prompt hashes and the optimization flag; saving a changed optimization flag resets Generate.
+  * **Outcome (2026-09-05):** `prompt-optimize` module, `promptOptimizations` table, `GET/PUT /settings/prompt-optimization`, Settings Prompt Optimization section. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-29-prompt-optimization.md`](./plans/2026-09-05-phase-29-prompt-optimization.md).
 
 ## Cursor Rules (Documentation Governance)
 

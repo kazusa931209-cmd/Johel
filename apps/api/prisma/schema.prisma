@@ -21,6 +21,7 @@ model User {
   aiUsages     AiUsage[]
   prompt       Prompt?
   generationProcess GenerationProcess?
+  promptOptimizations PromptOptimization[]
 
   // SQLite table names are case-insensitive; plural avoids colliding with former PascalCase names.
   @@map("users")
@@ -216,13 +217,29 @@ model Prompt {
 }
 
 model GenerationProcess {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  doVerdict  Boolean  @default(true)
-  doEvaluate Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doVerdict               Boolean  @default(true)
+  doEvaluate              Boolean  @default(true)
+  usePromptOptimizationAi Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   @@map("generationProcess")
+}
+
+model PromptOptimization {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind            String
+  sourceHash      String
+  optimizedPrompt String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, kind, sourceHash])
+  @@index([userId, kind])
+  @@map("promptOptimizations")
 }

@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /prompts`, `PUT /prompts`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `GET /settings/prompt-optimization`, `PUT /settings/prompt-optimization`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /prompts`, `PUT /prompts`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
@@ -57,7 +57,8 @@ User browser (:4041)
 - Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
-- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `createdAt`, `updatedAt`; defaults both `true`
+- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `usePromptOptimizationAi`, `createdAt`, `updatedAt`; defaults all three booleans `true`
+- Prisma `PromptOptimization` → table `promptOptimizations`: `id`, `userId`, `kind` (`verdict` | `generate` | `evaluate`), `sourceHash`, `optimizedPrompt`, `createdAt`, `updatedAt`; unique `(userId, kind, sourceHash)`
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
@@ -79,7 +80,9 @@ User browser (:4041)
 
 - Layout: top bar + left sidebar + main content (full-height studio chrome)
 - Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`
-- Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light
+- Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light. Tailwind `dark:` uses the `.dark` class (`@custom-variant dark` in `globals.css`), not `prefers-color-scheme`.
+- Prompts (`/prompts`) and Settings (`/settings`) content is centered at `max-w-3xl`, matching other form pages.
+- `react-markdown` preview (`AiVerdictMarkdown`, `ResumeMarkdown`) uses `@tailwindcss/typography` `prose` with `--tw-prose-*` mapped to theme tokens (`--foreground`, `--muted`, `--border`) so body text stays readable in Light and Dark. Do not use `dark:prose-invert` (it follows OS color-scheme unless the class variant is set, and it ignores app tokens).
 - Toast: top-center; variants success / warning / error / info with theme-aware bg and text tokens (`components/app/ToastProvider`). Any user action that calls the API must report the result with a toast.
 - Routes (authenticated):
   - `/` — Workspace / Generate
@@ -112,6 +115,23 @@ User browser (:4041)
 - Generate reads process settings on load; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
 - When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel; `POST /ai-resume` receives `acceptedMarkdown: ""`
 - When `doEvaluate` is false: timeline is Job → Workflow → Generate; Generate **Download** is last-step action; Evaluate step hidden; stored `activeStep: "Evaluate"` normalizes to Generate on load
+
+## Prompt optimization settings (Phase 29)
+
+- `GET /settings/prompt-optimization` → `{ usePromptOptimizationAi }` (default `true` when no row)
+- `PUT /settings/prompt-optimization` → `{ usePromptOptimizationAi }`; upsert on `generationProcess` by `userId`; returns saved value
+- Web Settings **Prompt Optimization** section (between Process and AI Agent): **Use prompt optimization using AI** checkbox; Save always enabled; toast on API result
+- Saving a changed value clears the in-progress Generate session (same pattern as Process flags)
+- When `usePromptOptimizationAi` is false: `POST /ai-verdict`, `POST /ai-resume`, and `POST /ai-evaluate` use deterministic compile only (no LLM rewrite, no extra tokens)
+
+## Prompt optimization pipeline (Phase 29)
+
+- Module: `apps/api/src/lib/prompt-optimize/` — `compileInstruction`, `hashPromptSource`, `optimizeInstruction`
+- Runs in AI routes immediately before existing `getAi*SystemPrompt` concat; does not change saved prompts or const `SHARED_RULES` / provider notes
+- **Deterministic compile (always):** trim, collapse extra blank lines, wrap in `## User instruction` fence; Generate adds honesty line (no invented employers/dates/skills/experience)
+- **LLM rewrite (when enabled):** rewrites compiled instruction only; cached in `promptOptimizations` by `(userId, kind, sourceHash)` where `sourceHash = sha256(compilerVersion + kind + originalPrompt)`; rewrite failure falls back to compiled instruction; rewrite usage stored in `aiUsage`
+- OpenAI rewrite uses `gpt-5.6-luna` (reasoning `low`); Cursor uses `auto`
+- Generate cache keys (`buildVerdictInputKey`, `buildGenerationInputKey`, `buildEvaluationInputKey`) include prompt hashes and `usePromptOptimizationAi` via `apps/web/src/lib/prompt-hash.ts`
 
 ## Workflows (Phase 6–7, 22)
 
@@ -177,7 +197,7 @@ User browser (:4041)
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-luna`, reasoning `low`)
 - Markdown output sections (in order): `## Verdict` (each user question as `###` heading + answer paragraph or sub-bullet list), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
-- Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography`); `AiUsageProvider` refreshes header total after success
+- Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography` theme tokens); `AiUsageProvider` refreshes header total after success
 - **Note:** Phase 13 introduced this as `POST /ai-filter`; Phase 19 renamed to `ai-verdict` and wired into Generate Job **Next**
 
 ## Prompts settings (Phase 18, 23)

@@ -21,6 +21,7 @@ import {
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
 import { validateWorkflowSelection } from "@/components/generate/pcew-types";
 import {
+  buildEvaluationInputKey,
   buildGenerationInputKey,
   canReuseStoredEvaluation,
   canReuseStoredResume,
@@ -33,6 +34,7 @@ import {
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
   getGenerationProcess,
+  getPromptOptimizationSettings,
   getPrompts,
   getWorkflowGenerationFingerprint,
   listWorkflows,
@@ -45,6 +47,16 @@ const DEFAULT_PROCESS = {
   doEvaluate: true,
 };
 
+const DEFAULT_PROMPTS = {
+  verdictPrompt: "",
+  generatePrompt: "",
+  evaluatePrompt: "",
+};
+
+const DEFAULT_PROMPT_OPTIMIZATION = {
+  usePromptOptimizationAi: true,
+};
+
 export default function GeneratePage() {
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
@@ -54,6 +66,10 @@ export default function GeneratePage() {
   const [verdictRunning, setVerdictRunning] = useState(false);
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
   const [processSettings, setProcessSettings] = useState(DEFAULT_PROCESS);
+  const [promptSettings, setPromptSettings] = useState(DEFAULT_PROMPTS);
+  const [promptOptimizationSettings, setPromptOptimizationSettings] = useState(
+    DEFAULT_PROMPT_OPTIMIZATION,
+  );
   const {
     ready: sessionReady,
     activeStep,
@@ -94,12 +110,20 @@ export default function GeneratePage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listWorkflows("", 1), getPrompts(), getGenerationProcess()]).then(
-      ([workflows, prompts, process]) => {
+    Promise.all([
+      listWorkflows("", 1),
+      getPrompts(),
+      getGenerationProcess(),
+      getPromptOptimizationSettings(),
+    ]).then(
+      ([workflows, prompts, process, promptOptimization]) => {
         if (cancelled) return;
-        const errors = [workflows.error, prompts.error, process.error].filter(
-          Boolean,
-        );
+        const errors = [
+          workflows.error,
+          prompts.error,
+          process.error,
+          promptOptimization.error,
+        ].filter(Boolean);
         if (errors.length > 0) {
           toast(
             errors[0] ?? "Failed to check Generate prerequisites",
@@ -118,6 +142,16 @@ export default function GeneratePage() {
           doEvaluate: process.data?.doEvaluate ?? DEFAULT_PROCESS.doEvaluate,
         };
         setProcessSettings(nextProcess);
+        setPromptSettings({
+          verdictPrompt: prompts.data?.verdictPrompt ?? "",
+          generatePrompt: prompts.data?.generatePrompt ?? "",
+          evaluatePrompt: prompts.data?.evaluatePrompt ?? "",
+        });
+        setPromptOptimizationSettings({
+          usePromptOptimizationAi:
+            promptOptimization.data?.usePromptOptimizationAi ??
+            DEFAULT_PROMPT_OPTIMIZATION.usePromptOptimizationAi,
+        });
 
         const nextMissing: MissingPrerequisite[] = [];
         if ((workflows.data?.total ?? 0) < 1) {
@@ -157,6 +191,17 @@ export default function GeneratePage() {
     }
   }
 
+  const promptCacheContext = useMemo(
+    () => ({
+      verdictPrompt: promptSettings.verdictPrompt,
+      generatePrompt: promptSettings.generatePrompt,
+      evaluatePrompt: promptSettings.evaluatePrompt,
+      usePromptOptimizationAi:
+        promptOptimizationSettings.usePromptOptimizationAi,
+    }),
+    [promptOptimizationSettings.usePromptOptimizationAi, promptSettings],
+  );
+
   async function onWorkflowNext() {
     if (generatingResume) return;
 
@@ -179,6 +224,7 @@ export default function GeneratePage() {
       job,
       workflow,
       fingerprintRes.data.fingerprint,
+      promptCacheContext,
     );
     if (
       canReuseStoredResume(
@@ -262,6 +308,7 @@ export default function GeneratePage() {
       job,
       workflow,
       fingerprintRes.data.fingerprint,
+      promptCacheContext,
     );
     if (currentInputKey !== generationInputKey) {
       toast(
@@ -271,7 +318,12 @@ export default function GeneratePage() {
       return;
     }
 
-    const inputKey = generationInputKey;
+    const nextEvaluationInputKey = buildEvaluationInputKey(
+      job,
+      workflow,
+      fingerprintRes.data.fingerprint,
+      promptCacheContext,
+    );
     if (
       canReuseStoredEvaluation(
         {
@@ -284,7 +336,7 @@ export default function GeneratePage() {
           evaluationMarkdown,
           evaluationInputKey,
         },
-        inputKey,
+        nextEvaluationInputKey,
       )
     ) {
       setActiveStep("Evaluate");
@@ -300,7 +352,7 @@ export default function GeneratePage() {
         return;
       }
 
-      setEvaluationResult(res.data.markdown, inputKey);
+      setEvaluationResult(res.data.markdown, nextEvaluationInputKey);
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
       toast("Resume evaluated.", "success");
@@ -361,6 +413,10 @@ export default function GeneratePage() {
             <GenerateJobStep
               job={job}
               verdictInputKey={verdictInputKey}
+              verdictPrompt={promptSettings.verdictPrompt}
+              usePromptOptimizationAi={
+                promptOptimizationSettings.usePromptOptimizationAi
+              }
               doVerdict={processSettings.doVerdict}
               onJobChange={setJob}
               onVerdictResult={setVerdictResult}

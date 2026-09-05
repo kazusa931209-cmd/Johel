@@ -6,6 +6,7 @@ import {
   type WorkflowSelection,
 } from "@/components/generate/pcew-types";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
+import { hashPromptForCache } from "@/lib/prompt-hash";
 
 export type GenerateJobInputMethod = "url" | "file" | "manual";
 
@@ -117,9 +118,21 @@ function parseStoredResume(value: unknown): GeneratedResume | null {
   return parsed.success ? parsed.data : null;
 }
 
-export function buildVerdictInputKey(job: GenerateJobState): string {
+export type PromptCacheContext = {
+  verdictPrompt?: string;
+  generatePrompt?: string;
+  evaluatePrompt?: string;
+  usePromptOptimizationAi: boolean;
+};
+
+export function buildVerdictInputKey(
+  job: GenerateJobState,
+  prompts: Pick<PromptCacheContext, "verdictPrompt" | "usePromptOptimizationAi">,
+): string {
   return JSON.stringify({
     jobText: noiseFilter(job.jobText.trim()).text,
+    verdictPromptHash: hashPromptForCache(prompts.verdictPrompt ?? ""),
+    usePromptOptimizationAi: prompts.usePromptOptimizationAi,
   });
 }
 
@@ -134,16 +147,55 @@ export function canReuseStoredVerdict(
   );
 }
 
-export function buildGenerationInputKey(
+function buildGenerationInputKeyParts(
   job: GenerateJobState,
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
-): string {
-  return JSON.stringify({
+  prompts: Pick<PromptCacheContext, "generatePrompt" | "usePromptOptimizationAi">,
+) {
+  return {
     jobText: job.jobText.trim(),
     acceptedMarkdown: job.acceptedMarkdown ?? "",
     workflowId: workflow.workflowId,
     workflowContentFingerprint,
+    generatePromptHash: hashPromptForCache(prompts.generatePrompt ?? ""),
+    usePromptOptimizationAi: prompts.usePromptOptimizationAi,
+  };
+}
+
+export function buildGenerationInputKey(
+  job: GenerateJobState,
+  workflow: WorkflowSelection,
+  workflowContentFingerprint: string,
+  prompts: Pick<PromptCacheContext, "generatePrompt" | "usePromptOptimizationAi">,
+): string {
+  return JSON.stringify(
+    buildGenerationInputKeyParts(
+      job,
+      workflow,
+      workflowContentFingerprint,
+      prompts,
+    ),
+  );
+}
+
+export function buildEvaluationInputKey(
+  job: GenerateJobState,
+  workflow: WorkflowSelection,
+  workflowContentFingerprint: string,
+  prompts: Pick<
+    PromptCacheContext,
+    "generatePrompt" | "evaluatePrompt" | "usePromptOptimizationAi"
+  >,
+): string {
+  return JSON.stringify({
+    ...buildGenerationInputKeyParts(
+      job,
+      workflow,
+      workflowContentFingerprint,
+      prompts,
+    ),
+    evaluatePromptHash: hashPromptForCache(prompts.evaluatePrompt ?? ""),
   });
 }
 
@@ -180,7 +232,10 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
   let verdictInputKey =
     typeof raw.verdictInputKey === "string" ? raw.verdictInputKey : null;
   if (job.acceptedMarkdown && !verdictInputKey) {
-    verdictInputKey = buildVerdictInputKey(job);
+    verdictInputKey = buildVerdictInputKey(job, {
+      verdictPrompt: "",
+      usePromptOptimizationAi: true,
+    });
   }
   return {
     activeStep: normalizeActiveStep(raw.activeStep),

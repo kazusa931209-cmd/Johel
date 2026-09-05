@@ -3,6 +3,10 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { runAiEvaluate, type AiProviderId } from "../lib/ai-evaluate/index.js";
 import { isAiProviderId } from "../lib/ai-provider.js";
+import {
+  getUsePromptOptimizationAi,
+  optimizeInstruction,
+} from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
@@ -71,10 +75,34 @@ aiEvaluateRoutes.post("/", async (c) => {
   const provider: AiProviderId = setting.provider;
 
   try {
+    const usePromptOptimizationAi = await getUsePromptOptimizationAi(user.id);
+    const { instruction: optimizedEvaluatePrompt, rewriteUsage } =
+      await optimizeInstruction({
+        userId: user.id,
+        kind: "evaluate",
+        originalPrompt: evaluatePrompt,
+        provider,
+        apiKey: setting.apiKey,
+        usePromptOptimizationAi,
+      });
+
+    if (rewriteUsage) {
+      await prisma.aiUsage.create({
+        data: {
+          userId: user.id,
+          aiProvider: provider,
+          inputToken: rewriteUsage.inputToken,
+          outputToken: rewriteUsage.outputToken,
+          input: rewriteUsage.input,
+          output: rewriteUsage.output,
+        },
+      });
+    }
+
     const result = await runAiEvaluate(provider, {
       jobDescription: parsed.data.jobDescription,
       resume: parsed.data.resume,
-      evaluatePrompt,
+      evaluatePrompt: optimizedEvaluatePrompt,
       apiKey: setting.apiKey,
     });
 
