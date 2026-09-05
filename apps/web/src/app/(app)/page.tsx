@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
+import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
 import {
   GeneratePrerequisites,
   type MissingPrerequisite,
@@ -20,16 +21,18 @@ import { useGenerateSession } from "@/components/generate/useGenerateSession";
 import { validateWorkflowSelection } from "@/components/generate/pcew-types";
 import {
   buildGenerationInputKey,
+  canReuseStoredEvaluation,
   canReuseStoredResume,
 } from "@/lib/generate-session";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
-import { getPrompts, listWorkflows, runAiResume } from "@/lib/api";
+import { getPrompts, listWorkflows, runAiEvaluate, runAiResume } from "@/lib/api";
 
 export default function GeneratePage() {
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
   const [loading, setLoading] = useState(true);
   const [generatingResume, setGeneratingResume] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
   const {
     ready: sessionReady,
@@ -42,6 +45,9 @@ export default function GeneratePage() {
     resume,
     generationInputKey,
     setResumeResult,
+    evaluationMarkdown,
+    evaluationInputKey,
+    setEvaluationResult,
   } = useGenerateSession();
 
   useEffect(() => {
@@ -73,6 +79,9 @@ export default function GeneratePage() {
         if (!prompts.data?.generatePrompt.trim()) {
           nextMissing.push({ label: "Generate Prompt", href: "/prompts" });
         }
+        if (!prompts.data?.evaluatePrompt.trim()) {
+          nextMissing.push({ label: "Evaluate Prompt", href: "/prompts" });
+        }
 
         setMissing(nextMissing.length > 0 ? nextMissing : null);
         setLoading(false);
@@ -92,7 +101,15 @@ export default function GeneratePage() {
     const inputKey = buildGenerationInputKey(job, workflow);
     if (
       canReuseStoredResume(
-        { activeStep, job, workflow, resume, generationInputKey },
+        {
+          activeStep,
+          job,
+          workflow,
+          resume,
+          generationInputKey,
+          evaluationMarkdown,
+          evaluationInputKey,
+        },
         inputKey,
       )
     ) {
@@ -131,6 +148,57 @@ export default function GeneratePage() {
       toast("AI Resume generation failed.", "error");
     } finally {
       setGeneratingResume(false);
+    }
+  }
+
+  async function onGenerateNext() {
+    if (evaluating) return;
+
+    if (!resume || !generationInputKey) {
+      toast(
+        "No generated resume is available. Go back to Workflow and run generation first.",
+        "error",
+      );
+      return;
+    }
+
+    const inputKey = generationInputKey;
+    if (
+      canReuseStoredEvaluation(
+        {
+          activeStep,
+          job,
+          workflow,
+          resume,
+          generationInputKey,
+          evaluationMarkdown,
+          evaluationInputKey,
+        },
+        inputKey,
+      )
+    ) {
+      setActiveStep("Evaluate");
+      return;
+    }
+
+    const jobDescription = noiseFilter(job.jobText.trim()).text;
+    setEvaluating(true);
+    try {
+      const res = await runAiEvaluate({ jobDescription, resume });
+      if (!res.data) {
+        toast(res.error ?? "AI Evaluate failed.", "error");
+        return;
+      }
+
+      setEvaluationResult(res.data.markdown, inputKey);
+      setTokenUsed(res.data.tokenUsed);
+      await refreshTokenUsed();
+      toast("Resume evaluated.", "success");
+      setActiveStep("Evaluate");
+    } catch {
+      toast("AI Evaluate failed.", "error");
+    } finally {
+      setEvaluating(false);
     }
   }
 
@@ -188,7 +256,16 @@ export default function GeneratePage() {
           {activeStep === "Generate" ? (
             <GenerateGenerateStep
               resume={resume}
+              evaluating={evaluating}
               onPrev={() => setActiveStep("Workflow")}
+              onNext={onGenerateNext}
+            />
+          ) : null}
+          {activeStep === "Evaluate" ? (
+            <GenerateEvaluateStep
+              resume={resume}
+              evaluationMarkdown={evaluationMarkdown}
+              onPrev={() => setActiveStep("Generate")}
             />
           ) : null}
         </div>

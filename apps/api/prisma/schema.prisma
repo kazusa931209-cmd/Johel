@@ -19,7 +19,7 @@ model User {
   companies    Company[]
   experiences  Experience[]
   aiUsages     AiUsage[]
-  verdict      Verdict?
+  prompt       Prompt?
 
   // SQLite table names are case-insensitive; plural avoids colliding with former PascalCase names.
   @@map("users")
@@ -201,14 +201,15 @@ model AiUsage {
   @@map("aiUsage")
 }
 
-model Verdict {
+model Prompt {
   id             String   @id @default(cuid())
   userId         String   @unique
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   verdictPrompt  String
   generatePrompt String   @default("")
+  evaluatePrompt String   @default("")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@map("verdicts")
+  @@map("prompts")
 }

@@ -12,24 +12,25 @@
 * **Companies** — One user can manage **multiple companies** (name, description, priority, and metadata).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
 * **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more companies, one or more shared experiences, and a resume output language.
-* **Prompts** — Per-user **Verdict Prompt** and **Generate Prompt**, used when checking Job Descriptions and generating résumés.
+* **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés.
 
 ### End-to-end flow
 
 A generation run combines:
 
-**one Workflow** (profile + companies + experiences preset) → **Job Description** → **Filtering** → **Workflow** → **Generate**
+**one Workflow** (profile + companies + experiences preset) → **Job Description** → **Filtering** → **Workflow** → **Generate** → **Evaluate**
 
 ```text
 Workflow (one of many; includes Profile + Companies + Experiences)
         |
         v
-Job Description → Filtering → Workflow → Generate
+Job Description → Filtering → Workflow → Generate → Evaluate
 ```
 
 1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
 2. **Workflow** — Choose one workflow; its saved profile, companies, and experiences are used for generation.
 3. **Generate** — Generate the résumé from the filtered JD and the selected workflow.
+4. **Evaluate** — Score the generated résumé against the job description from an ATS perspective, then download the résumé.
 
 ## Deployment
 
@@ -169,20 +170,21 @@ Aligned with the product flow above:
   * Detail dialog shows the selected profile, companies, and experiences instead of metadata rules
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Prompts** (`/prompts`)
-  * One signed-in user maintains a **Verdict Prompt** and a **Generate Prompt**
-  * Editor fields: Verdict Prompt (required), Generate Prompt (required)
+  * One signed-in user maintains a **Verdict Prompt**, a **Generate Prompt**, and an **Evaluate Prompt**
+  * Editor fields: Verdict Prompt (required), Generate Prompt (required), Evaluate Prompt (required)
   * **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
   * Save and load via the API; toast on API success or failure
-  * The Verdict Prompt is used when checking Job Descriptions; the Generate Prompt is used when generating résumés (neither runs on this page)
+  * The Verdict Prompt is used when checking Job Descriptions; the Generate Prompt is used when generating résumés; the Evaluate Prompt is used when evaluating résumés (none run on this page)
 * **Generate** (`/`)
-  * Before the flow starts, the page checks that the user has at least one Workflow and saved **Verdict Prompt** and **Generate Prompt**. If any are missing, a centered alert lists what is missing with links to those pages
-  * When ready, a timeline shows steps: Job → Workflow → Generate; the page **title**, **timeline**, and round **Previous** / **Next** (or **Download** on the last step) controls share one sticky header row—the timeline sits between the side buttons—and the header stays fixed at the top of the scroll area while step content scrolls beneath
+  * Before the flow starts, the page checks that the user has at least one Workflow and saved **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**. If any are missing, a centered alert lists what is missing with links to those pages
+  * When ready, a timeline shows steps: Job → Workflow → Generate → Evaluate; the page **title**, **timeline**, and round **Previous** / **Next** (or **Download** on the last step) controls share one sticky header row—the timeline sits between the side buttons—and the header stays fixed at the top of the scroll area while step content scrolls beneath
   * **Job** step: input method tabs URL / File upload / Manual; Manual shows the Job Description textarea (max 10,000 characters); URL and File upload show an info alert that they are not implemented yet and coming soon
   * **Next** on Job (Manual): the right side button in the sticky step row; validates the Job Description (inline error if empty); runs **Noise Filter** silently in the background (textarea unchanged); calls **AI Verdict** with the user’s saved Verdict Prompt plus extraction instructions; fullscreen loading while the request runs; on success persists token usage, saves accepted Markdown, toasts success, and advances to **Workflow**; on failure stays on Job and toasts the error
   * **Workflow** step: read-only **AI Verdict result** Markdown panel at the top (from the accepted Job-step result); then a **Workflow** section with a single-select table (all workflows loaded at once; no search or pagination). Row click selects; View opens read-only workflow detail. **Previous** and **Next** in the sticky step row return to Job and advance respectively; **Next** stays enabled and validates inline (one workflow selected) before advancing
   * **Workflow** **Next** runs **AI Resume generation** with the noise-filtered Job Description, accepted AI Verdict Markdown, selected workflow, and saved Generate Prompt; fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on Workflow and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
-  * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, workflow selection, generated resume JSON) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
-  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; **Previous** in the sticky step row returns to Workflow; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume
+  * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, workflow selection, generated resume JSON, and evaluation result) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
+  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON; **Previous** in the sticky step row returns to Workflow; **Next** runs **AI Evaluate** with the noise-filtered Job Description, stored resume, and saved Evaluate Prompt, fullscreen loading while evaluation runs, persists token usage, stores the evaluation Markdown, toasts success, and advances to **Evaluate**; on failure stays on Generate and toasts the error; if the same resume already has a stored evaluation in this session, **Next** reuses it without calling the AI again
+  * **Evaluate** step: shows the AI evaluation as Markdown; **Previous** returns to Generate; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume or re-running evaluation
 * **Settings**
   * Theme (Dark / Light)
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
@@ -243,6 +245,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-05):** `/prompts` page and API; `generatePrompt` on `verdicts`; Generate prerequisite checks both prompts. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-23-sidebar-prompts.md`](./plans/2026-09-05-phase-23-sidebar-prompts.md).
 * [x] **Phase 24 — Generate sticky header and side navigation** — Sticky page title and timeline; large round chevron (and download on the last step) controls in side gutters alongside step content.
   * **Outcome (2026-09-05):** Sticky title + `GenerateTimeline`; `GenerateStepNav` three-column layout with sticky vertically centered side buttons. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-24-generate-side-nav.md`](./plans/2026-09-05-phase-24-generate-side-nav.md).
+* [x] **Phase 25 — Generate Evaluate step** — Add **Evaluate** as the final timeline step; **Generate** **Next** runs AI evaluation and advances; **Download** moves to **Evaluate**; evaluation result shown as Markdown.
+  * **Outcome (2026-09-05):** `POST /ai-evaluate`, `GenerateEvaluateStep`, session evaluation persistence, Generate step keeps Next. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-25-generate-evaluate.md`](./plans/2026-09-05-phase-25-generate-evaluate.md).
 
 ## Cursor Rules (Documentation Governance)
 

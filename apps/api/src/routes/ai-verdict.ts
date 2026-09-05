@@ -29,10 +29,10 @@ aiVerdictRoutes.post("/", async (c) => {
     );
   }
 
-  const verdict = await prisma.verdict.findUnique({
+  const prompts = await prisma.prompt.findUnique({
     where: { userId: user.id },
   });
-  const verdictPrompt = verdict?.verdictPrompt?.trim() ?? "";
+  const verdictPrompt = prompts?.verdictPrompt?.trim() ?? "";
   if (!verdictPrompt) {
     return c.json(
       {

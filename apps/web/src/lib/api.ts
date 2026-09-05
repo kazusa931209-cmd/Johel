@@ -136,6 +136,7 @@ export function saveSettings(provider: AiProviderId, apiKey: string) {
 export type PromptSettings = {
   verdictPrompt: string;
   generatePrompt: string;
+  evaluatePrompt: string;
 };
 
 export function getPrompts() {
@@ -373,6 +374,25 @@ export type AiResumeResult = {
 
 export function runAiResume(payload: AiResumeRequest) {
   return request<AiResumeResult>("/ai-resume", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export type AiEvaluateRequest = {
+  jobDescription: string;
+  resume: import("@johel/resume").GeneratedResume;
+};
+
+export type AiEvaluateResult = {
+  markdown: string;
+  usage: AiVerdictUsage;
+  tokenUsed: number;
+};
+
+export function runAiEvaluate(payload: AiEvaluateRequest) {
+  return request<AiEvaluateResult>("/ai-evaluate", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,

@@ -1,8 +1,8 @@
+import { generatedResumeSchema } from "@johel/resume";
 import { Hono } from "hono";
 import { z } from "zod";
+import { runAiEvaluate, type AiProviderId } from "../lib/ai-evaluate/index.js";
 import { isAiProviderId } from "../lib/ai-provider.js";
-import { runAiResume, type AiProviderId } from "../lib/ai-resume/index.js";
-import { assembleResumeGenerationInput } from "../lib/resume/assemble-input.js";
 import { prisma } from "../lib/prisma.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
@@ -11,13 +11,12 @@ const JOB_TEXT_MAX = 10_000;
 
 const postSchema = z.object({
   jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX),
-  acceptedMarkdown: z.string().trim().min(1).max(JOB_TEXT_MAX),
-  workflowId: z.string().trim().min(1),
+  resume: generatedResumeSchema,
 });
 
-export const aiResumeRoutes = new Hono();
+export const aiEvaluateRoutes = new Hono();
 
-aiResumeRoutes.post("/", async (c) => {
+aiEvaluateRoutes.post("/", async (c) => {
   const user = await requireUser(c);
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
@@ -29,7 +28,7 @@ aiResumeRoutes.post("/", async (c) => {
     return c.json(
       {
         error:
-          "Resume generation input is invalid. Check job description and workflow selection.",
+          "Job Description and a valid generated resume are required (max 10,000 characters for the job).",
       },
       400,
     );
@@ -48,6 +47,20 @@ aiResumeRoutes.post("/", async (c) => {
     );
   }
 
+  const prompts = await prisma.prompt.findUnique({
+    where: { userId: user.id },
+  });
+  const evaluatePrompt = prompts?.evaluatePrompt?.trim() ?? "";
+  if (!evaluatePrompt) {
+    return c.json(
+      {
+        error:
+          "Evaluate Prompt is not configured. Save your prompts on the Prompts page first.",
+      },
+      400,
+    );
+  }
+
   if (!isAiProviderId(setting.provider)) {
     return c.json(
       { error: `Unsupported AI provider: ${setting.provider}` },
@@ -57,39 +70,12 @@ aiResumeRoutes.post("/", async (c) => {
 
   const provider: AiProviderId = setting.provider;
 
-  const prompts = await prisma.prompt.findUnique({
-    where: { userId: user.id },
-  });
-  const generatePrompt = prompts?.generatePrompt?.trim() ?? "";
-  if (!generatePrompt) {
-    return c.json(
-      {
-        error:
-          "Generate Prompt is not configured. Save your prompts on the Prompts page first.",
-      },
-      400,
-    );
-  }
-
-  let generationInput;
   try {
-    generationInput = await assembleResumeGenerationInput({
-      userId: user.id,
-      ...parsed.data,
-    });
-  } catch (err) {
-    const message =
-      err instanceof Error && err.message
-        ? err.message
-        : "Resume generation input could not be loaded.";
-    return c.json({ error: message }, 400);
-  }
-
-  try {
-    const result = await runAiResume(provider, {
+    const result = await runAiEvaluate(provider, {
+      jobDescription: parsed.data.jobDescription,
+      resume: parsed.data.resume,
+      evaluatePrompt,
       apiKey: setting.apiKey,
-      generatePrompt,
-      input: generationInput,
     });
 
     await prisma.aiUsage.create({
@@ -106,7 +92,7 @@ aiResumeRoutes.post("/", async (c) => {
     const tokenUsed = await sumTokenUsed(user.id);
 
     return c.json({
-      resume: result.resume,
+      markdown: result.markdown,
       usage: result.usage,
       tokenUsed,
     });
@@ -114,7 +100,7 @@ aiResumeRoutes.post("/", async (c) => {
     const message =
       err instanceof Error && err.message
         ? err.message
-        : "AI Resume generation failed. Please try again.";
+        : "AI Evaluate failed. Please try again.";
     return c.json({ error: message }, 502);
   }
 });

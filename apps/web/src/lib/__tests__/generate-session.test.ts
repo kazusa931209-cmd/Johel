@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildGenerationInputKey,
+  canReuseStoredEvaluation,
   canReuseStoredResume,
   parseGenerateSession,
 } from "../generate-session";
@@ -23,6 +24,8 @@ describe("generate-session resume helpers", () => {
       ],
     },
     generationInputKey: null as string | null,
+    evaluationMarkdown: null as string | null,
+    evaluationInputKey: null as string | null,
   };
 
   it("builds a stable generation input key", () => {
@@ -54,6 +57,32 @@ describe("generate-session resume helpers", () => {
       generationInputKey: "different-key",
     };
     expect(canReuseStoredResume(session, inputKey)).toBe(false);
+  });
+
+  it("reuses stored evaluation when fingerprint matches", () => {
+    const inputKey = buildGenerationInputKey(
+      baseSession.job,
+      baseSession.workflow,
+    );
+    const session = {
+      ...baseSession,
+      evaluationMarkdown: "## ATS Score\n\n85/100",
+      evaluationInputKey: inputKey,
+    };
+    expect(canReuseStoredEvaluation(session, inputKey)).toBe(true);
+  });
+
+  it("does not reuse stored evaluation when fingerprint differs", () => {
+    const inputKey = buildGenerationInputKey(
+      baseSession.job,
+      baseSession.workflow,
+    );
+    const session = {
+      ...baseSession,
+      evaluationMarkdown: "## ATS Score\n\n85/100",
+      evaluationInputKey: "different-key",
+    };
+    expect(canReuseStoredEvaluation(session, inputKey)).toBe(false);
   });
 
   it("parses resume from stored session JSON", () => {

@@ -20,6 +20,8 @@ export type GenerateSession = {
   workflow: WorkflowSelection;
   resume: GeneratedResume | null;
   generationInputKey: string | null;
+  evaluationMarkdown: string | null;
+  evaluationInputKey: string | null;
 };
 
 const STORAGE_KEY_PREFIX = "johel:generate-session:";
@@ -36,6 +38,8 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   workflow: EMPTY_WORKFLOW_SELECTION,
   resume: null,
   generationInputKey: null,
+  evaluationMarkdown: null,
+  evaluationInputKey: null,
 };
 
 function storageKey(userId: string) {
@@ -43,7 +47,12 @@ function storageKey(userId: string) {
 }
 
 function normalizeActiveStep(value: unknown): GenerateStep {
-  if (value === "Job" || value === "Workflow" || value === "Generate") {
+  if (
+    value === "Job" ||
+    value === "Workflow" ||
+    value === "Generate" ||
+    value === "Evaluate"
+  ) {
     return value;
   }
   if (value === "PCEW" || value === "Verdict" || value === "Company") {
@@ -119,6 +128,17 @@ export function canReuseStoredResume(
   );
 }
 
+export function canReuseStoredEvaluation(
+  session: GenerateSession,
+  inputKey: string,
+): boolean {
+  return Boolean(
+    session.evaluationMarkdown &&
+      session.evaluationInputKey &&
+      session.evaluationInputKey === inputKey,
+  );
+}
+
 export function parseGenerateSession(value: unknown): GenerateSession | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
@@ -135,11 +155,20 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
       typeof raw.generationInputKey === "string"
         ? raw.generationInputKey
         : null,
+    evaluationMarkdown:
+      typeof raw.evaluationMarkdown === "string"
+        ? raw.evaluationMarkdown
+        : null,
+    evaluationInputKey:
+      typeof raw.evaluationInputKey === "string"
+        ? raw.evaluationInputKey
+        : null,
   };
 }
 
 export function isGenerateInProgress(session: GenerateSession): boolean {
   if (session.activeStep !== "Job") return true;
+  if (session.evaluationMarkdown) return true;
   if (session.resume) return true;
   if (session.job.acceptedMarkdown) return true;
   if (session.job.jobText.trim()) return true;

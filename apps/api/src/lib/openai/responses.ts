@@ -78,3 +78,16 @@ export async function runOpenAiResumeResponse(
     jsonOutput: true,
   });
 }
+
+export async function runOpenAiEvaluateResponse(
+  apiKey: string,
+  instructions: string,
+  input: string,
+): Promise<OpenAiTextResponse> {
+  return createTextResponse(apiKey, {
+    model: OPENAI_VERDICT_MODEL,
+    instructions,
+    input,
+    reasoningEffort: "low",
+  });
+}

@@ -8,6 +8,7 @@ const PROMPT_MAX = 10_000;
 const putSchema = z.object({
   verdictPrompt: z.string().trim().min(1).max(PROMPT_MAX),
   generatePrompt: z.string().trim().min(1).max(PROMPT_MAX),
+  evaluatePrompt: z.string().trim().min(1).max(PROMPT_MAX),
 });
 
 export const promptsRoutes = new Hono();
@@ -18,13 +19,14 @@ promptsRoutes.get("/", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const verdict = await prisma.verdict.findUnique({
+  const prompts = await prisma.prompt.findUnique({
     where: { userId: user.id },
   });
 
   return c.json({
-    verdictPrompt: verdict?.verdictPrompt ?? "",
-    generatePrompt: verdict?.generatePrompt ?? "",
+    verdictPrompt: prompts?.verdictPrompt ?? "",
+    generatePrompt: prompts?.generatePrompt ?? "",
+    evaluatePrompt: prompts?.evaluatePrompt ?? "",
   });
 });
 
@@ -39,27 +41,30 @@ promptsRoutes.put("/", async (c) => {
   if (!parsed.success) {
     return c.json(
       {
-        error: `Both prompts are required (max ${PROMPT_MAX} characters each).`,
+        error: `All prompts are required (max ${PROMPT_MAX} characters each).`,
       },
       400,
     );
   }
 
-  const verdict = await prisma.verdict.upsert({
+  const prompts = await prisma.prompt.upsert({
     where: { userId: user.id },
     create: {
       userId: user.id,
       verdictPrompt: parsed.data.verdictPrompt,
       generatePrompt: parsed.data.generatePrompt,
+      evaluatePrompt: parsed.data.evaluatePrompt,
     },
     update: {
       verdictPrompt: parsed.data.verdictPrompt,
       generatePrompt: parsed.data.generatePrompt,
+      evaluatePrompt: parsed.data.evaluatePrompt,
     },
   });
 
   return c.json({
-    verdictPrompt: verdict.verdictPrompt,
-    generatePrompt: verdict.generatePrompt,
+    verdictPrompt: prompts.verdictPrompt,
+    generatePrompt: prompts.generatePrompt,
+    evaluatePrompt: prompts.evaluatePrompt,
   });
 });

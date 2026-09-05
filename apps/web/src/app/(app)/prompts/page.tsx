@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useToast } from "@/components/app/ToastProvider";
 import { getPrompts, savePrompts } from "@/lib/api";
 import {
+  EVALUATE_PROMPT_PLACEHOLDER,
   GENERATE_PROMPT_PLACEHOLDER,
   VERDICT_PROMPT_PLACEHOLDER,
 } from "@/lib/prompts";
@@ -24,12 +25,14 @@ function FieldError({ message }: { message?: string }) {
 type FieldErrors = {
   verdictPrompt?: string;
   generatePrompt?: string;
+  evaluatePrompt?: string;
 };
 
 export default function PromptsPage() {
   const { toast } = useToast();
   const [verdictPrompt, setVerdictPrompt] = useState("");
   const [generatePrompt, setGeneratePrompt] = useState("");
+  const [evaluatePrompt, setEvaluatePrompt] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -43,6 +46,7 @@ export default function PromptsPage() {
       } else if (res.data) {
         setVerdictPrompt(res.data.verdictPrompt);
         setGeneratePrompt(res.data.generatePrompt);
+        setEvaluatePrompt(res.data.evaluatePrompt);
       }
       setLoading(false);
     });
@@ -60,6 +64,9 @@ export default function PromptsPage() {
     if (!generatePrompt.trim()) {
       nextErrors.generatePrompt = "Generate Prompt is required.";
     }
+    if (!evaluatePrompt.trim()) {
+      nextErrors.evaluatePrompt = "Evaluate Prompt is required.";
+    }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -69,6 +76,7 @@ export default function PromptsPage() {
     const res = await savePrompts({
       verdictPrompt: verdictPrompt.trim(),
       generatePrompt: generatePrompt.trim(),
+      evaluatePrompt: evaluatePrompt.trim(),
     });
     setSaving(false);
     if (res.error || !res.data) {
@@ -77,6 +85,7 @@ export default function PromptsPage() {
     }
     setVerdictPrompt(res.data.verdictPrompt);
     setGeneratePrompt(res.data.generatePrompt);
+    setEvaluatePrompt(res.data.evaluatePrompt);
     toast("Prompts saved.", "success");
   }
 
@@ -85,8 +94,8 @@ export default function PromptsPage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Prompts</h1>
         <p className="text-muted">
-          Configure prompts used when checking Job Descriptions and generating
-          résumés.
+          Configure prompts used when checking Job Descriptions, generating
+          résumés, and evaluating résumés.
         </p>
       </div>
       <form
@@ -148,6 +157,34 @@ export default function PromptsPage() {
             />
           )}
           <FieldError message={fieldErrors.generatePrompt} />
+        </label>
+
+        <label className="block space-y-1 text-sm">
+          <span>
+            Evaluate Prompt
+            <RequiredMark />
+          </span>
+          {loading ? (
+            <p className="text-muted">Loading…</p>
+          ) : (
+            <textarea
+              value={evaluatePrompt}
+              onChange={(e) => {
+                setEvaluatePrompt(e.target.value);
+                if (fieldErrors.evaluatePrompt) {
+                  setFieldErrors((errors) => ({
+                    ...errors,
+                    evaluatePrompt: undefined,
+                  }));
+                }
+              }}
+              placeholder={EVALUATE_PROMPT_PLACEHOLDER}
+              rows={8}
+              aria-invalid={Boolean(fieldErrors.evaluatePrompt)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            />
+          )}
+          <FieldError message={fieldErrors.evaluatePrompt} />
         </label>
 
         <button
