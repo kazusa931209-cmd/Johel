@@ -18,8 +18,6 @@ const baseInput = {
       id: "company-1",
       name: "Acme",
       description: "Software",
-      priority: 1,
-      metadata: [{ key: "Industry", value: "Tech" }],
     },
   ],
   experiences: [
@@ -27,7 +25,6 @@ const baseInput = {
       id: "experience-1",
       category: "Backend",
       description: "Built APIs",
-      metadata: [{ key: "Stack", value: "Node" }],
     },
   ],
   workflow: {

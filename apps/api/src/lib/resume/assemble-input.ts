@@ -56,9 +56,6 @@ export async function assembleResumeGenerationInput(
       userId: params.userId,
       id: { in: companyIds },
     },
-    include: {
-      metadata: { orderBy: { sortOrder: "asc" } },
-    },
   });
   if (companies.length !== companyIds.length) {
     throw new Error("One or more selected companies were not found.");
@@ -68,9 +65,6 @@ export async function assembleResumeGenerationInput(
     where: {
       userId: params.userId,
       id: { in: experienceIds },
-    },
-    include: {
-      metadata: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (experiences.length !== experienceIds.length) {
@@ -108,11 +102,6 @@ export async function assembleResumeGenerationInput(
         id: company.id,
         name: company.name,
         description: company.description,
-        priority: company.priority,
-        metadata: company.metadata.map((item) => ({
-          key: item.key,
-          value: item.value,
-        })),
       };
     }),
     experiences: experienceIds.map((id) => {
@@ -124,10 +113,6 @@ export async function assembleResumeGenerationInput(
         id: experience.id,
         category: experience.category,
         description: experience.description,
-        metadata: experience.metadata.map((item) => ({
-          key: item.key,
-          value: item.value,
-        })),
       };
     }),
     workflow: {

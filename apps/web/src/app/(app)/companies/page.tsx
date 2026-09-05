@@ -18,7 +18,6 @@ import {
   listCompanies,
   type CompanyDetail,
 } from "@/lib/api";
-import { formatMetadataCell } from "@/lib/company";
 
 export default function CompaniesPage() {
   const router = useRouter();
@@ -101,27 +100,25 @@ export default function CompaniesPage() {
         />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
               <th className="px-3 py-2 font-medium">Company Name</th>
               <th className="px-3 py-2 font-medium">Description</th>
-              <th className="px-3 py-2 font-medium">Metadata</th>
-              <th className="px-3 py-2 font-medium">Priority</th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-muted">
+                <td colSpan={4} className="px-3 py-8 text-center text-muted">
                   Loading…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-muted">
+                <td colSpan={4} className="px-3 py-8 text-center text-muted">
                   No companies yet.
                 </td>
               </tr>
@@ -145,12 +142,6 @@ export default function CompaniesPage() {
                   <td className="px-3 py-2 font-medium">{row.name}</td>
                   <td className="max-w-[280px] truncate px-3 py-2 text-muted">
                     {row.description}
-                  </td>
-                  <td className="max-w-[180px] truncate px-3 py-2 text-muted">
-                    {formatMetadataCell(row.metadata)}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-muted">
-                    {row.priority}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"

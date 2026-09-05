@@ -51,10 +51,8 @@ User browser (:4041)
 - Prisma `WorkflowExperience` → table `workflowExperiences`: `id`, `workflowId`, `experienceId`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, experienceId)`; cascade delete with workflow
 - Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `education?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
-- Prisma `Company` → table `companies` (per user): `id`, `userId`, `name`, `description`, `priority` (1-based integer), `createdAt`, `updatedAt`
-- Prisma `CompanyMetadata` → table `companyMetadata`: `id`, `companyId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(companyId, key)`; cascade delete with company
+- Prisma `Company` → table `companies` (per user): `id`, `userId`, `name`, `description`, `createdAt`, `updatedAt`
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
-- Prisma `ExperienceMetadata` → table `experienceMetadata`: `id`, `experienceId`, `key`, `value`, `sortOrder`, `createdAt`, `updatedAt`; unique `(experienceId, key)`; cascade delete with experience
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
 - Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `usePromptOptimizationAi`, `createdAt`, `updatedAt`; defaults all three booleans `true`
@@ -133,10 +131,9 @@ User browser (:4041)
 - OpenAI rewrite uses `gpt-5.6-luna` (reasoning `low`); Cursor uses `auto`
 - Generate cache keys (`buildVerdictInputKey`, `buildGenerationInputKey`, `buildEvaluationInputKey`) include prompt hashes and `usePromptOptimizationAi` via `apps/web/src/lib/prompt-hash.ts`
 
-## Workflows (Phase 6–7, 22)
+## Workflows (Phase 6–7, 22, 30)
 
-- `GET /workflows?q=&page=` — page size 10; lean list items (name, description, used, dates)
-- Each list item includes `used` from a **post-query aggregation** by `workflowId` (not stored on `Workflow`). No usage rows yet → `used` is 0.
+- `GET /workflows?q=&page=` — page size 10; lean list items (name, description, dates)
 - `GET /workflows/:id` — full detail for the editor (owner only): `profileId`, `companyIds[]`, `experienceIds[]`, plus scalar fields
 - `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, profileId, companyIds[], experienceIds[] }`; validates one profile, ≥1 company, ≥1 experience (all owned by user); on write, replaces `workflowCompanies` and `workflowExperiences` junction rows
 - Language codes: `en`, `ja`, `zh-TW`, `zh-CN`, `ko` (default `en`)
@@ -153,26 +150,23 @@ User browser (:4041)
 - Links: `{ key, link | null }`; keys unique per profile
 - Web routes: `/profiles` list; `/profiles/new` add; `/profiles/[id]/edit` edit; Links UX mirrors workflow Metadata
 
-## Companies (Phase 9)
+## Companies (Phase 9, 30, 31)
 
-- `GET /companies?q=&page=` — page size 10; list includes `metadata` for the Metadata column and `nextPriority` (max existing priority for the user + 1, or 1)
-- List order: `priority` ascending, then `name` ascending
+- `GET /companies?q=&page=` — page size 10
+- List order: `name` ascending
 - `GET /companies/:id` — full detail for the editor (owner only)
-- `POST /companies` / `PUT /companies/:id` — `{ name, description, priority?, metadata }`; on write, delete existing `companyMetadata` and insert the submitted list
-- If `priority` is omitted on create, the API assigns `nextPriority`; on update, omitted priority keeps the existing value
+- `POST /companies` / `PUT /companies/:id` — `{ name, description }`
 - Search `q` across name and description
-- Metadata: `{ key, value }`; keys unique per company; value is a string (may be empty)
-- Web routes: `/companies` list; `/companies/new` add; `/companies/[id]/edit` edit; Metadata UX mirrors workflow Metadata
+- Web routes: `/companies` list; `/companies/new` add; `/companies/[id]/edit` edit
 
-## Experiences (Phase 10)
+## Experiences (Phase 10, 30)
 
-- `GET /experiences?q=&page=` — page size 10; list includes `metadata` for the Metadata column
+- `GET /experiences?q=&page=` — page size 10
 - List order: `updatedAt` descending
 - `GET /experiences/:id` — full detail for the editor (owner only)
-- `POST /experiences` / `PUT /experiences/:id` — `{ category, description, metadata }`; on write, delete existing `experienceMetadata` and insert the submitted list
+- `POST /experiences` / `PUT /experiences/:id` — `{ category, description }`
 - Search `q` across category and description
-- Metadata: `{ key, value }`; keys unique per experience; value is a string (may be empty)
-- Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; Metadata UX mirrors company Metadata
+- Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit
 
 ## Generate UI (Phase 11–20, 22, 24, 25, 26, 27, 28)
 

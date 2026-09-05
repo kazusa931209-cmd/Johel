@@ -101,7 +101,6 @@ export function WorkflowDetailDialog({
             label="Language"
             value={languageLabel(detail.language)}
           />
-          <DetailField label="Used" value={detail.used} />
           <DetailField
             label="Created"
             value={new Date(detail.createdAt).toLocaleString()}

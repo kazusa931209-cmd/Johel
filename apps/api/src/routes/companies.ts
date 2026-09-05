@@ -10,109 +10,29 @@ import {
 
 const PAGE_SIZE = 10;
 
-const metadataItemSchema = z.object({
-  key: z.string().trim().min(1).max(200),
-  value: z.string().trim().max(2000),
-});
-
 const writeSchema = z.object({
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().min(1).max(20000),
-  priority: z.number().int().min(1).max(1_000_000).optional(),
-  metadata: z.array(metadataItemSchema).max(100),
 });
 
-type MetadataItem = {
-  key: string;
-  value: string;
-};
-
-type CompanyWithMetadata = {
+type CompanyRow = {
   id: string;
   name: string;
   description: string;
-  priority: number;
   createdAt: Date;
   updatedAt: Date;
-  metadata: {
-    key: string;
-    value: string;
-    sortOrder: number;
-  }[];
 };
 
 export const companiesRoutes = new Hono();
 
-function normalizeMetadata(
-  items: z.infer<typeof writeSchema>["metadata"],
-): { ok: true; value: MetadataItem[] } | { ok: false; error: string } {
-  const normalized: MetadataItem[] = [];
-  const seen = new Set<string>();
-  for (const item of items) {
-    const key = item.key.trim();
-    const keyLower = key.toLowerCase();
-    if (seen.has(keyLower)) {
-      return { ok: false, error: "Metadata keys must be unique" };
-    }
-    seen.add(keyLower);
-    normalized.push({
-      key,
-      value: item.value.trim(),
-    });
-  }
-  return { ok: true, value: normalized };
-}
-
-function mapMetadata(
-  metadata: CompanyWithMetadata["metadata"],
-): MetadataItem[] {
-  return [...metadata]
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((item) => ({
-      key: item.key,
-      value: item.value,
-    }));
-}
-
-function toDetail(row: CompanyWithMetadata) {
+function toDetail(row: CompanyRow) {
   return {
     id: row.id,
     name: row.name,
     description: row.description,
-    priority: row.priority,
-    metadata: mapMetadata(row.metadata),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
-}
-
-const metadataInclude = {
-  metadata: { orderBy: { sortOrder: "asc" as const } },
-};
-
-async function nextPriorityForUser(userId: string) {
-  const agg = await prisma.company.aggregate({
-    where: { userId },
-    _max: { priority: true },
-  });
-  return (agg._max.priority ?? 0) + 1;
-}
-
-async function replaceMetadata(
-  tx: Prisma.TransactionClient,
-  companyId: string,
-  items: MetadataItem[],
-) {
-  await tx.companyMetadata.deleteMany({ where: { companyId } });
-  if (items.length === 0) return;
-  await tx.companyMetadata.createMany({
-    data: items.map((item, index) => ({
-      companyId,
-      key: item.key,
-      value: item.value,
-      sortOrder: index,
-    })),
-  });
 }
 
 companiesRoutes.get("/", async (c) => {
@@ -139,21 +59,19 @@ companiesRoutes.get("/", async (c) => {
     ...searchFilter,
   };
 
-  const [total, rows, nextPriority] = await Promise.all([
+  const [total, rows] = await Promise.all([
     prisma.company.count({ where }),
     prisma.company.findMany({
       where,
-      include: metadataInclude,
-      orderBy: [{ priority: "asc" }, { name: "asc" }],
+      orderBy: { name: "asc" },
       ...(pagination.skip != null ? { skip: pagination.skip } : {}),
       ...(pagination.take != null ? { take: pagination.take } : {}),
     }),
-    nextPriorityForUser(user.id),
   ]);
 
   const items = rows.map((row) => toDetail(row));
   const pageSize = listResponsePageSize(pagination, total);
-  return c.json({ items, total, page: pagination.page, pageSize, nextPriority });
+  return c.json({ items, total, page: pagination.page, pageSize });
 });
 
 companiesRoutes.get("/:id", async (c) => {
@@ -165,7 +83,6 @@ companiesRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
   const row = await prisma.company.findFirst({
     where: { id, userId: user.id },
-    include: metadataInclude,
   });
   if (!row) {
     return c.json({ error: "Not found" }, 404);
@@ -186,28 +103,12 @@ companiesRoutes.post("/", async (c) => {
     return c.json({ error: "Invalid company payload" }, 400);
   }
 
-  const metadata = normalizeMetadata(parsed.data.metadata);
-  if (!metadata.ok) {
-    return c.json({ error: metadata.error }, 400);
-  }
-
-  const priority =
-    parsed.data.priority ?? (await nextPriorityForUser(user.id));
-
-  const row = await prisma.$transaction(async (tx) => {
-    const created = await tx.company.create({
-      data: {
-        userId: user.id,
-        name: parsed.data.name,
-        description: parsed.data.description,
-        priority,
-      },
-    });
-    await replaceMetadata(tx, created.id, metadata.value);
-    return tx.company.findUniqueOrThrow({
-      where: { id: created.id },
-      include: metadataInclude,
-    });
+  const row = await prisma.company.create({
+    data: {
+      userId: user.id,
+      name: parsed.data.name,
+      description: parsed.data.description,
+    },
   });
 
   return c.json(toDetail(row), 201);
@@ -233,25 +134,12 @@ companiesRoutes.put("/:id", async (c) => {
     return c.json({ error: "Invalid company payload" }, 400);
   }
 
-  const metadata = normalizeMetadata(parsed.data.metadata);
-  if (!metadata.ok) {
-    return c.json({ error: metadata.error }, 400);
-  }
-
-  const row = await prisma.$transaction(async (tx) => {
-    await tx.company.update({
-      where: { id },
-      data: {
-        name: parsed.data.name,
-        description: parsed.data.description,
-        priority: parsed.data.priority ?? existing.priority,
-      },
-    });
-    await replaceMetadata(tx, id, metadata.value);
-    return tx.company.findUniqueOrThrow({
-      where: { id },
-      include: metadataInclude,
-    });
+  const row = await prisma.company.update({
+    where: { id },
+    data: {
+      name: parsed.data.name,
+      description: parsed.data.description,
+    },
   });
 
   return c.json(toDetail(row));

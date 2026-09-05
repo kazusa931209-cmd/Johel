@@ -9,7 +9,7 @@
 ### What the user owns
 
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
-* **Companies** — One user can manage **multiple companies** (name, description, priority, and metadata).
+* **Companies** — One user can manage **multiple companies** (name and description).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
 * **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more companies, one or more shared experiences, and a resume output language.
 * **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés.
@@ -136,25 +136,23 @@ Aligned with the product flow above:
   * Distinct from header menu **Profile** (account email page)
 * **Companies**
   * One signed-in user can manage **multiple** companies
-  * Per-user list: No, Company Name, Description, Metadata, Priority
+  * Per-user list: No, Company Name, Description
   * Keyword filter on name and description; 10 rows per page
-  * List is ordered by Priority (1 is first), then Company Name
+  * List is ordered by Company Name
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole company
-  * Metadata add/edit/delete is local on the page until Save persists the company (same pattern as workflow Metadata and profile Links)
-  * Editor fields: company name (required), description (required), priority (required; 1-based integer; new companies default to the next number for that user); metadata table (Key required; Value optional)
+  * Editor fields: company name (required), description (required)
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
-  * Per-user list: No, Category, Description, Metadata
+  * Per-user list: No, Category, Description
   * Keyword filter on category and description; 10 rows per page
   * List is ordered by most recently updated first
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience
-  * Metadata add/edit/delete is local on the page until Save persists the experience (same pattern as company Metadata)
-  * Editor fields: category (required; free-text), description (required); metadata table (Key required; Value optional)
+  * Editor fields: category (required; free-text), description (required)
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
@@ -258,6 +256,10 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-05):** `GET /workflows/:id/generation-fingerprint`, workflow content fingerprint in `generationInputKey`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-28-pce-cache-invalidation.md`](./plans/2026-09-05-phase-28-pce-cache-invalidation.md).
 * [x] **Phase 29 — Prompt Optimization** — Before AI Verdict, Generate, and Evaluate run, compile each saved user prompt deterministically and optionally rewrite it with AI (cached by prompt hash). Settings **Prompt Optimization** section with **Use prompt optimization using AI** (default on). Saved prompts on the Prompts page are unchanged; codebase const system prompts are unchanged. Generate cache keys include prompt hashes and the optimization flag; saving a changed optimization flag resets Generate.
   * **Outcome (2026-09-05):** `prompt-optimize` module, `promptOptimizations` table, `GET/PUT /settings/prompt-optimization`, Settings Prompt Optimization section. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-05-phase-29-prompt-optimization.md`](./plans/2026-09-05-phase-29-prompt-optimization.md).
+* [x] **Phase 30 — Remove Metadatas** — Remove company and experience metadata (database, API, UI). Remove the **Used** field from the workflow detail dialog.
+  * **Outcome (2026-09-06):** `companyMetadata` and `experienceMetadata` tables dropped; company/experience editors and lists simplified; workflow detail no longer shows Used. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-30-remove-metadatas.md`](./plans/2026-09-06-phase-30-remove-metadatas.md).
+* [x] **Phase 31 — Remove company priority** — Remove the Priority field from companies (database, API, UI, and resume generation input).
+  * **Outcome (2026-09-06):** `companies.priority` column dropped; company list ordered by name; editors and detail dialogs simplified. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-31-remove-company-priority.md`](./plans/2026-09-06-phase-31-remove-company-priority.md).
 
 ## Cursor Rules (Documentation Governance)
 

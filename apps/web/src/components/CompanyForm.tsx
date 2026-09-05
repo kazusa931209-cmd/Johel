@@ -1,18 +1,15 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton } from "@/components/shared/back-button";
-import { CompanyMetadataEditor } from "@/components/CompanyMetadataEditor";
 import { useToast } from "@/components/app/ToastProvider";
 import {
   createCompany,
-  listCompanies,
   updateCompany,
   type CompanyDetail,
   type CompanyWritePayload,
 } from "@/lib/api";
-import type { CompanyMetadataItem } from "@/lib/company";
 
 type CompanyFormProps = {
   mode: "create" | "edit";
@@ -23,7 +20,6 @@ type CompanyFormProps = {
 type FieldErrors = {
   name?: string;
   description?: string;
-  priority?: string;
 };
 
 function RequiredMark() {
@@ -44,29 +40,8 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
   const { toast } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [priority, setPriority] = useState(
-    initial?.priority != null ? String(initial.priority) : "",
-  );
-  const [metadata, setMetadata] = useState<CompanyMetadataItem[]>(
-    initial?.metadata ?? [],
-  );
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-
-  useEffect(() => {
-    if (mode !== "create" || initial?.priority != null) return;
-    let cancelled = false;
-    listCompanies("", 1).then((res) => {
-      if (cancelled || !res.data) return;
-      const nextPriority = res.data.nextPriority;
-      setPriority((current) =>
-        current.trim() === "" ? String(nextPriority) : current,
-      );
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [mode, initial?.priority]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -77,14 +52,6 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     if (!description.trim()) {
       nextErrors.description = "Description is required.";
     }
-    const parsedPriority = Number.parseInt(priority.trim(), 10);
-    if (
-      !priority.trim() ||
-      !Number.isInteger(parsedPriority) ||
-      parsedPriority < 1
-    ) {
-      nextErrors.priority = "Priority must be a number of 1 or greater.";
-    }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -93,8 +60,6 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     const payload: CompanyWritePayload = {
       name: name.trim(),
       description: description.trim(),
-      priority: parsedPriority,
-      metadata,
     };
     setSaving(true);
     const res =
@@ -124,7 +89,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure company details, priority, and metadata.
+          Configure company name and description.
         </p>
       </div>
 
@@ -169,30 +134,6 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
         />
         <FieldError message={fieldErrors.description} />
       </label>
-
-      <label className="block space-y-1 text-sm">
-        <span>
-          Priority
-          <RequiredMark />
-        </span>
-        <input
-          type="number"
-          min={1}
-          step={1}
-          value={priority}
-          onChange={(e) => {
-            setPriority(e.target.value);
-            if (fieldErrors.priority) {
-              setFieldErrors((errors) => ({ ...errors, priority: undefined }));
-            }
-          }}
-          aria-invalid={Boolean(fieldErrors.priority)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
-        />
-        <FieldError message={fieldErrors.priority} />
-      </label>
-
-      <CompanyMetadataEditor metadata={metadata} onChange={setMetadata} />
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button

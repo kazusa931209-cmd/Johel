@@ -21,13 +21,11 @@ export type {
 
 export type {
   CompanyDetail,
-  CompanyMetadataItem,
   CompanyWritePayload,
 } from "./company";
 
 export type {
   ExperienceDetail,
-  ExperienceMetadataItem,
   ExperienceWritePayload,
 } from "./experience";
 
@@ -187,7 +185,6 @@ export type Workflow = {
   id: string;
   name: string;
   description: string | null;
-  used: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -300,7 +297,6 @@ export type CompanyList = {
   total: number;
   page: number;
   pageSize: number;
-  nextPriority: number;
 };
 
 export function listCompanies(

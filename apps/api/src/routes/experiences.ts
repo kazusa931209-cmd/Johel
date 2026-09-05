@@ -10,98 +10,29 @@ import {
 
 const PAGE_SIZE = 10;
 
-const metadataItemSchema = z.object({
-  key: z.string().trim().min(1).max(200),
-  value: z.string().trim().max(2000),
-});
-
 const writeSchema = z.object({
   category: z.string().trim().min(1).max(200),
   description: z.string().trim().min(1).max(20000),
-  metadata: z.array(metadataItemSchema).max(100),
 });
 
-type MetadataItem = {
-  key: string;
-  value: string;
-};
-
-type ExperienceWithMetadata = {
+type ExperienceRow = {
   id: string;
   category: string;
   description: string;
   createdAt: Date;
   updatedAt: Date;
-  metadata: {
-    key: string;
-    value: string;
-    sortOrder: number;
-  }[];
 };
 
 export const experiencesRoutes = new Hono();
 
-function normalizeMetadata(
-  items: z.infer<typeof writeSchema>["metadata"],
-): { ok: true; value: MetadataItem[] } | { ok: false; error: string } {
-  const normalized: MetadataItem[] = [];
-  const seen = new Set<string>();
-  for (const item of items) {
-    const key = item.key.trim();
-    const keyLower = key.toLowerCase();
-    if (seen.has(keyLower)) {
-      return { ok: false, error: "Metadata keys must be unique" };
-    }
-    seen.add(keyLower);
-    normalized.push({
-      key,
-      value: item.value.trim(),
-    });
-  }
-  return { ok: true, value: normalized };
-}
-
-function mapMetadata(
-  metadata: ExperienceWithMetadata["metadata"],
-): MetadataItem[] {
-  return [...metadata]
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((item) => ({
-      key: item.key,
-      value: item.value,
-    }));
-}
-
-function toDetail(row: ExperienceWithMetadata) {
+function toDetail(row: ExperienceRow) {
   return {
     id: row.id,
     category: row.category,
     description: row.description,
-    metadata: mapMetadata(row.metadata),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
-}
-
-const metadataInclude = {
-  metadata: { orderBy: { sortOrder: "asc" as const } },
-};
-
-async function replaceMetadata(
-  tx: Prisma.TransactionClient,
-  experienceId: string,
-  items: MetadataItem[],
-) {
-  await tx.experienceMetadata.deleteMany({ where: { experienceId } });
-  if (items.length === 0) return;
-  await tx.experienceMetadata.createMany({
-    data: items.map((item, index) => ({
-      experienceId,
-      key: item.key,
-      value: item.value,
-      sortOrder: index,
-    })),
-  });
 }
 
 experiencesRoutes.get("/", async (c) => {
@@ -135,7 +66,6 @@ experiencesRoutes.get("/", async (c) => {
     prisma.experience.count({ where }),
     prisma.experience.findMany({
       where,
-      include: metadataInclude,
       orderBy: { updatedAt: "desc" },
       ...(pagination.skip != null ? { skip: pagination.skip } : {}),
       ...(pagination.take != null ? { take: pagination.take } : {}),
@@ -156,7 +86,6 @@ experiencesRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
   const row = await prisma.experience.findFirst({
     where: { id, userId: user.id },
-    include: metadataInclude,
   });
   if (!row) {
     return c.json({ error: "Not found" }, 404);
@@ -177,24 +106,12 @@ experiencesRoutes.post("/", async (c) => {
     return c.json({ error: "Invalid experience payload" }, 400);
   }
 
-  const metadata = normalizeMetadata(parsed.data.metadata);
-  if (!metadata.ok) {
-    return c.json({ error: metadata.error }, 400);
-  }
-
-  const row = await prisma.$transaction(async (tx) => {
-    const created = await tx.experience.create({
-      data: {
-        userId: user.id,
-        category: parsed.data.category,
-        description: parsed.data.description,
-      },
-    });
-    await replaceMetadata(tx, created.id, metadata.value);
-    return tx.experience.findUniqueOrThrow({
-      where: { id: created.id },
-      include: metadataInclude,
-    });
+  const row = await prisma.experience.create({
+    data: {
+      userId: user.id,
+      category: parsed.data.category,
+      description: parsed.data.description,
+    },
   });
 
   return c.json(toDetail(row), 201);
@@ -220,24 +137,12 @@ experiencesRoutes.put("/:id", async (c) => {
     return c.json({ error: "Invalid experience payload" }, 400);
   }
 
-  const metadata = normalizeMetadata(parsed.data.metadata);
-  if (!metadata.ok) {
-    return c.json({ error: metadata.error }, 400);
-  }
-
-  const row = await prisma.$transaction(async (tx) => {
-    await tx.experience.update({
-      where: { id },
-      data: {
-        category: parsed.data.category,
-        description: parsed.data.description,
-      },
-    });
-    await replaceMetadata(tx, id, metadata.value);
-    return tx.experience.findUniqueOrThrow({
-      where: { id },
-      include: metadataInclude,
-    });
+  const row = await prisma.experience.update({
+    where: { id },
+    data: {
+      category: parsed.data.category,
+      description: parsed.data.description,
+    },
   });
 
   return c.json(toDetail(row));

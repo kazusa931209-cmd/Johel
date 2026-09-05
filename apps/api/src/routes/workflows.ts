@@ -3,7 +3,6 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
-import { aggregateWorkflowUsed } from "../lib/workflowUsed.js";
 import { buildWorkflowGenerationFingerprint } from "../lib/resume/generation-fingerprint.js";
 import {
   listResponsePageSize,
@@ -122,27 +121,23 @@ async function replaceWorkflowRelations(
   }
 }
 
-function toListItem(
-  row: {
-    id: string;
-    name: string;
-    description: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  },
-  used: number,
-) {
+function toListItem(row: {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}) {
   return {
     id: row.id,
     name: row.name,
     description: row.description,
-    used,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
 
-function toDetail(row: WorkflowWithRelations, used: number) {
+function toDetail(row: WorkflowWithRelations) {
   return {
     id: row.id,
     name: row.name,
@@ -155,7 +150,6 @@ function toDetail(row: WorkflowWithRelations, used: number) {
     experienceIds: [...row.experiences]
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((item) => item.experienceId),
-    used,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -198,8 +192,7 @@ workflowsRoutes.get("/", async (c) => {
     }),
   ]);
 
-  const usedById = await aggregateWorkflowUsed(rows.map((row) => row.id));
-  const items = rows.map((row) => toListItem(row, usedById.get(row.id) ?? 0));
+  const items = rows.map((row) => toListItem(row));
   const pageSize = listResponsePageSize(pagination, total);
 
   return c.json({ items, total, page: pagination.page, pageSize });
@@ -247,8 +240,7 @@ workflowsRoutes.get("/:id", async (c) => {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const usedById = await aggregateWorkflowUsed([row.id]);
-  return c.json(toDetail(row, usedById.get(row.id) ?? 0));
+  return c.json(toDetail(row));
 });
 
 workflowsRoutes.post("/", async (c) => {
@@ -298,8 +290,7 @@ workflowsRoutes.post("/", async (c) => {
     });
   });
 
-  const usedById = await aggregateWorkflowUsed([row.id]);
-  return c.json(toDetail(row, usedById.get(row.id) ?? 0), 201);
+  return c.json(toDetail(row), 201);
 });
 
 workflowsRoutes.put("/:id", async (c) => {
@@ -352,8 +343,7 @@ workflowsRoutes.put("/:id", async (c) => {
     });
   });
 
-  const usedById = await aggregateWorkflowUsed([row.id]);
-  return c.json(toDetail(row, usedById.get(row.id) ?? 0));
+  return c.json(toDetail(row));
 });
 
 workflowsRoutes.delete("/:id", async (c) => {

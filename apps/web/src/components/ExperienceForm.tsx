@@ -3,7 +3,6 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton } from "@/components/shared/back-button";
-import { ExperienceMetadataEditor } from "@/components/ExperienceMetadataEditor";
 import { useToast } from "@/components/app/ToastProvider";
 import {
   createExperience,
@@ -11,7 +10,6 @@ import {
   type ExperienceDetail,
   type ExperienceWritePayload,
 } from "@/lib/api";
-import type { ExperienceMetadataItem } from "@/lib/experience";
 
 type ExperienceFormProps = {
   mode: "create" | "edit";
@@ -46,9 +44,6 @@ export function ExperienceForm({
   const { toast } = useToast();
   const [category, setCategory] = useState(initial?.category ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [metadata, setMetadata] = useState<ExperienceMetadataItem[]>(
-    initial?.metadata ?? [],
-  );
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -69,7 +64,6 @@ export function ExperienceForm({
     const payload: ExperienceWritePayload = {
       category: category.trim(),
       description: description.trim(),
-      metadata,
     };
     setSaving(true);
     const res =
@@ -102,7 +96,7 @@ export function ExperienceForm({
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure category, description, and metadata for this experience.
+          Configure category and description for this experience.
         </p>
       </div>
 
@@ -147,8 +141,6 @@ export function ExperienceForm({
         />
         <FieldError message={fieldErrors.description} />
       </label>
-
-      <ExperienceMetadataEditor metadata={metadata} onChange={setMetadata} />
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button

@@ -18,7 +18,6 @@ import {
   listExperiences,
   type ExperienceDetail,
 } from "@/lib/api";
-import { formatMetadataCell } from "@/lib/experience";
 
 export default function ExperiencesPage() {
   const router = useRouter();
@@ -101,26 +100,25 @@ export default function ExperiencesPage() {
         />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
               <th className="px-3 py-2 font-medium">Category</th>
               <th className="px-3 py-2 font-medium">Description</th>
-              <th className="px-3 py-2 font-medium">Metadata</th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-muted">
+                <td colSpan={4} className="px-3 py-8 text-center text-muted">
                   Loading…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-muted">
+                <td colSpan={4} className="px-3 py-8 text-center text-muted">
                   No experiences yet.
                 </td>
               </tr>
@@ -144,9 +142,6 @@ export default function ExperiencesPage() {
                   <td className="px-3 py-2 font-medium">{row.category}</td>
                   <td className="max-w-[320px] truncate px-3 py-2 text-muted">
                     {row.description}
-                  </td>
-                  <td className="max-w-[180px] truncate px-3 py-2 text-muted">
-                    {formatMetadataCell(row.metadata)}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"

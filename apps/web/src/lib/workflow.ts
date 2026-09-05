@@ -16,7 +16,6 @@ export type WorkflowDetail = {
   profileId: string;
   companyIds: string[];
   experienceIds: string[];
-  used: number;
   createdAt: string;
   updatedAt: string;
 };

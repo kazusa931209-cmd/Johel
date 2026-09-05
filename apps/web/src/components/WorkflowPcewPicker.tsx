@@ -17,8 +17,6 @@ import {
   type ExperienceDetail,
   type ProfileDetail,
 } from "@/lib/api";
-import { formatMetadataCell as formatCompanyMetadata } from "@/lib/company";
-import { formatMetadataCell as formatExperienceMetadata } from "@/lib/experience";
 import { fullName } from "@/lib/profile";
 
 type WorkflowPcewPickerProps = {
@@ -129,7 +127,7 @@ export function WorkflowPcewPicker({
         loadErrorLabel="Failed to load companies"
         viewing={viewingCompany}
         onView={setViewingCompany}
-        minWidthClass="min-w-[720px]"
+        minWidthClass="min-w-[560px]"
         columns={[
           {
             header: "Company Name",
@@ -139,16 +137,6 @@ export function WorkflowPcewPicker({
             header: "Description",
             className: "max-w-[280px] truncate text-muted",
             cell: (row) => row.description,
-          },
-          {
-            header: "Metadata",
-            className: "max-w-[180px] truncate text-muted",
-            cell: (row) => formatCompanyMetadata(row.metadata),
-          },
-          {
-            header: "Priority",
-            className: "whitespace-nowrap text-muted",
-            cell: (row) => row.priority,
           },
         ]}
         renderDetailDialog={(row) => (
@@ -179,11 +167,6 @@ export function WorkflowPcewPicker({
             header: "Description",
             className: "max-w-[320px] truncate text-muted",
             cell: (row) => row.description,
-          },
-          {
-            header: "Metadata",
-            className: "max-w-[180px] truncate text-muted",
-            cell: (row) => formatExperienceMetadata(row.metadata),
           },
         ]}
         renderDetailDialog={(row) => (

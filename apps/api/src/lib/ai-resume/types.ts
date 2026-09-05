@@ -27,15 +27,12 @@ export type ResumeGenerationCompany = {
   id: string;
   name: string;
   description: string;
-  priority: number;
-  metadata: { key: string; value: string }[];
 };
 
 export type ResumeGenerationExperience = {
   id: string;
   category: string;
   description: string;
-  metadata: { key: string; value: string }[];
 };
 
 export type ResumeGenerationWorkflow = {
