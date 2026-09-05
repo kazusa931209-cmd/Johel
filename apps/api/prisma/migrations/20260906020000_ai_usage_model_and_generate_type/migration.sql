@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "aiUsage" ADD COLUMN "modelName" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "aiUsage" ADD COLUMN "generateType" TEXT NOT NULL DEFAULT '';

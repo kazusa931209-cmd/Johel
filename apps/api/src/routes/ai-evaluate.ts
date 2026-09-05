@@ -8,6 +8,7 @@ import {
   optimizeInstruction,
 } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
+import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
@@ -87,15 +88,11 @@ aiEvaluateRoutes.post("/", async (c) => {
       });
 
     if (rewriteUsage) {
-      await prisma.aiUsage.create({
-        data: {
-          userId: user.id,
-          aiProvider: provider,
-          inputToken: rewriteUsage.inputToken,
-          outputToken: rewriteUsage.outputToken,
-          input: rewriteUsage.input,
-          output: rewriteUsage.output,
-        },
+      await recordAiUsage({
+        userId: user.id,
+        aiProvider: provider,
+        generateType: "promptOptimize",
+        usage: rewriteUsage,
       });
     }
 
@@ -106,15 +103,11 @@ aiEvaluateRoutes.post("/", async (c) => {
       apiKey: setting.apiKey,
     });
 
-    await prisma.aiUsage.create({
-      data: {
-        userId: user.id,
-        aiProvider: provider,
-        inputToken: result.usage.inputToken,
-        outputToken: result.usage.outputToken,
-        input: result.usage.input,
-        output: result.usage.output,
-      },
+    await recordAiUsage({
+      userId: user.id,
+      aiProvider: provider,
+      generateType: "evaluate",
+      usage: result.usage,
     });
 
     const tokenUsed = await sumTokenUsed(user.id);

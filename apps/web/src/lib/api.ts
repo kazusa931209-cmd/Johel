@@ -387,6 +387,28 @@ export type AiUsageSummary = {
   tokenUsed: number;
 };
 
+export type AiUsageListItem = {
+  id: string;
+  aiProvider: string;
+  modelName: string;
+  generateType: string;
+  inputToken: number;
+  outputToken: number;
+  createdAt: string;
+};
+
+export type AiUsageList = {
+  items: AiUsageListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type AiUsageDetail = AiUsageListItem & {
+  input: string;
+  output: string;
+};
+
 export function runAiVerdict(jobDescription: string) {
   return request<AiVerdictResult>("/ai-verdict", {
     method: "POST",
@@ -436,6 +458,16 @@ export function runAiEvaluate(payload: AiEvaluateRequest) {
 
 export function getAiUsageSummary() {
   return request<AiUsageSummary>("/ai-usage/summary");
+}
+
+export function listAiUsage(page = 1) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  return request<AiUsageList>(`/ai-usage?${params.toString()}`);
+}
+
+export function getAiUsage(id: string) {
+  return request<AiUsageDetail>(`/ai-usage/${id}`);
 }
 
 export async function downloadResumeDocx(

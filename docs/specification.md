@@ -190,6 +190,7 @@ Aligned with the product flow above:
   * **Prompt Optimization**: **Use prompt optimization using AI** checkbox (default on); Save persists per user; when off, AI Verdict, Generate, and Evaluate skip the optional AI rewrite of saved prompts (deterministic prompt compile still runs)
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
+* **AI Usage History** — A fixed bottom-right round button (history / clock icon) on every authenticated page opens a right-side drawer with the user’s AI usage history table. Columns: No, AI, Model, Generate Type, Input Token, Output Token, Created At. Newest first; 100 rows per page with pagination stuck to the bottom of the drawer. Clicking a row opens a nested overlapping drawer on the right showing that run’s input and output text. Clicking outside a drawer (or its Close control) collapses the topmost drawer; closing the history drawer also closes the detail drawer.
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.
 * **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon; **View** is an eye icon; **Close** is an X (cross) icon (accessible labels required when icon-only).
 * **Dialog close** — Every dialog (including confirm dialogs) has a Close (X) control in the **top-right corner**. Close is not placed beside the dialog’s main action (Apply, Delete, and similar).
@@ -260,6 +261,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-06):** `companyMetadata` and `experienceMetadata` tables dropped; company/experience editors and lists simplified; workflow detail no longer shows Used. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-30-remove-metadatas.md`](./plans/2026-09-06-phase-30-remove-metadatas.md).
 * [x] **Phase 31 — Remove company priority** — Remove the Priority field from companies (database, API, UI, and resume generation input).
   * **Outcome (2026-09-06):** `companies.priority` column dropped; company list ordered by name; editors and detail dialogs simplified. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-31-remove-company-priority.md`](./plans/2026-09-06-phase-31-remove-company-priority.md).
+* [x] **Phase 32 — AI Usage History drawer** — Fixed bottom-right history button opens a right-side usage table drawer (100 rows per page); row click opens a nested drawer with input and output text; backdrop dismiss closes the topmost drawer.
+  * **Outcome (2026-09-06):** `GET /ai-usage` list and `GET /ai-usage/:id` detail; global FAB and nested drawers on the authenticated shell. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-32-ai-usage-history.md`](./plans/2026-09-06-phase-32-ai-usage-history.md).
 
 ## Cursor Rules (Documentation Governance)
 

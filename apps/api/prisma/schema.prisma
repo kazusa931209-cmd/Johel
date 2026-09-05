@@ -154,15 +154,17 @@ model Experience {
 }
 
 model AiUsage {
-  id               String   @id @default(cuid())
-  userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  aiProvider       String
-  input            String
-  output           String
-  inputToken       Int
-  outputToken      Int
-  createdAt        DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiProvider   String
+  modelName    String
+  generateType String
+  input        String
+  output       String
+  inputToken   Int
+  outputToken  Int
+  createdAt    DateTime @default(now())
 
   @@index([userId])
   @@index([userId, createdAt])
