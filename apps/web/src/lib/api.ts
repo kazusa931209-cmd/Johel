@@ -181,6 +181,33 @@ export function savePrompts(payload: PromptSettings) {
   });
 }
 
+export type PromptHelperKind =
+  | "verdict"
+  | "generate"
+  | "evaluate"
+  | "companyDescription"
+  | "experienceDescription";
+
+export type AiPromptHelperRequest = {
+  kind: PromptHelperKind;
+  request: string;
+  currentPrompt: string;
+};
+
+export type AiPromptHelperResult = {
+  sentence: string;
+  usage: AiVerdictUsage;
+  tokenUsed: number;
+};
+
+export function runAiPromptHelper(payload: AiPromptHelperRequest) {
+  return request<AiPromptHelperResult>("/ai-prompt-helper", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
 export type Workflow = {
   id: string;
   name: string;

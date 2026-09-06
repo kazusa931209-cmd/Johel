@@ -144,6 +144,7 @@ Aligned with the product flow above:
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole company
   * Editor fields: company name (required), description (required)
+  * Description has an **Add** (plus) control beside the label; it opens the Prompt Helper dialog (required text, max **150** characters); **Create** generates exactly one sentence appended locally under a `## New` heading; page **Save** persists the company
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
@@ -154,6 +155,7 @@ Aligned with the product flow above:
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience
   * Editor fields: category (required; free-text), description (required)
+  * Description has an **Add** (plus) control beside the label; it opens the Prompt Helper dialog (required text, max **150** characters); **Create** generates exactly one sentence appended locally under a `## New` heading; page **Save** persists the experience
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
@@ -172,8 +174,10 @@ Aligned with the product flow above:
   * Page content is centered in a readable column
   * One signed-in user maintains a **Verdict Prompt**, a **Generate Prompt**, and an **Evaluate Prompt**
   * Editor fields: Verdict Prompt (required), Generate Prompt (required), Evaluate Prompt (required)
-  * **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
-  * Save and load via the API; toast on API success or failure
+  * Each prompt field has an **Add** (plus) control beside the label; it opens a dialog with a required textbox (max **150** characters) and a **Create** action
+  * **Create** calls the AI to produce exactly **one** concise, simple sentence addable to that prompt; on success the sentence is appended locally under a `## New` heading (the page **Save** still persists all prompts)
+  * **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast); empty helper text shows an inline error on **Create** (not a toast)
+  * Save and load via the API; toast on API success or failure (including the prompt helper)
   * The Verdict Prompt is used when checking Job Descriptions; the Generate Prompt is used when generating résumés; the Evaluate Prompt is used when evaluating résumés (none run on this page)
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Workflow and saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to those pages
@@ -266,6 +270,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-06):** `GET /ai-usage` list and `GET /ai-usage/:id` detail; global FAB and nested drawers on the authenticated shell. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-32-ai-usage-history.md`](./plans/2026-09-06-phase-32-ai-usage-history.md).
 * [x] **Phase 33 — Docker Environment** — One Docker image contains API and web together. Run on **Docker Desktop** (Apple Silicon); publish port **4041** so other LAN devices can use the app. Database persists on the host that runs the container when the image is updated.
   * **Outcome (2026-09-06):** `Dockerfile`, `docker-compose.yml`, and [`docs/docker.md`](./docker.md) (Case A: local Desktop; Case B: other device Desktop). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-33-docker-environment.md`](./plans/2026-09-06-phase-33-docker-environment.md).
+* [x] **Phase 34 — User Prompt Helper with AI** — On Prompts, each prompt field has an Add control that opens a dialog (max 1,000 characters); **Create** calls AI to append one concise sentence under `## New`; page Save still persists.
+  * **Outcome (2026-09-06):** `POST /ai-prompt-helper`, `PromptHelperDialog`, plus buttons on `/prompts`, `promptHelper` usage type. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-34-prompt-helper.md`](./plans/2026-09-06-phase-34-prompt-helper.md).
 
 ## Cursor Rules (Documentation Governance)
 

@@ -8,6 +8,7 @@ const GENERATE_TYPE_LABELS: Record<string, string> = {
   generate: "Generate",
   evaluate: "Evaluate",
   promptOptimize: "Prompt Optimize",
+  promptHelper: "Prompt Helper",
 };
 
 export function formatAiProvider(aiProvider: string): string {

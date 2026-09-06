@@ -10,6 +10,7 @@ export const AI_GENERATE_TYPES = [
   "generate",
   "evaluate",
   "promptOptimize",
+  "promptHelper",
 ] as const;
 
 export type AiGenerateType = (typeof AI_GENERATE_TYPES)[number];
