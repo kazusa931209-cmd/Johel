@@ -90,8 +90,8 @@ packages/resume/src/docx-builder/
 
 1. Header (centered name, optional title, contact line)
 2. Summary
-3. Skills
-4. Experience
+3. Experience
+4. Skills
 5. Education
 6. Certifications
 7. Projects

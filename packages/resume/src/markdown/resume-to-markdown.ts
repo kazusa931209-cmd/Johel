@@ -38,16 +38,6 @@ export function resumeToMarkdown(resume: GeneratedResume): string {
     lines.push("", "## Summary", "", resume.summary.trim());
   }
 
-  if (resume.skills && resume.skills.length > 0) {
-    lines.push("", "## Skills");
-    for (const group of resume.skills) {
-      lines.push(
-        "",
-        `**${group.category.trim()}:** ${group.items.map((item) => item.trim()).join(", ")}`,
-      );
-    }
-  }
-
   lines.push("", "## Experience");
   for (const experience of resume.experiences) {
     lines.push("");
@@ -63,6 +53,16 @@ export function resumeToMarkdown(resume: GeneratedResume): string {
     }
     for (const bullet of experience.bullets) {
       lines.push(`- ${bullet.trim()}`);
+    }
+  }
+
+  if (resume.skills && resume.skills.length > 0) {
+    lines.push("", "## Skills");
+    for (const group of resume.skills) {
+      lines.push(
+        "",
+        `**${group.category.trim()}:** ${group.items.map((item) => item.trim()).join(", ")}`,
+      );
     }
   }
 

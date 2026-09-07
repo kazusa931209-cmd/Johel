@@ -70,6 +70,18 @@ describe("resumeToMarkdown", () => {
     expect(markdown).toContain("### Engineer — Beta LLC");
   });
 
+  it("renders Summary, then Experience, then Skills, then Education", () => {
+    const markdown = resumeToMarkdown(sampleResume);
+    const summary = markdown.indexOf("## Summary");
+    const experience = markdown.indexOf("## Experience");
+    const skills = markdown.indexOf("## Skills");
+    const education = markdown.indexOf("## Education");
+    expect(summary).toBeGreaterThan(-1);
+    expect(experience).toBeGreaterThan(summary);
+    expect(skills).toBeGreaterThan(experience);
+    expect(education).toBeGreaterThan(skills);
+  });
+
   it("renders optional sections", () => {
     const markdown = resumeToMarkdown(sampleResume);
     expect(markdown).toContain("## Education");

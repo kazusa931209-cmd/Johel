@@ -6,7 +6,7 @@ export {
 } from "@johel/prompt-defaults";
 
 export const VERDICT_PROMPT_PLACEHOLDER =
-  "Define Verdict sections (e.g. ## Verdict, ## Job, ## Company & contacts), questions, and answer format.";
+  "Define Verdict sections (e.g. ## Fit questions, ## Role, ## Technical Requirements, ## Company & Contacts), questions, and answer format.";
 
 export const VERDICT_PROMPT_RESUME_HINT =
   "When Do Verdict is enabled in Settings, this prompt shapes the Markdown that replaces the raw job description during resume generation. Its sections and extracted fields directly affect resume tailoring quality.";

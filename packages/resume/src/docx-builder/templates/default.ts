@@ -19,8 +19,8 @@ export function buildDefaultResumeDocxChildren(
   return [
     ...buildHeaderSection(resume, style),
     ...buildSummarySection(resume, style),
-    ...buildSkillsSection(resume, style),
     ...buildExperienceSection(resume, style),
+    ...buildSkillsSection(resume, style),
     ...buildEducationSection(resume, style),
     ...buildCertificationsSection(resume, style),
     ...buildProjectsSection(resume, style),

@@ -198,7 +198,7 @@ User browser (:4041)
 
 ## Prompts settings (Phase 18, 23, 34, 39, 40, 43)
 
-- `GET /prompts` → `{ verdictPrompt, generatePrompt, evaluatePrompt }` — empty strings when no row yet (owner only); new sign-ups receive defaults from `@johel/prompt-defaults` via `POST /auth/register`
+- `GET /prompts` → `{ verdictPrompt, generatePrompt, evaluatePrompt }` — empty strings when no row yet (owner only); new sign-ups receive defaults from `@johel/prompt-defaults` via `POST /auth/register` (Verdict default uses Role / Technical Requirements / Final Verdict sections; Generate default maps those headings and caps skills at 3–5 groups and 12 items)
 - `PUT /prompts/verdict` → body `{ verdictPrompt }`; `PUT /prompts/generate` → `{ generatePrompt }`; `PUT /prompts/evaluate` → `{ evaluatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; on write, only the submitted prompt is converted to markdown via AI when changed (unchanged skip conversion); requires Settings provider/apiKey when conversion runs; each endpoint returns all three prompts
 - Web route `/prompts`: **Verdict**, **Generate**, and **Evaluate** tabs (`?tab=verdict|generate|evaluate`, default Verdict); each tab shows one read-only `AiVerdictMarkdown` preview (muted placeholder when empty); **Edit** (pencil) opens `PromptEditDialog` (textarea + **Apply**, local until that tab’s **Save**); auto-markdown notice and resume-context hints where applicable; fullscreen `BusyOverlay` when conversion runs; per-tab **Save** (always enabled; inline validation on submit); toast on API result; refreshes header Token Used after save
 - Company editor form (`CompanyForm`): alias, company name, what this company is, and domain & stack; prompt fields show auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialog renders prompt fields with `AiVerdictMarkdown`. Experience editor form (`ExperienceForm`): Description textarea with the same auto-markdown behavior.
@@ -225,7 +225,7 @@ User browser (:4041)
 
 ## AI Resume (Phase 20, 22, 23, 28)
 
-- `POST /ai-resume` — body `{ jobContext, workflowId, oneTimePrompt? }` where `jobContext` is AI Verdict Markdown when the client ran Verdict, otherwise noise-filtered job description text (1–10,000 chars); requires saved Settings provider/apiKey and non-empty `prompts.generatePrompt`; server loads the owned workflow (profile, ordered company entries with period and linked experiences) and assembles generation input; system prompt = compiled user Generate Prompt + optional `## One-time prompt` section when `oneTimePrompt` is non-empty + shared resume rules; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
+- `POST /ai-resume` — body `{ jobContext, workflowId, oneTimePrompt? }` where `jobContext` is AI Verdict Markdown when the client ran Verdict, otherwise noise-filtered job description text (1–10,000 chars); requires saved Settings provider/apiKey and non-empty `prompts.generatePrompt`; server loads the owned workflow (profile, ordered company entries with period and linked experiences) and assembles generation input; system prompt = compiled user Generate Prompt + optional `## One-time prompt` section when `oneTimePrompt` is non-empty + shared resume rules (use the full jobContext as rubric; map missing Instruction headings to the closest sections present); user prompt prepends jobContext Markdown headings then the assembled JSON; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
 - `GET /workflows/:id/generation-fingerprint` — returns `{ fingerprint }` where `fingerprint` is a stable JSON string of the assembled profile, nested companies (with period and linked experiences), and workflow fields (same source as `assembleResumeGenerationInput`, excluding job text); used by Generate to detect PCE edits without re-running AI on unchanged content
 - Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`
 - Web: `runAiResume` in `apps/web/src/lib/api.ts`; Workflow **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown; Evaluate step downloads DOCX without re-calling AI when inputs are unchanged
@@ -240,9 +240,9 @@ User browser (:4041)
 
 - Workspace package: `packages/resume`
 - Canonical model: `GeneratedResume` (Zod schema in `domain/generated-resume.ts`)
-- `resumeToMarkdown(resume)` — deterministic Markdown for web display (main export)
+- `resumeToMarkdown(resume)` — deterministic Markdown for web display (main export); section order matches the default DOCX template: Header, Summary, Experience, Skills, Education, Certifications, Projects
 - `buildResumeDocxFileName(resume, workflowName?, date?)` — `YYYY-MM-DD-{name}-{workflow}.docx` using sanitized segments and local calendar date
-- `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts`; shared `ResumeDocxStyle` in `docx-builder/styles.ts`
+- `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts` (same section order as Markdown); shared `ResumeDocxStyle` in `docx-builder/styles.ts`
 - `POST /resume/docx` — body `{ resume, workflowName? }` (validated `GeneratedResume`); returns `.docx` attachment named via `buildResumeDocxFileName`; used by Generate/Evaluate **Download**
 - Consumed by API (validation), web (display + download), and Vitest unit tests
 - **DOCX template management** — architecture, default template, style tokens, and extension guide: [`docx-template-management.md`](./docx-template-management.md)
