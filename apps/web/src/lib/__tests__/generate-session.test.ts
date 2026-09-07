@@ -183,6 +183,7 @@ describe("generate-session resume cache", () => {
   it("includes workflow content fingerprint in generation input key", () => {
     const key = buildGenerationInputKey(
       job,
+      true,
       workflow,
       "fp-v1",
       promptContext,
@@ -192,11 +193,26 @@ describe("generate-session resume cache", () => {
     expect(key).toContain("wf-1");
     expect(key).toContain("generatePromptHash");
     expect(key).toContain("Emphasize leadership");
+    expect(key).toContain("# Verdict");
+    expect(key).toContain('"jobContextSource":"verdict"');
+  });
+
+  it("uses filtered job description in key when doVerdict is false", () => {
+    const key = buildGenerationInputKey(
+      job,
+      false,
+      workflow,
+      "fp-v1",
+      promptContext,
+    );
+    expect(key).toContain("Engineer role");
+    expect(key).toContain('"jobContextSource":"jobDescription"');
   });
 
   it("does not reuse stored resume when one-time prompt changes", () => {
     const storedKey = buildGenerationInputKey(
       job,
+      true,
       workflow,
       "fp-v1",
       promptContext,
@@ -204,6 +220,7 @@ describe("generate-session resume cache", () => {
     );
     const currentKey = buildGenerationInputKey(
       job,
+      true,
       workflow,
       "fp-v1",
       promptContext,
@@ -239,12 +256,14 @@ describe("generate-session resume cache", () => {
   it("does not reuse stored resume when fingerprint changes", () => {
     const storedKey = buildGenerationInputKey(
       job,
+      true,
       workflow,
       "fp-v1",
       promptContext,
     );
     const currentKey = buildGenerationInputKey(
       job,
+      true,
       workflow,
       "fp-v2",
       promptContext,

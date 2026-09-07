@@ -42,7 +42,8 @@ const JSON_SCHEMA_DESCRIPTION = `{
 }`;
 
 const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation system.
-- Generate a resume targeted to the supplied Job Description and input data.
+- Generate a resume targeted to the supplied job context and input data.
+- Job context is AI Verdict Markdown when the client ran Verdict; otherwise it is the noise-filtered job description text.
 - Follow the tailoring rules and output expectations defined in Instructions above.
 - Do not invent employers, dates, skills, or experience not present in the supplied input data.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.

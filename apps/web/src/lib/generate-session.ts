@@ -172,15 +172,27 @@ export function canReuseStoredWorkflowRecommend(
   );
 }
 
+export function buildResumeJobContext(
+  job: GenerateJobState,
+  doVerdict: boolean,
+): string {
+  if (doVerdict) {
+    return job.acceptedMarkdown?.trim() ?? "";
+  }
+  return noiseFilter(job.jobText.trim()).text;
+}
+
 function buildGenerationInputKeyParts(
   job: GenerateJobState,
+  doVerdict: boolean,
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt">,
   oneTimePrompt: string,
 ) {
   return {
-    jobText: job.jobText.trim(),
+    jobContext: buildResumeJobContext(job, doVerdict),
+    jobContextSource: doVerdict ? "verdict" : "jobDescription",
     workflowId: workflow.workflowId,
     workflowContentFingerprint,
     generatePromptHash: hashPromptForCache(prompts.generatePrompt ?? ""),
@@ -190,6 +202,7 @@ function buildGenerationInputKeyParts(
 
 export function buildGenerationInputKey(
   job: GenerateJobState,
+  doVerdict: boolean,
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt">,
@@ -198,6 +211,7 @@ export function buildGenerationInputKey(
   return JSON.stringify(
     buildGenerationInputKeyParts(
       job,
+      doVerdict,
       workflow,
       workflowContentFingerprint,
       prompts,
@@ -208,6 +222,7 @@ export function buildGenerationInputKey(
 
 export function buildEvaluationInputKey(
   job: GenerateJobState,
+  doVerdict: boolean,
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt" | "evaluatePrompt">,
@@ -216,6 +231,7 @@ export function buildEvaluationInputKey(
   return JSON.stringify({
     ...buildGenerationInputKeyParts(
       job,
+      doVerdict,
       workflow,
       workflowContentFingerprint,
       prompts,

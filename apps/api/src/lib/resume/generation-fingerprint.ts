@@ -18,7 +18,7 @@ export async function buildWorkflowGenerationFingerprint(
   const assembled = await assembleResumeGenerationInput({
     userId,
     workflowId,
-    jobDescription: "",
+    jobContext: "",
   });
   return workflowContentFingerprintFromInput(assembled);
 }

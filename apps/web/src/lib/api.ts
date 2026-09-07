@@ -162,6 +162,8 @@ export function saveLastSelectedWorkflow(workflowId: string) {
   });
 }
 
+export type PromptKind = "verdict" | "generate" | "evaluate";
+
 export type PromptSettings = {
   verdictPrompt: string;
   generatePrompt: string;
@@ -172,10 +174,16 @@ export function getPrompts() {
   return request<PromptSettings>("/prompts");
 }
 
-export function savePrompts(payload: PromptSettings) {
-  return request<PromptSettings>("/prompts", {
+export function savePrompt(kind: PromptKind, prompt: string) {
+  const body =
+    kind === "verdict"
+      ? { verdictPrompt: prompt }
+      : kind === "generate"
+        ? { generatePrompt: prompt }
+        : { evaluatePrompt: prompt };
+  return request<PromptSettings>(`/prompts/${kind}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 }
 
@@ -416,7 +424,7 @@ export function runAiVerdict(jobDescription: string) {
 }
 
 export type AiResumeRequest = {
-  jobDescription: string;
+  jobContext: string;
   workflowId: string;
   oneTimePrompt?: string;
 };

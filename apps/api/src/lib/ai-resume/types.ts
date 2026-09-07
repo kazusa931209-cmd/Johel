@@ -46,7 +46,7 @@ export type ResumeGenerationWorkflow = {
 };
 
 export type ResumeGenerationInput = {
-  jobDescription: string;
+  jobContext: string;
   profile: ResumeGenerationProfile;
   companies: ResumeGenerationCompany[];
   workflow: ResumeGenerationWorkflow;

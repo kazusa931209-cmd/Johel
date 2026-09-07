@@ -24,6 +24,7 @@ import { validateWorkflowSelection } from "@/components/generate/pcew-types";
 import {
   buildEvaluationInputKey,
   buildGenerationInputKey,
+  buildResumeJobContext,
   buildWorkflowListFingerprint,
   buildWorkflowRecommendInputKey,
   canReuseStoredEvaluation,
@@ -137,7 +138,7 @@ export default function GeneratePage() {
         setLoading(false);
         setMissing([
           { label: "Workflows", href: "/workflows" },
-          { label: "Prompts", href: "/prompts" },
+          { label: "Prompts", href: "/prompts?tab=generate" },
         ]);
         return;
       }
@@ -168,13 +169,13 @@ export default function GeneratePage() {
         nextMissing.push({ label: "Workflows", href: "/workflows" });
       }
       if (nextProcess.doVerdict && !prompts.data?.verdictPrompt.trim()) {
-        nextMissing.push({ label: "Verdict Prompt", href: "/prompts" });
+        nextMissing.push({ label: "Verdict Prompt", href: "/prompts?tab=verdict" });
       }
       if (!prompts.data?.generatePrompt.trim()) {
-        nextMissing.push({ label: "Generate Prompt", href: "/prompts" });
+        nextMissing.push({ label: "Generate Prompt", href: "/prompts?tab=generate" });
       }
       if (nextProcess.doEvaluate && !prompts.data?.evaluatePrompt.trim()) {
-        nextMissing.push({ label: "Evaluate Prompt", href: "/prompts" });
+        nextMissing.push({ label: "Evaluate Prompt", href: "/prompts?tab=evaluate" });
       }
 
       setMissing(nextMissing.length > 0 ? nextMissing : null);
@@ -323,6 +324,7 @@ export default function GeneratePage() {
 
     const inputKey = buildGenerationInputKey(
       job,
+      processSettings.doVerdict,
       workflow,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
@@ -349,12 +351,20 @@ export default function GeneratePage() {
       return;
     }
 
-    const jobDescription = noiseFilter(job.jobText.trim()).text;
+    const jobContext = buildResumeJobContext(job, processSettings.doVerdict);
+    if (processSettings.doVerdict && !jobContext) {
+      toast(
+        "AI Verdict result is missing. Go back to Job and run analysis first.",
+        "error",
+      );
+      return;
+    }
+
     setGeneratingResume(true);
     try {
       const trimmedOneTimePrompt = oneTimePrompt.trim();
       const res = await runAiResume({
-        jobDescription,
+        jobContext,
         workflowId: workflow.workflowId,
         ...(trimmedOneTimePrompt
           ? { oneTimePrompt: trimmedOneTimePrompt }
@@ -402,6 +412,7 @@ export default function GeneratePage() {
 
     const currentInputKey = buildGenerationInputKey(
       job,
+      processSettings.doVerdict,
       workflow,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
@@ -417,6 +428,7 @@ export default function GeneratePage() {
 
     const nextEvaluationInputKey = buildEvaluationInputKey(
       job,
+      processSettings.doVerdict,
       workflow,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
@@ -523,6 +535,7 @@ export default function GeneratePage() {
           ) : null}
           {normalizedActiveStep === "Workflow" ? (
             <GenerateWorkflowStep
+              doVerdict={processSettings.doVerdict}
               acceptedMarkdown={
                 processSettings.doVerdict ? job.acceptedMarkdown : null
               }

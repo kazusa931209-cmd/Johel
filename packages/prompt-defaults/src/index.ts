@@ -16,7 +16,9 @@ Extract when present: company name, description, website, industry, products/ser
 Use "Not found" for missing items.`;
 
 export const DEFAULT_GENERATE_PROMPT = `## Resume tailoring
-Tailor the resume to the supplied Job Description and workflow profile data.
+Tailor the resume to the supplied job context and workflow profile data.
+When Do Verdict is enabled, job context is the AI Verdict Markdown from the Job step (not the raw job description); its sections and extracted fields define what the role requires.
+When Do Verdict is disabled, job context is the noise-filtered job description text.
 
 ## Selection & rewriting
 - Map linked experiences under their company; do not redistribute experiences across companies.
