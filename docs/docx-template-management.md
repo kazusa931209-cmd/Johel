@@ -82,7 +82,7 @@ packages/resume/src/docx-builder/
 | `DEFAULT_RESUME_DOCX_STYLE` | Default style token object |
 | `ResumeDocxStyle` | Type for style overrides |
 
-`builder.ts` always uses `buildDefaultResumeDocxChildren` today. Passing a custom `ResumeDocxStyle` is supported at the API level but **not exposed** to end users or the HTTP route yet.
+`builder.ts` always uses `buildDefaultResumeDocxChildren` today and also sets the document default run font from `style.fontFamily` so Word’s Normal style matches the body text. Passing a custom `ResumeDocxStyle` is supported at the API level but **not exposed** to end users or the HTTP route yet.
 
 ### Default template
 
@@ -119,7 +119,7 @@ Defined in `packages/resume/src/docx-builder/styles.ts`.
 
 | Token | Default | Meaning |
 | --- | --- | --- |
-| `fontFamily` | `"Calibri"` | TextRun font |
+| `fontFamily` | `"Arial"` | TextRun font and document default run font |
 | `fontSize` | `22` | Body text (11 pt) |
 | `headingSize` | `32` | Header name (16 pt) |
 | `sectionHeadingSize` | `26` | Section titles (13 pt) |

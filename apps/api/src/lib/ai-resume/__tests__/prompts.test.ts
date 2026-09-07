@@ -35,7 +35,7 @@ Go, PostgreSQL`,
           category: "API latency",
           problem: "Slow checkout API",
           actions: "Added caching",
-          outcome: "",
+          outcome: "Reduced p95 latency by 40%",
         },
       ],
     },
@@ -66,7 +66,8 @@ describe("buildAiResumeUserPrompt", () => {
     expect(prompt).toContain("What this company is:");
     expect(prompt).toContain("Problem:");
     expect(prompt).toContain("Actions:");
-    expect(prompt).not.toContain("Outcome:");
+    expect(prompt).toContain("Outcome:");
+    expect(prompt).toContain("Reduced p95 latency by 40%");
     expect(prompt).not.toContain("InternalAcme");
     expect(prompt).not.toContain("profile-secret");
     expect(prompt).not.toContain("company-secret");

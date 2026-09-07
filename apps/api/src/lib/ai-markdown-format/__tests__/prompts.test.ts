@@ -53,6 +53,21 @@ describe("finalizeFormattedMarkdown", () => {
       "# About",
     );
   });
+
+  it("strips headings and field-type metadata from structured list kinds", () => {
+    const raw = [
+      "# Startup Experience",
+      "",
+      "**Field type:** Experience actions (used when generating résumés from workflow data)",
+      "",
+      "- **Startup experience**",
+      "  Use this when the job description lists startup experience as a must-have.",
+    ].join("\n");
+
+    expect(finalizeFormattedMarkdown("experienceActions", raw)).toBe(
+      "- **Startup experience**\n  Use this when the job description lists startup experience as a must-have.",
+    );
+  });
 });
 
 describe("normalizeFormattedMarkdown", () => {

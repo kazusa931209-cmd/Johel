@@ -138,7 +138,7 @@ export default function GeneratePage() {
         setLoading(false);
         setMissing([
           { label: "Workflows", href: "/workflows" },
-          { label: "Prompts", href: "/prompts?tab=generate" },
+          { label: "Prompts", href: "/settings/prompts?tab=generate" },
         ]);
         return;
       }
@@ -169,13 +169,13 @@ export default function GeneratePage() {
         nextMissing.push({ label: "Workflows", href: "/workflows" });
       }
       if (nextProcess.doVerdict && !prompts.data?.verdictPrompt.trim()) {
-        nextMissing.push({ label: "Verdict Prompt", href: "/prompts?tab=verdict" });
+        nextMissing.push({ label: "Verdict Prompt", href: "/settings/prompts?tab=verdict" });
       }
       if (!prompts.data?.generatePrompt.trim()) {
-        nextMissing.push({ label: "Generate Prompt", href: "/prompts?tab=generate" });
+        nextMissing.push({ label: "Generate Prompt", href: "/settings/prompts?tab=generate" });
       }
       if (nextProcess.doEvaluate && !prompts.data?.evaluatePrompt.trim()) {
-        nextMissing.push({ label: "Evaluate Prompt", href: "/prompts?tab=evaluate" });
+        nextMissing.push({ label: "Evaluate Prompt", href: "/settings/prompts?tab=evaluate" });
       }
 
       setMissing(nextMissing.length > 0 ? nextMissing : null);

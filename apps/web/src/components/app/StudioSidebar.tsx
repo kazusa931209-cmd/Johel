@@ -25,14 +25,18 @@ export function StudioSidebar() {
     pathname === "/experiences" || pathname.startsWith("/experiences/");
   const workflowsActive =
     pathname === "/workflows" || pathname.startsWith("/workflows/");
+  const environmentActive =
+    pathname === "/settings" ||
+    pathname === "/settings/environment" ||
+    pathname.startsWith("/settings/environment/");
   const promptsActive =
+    pathname === "/settings/prompts" ||
+    pathname.startsWith("/settings/prompts/") ||
     pathname === "/prompts" ||
     pathname.startsWith("/prompts/") ||
     pathname === "/verdict" ||
     pathname.startsWith("/verdict/");
   const generateActive = pathname === "/";
-  const settingsActive =
-    pathname === "/settings" || pathname.startsWith("/settings/");
 
   return (
     <aside className="flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar">
@@ -50,24 +54,21 @@ export function StudioSidebar() {
         <Link href="/workflows" className={navLinkClass(workflowsActive)}>
           Workflows
         </Link>
-        <Link href="/prompts" className={navLinkClass(promptsActive)}>
-          Prompts
-        </Link>
 
         <div className={`${sectionLabelClass()} mt-2`}>Run</div>
         <Link href="/" className={navLinkClass(generateActive)}>
           Generate
         </Link>
 
+        <div className={`${sectionLabelClass()} mt-2`}>Settings</div>
         <Link
-          href="/settings"
-          className={`mt-2 rounded-md px-3 py-2 text-sm transition-colors ${
-            settingsActive
-              ? "bg-surface-muted font-medium text-foreground"
-              : "text-muted hover:bg-surface-muted hover:text-foreground"
-          }`}
+          href="/settings/environment"
+          className={navLinkClass(environmentActive)}
         >
-          Settings
+          Environment
+        </Link>
+        <Link href="/settings/prompts" className={navLinkClass(promptsActive)}>
+          Prompts
         </Link>
       </nav>
     </aside>

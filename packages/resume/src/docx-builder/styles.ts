@@ -9,7 +9,7 @@ export type ResumeDocxStyle = {
 };
 
 export const DEFAULT_RESUME_DOCX_STYLE: ResumeDocxStyle = {
-  fontFamily: "Calibri",
+  fontFamily: "Arial",
   fontSize: 22,
   headingSize: 32,
   sectionHeadingSize: 26,

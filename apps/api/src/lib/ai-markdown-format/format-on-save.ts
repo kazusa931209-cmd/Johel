@@ -2,9 +2,8 @@ import { isAiProviderId, type AiProviderId } from "../ai-provider.js";
 import { prisma } from "../prisma.js";
 import { recordAiUsage } from "../record-ai-usage.js";
 import {
-  capPromptHeadings,
+  finalizeFormattedMarkdown,
   isMarkdownFormatUnchanged,
-  isPromptInstructionKind,
 } from "./prompts.js";
 import { runAiMarkdownFormat } from "./run.js";
 import type { MarkdownFormatKind } from "./types.js";
@@ -26,11 +25,7 @@ function finalizeStoredMarkdown(
   kind: MarkdownFormatKind,
   markdown: string,
 ): string {
-  const trimmed = markdown.trim();
-  if (isPromptInstructionKind(kind)) {
-    return capPromptHeadings(trimmed);
-  }
-  return trimmed;
+  return finalizeFormattedMarkdown(kind, markdown);
 }
 
 async function loadUserAiSettings(userId: string): Promise<{

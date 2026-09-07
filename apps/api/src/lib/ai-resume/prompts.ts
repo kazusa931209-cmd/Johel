@@ -111,10 +111,8 @@ function formatCompaniesSection(input: ResumeGenerationInput): string {
         `#### ${experience.category}`,
         `Problem:\n${experience.problem.trim()}`,
         `Actions:\n${experience.actions.trim()}`,
+        `Outcome:\n${experience.outcome.trim()}`,
       ];
-      if (experience.outcome.trim()) {
-        parts.push(`Outcome:\n${experience.outcome.trim()}`);
-      }
       return parts.join("\n\n");
     });
 

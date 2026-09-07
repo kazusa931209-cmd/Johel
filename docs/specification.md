@@ -127,10 +127,11 @@ Aligned with the product flow above:
     * Companies
     * Experiences
     * Workflows
-    * Prompts
   * **Run** (always-open submenus)
     * Generate (`/` is Generate)
-  * Settings
+  * **Settings** (always-open submenus)
+    * Environment
+    * Prompts
 * **Profiles**
   * One signed-in user can manage **multiple** profiles
   * Per-user list: No, Full Name (first + last), birth date, email, PN, links, residence, education
@@ -150,20 +151,20 @@ Aligned with the product flow above:
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole company
   * Editor fields in order: alias (required), company name (required), what this company is (required; used as a resume-generation prompt), domain & stack (required; used as a resume-generation prompt)
-  * What this company is shows guideline *(One sentence: industry, product, customer)* with good and bad examples; domain & stack shows guideline *(What they handle, tech, regulation/scale — bullets)* with good and bad examples; shared note that personal achievements belong in shared experiences because the same experience can link to multiple companies
-  * What this company is and domain & stack show a notice that they are used as prompts during resume generation and that contents will be automatically converted to markdown format on **Save**; when a field changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged fields skip conversion; fullscreen loading while conversion runs; the detail dialog renders both fields as Markdown
+  * What this company is shows guideline *(One sentence: industry, product, customer)* with good and bad examples; domain & stack shows guideline for bullet lists with bold labels and indented bodies, with good and bad examples; shared note that personal achievements belong in shared experiences because the same experience can link to multiple companies
+  * What this company is and domain & stack show a notice that they are used as prompts during resume generation and that contents will be automatically converted to markdown format on **Save**; when a field changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged fields skip conversion; domain & stack conversion formats each item as a bullet with a bold label and indented body (no document titles); fullscreen loading while conversion runs; the detail dialog renders both fields as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
-  * Per-user list: No, Category, Problem, Actions
+  * Per-user list: No, Category, Problem, Actions, Outcome
   * Keyword filter on category, problem, actions, and outcome; 10 rows per page
   * List is ordered by most recently updated first
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
-  * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience
-  * Editor fields: category (required; free-text), problem (required; used as a resume-generation prompt), actions (required; used as a resume-generation prompt), outcome (optional; used as a resume-generation prompt)
-  * Problem shows guideline *(What you solved)*; actions shows guideline *(What you did (verb + object) and the tech/methods used)*; outcome shows guideline *(Measurable result — include numbers only when you have them)*; shared note that one card should represent one capability unit for better synthesis
-  * Problem, actions, and outcome show a notice that they are used as prompts during resume generation and that contents will be automatically converted to markdown format on **Save**; when a field changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged fields skip conversion; empty outcome skips conversion; fullscreen loading while conversion runs; the detail dialog renders all three fields as Markdown
+  * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience; Save is right-aligned
+  * Editor fields: category (required; free-text), problem (required; used as a resume-generation prompt), actions (required; used as a resume-generation prompt), outcome (required; used as a resume-generation prompt)
+  * Problem, actions, and outcome show guidelines for bullet lists with bold labels and indented bodies; shared note that one card should represent one capability unit for better synthesis
+  * Problem, actions, and outcome show a notice that they are used as prompts during resume generation and that contents will be automatically converted to markdown format on **Save**; when a field changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged fields skip conversion; conversion formats each item as a bullet with a bold label and indented body (no document titles or category headings); fullscreen loading while conversion runs; the detail dialog renders all three fields as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
@@ -180,14 +181,15 @@ Aligned with the product flow above:
   * Page Save validates inline: one profile; at least one company entry; each entry has startDate, endDate, roleContext, and at least one experience (not via disabling Save)
   * Detail dialog shows the selected profile and companies grouped with period and linked experiences (preserve company order)
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
-* **Prompts** (`/prompts`)
+* **Prompts** (`/settings/prompts`)
   * Page content is centered in a readable column
   * One signed-in user maintains a **Verdict Prompt**, a **Generate Prompt**, and an **Evaluate Prompt**; **sign-up** seeds all three from shared default templates (`@johel/prompt-defaults`)
+  * Page copy explicitly states that changes to these system prompts directly affect resume generation quality
   * **Tabs** — **Verdict**, **Generate**, and **Evaluate**; each tab shows one prompt only (`?tab=verdict|generate|evaluate`; default Verdict)
   * Editor fields: each tab’s prompt (required) is shown as a read-only Markdown preview (`AiVerdictMarkdown`); empty prompts show a muted placeholder
   * Each tab has its own **Edit** (pencil) control beside the label; **Edit** opens a dialog with a textarea and **Apply** (local until that tab’s **Save**)
   * Each tab shows a notice that contents will be automatically converted to markdown format on **Save**; prompt kinds (Verdict / Generate / Evaluate) are capped at `##` as the largest heading during conversion, with deterministic `#`→`##` post-processing; when a prompt changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged prompts skip conversion but still receive heading-cap post-processing; fullscreen loading while conversion runs; saved preview refreshes with the converted markdown
-  * Each tab’s **Save** persists only that prompt; **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
+  * Each tab’s footer has **Reset to Default** (secondary, beside **Save**) and **Save**; **Reset to Default** opens a confirm dialog and, on confirm, persists the shared default template for that tab; both actions stay enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
   * Load all prompts via `GET /prompts`; save per tab via `PUT /prompts/verdict`, `PUT /prompts/generate`, or `PUT /prompts/evaluate`; toast on API success or failure
   * The Verdict Prompt is used when checking Job Descriptions; when **Do Verdict** is enabled its Markdown output replaces the raw job description as job context for resume generation and résumé evaluation (Verdict structure and extracted fields affect resume quality); the Generate Prompt is used when generating résumés; the Evaluate Prompt scores the résumé against the same Verdict dimensions (Role, Technical Requirements, Final Verdict, and related sections)—the Evaluate step sends the same job context as Generate (none run on this page)
 * **Generate** (`/`)
@@ -198,14 +200,15 @@ Aligned with the product flow above:
   * **Workflow** step: read-only **AI Verdict result** Markdown panel at the top when **Do Verdict** is enabled (from the accepted Job-step result); then a **Workflow** section with a single-select table (all workflows loaded at once; no search or pagination). Row click selects and persists the last manual choice for reuse when recommendation is off; View opens read-only workflow detail. Below the workflow table, an optional **One-time Prompt** textarea (8 rows) accepts run-specific instructions; when non-empty, it is appended to the saved Generate Prompt for that run’s resume generation only (stored in the Generate session, not on the Prompts page). **Previous** and **Next** in the sticky step row return to Job and advance respectively; **Next** stays enabled and validates inline (one workflow selected) before advancing
   * **Workflow** **Next** runs **AI Resume generation** with job context (AI Verdict Markdown when **Do Verdict** is enabled, otherwise the noise-filtered job description), selected workflow, saved Generate Prompt, and optional One-time Prompt when provided; fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on Workflow and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
   * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, workflow selection, optional One-time Prompt, generated resume JSON, and evaluation result) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
-  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON (section order: Summary, Experience, Skills, Education, then optional Certifications and Projects); **Previous** in the sticky step row returns to Workflow; when **Do Evaluate** is enabled, **Next** runs **AI Evaluate** with the same job context as generation (AI Verdict Markdown when **Do Verdict** is enabled, otherwise the noise-filtered job description), stored resume, and saved Evaluate Prompt, fullscreen loading while evaluation runs, persists token usage, stores the evaluation Markdown, toasts success, and advances to **Evaluate**; when **Do Evaluate** is disabled, **Download** exports the stored resume JSON to a `.docx` file; on evaluation failure stays on Generate and toasts the error; if the same resume already has a stored evaluation in this session, **Next** reuses it without calling the AI again
-  * **Evaluate** step (only when **Do Evaluate** is enabled): shows the AI evaluation as Markdown; **Previous** returns to Generate; **Download** exports the stored resume JSON to a `.docx` file without regenerating the resume or re-running evaluation
+  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON (section order: Summary, Experience, Skills, Education, then optional Certifications and Projects); **Previous** in the sticky step row returns to Workflow; when **Do Evaluate** is enabled, **Next** runs **AI Evaluate** with the same job context as generation (AI Verdict Markdown when **Do Verdict** is enabled, otherwise the noise-filtered job description), stored resume, and saved Evaluate Prompt, fullscreen loading while evaluation runs, persists token usage, stores the evaluation Markdown, toasts success, and advances to **Evaluate**; when **Do Evaluate** is disabled, **Download** exports the stored resume JSON to a `.docx` file using Arial; on evaluation failure stays on Generate and toasts the error; if the same resume already has a stored evaluation in this session, **Next** reuses it without calling the AI again
+  * **Evaluate** step (only when **Do Evaluate** is enabled): shows the AI evaluation as Markdown; **Previous** returns to Generate; **Download** exports the stored resume JSON to a `.docx` file using Arial without regenerating the resume or re-running evaluation
 * **Settings**
-  * Page content is centered in a readable column
+  * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here
   * Theme (Dark / Light)
   * **Process**: **Do Verdict**, **Do Evaluate**, and **Do Workflow Recommendation** checkboxes (Verdict and Evaluate default on; Workflow Recommendation default off); when **Do Workflow Recommendation** is enabled, **Recommendation threshold** (integer 0–100, default 70) is shown and validated inline on Save (Save stays enabled); Save persists per user; controls which optional AI steps run during Generate; changing any Process flag or threshold resets an in-progress Generate session
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
+  * **Prompts** — see **Prompts** above (`/settings/prompts`)
 * **AI Usage History** — A fixed bottom-right round button (history / clock icon) on every authenticated page opens a right-side drawer with the user’s AI usage history table. Columns: No, AI, Model, Generate Type, Input Token, Output Token, Created At. Newest first; 100 rows per page with pagination stuck to the bottom of the drawer. Clicking a row opens a nested overlapping drawer on the right with **Input** and **Output** tabs (**Input** is the default); the active tab’s text is previewed as Markdown (`AiVerdictMarkdown`); a **Copy** icon copies the raw stored text for the active tab (not the rendered preview) and toasts success or failure. Clicking outside a drawer (or its Close control) collapses the topmost drawer; closing the history drawer also closes the detail drawer.
 * **Dialogs** — View-only dialogs (detail/read-only, delete confirms) close when the user clicks the outer backdrop. Add/Edit form dialogs do not close on backdrop click; the user must use Close (X) or the main action (Apply/Save).
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.

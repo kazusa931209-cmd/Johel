@@ -11,12 +11,18 @@ export const COMPANY_WHAT_IT_IS_BAD =
   "Here I designed microservices and reduced latency by 30%.";
 
 export const COMPANY_DOMAIN_STACK_GUIDELINE =
-  "(What they handle, tech, regulation/scale — bullets)";
+  "(What they handle, tech, regulation/scale — bullet list with bold labels)";
+
+export const COMPANY_STRUCTURED_FIELD_FORMAT =
+  "Format each item as a bullet with a bold label and indented body, e.g. - **Payments** followed by the description on the next line, indented.";
 
 export const COMPANY_DOMAIN_STACK_GOOD = [
-  "Card acquiring, settlement, and risk",
-  "Java, Kafka, AWS",
-  "PCI-regulated, high-volume processing",
+  "- **Payments**",
+  "  Card acquiring, settlement, and risk",
+  "- **Stack**",
+  "  Java, Kafka, AWS",
+  "- **Scale**",
+  "  PCI-regulated, high-volume processing",
 ];
 
 export const COMPANY_DOMAIN_STACK_BAD =

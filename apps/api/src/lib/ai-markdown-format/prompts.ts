@@ -22,9 +22,27 @@ const PROMPT_INSTRUCTION_KINDS = new Set<MarkdownFormatKind>([
   "evaluate",
 ]);
 
+const STRUCTURED_LIST_KINDS = new Set<MarkdownFormatKind>([
+  "experienceProblem",
+  "experienceActions",
+  "experienceOutcome",
+  "companyDomainAndStack",
+]);
+
 const PROMPT_HEADING_RULES = `- Use ## as the largest heading. Never use # (h1).
 - Use ### and below for subsections.
 - Preserve the author's section intent; do not invent new sections.`;
+
+const STRUCTURED_LIST_RULES = `- Do NOT add document titles, # headings, or field-type metadata.
+- Do NOT repeat the experience category as a heading (category is stored separately).
+- Format each distinct item as a bullet with a bold label and an indented body on the next line:
+  - **Label**
+    Description text continues here, indented with two spaces.
+- For a single plain sentence, use one bullet; derive a short bold label from the content when none is given.
+- Example:
+  - **0→1 Product Development**
+    Took end-to-end ownership of products from initial requirements and architecture through implementation, production deployment, and ongoing operations.
+- Preserve all factual content from the input. Do not invent metrics or details.`;
 
 const SYSTEM_MESSAGE = `You convert user-authored text into clean, well-structured Markdown.
 
@@ -41,6 +59,32 @@ export function isPromptInstructionKind(
   return PROMPT_INSTRUCTION_KINDS.has(kind);
 }
 
+export function isStructuredListKind(
+  kind: MarkdownFormatKind,
+): kind is
+  | "experienceProblem"
+  | "experienceActions"
+  | "experienceOutcome"
+  | "companyDomainAndStack" {
+  return STRUCTURED_LIST_KINDS.has(kind);
+}
+
+function stripStructuredListArtifacts(markdown: string): string {
+  return markdown
+    .split("\n")
+    .filter((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return true;
+      if (/^#{1,6}\s/.test(trimmed)) return false;
+      if (/^\*\*Field type:\*\*/i.test(trimmed)) return false;
+      if (/^Field type:/i.test(trimmed)) return false;
+      return true;
+    })
+    .join("\n")
+    .replace(/^\n+/, "")
+    .trim();
+}
+
 export function capPromptHeadings(markdown: string): string {
   return markdown.replace(/^# (?!#)/gm, "## ");
 }
@@ -54,18 +98,20 @@ export function buildMarkdownFormatUserMessage(input: {
   text: string;
 }): string {
   const kindLabel = KIND_LABELS[input.kind];
-  const headingRules = isPromptInstructionKind(input.kind)
-    ? `\n\nAdditional rules for this field:\n${PROMPT_HEADING_RULES}`
-    : "";
+  const additionalRules = isPromptInstructionKind(input.kind)
+    ? `\n\nAdditional rules:\n${PROMPT_HEADING_RULES}`
+    : isStructuredListKind(input.kind)
+      ? `\n\nAdditional rules:\n${STRUCTURED_LIST_RULES}`
+      : "";
 
-  return `Field type: ${kindLabel}
+  return `Convert the text below to clean Markdown. Output only the Markdown.
 
-Text to convert to Markdown:
+Context (do NOT include in output): ${kindLabel}
+
+Text:
 ---
 ${input.text.trim()}
----${headingRules}
-
-Convert the text above to clean Markdown. Output only the Markdown.`;
+---${additionalRules}`;
 }
 
 export function normalizeFormattedMarkdown(raw: string): string {
@@ -87,6 +133,9 @@ export function finalizeFormattedMarkdown(
   let text = normalizeFormattedMarkdown(raw);
   if (isPromptInstructionKind(kind)) {
     text = capPromptHeadings(text);
+  }
+  if (isStructuredListKind(kind)) {
+    text = stripStructuredListArtifacts(text);
   }
   return text;
 }

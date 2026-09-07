@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GeneratedResume } from "../../domain/generated-resume";
 import { buildResumeDocxBuffer } from "../../docx-builder/builder";
+import { DEFAULT_RESUME_DOCX_STYLE } from "../../docx-builder/styles";
 
 const sampleResume: GeneratedResume = {
   header: {
@@ -24,5 +25,9 @@ describe("buildResumeDocxBuffer", () => {
     const buffer = await buildResumeDocxBuffer(sampleResume);
     expect(buffer.length).toBeGreaterThan(0);
     expect(buffer.subarray(0, 2).toString("utf8")).toBe("PK");
+  });
+
+  it("uses Arial as the default font", () => {
+    expect(DEFAULT_RESUME_DOCX_STYLE.fontFamily).toBe("Arial");
   });
 });

@@ -79,7 +79,7 @@ User browser (:4041)
 - Layout: top bar + left sidebar + main content (full-height studio chrome)
 - Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`
 - Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light. Tailwind `dark:` uses the `.dark` class (`@custom-variant dark` in `globals.css`), not `prefers-color-scheme`.
-- Prompts (`/prompts`) and Settings (`/settings`) content is centered at `max-w-3xl`, matching other form pages.
+- Prompts (`/settings/prompts`) and Environment (`/settings/environment`) content is centered at `max-w-3xl`, matching other form pages.
 - `react-markdown` preview (`AiVerdictMarkdown`, `ResumeMarkdown`) uses `@tailwindcss/typography` `prose` with `--tw-prose-*` mapped to theme tokens (`--foreground`, `--muted`, `--border`) so body text stays readable in Light and Dark. Do not use `dark:prose-invert` (it follows OS color-scheme unless the class variant is set, and it ignores app tokens).
 - Toast: top-center; variants success / warning / error / info with theme-aware bg and text tokens (`components/app/ToastProvider`). Any user action that calls the API must report the result with a toast.
 - Routes (authenticated):
@@ -88,13 +88,14 @@ User browser (:4041)
   - `/companies` — Workspace / Companies
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
-  - `/prompts` — Workspace / Prompts
-  - `/settings` — Settings (theme + AI Agent)
+  - `/settings/environment` — Settings / Environment (theme, AI Agent, Process); `/settings` redirects here
+  - `/settings/prompts` — Settings / Prompts
+  - `/prompts` — legacy redirect to `/settings/prompts`
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
 - **AI Usage History (Phase 32, 41):** fixed bottom-right FAB (`AiUsageHistory` in app layout) opens `Drawer` history panel; row click opens nested detail `Drawer` with **Input** / **Output** tabs (Input default), `AiVerdictMarkdown` preview, and **Copy** for the active tab’s raw text (`CopyButton` + `copyTextToClipboard`); `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`; labels in `apps/web/src/lib/ai-usage.ts`
-- Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows, Prompts — always open), **Run** (Generate — always open), Settings; section labels use normal title case (not all caps)
+- Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows — always open), **Run** (Generate — always open), **Settings** (Environment, Prompts — always open); section labels use normal title case (not all caps)
 
 ## AI Agent settings (Phase 5, 21)
 
@@ -162,9 +163,9 @@ User browser (:4041)
 - `GET /experiences?q=&page=` — page size 10
 - List order: `updatedAt` descending
 - `GET /experiences/:id` — full detail for the editor (owner only)
-- `POST /experiences` / `PUT /experiences/:id` — `{ category, problem, actions, outcome }`; on write, `problem`, `actions`, and non-empty `outcome` are converted to markdown via AI when changed since last save (create always converts required fields); unchanged fields skip conversion; empty outcome skips conversion; requires Settings provider/apiKey when conversion runs
+- `POST /experiences` / `PUT /experiences/:id` — `{ category, problem, actions, outcome }` (all required); on write, `problem`, `actions`, and `outcome` are converted to markdown via AI when changed since last save (create always converts); unchanged fields skip conversion; requires Settings provider/apiKey when conversion runs
 - Search `q` across category, problem, actions, and outcome
-- Web routes: `/experiences` list (columns: Category, Problem, Actions); `/experiences/new` add; `/experiences/[id]/edit` edit; editor shows English guidelines on problem/actions/outcome and shared guidance on one card = one capability unit; `DESCRIPTION_AS_RESUME_PROMPT_HINT` on each prompt field
+- Web routes: `/experiences` list (columns: Category, Problem, Actions, Outcome); `/experiences/new` add; `/experiences/[id]/edit` edit; editor shows bullet-format guidelines and examples on problem/actions/outcome and shared guidance on one card = one capability unit; `DESCRIPTION_AS_RESUME_PROMPT_HINT` on each prompt field; Save right-aligned
 - **Phase 45 migration note:** `experiences.description` dropped; existing rows backfill `problem` from former `description`, `actions` and `outcome` to empty string — users must fill actions on next edit
 
 ## Generate UI (Phase 11–20, 22, 24, 25, 26, 27, 28)
@@ -200,9 +201,9 @@ User browser (:4041)
 
 - `GET /prompts` → `{ verdictPrompt, generatePrompt, evaluatePrompt }` — empty strings when no row yet (owner only); new sign-ups receive defaults from `@johel/prompt-defaults` via `POST /auth/register` (Verdict default uses Role / Technical Requirements / Final Verdict sections; Generate default maps those headings and caps skills at 3–5 groups and 12 items; Evaluate default scores the same Verdict dimensions)
 - `PUT /prompts/verdict` → body `{ verdictPrompt }`; `PUT /prompts/generate` → `{ generatePrompt }`; `PUT /prompts/evaluate` → `{ evaluatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; on write, only the submitted prompt is converted to markdown via AI when changed (unchanged skip conversion); requires Settings provider/apiKey when conversion runs; each endpoint returns all three prompts
-- Web route `/prompts`: **Verdict**, **Generate**, and **Evaluate** tabs (`?tab=verdict|generate|evaluate`, default Verdict); each tab shows one read-only `AiVerdictMarkdown` preview (muted placeholder when empty); **Edit** (pencil) opens `PromptEditDialog` (textarea + **Apply**, local until that tab’s **Save**); auto-markdown notice and resume-context hints where applicable; fullscreen `BusyOverlay` when conversion runs; per-tab **Save** (always enabled; inline validation on submit); toast on API result; refreshes header Token Used after save
+- Web route `/settings/prompts`: **Verdict**, **Generate**, and **Evaluate** tabs (`?tab=verdict|generate|evaluate`, default Verdict); page copy states that system prompt changes directly affect resume generation quality; each tab shows one read-only `AiVerdictMarkdown` preview (muted placeholder when empty); **Edit** (pencil) opens `PromptEditDialog` (textarea + **Apply**, local until that tab’s **Save**); auto-markdown notice and resume-context hints where applicable; fullscreen `BusyOverlay` when conversion runs; per-tab **Reset to Default** (secondary, confirm dialog, persists `@johel/prompt-defaults` for that tab) and **Save** (always enabled; inline validation on submit); toast on API result; refreshes header Token Used after save
+- Legacy web routes `/prompts` and `/verdict` redirect to `/settings/prompts`
 - Company editor form (`CompanyForm`): alias, company name, what this company is, and domain & stack; prompt fields show auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialog renders prompt fields with `AiVerdictMarkdown`. Experience editor form (`ExperienceForm`): Description textarea with the same auto-markdown behavior.
-- Legacy web route `/verdict` redirects to `/prompts`
 - Client: `getPrompts`, `savePrompt` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
 - Verdict Prompt consumed by `POST /ai-verdict`; Generate Prompt consumed by `POST /ai-resume`; Evaluate Prompt consumed by `POST /ai-evaluate`
 
@@ -211,7 +212,7 @@ User browser (:4041)
 - Embedded in `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`, `POST/PUT /companies`, `POST/PUT /experiences` write handlers (no separate endpoint)
 - Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; kinds `verdict` | `generate` | `evaluate` | `companyWhatItIs` | `companyDomainAndStack` | `experienceProblem` | `experienceActions` | `experienceOutcome`
 - Skip rule: when `submitted.trim() === stored.trim()`, persist without AI (no API key required); prompt kinds still run deterministic `#`→`##` heading cap on save
-- When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); **prompt kinds** additionally require `##` as the largest heading (AI rule + `capPromptHeadings` post-process); strips accidental code fences; rejects empty or over-limit output
+- When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); **prompt kinds** additionally require `##` as the largest heading (AI rule + `capPromptHeadings` post-process); **structured list kinds** (`experienceProblem`, `experienceActions`, `experienceOutcome`, `companyDomainAndStack`) format each item as a bullet with a bold label and indented body, strip accidental `#` headings and field-type metadata; strips accidental code fences; rejects empty or over-limit output
 - Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiMarkdownFormatResponse` (`gpt-5.6-sol`, reasoning `low`); usage stored as `generateType: "markdownFormat"`; AI Usage History label **Markdown Format**
 - Prompts: changed fields convert in parallel before upsert
 - Web: `AUTO_MARKDOWN_FORMAT_HINT` in `apps/web/src/lib/markdown-format.ts`; `BusyOverlay` during save when client detects changed fields; `refreshTokenUsed` after successful save
@@ -242,7 +243,7 @@ User browser (:4041)
 - Canonical model: `GeneratedResume` (Zod schema in `domain/generated-resume.ts`)
 - `resumeToMarkdown(resume)` — deterministic Markdown for web display (main export); section order matches the default DOCX template: Header, Summary, Experience, Skills, Education, Certifications, Projects
 - `buildResumeDocxFileName(resume, workflowName?, date?)` — `YYYY-MM-DD-{name}-{workflow}.docx` using sanitized segments and local calendar date
-- `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts` (same section order as Markdown); shared `ResumeDocxStyle` in `docx-builder/styles.ts`
+- `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts` (same section order as Markdown); shared `ResumeDocxStyle` in `docx-builder/styles.ts` (default font Arial)
 - `POST /resume/docx` — body `{ resume, workflowName? }` (validated `GeneratedResume`); returns `.docx` attachment named via `buildResumeDocxFileName`; used by Generate/Evaluate **Download**
 - Consumed by API (validation), web (display + download), and Vitest unit tests
 - **DOCX template management** — architecture, default template, style tokens, and extension guide: [`docx-template-management.md`](./docx-template-management.md)

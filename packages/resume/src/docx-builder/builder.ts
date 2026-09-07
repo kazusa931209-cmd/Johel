@@ -11,6 +11,15 @@ function createResumeDocument(
   style: ResumeDocxStyle,
 ): Document {
   return new Document({
+    styles: {
+      default: {
+        document: {
+          run: {
+            font: style.fontFamily,
+          },
+        },
+      },
+    },
     sections: [
       {
         properties: {},

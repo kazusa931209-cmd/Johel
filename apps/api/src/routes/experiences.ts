@@ -15,7 +15,7 @@ const writeSchema = z.object({
   category: z.string().trim().min(1).max(200),
   problem: z.string().trim().min(1).max(20000),
   actions: z.string().trim().min(1).max(20000),
-  outcome: z.string().trim().max(20000),
+  outcome: z.string().trim().min(1).max(20000),
 });
 
 type ExperienceRow = {
@@ -47,15 +47,10 @@ async function formatExperienceOutcomeOnSave(input: {
   submitted: string;
   stored: string | null | undefined;
 }): Promise<string> {
-  const trimmed = input.submitted.trim();
-  if (!trimmed) {
-    return "";
-  }
-
   const { formatted } = await formatMarkdownOnSave({
     userId: input.userId,
     kind: "experienceOutcome",
-    submitted: trimmed,
+    submitted: input.submitted,
     stored: input.stored,
     maxLen: 20_000,
   });

@@ -5,6 +5,9 @@ export {
   DEFAULT_VERDICT_PROMPT,
 } from "@johel/prompt-defaults";
 
+export const SYSTEM_PROMPT_QUALITY_NOTICE =
+  "Changes to these system prompts directly affect resume generation quality. Review edits carefully before saving.";
+
 export const VERDICT_PROMPT_PLACEHOLDER =
   "Define Verdict sections (e.g. ## Fit questions, ## Role, ## Technical Requirements, ## Company & Contacts), questions, and answer format.";
 

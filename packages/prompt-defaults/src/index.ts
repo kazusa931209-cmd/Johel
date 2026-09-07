@@ -93,14 +93,14 @@ Do not treat company or experience fields as the job target.
 - \`companies[].name\`: Employer name on the résumé. Do not use \`alias\` in output.
 - \`companies[].alias\`: Internal label only. Ignore for writing.
 - \`companies[].whatCompanyIs\`: One-sentence scene (industry, product, customer). Do not paste as bullets.
-- \`companies[].domainAndStack\`: Domain, product scope, tech. Use for wording and grounding; do not paste as bullets.
+- \`companies[].domainAndStack\`: Domain, product scope, tech. Bullet list with bold labels; use for wording and grounding; do not paste as bullets.
 - \`companies[].roleContext\`: Nature of the role held there. Primary hint for \`title\`. Not achievements.
 - \`companies[].startDate\` / \`endDate\`: Employment dates. Copy as-is.
 - \`companies[].experiences[]\`: Materials already assigned to that company. Do not move them. Do not drop a linked experience unless it has zero overlap with the rubric and \`workflow.description\` says to omit.
 - \`experiences[].category\`: Work cluster; use when choosing \`title\` and grouping skills.
-- \`experiences[].problem\`: What was solved. Use as the situation in the bullet.
-- \`experiences[].actions\`: What was done (verb + object) and tech/methods. Use as the action in the bullet.
-- \`experiences[].outcome\`: Result for that same card. Include numbers only when this field has them.
+- \`experiences[].problem\`: What was solved. Bullet list with bold labels; use as the situation in the bullet.
+- \`experiences[].actions\`: What was done (verb + object) and tech/methods. Bullet list with bold labels; use as the action in the bullet.
+- \`experiences[].outcome\`: Result for that same card. Bullet list with bold labels; include numbers only when this field has them.
 
 ## Experience Synthesis
 For each company, emit one experience object.

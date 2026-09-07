@@ -22,6 +22,7 @@ import {
   COMPANY_DOMAIN_STACK_GOOD,
   COMPANY_DOMAIN_STACK_GUIDELINE,
   COMPANY_SHARED_GUIDANCE,
+  COMPANY_STRUCTURED_FIELD_FORMAT,
   COMPANY_WHAT_IT_IS_BAD,
   COMPANY_WHAT_IT_IS_GOOD,
   COMPANY_WHAT_IT_IS_GUIDELINE,
@@ -56,11 +57,27 @@ function FieldError({ message }: { message?: string }) {
 function FieldExamples({
   good,
   bad,
+  multiline = false,
 }: {
   good: string | string[];
   bad: string;
+  multiline?: boolean;
 }) {
   const goodItems = Array.isArray(good) ? good : [good];
+  if (multiline) {
+    return (
+      <div className="space-y-1 text-xs text-muted">
+        <p>
+          <span className="font-medium text-foreground">Example:</span>
+        </p>
+        <pre className="whitespace-pre-wrap font-sans">{goodItems.join("\n")}</pre>
+        <p>
+          <span className="font-medium text-foreground">Bad:</span>{" "}
+          &ldquo;{bad}&rdquo;
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-1 text-xs text-muted">
       <p>
@@ -238,6 +255,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           <RequiredMark />
         </span>
         <p className="text-xs text-muted">{COMPANY_DOMAIN_STACK_GUIDELINE}</p>
+        <p className="text-xs text-muted">{COMPANY_STRUCTURED_FIELD_FORMAT}</p>
         <textarea
           value={domainAndStack}
           onChange={(e) => {
@@ -256,6 +274,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
         <FieldExamples
           good={COMPANY_DOMAIN_STACK_GOOD}
           bad={COMPANY_DOMAIN_STACK_BAD}
+          multiline
         />
         <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
         <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
