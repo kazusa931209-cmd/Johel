@@ -247,6 +247,7 @@ User browser (:4041)
 - `POST /resume/docx` — body `{ resume, workflowName? }` (validated `GeneratedResume`); returns `.docx` attachment named via `buildResumeDocxFileName`; used by Generate/Evaluate **Download**
 - Consumed by API (validation), web (display + download), and Vitest unit tests
 - **DOCX template management** — architecture, default template, style tokens, and extension guide: [`docx-template-management.md`](./docx-template-management.md)
+- **Workspace authoring** — how Company / Experience / Workflow fields should be written so assembly and the Generate Prompt can multiply scene × capability × rubric: [`workspace-authoring.md`](./workspace-authoring.md). `assembleResumeGenerationInput` nests linked experiences under each workflow company; it does not de-duplicate stack variants. The default Generate Prompt treats `whatCompanyIs` / `domainAndStack` as scene, `roleContext` as title hint, and each linked card as 1–3 bullets (`actions` lead, `outcome` close).
 
 ## Noise Filter (Phase 12)
 

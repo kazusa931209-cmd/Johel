@@ -16,7 +16,7 @@ Result quality depends entirely on the user's prompt authoring and the capabilit
 
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
 * **Companies** — One user can manage **multiple companies** (alias, name, what this company is, and domain & stack — all required; used as resume-generation prompts).
-* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone). Each experience has a required category, required problem, required actions, and optional outcome used as resume-generation prompts.
+* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone). Each experience has a required category, required problem, required actions, and required outcome used as resume-generation prompts. One card is one capability unit. Stack-only variants of the same capability (for example NestJS vs Go) are allowed; the author must not link more than one variant of that capability to the same company in the same workflow.
 * **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more ordered company entries (each with a required employment period and linked shared experiences), a resume output language, and a required description used as a resume-generation prompt.
 * **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés. New accounts receive default prompt templates on sign-up; users may replace them freely. Output structure and instructions are user-defined; JoHEL does not guarantee AI output quality (see **Philosophy**).
 
@@ -37,6 +37,17 @@ Job Description → Filtering → Workflow → Generate → Evaluate
 2. **Workflow** — Choose one workflow; its saved profile and company entries (each with period and linked experiences) are used for generation.
 3. **Generate** — Generate the résumé from the filtered JD and the selected workflow.
 4. **Evaluate** — Score the generated résumé against the same Verdict dimensions (Role, Technical Requirements, Final Verdict, and related sections), then download the résumé.
+
+### Workspace authoring
+
+Company, Experience, and Workflow fields are resume-generation prompts. Generation multiplies **company scene × linked capability cards × job rubric**.
+
+* **Company** holds scene only (industry, product, customer, domain, stack, snapshot scale). Personal achievements and before→after metrics do not belong here.
+* **Experience** holds one capability (STAR). Category names the capability (stack suffix only when keeping intentional variants). Outcome numbers stay on the card that produced them. Do not store routing instructions (“use when the JD asks for X”) in Actions.
+* **Workflow** chooses profile, résumé company order, and which cards attach to which company. Description is persona/emphasis, not a metrics dump. Linking a card to a company asserts that work happened there.
+* **Prompts** (Verdict / Generate / Evaluate) say how to read the JD and write/score the résumé. They do not add facts. Run-specific emphasis uses the Generate **One-time Prompt**.
+
+Authoring criteria, good/bad examples, stack-variant rules, and the mapping to user-defined prompts: [`docs/workspace-authoring.md`](./workspace-authoring.md).
 
 ## Deployment
 
@@ -176,7 +187,7 @@ Aligned with the product flow above:
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
   * Editor fields: name (required), description (required; used as a resume-generation prompt), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean)
   * Below the scalar fields, **Profile** (single row selection table: all items loaded at once; row click selects; View opens read-only detail dialog)
-  * **Companies** section: ordered list of entries built one at a time; **Add** (plus icon) opens a dialog to pick one company, set required **Start** and **End** period (free-text), required **Role Context** (nature of the role held in this employment; not personal achievements), and multi-select one or more shared experiences; **Save** in the dialog validates inline and adds or updates the entry; row **Edit** (pencil) and **Delete** (red trash); company order is résumé order (first added = highest priority); the same shared experience may appear under multiple companies
+  * **Companies** section: ordered list of entries built one at a time; **Add** (plus icon) opens a dialog to pick one company, set required **Start** and **End** period (free-text), required **Role Context** (nature of the role held in this employment; not personal achievements), and multi-select one or more shared experiences; **Save** in the dialog validates inline and adds or updates the entry; row **Edit** (pencil) and **Delete** (red trash); company order is résumé order (first added = highest priority); the same shared experience may appear under multiple companies when the work is true in both scenes; stack-only variants of one capability must not both be linked under the same company entry (author responsibility; JoHEL does not de-duplicate)
   * Company-entry edits stay local until page **Save** (same pattern as profile Links)
   * Page Save validates inline: one profile; at least one company entry; each entry has startDate, endDate, roleContext, and at least one experience (not via disabling Save)
   * Detail dialog shows the selected profile and companies grouped with period and linked experiences (preserve company order)
