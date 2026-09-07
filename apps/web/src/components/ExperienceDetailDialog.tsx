@@ -9,6 +9,27 @@ type ExperienceDetailDialogProps = {
   onClose: () => void;
 };
 
+function MarkdownField({
+  label,
+  markdown,
+}: {
+  label: string;
+  markdown: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="text-xs font-medium tracking-wide text-muted uppercase">
+        {label}
+      </div>
+      {markdown ? (
+        <AiVerdictMarkdown markdown={markdown} />
+      ) : (
+        <div className="text-foreground">—</div>
+      )}
+    </div>
+  );
+}
+
 export function ExperienceDetailDialog({
   experience,
   onClose,
@@ -19,16 +40,9 @@ export function ExperienceDetailDialog({
       onClose={onClose}
     >
       <DetailField label="Category" value={experience.category} />
-      <div className="space-y-1">
-        <div className="text-xs font-medium tracking-wide text-muted uppercase">
-          Description
-        </div>
-        {experience.description ? (
-          <AiVerdictMarkdown markdown={experience.description} />
-        ) : (
-          <div className="text-foreground">—</div>
-        )}
-      </div>
+      <MarkdownField label="Problem" markdown={experience.problem} />
+      <MarkdownField label="Actions" markdown={experience.actions} />
+      <MarkdownField label="Outcome" markdown={experience.outcome} />
       <DetailField
         label="Created"
         value={new Date(experience.createdAt).toLocaleString()}

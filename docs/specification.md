@@ -16,7 +16,7 @@ Result quality depends entirely on the user's prompt authoring and the capabilit
 
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
 * **Companies** — One user can manage **multiple companies** (alias, name, what this company is, and domain & stack — all required; used as resume-generation prompts).
-* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone). Each experience has a required category and a required description used as a resume-generation prompt.
+* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone). Each experience has a required category, required problem, required actions, and optional outcome used as resume-generation prompts.
 * **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more ordered company entries (each with a required employment period and linked shared experiences), a resume output language, and a required description used as a resume-generation prompt.
 * **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés. New accounts receive default prompt templates on sign-up; users may replace them freely. Output structure and instructions are user-defined; JoHEL does not guarantee AI output quality (see **Philosophy**).
 
@@ -155,14 +155,15 @@ Aligned with the product flow above:
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
-  * Per-user list: No, Category, Description
-  * Keyword filter on category and description; 10 rows per page
+  * Per-user list: No, Category, Problem, Actions
+  * Keyword filter on category, problem, actions, and outcome; 10 rows per page
   * List is ordered by most recently updated first
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience
-  * Editor fields: category (required; free-text), description (required; used as a resume-generation prompt)
-  * Description shows a notice that it is used as a prompt during resume generation and that contents will be automatically converted to markdown format on **Save**; when the description changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged descriptions skip conversion; fullscreen loading while conversion runs; the detail dialog renders Description as Markdown
+  * Editor fields: category (required; free-text), problem (required; used as a resume-generation prompt), actions (required; used as a resume-generation prompt), outcome (optional; used as a resume-generation prompt)
+  * Problem shows guideline *(What you solved)*; actions shows guideline *(What you did (verb + object) and the tech/methods used)*; outcome shows guideline *(Measurable result — include numbers only when you have them)*; shared note that one card should represent one capability unit for better synthesis
+  * Problem, actions, and outcome show a notice that they are used as prompts during resume generation and that contents will be automatically converted to markdown format on **Save**; when a field changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged fields skip conversion; empty outcome skips conversion; fullscreen loading while conversion runs; the detail dialog renders all three fields as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
@@ -303,6 +304,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-07):** `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`; tabbed `/prompts?tab=` UI with per-tab Save. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-43-prompts-tabbed-save.md`](./plans/2026-09-07-phase-43-prompts-tabbed-save.md).
 * [x] **Phase 44 — Company structure** — Replace the single company description with structured fields: alias (required, first field), company name (required), what this company is (required; one-sentence industry/product/customer context), and domain & stack (required; bullet-style scope, tech, regulation/scale). Editor shows English guidelines, good/bad examples, and guidance that personal achievements belong in shared experiences, not company descriptions. List, detail, search, and resume generation use the new fields; existing companies are migrated (alias from name, what this company is from old description; domain & stack must be filled on next edit).
   * **Outcome (2026-09-08):** `companies` schema with `alias`, `whatCompanyIs`, `domainAndStack`; updated Companies API, form, list, detail, workflow picker, and resume assembly input. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-44-company-structure-update.md`](./plans/2026-09-08-phase-44-company-structure-update.md).
+* [x] **Phase 45 — Experience structure** — Replace the single experience description with structured fields: category (required), problem (required), actions (required), and outcome (optional). Editor shows English guidelines and shared guidance that one card should represent one capability unit for better synthesis. List, detail, search, workflow picker, and resume generation use the new fields; existing experiences are migrated (problem from old description; actions must be filled on next edit).
+  * **Outcome (2026-09-08):** `experiences` schema with `problem`, `actions`, `outcome`; updated Experiences API, form, list, detail, workflow picker, and resume assembly input. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-45-experience-structure-update.md`](./plans/2026-09-08-phase-45-experience-structure-update.md).
 
 ## Cursor Rules (Documentation Governance)
 

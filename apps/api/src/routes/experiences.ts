@@ -13,13 +13,17 @@ const PAGE_SIZE = 10;
 
 const writeSchema = z.object({
   category: z.string().trim().min(1).max(200),
-  description: z.string().trim().min(1).max(20000),
+  problem: z.string().trim().min(1).max(20000),
+  actions: z.string().trim().min(1).max(20000),
+  outcome: z.string().trim().max(20000),
 });
 
 type ExperienceRow = {
   id: string;
   category: string;
-  description: string;
+  problem: string;
+  actions: string;
+  outcome: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -30,10 +34,32 @@ function toDetail(row: ExperienceRow) {
   return {
     id: row.id,
     category: row.category,
-    description: row.description,
+    problem: row.problem,
+    actions: row.actions,
+    outcome: row.outcome,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+async function formatExperienceOutcomeOnSave(input: {
+  userId: string;
+  submitted: string;
+  stored: string | null | undefined;
+}): Promise<string> {
+  const trimmed = input.submitted.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const { formatted } = await formatMarkdownOnSave({
+    userId: input.userId,
+    kind: "experienceOutcome",
+    submitted: trimmed,
+    stored: input.stored,
+    maxLen: 20_000,
+  });
+  return formatted;
 }
 
 experiencesRoutes.get("/", async (c) => {
@@ -53,7 +79,9 @@ experiencesRoutes.get("/", async (c) => {
     ? {
         OR: [
           { category: { contains: q } },
-          { description: { contains: q } },
+          { problem: { contains: q } },
+          { actions: { contains: q } },
+          { outcome: { contains: q } },
         ],
       }
     : {};
@@ -108,19 +136,36 @@ experiencesRoutes.post("/", async (c) => {
   }
 
   try {
-    const { formatted: description } = await formatMarkdownOnSave({
-      userId: user.id,
-      kind: "experienceDescription",
-      submitted: parsed.data.description,
-      stored: "",
-      maxLen: 20_000,
-    });
+    const [{ formatted: problem }, { formatted: actions }, outcome] =
+      await Promise.all([
+        formatMarkdownOnSave({
+          userId: user.id,
+          kind: "experienceProblem",
+          submitted: parsed.data.problem,
+          stored: "",
+          maxLen: 20_000,
+        }),
+        formatMarkdownOnSave({
+          userId: user.id,
+          kind: "experienceActions",
+          submitted: parsed.data.actions,
+          stored: "",
+          maxLen: 20_000,
+        }),
+        formatExperienceOutcomeOnSave({
+          userId: user.id,
+          submitted: parsed.data.outcome,
+          stored: "",
+        }),
+      ]);
 
     const row = await prisma.experience.create({
       data: {
         userId: user.id,
         category: parsed.data.category,
-        description,
+        problem,
+        actions,
+        outcome,
       },
     });
 
@@ -155,19 +200,36 @@ experiencesRoutes.put("/:id", async (c) => {
   }
 
   try {
-    const { formatted: description } = await formatMarkdownOnSave({
-      userId: user.id,
-      kind: "experienceDescription",
-      submitted: parsed.data.description,
-      stored: existing.description,
-      maxLen: 20_000,
-    });
+    const [{ formatted: problem }, { formatted: actions }, outcome] =
+      await Promise.all([
+        formatMarkdownOnSave({
+          userId: user.id,
+          kind: "experienceProblem",
+          submitted: parsed.data.problem,
+          stored: existing.problem,
+          maxLen: 20_000,
+        }),
+        formatMarkdownOnSave({
+          userId: user.id,
+          kind: "experienceActions",
+          submitted: parsed.data.actions,
+          stored: existing.actions,
+          maxLen: 20_000,
+        }),
+        formatExperienceOutcomeOnSave({
+          userId: user.id,
+          submitted: parsed.data.outcome,
+          stored: existing.outcome,
+        }),
+      ]);
 
     const row = await prisma.experience.update({
       where: { id },
       data: {
         category: parsed.data.category,
-        description,
+        problem,
+        actions,
+        outcome,
       },
     });
 

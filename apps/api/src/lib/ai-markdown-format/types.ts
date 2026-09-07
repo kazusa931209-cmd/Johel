@@ -7,7 +7,9 @@ export type MarkdownFormatKind =
   | "evaluate"
   | "companyWhatItIs"
   | "companyDomainAndStack"
-  | "experienceDescription";
+  | "experienceProblem"
+  | "experienceActions"
+  | "experienceOutcome";
 
 export type MarkdownFormatRequest = {
   kind: MarkdownFormatKind;

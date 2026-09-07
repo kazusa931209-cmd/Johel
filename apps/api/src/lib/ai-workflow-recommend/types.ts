@@ -1,7 +1,9 @@
 export type WorkflowRecommendExperienceSummary = {
   id: string;
   category: string;
-  description: string;
+  problem: string;
+  actions: string;
+  outcome: string;
 };
 
 export type WorkflowRecommendCompanySummary = {

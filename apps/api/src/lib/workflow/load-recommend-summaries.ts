@@ -25,7 +25,13 @@ export async function loadWorkflowRecommendSummaries(
             orderBy: { sortOrder: "asc" },
             include: {
               experience: {
-                select: { id: true, category: true, description: true },
+                select: {
+                  id: true,
+                  category: true,
+                  problem: true,
+                  actions: true,
+                  outcome: true,
+                },
               },
             },
           },

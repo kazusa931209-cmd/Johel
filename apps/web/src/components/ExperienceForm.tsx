@@ -17,6 +17,12 @@ import {
   needsMarkdownFormatOnSave,
 } from "@/lib/markdown-format";
 import { DESCRIPTION_AS_RESUME_PROMPT_HINT } from "@/lib/entity-description";
+import {
+  EXPERIENCE_ACTIONS_GUIDELINE,
+  EXPERIENCE_OUTCOME_GUIDELINE,
+  EXPERIENCE_PROBLEM_GUIDELINE,
+  EXPERIENCE_SHARED_GUIDANCE,
+} from "@/lib/experience-field-guidance";
 
 type ExperienceFormProps = {
   mode: "create" | "edit";
@@ -26,7 +32,8 @@ type ExperienceFormProps = {
 
 type FieldErrors = {
   category?: string;
-  description?: string;
+  problem?: string;
+  actions?: string;
 };
 
 function RequiredMark() {
@@ -51,8 +58,12 @@ export function ExperienceForm({
   const { toast } = useToast();
   const { refreshTokenUsed } = useAiUsage();
   const [category, setCategory] = useState(initial?.category ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
-  const [storedDescription] = useState(initial?.description ?? "");
+  const [problem, setProblem] = useState(initial?.problem ?? "");
+  const [actions, setActions] = useState(initial?.actions ?? "");
+  const [outcome, setOutcome] = useState(initial?.outcome ?? "");
+  const [storedProblem] = useState(initial?.problem ?? "");
+  const [storedActions] = useState(initial?.actions ?? "");
+  const [storedOutcome] = useState(initial?.outcome ?? "");
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -62,8 +73,11 @@ export function ExperienceForm({
     if (!category.trim()) {
       nextErrors.category = "Category is required.";
     }
-    if (!description.trim()) {
-      nextErrors.description = "Description is required.";
+    if (!problem.trim()) {
+      nextErrors.problem = "Problem is required.";
+    }
+    if (!actions.trim()) {
+      nextErrors.actions = "Actions is required.";
     }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -72,7 +86,9 @@ export function ExperienceForm({
 
     const payload: ExperienceWritePayload = {
       category: category.trim(),
-      description: description.trim(),
+      problem: problem.trim(),
+      actions: actions.trim(),
+      outcome: outcome.trim(),
     };
     setSaving(true);
     const res =
@@ -92,8 +108,13 @@ export function ExperienceForm({
     router.push("/experiences");
   }
 
+  const convertingProblem = needsMarkdownFormatOnSave(problem, storedProblem);
+  const convertingActions = needsMarkdownFormatOnSave(actions, storedActions);
+  const convertingOutcome =
+    outcome.trim().length > 0 &&
+    needsMarkdownFormatOnSave(outcome, storedOutcome);
   const converting =
-    saving && needsMarkdownFormatOnSave(description, storedDescription);
+    saving && (convertingProblem || convertingActions || convertingOutcome);
 
   return (
     <form
@@ -109,8 +130,8 @@ export function ExperienceForm({
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure category and a description used as a resume-generation
-          prompt.
+          Configure category and structured fields used as resume-generation
+          prompts.
         </p>
       </div>
 
@@ -135,28 +156,64 @@ export function ExperienceForm({
 
       <label className="block space-y-1 text-sm">
         <span>
-          Description
+          Problem
           <RequiredMark />
         </span>
+        <p className="text-xs text-muted">{EXPERIENCE_PROBLEM_GUIDELINE}</p>
         <textarea
-          value={description}
+          value={problem}
           onChange={(e) => {
-            setDescription(e.target.value);
-            if (fieldErrors.description) {
-              setFieldErrors((errors) => ({
-                ...errors,
-                description: undefined,
-              }));
+            setProblem(e.target.value);
+            if (fieldErrors.problem) {
+              setFieldErrors((errors) => ({ ...errors, problem: undefined }));
             }
           }}
-          rows={24}
-          aria-invalid={Boolean(fieldErrors.description)}
+          rows={6}
+          aria-invalid={Boolean(fieldErrors.problem)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
         <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
         <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
-        <FieldError message={fieldErrors.description} />
+        <FieldError message={fieldErrors.problem} />
       </label>
+
+      <label className="block space-y-1 text-sm">
+        <span>
+          Actions
+          <RequiredMark />
+        </span>
+        <p className="text-xs text-muted">{EXPERIENCE_ACTIONS_GUIDELINE}</p>
+        <textarea
+          value={actions}
+          onChange={(e) => {
+            setActions(e.target.value);
+            if (fieldErrors.actions) {
+              setFieldErrors((errors) => ({ ...errors, actions: undefined }));
+            }
+          }}
+          rows={10}
+          aria-invalid={Boolean(fieldErrors.actions)}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+        />
+        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
+        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
+        <FieldError message={fieldErrors.actions} />
+      </label>
+
+      <label className="block space-y-1 text-sm">
+        <span>Outcome</span>
+        <p className="text-xs text-muted">{EXPERIENCE_OUTCOME_GUIDELINE}</p>
+        <textarea
+          value={outcome}
+          onChange={(e) => setOutcome(e.target.value)}
+          rows={6}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+        />
+        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
+        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
+      </label>
+
+      <p className="text-xs text-muted">{EXPERIENCE_SHARED_GUIDANCE}</p>
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
@@ -177,7 +234,7 @@ export function ExperienceForm({
       {converting ? (
         <BusyOverlay
           title="Converting to markdown…"
-          description="Please wait while the description is formatted."
+          description="Please wait while the fields are formatted."
         />
       ) : null}
     </form>

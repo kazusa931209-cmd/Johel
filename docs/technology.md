@@ -52,7 +52,7 @@ User browser (:4041)
 - Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `education?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
 - Prisma `Company` → table `companies` (per user): `id`, `userId`, `alias`, `name`, `whatCompanyIs`, `domainAndStack`, `createdAt`, `updatedAt`
-- Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
+- Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `problem`, `actions`, `outcome`, `createdAt`, `updatedAt`
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
 - Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `doWorkflowRecommendation`, `workflowRecommendationThreshold`, `lastSelectedWorkflowId?` (FK → `workflows`, SetNull on delete), `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `doWorkflowRecommendation` false, threshold `70`
@@ -157,14 +157,15 @@ User browser (:4041)
 - Web routes: `/companies` list (columns: Alias, Company Name, What this company is, Domain & Stack); `/companies/new` add; `/companies/[id]/edit` edit; editor fields in order: alias, company name, what this company is, domain & stack; English guidelines and good/bad examples on the two prompt fields; shared guidance that personal achievements belong in shared experiences
 - **Phase 44 migration note:** `companies.description` dropped; existing rows backfill `alias` and `name` from former `name`, `whatCompanyIs` from former `description`, `domainAndStack` to empty string — users must fill domain & stack on next edit
 
-## Experiences (Phase 10, 30)
+## Experiences (Phase 10, 30, 45)
 
 - `GET /experiences?q=&page=` — page size 10
 - List order: `updatedAt` descending
 - `GET /experiences/:id` — full detail for the editor (owner only)
-- `POST /experiences` / `PUT /experiences/:id` — `{ category, description }`; on write, `description` is converted to markdown via AI when changed since last save (create always converts); unchanged descriptions skip conversion; requires Settings provider/apiKey when conversion runs
-- Search `q` across category and description
-- Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; editor shows `DESCRIPTION_AS_RESUME_PROMPT_HINT` on Description (required resume-generation prompt)
+- `POST /experiences` / `PUT /experiences/:id` — `{ category, problem, actions, outcome }`; on write, `problem`, `actions`, and non-empty `outcome` are converted to markdown via AI when changed since last save (create always converts required fields); unchanged fields skip conversion; empty outcome skips conversion; requires Settings provider/apiKey when conversion runs
+- Search `q` across category, problem, actions, and outcome
+- Web routes: `/experiences` list (columns: Category, Problem, Actions); `/experiences/new` add; `/experiences/[id]/edit` edit; editor shows English guidelines on problem/actions/outcome and shared guidance on one card = one capability unit; `DESCRIPTION_AS_RESUME_PROMPT_HINT` on each prompt field
+- **Phase 45 migration note:** `experiences.description` dropped; existing rows backfill `problem` from former `description`, `actions` and `outcome` to empty string — users must fill actions on next edit
 
 ## Generate UI (Phase 11–20, 22, 24, 25, 26, 27, 28)
 
@@ -208,7 +209,7 @@ User browser (:4041)
 ## AI Markdown Format (Phase 38, 40)
 
 - Embedded in `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`, `POST/PUT /companies`, `POST/PUT /experiences` write handlers (no separate endpoint)
-- Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; kinds `verdict` | `generate` | `evaluate` | `companyWhatItIs` | `companyDomainAndStack` | `experienceDescription`
+- Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; kinds `verdict` | `generate` | `evaluate` | `companyWhatItIs` | `companyDomainAndStack` | `experienceProblem` | `experienceActions` | `experienceOutcome`
 - Skip rule: when `submitted.trim() === stored.trim()`, persist without AI (no API key required); prompt kinds still run deterministic `#`→`##` heading cap on save
 - When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); **prompt kinds** additionally require `##` as the largest heading (AI rule + `capPromptHeadings` post-process); strips accidental code fences; rejects empty or over-limit output
 - Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiMarkdownFormatResponse` (`gpt-5.6-sol`, reasoning `low`); usage stored as `generateType: "markdownFormat"`; AI Usage History label **Markdown Format**
@@ -218,7 +219,7 @@ User browser (:4041)
 
 ## AI Workflow Recommendation (Phase 36)
 
-- `POST /ai-workflow-recommend` — body `{ jobDescription, acceptedMarkdown? }` (job 1–10,000 chars noise-filtered text; optional verdict markdown); requires saved Settings provider/apiKey and ≥1 owned workflow; loads workflow summaries (name, description, language, profile name, deduplicated flat `experiences` with id/category/description, company periods with `experienceIds` referencing that list); AI returns structured `{ matches: [{ workflowId, score }] }` (scores 0–100); server picks highest score and applies user’s `workflowRecommendationThreshold` from `generationProcess`; returns `{ workflowId, workflowName, score, threshold, usage, tokenUsed }` where `workflowId` is null when best score is below threshold
+- `POST /ai-workflow-recommend` — body `{ jobDescription, acceptedMarkdown? }` (job 1–10,000 chars noise-filtered text; optional verdict markdown); requires saved Settings provider/apiKey and ≥1 owned workflow; loads workflow summaries (name, description, language, profile name, deduplicated flat `experiences` with id/category/problem/actions/outcome, company periods with `experienceIds` referencing that list); AI returns structured `{ matches: [{ workflowId, score }] }` (scores 0–100); server picks highest score and applies user’s `workflowRecommendationThreshold` from `generationProcess`; returns `{ workflowId, workflowName, score, threshold, usage, tokenUsed }` where `workflowId` is null when best score is below threshold
 - Module: `apps/api/src/lib/ai-workflow-recommend/` — prompts, `parse-response`, `pickRecommendedWorkflow`, Cursor/OpenAI provider adapters; summaries via `loadWorkflowRecommendSummaries`
 - Web: `runAiWorkflowRecommend` in `apps/web/src/lib/api.ts`; Generate page runs after Job **Next** when `doWorkflowRecommendation`; session caches via `buildWorkflowRecommendInputKey` + `workflowRecommendInputKey`; manual workflow row select calls `PUT /settings/process/last-workflow`
 

@@ -107,7 +107,9 @@ export async function assembleResumeGenerationInput(
         return {
           id: experience.id,
           category: experience.category,
-          description: experience.description,
+          problem: experience.problem,
+          actions: experience.actions,
+          outcome: experience.outcome,
         };
       }),
     };

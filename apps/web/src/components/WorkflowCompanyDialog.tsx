@@ -266,9 +266,9 @@ export function WorkflowCompanyDialog({
               ),
             },
             {
-              header: "Description",
-              className: "max-w-[320px] truncate text-muted",
-              cell: (row) => row.description,
+              header: "Problem",
+              className: "max-w-[240px] truncate text-muted",
+              cell: (row) => row.problem,
             },
           ]}
           renderDetailDialog={(row) => (

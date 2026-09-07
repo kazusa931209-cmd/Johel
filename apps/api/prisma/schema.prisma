@@ -149,7 +149,9 @@ model Experience {
   userId      String
   user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    String
-  description String
+  problem     String
+  actions     String
+  outcome     String
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   workflowCompanyExperiences WorkflowCompanyExperience[]

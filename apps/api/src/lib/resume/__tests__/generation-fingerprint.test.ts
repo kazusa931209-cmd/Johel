@@ -27,7 +27,9 @@ const baseInput = {
         {
           id: "experience-1",
           category: "Backend",
-          description: "Built APIs",
+          problem: "Slow API responses",
+          actions: "Built REST APIs with Node.js",
+          outcome: "",
         },
       ],
     },
@@ -60,7 +62,7 @@ describe("workflowContentFingerprintFromInput", () => {
           experiences: [
             {
               ...baseInput.companies[0].experiences[0],
-              description: "Built scalable APIs",
+              actions: "Built scalable REST APIs with Node.js",
             },
           ],
         },

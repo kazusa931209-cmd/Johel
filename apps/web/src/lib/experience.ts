@@ -1,12 +1,16 @@
 export type ExperienceDetail = {
   id: string;
   category: string;
-  description: string;
+  problem: string;
+  actions: string;
+  outcome: string;
   createdAt: string;
   updatedAt: string;
 };
 
 export type ExperienceWritePayload = {
   category: string;
-  description: string;
+  problem: string;
+  actions: string;
+  outcome: string;
 };

@@ -26,7 +26,9 @@ export type ResumeGenerationProfile = {
 export type ResumeGenerationExperience = {
   id: string;
   category: string;
-  description: string;
+  problem: string;
+  actions: string;
+  outcome: string;
 };
 
 export type ResumeGenerationCompany = {

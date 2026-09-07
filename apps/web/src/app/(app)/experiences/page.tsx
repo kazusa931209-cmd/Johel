@@ -85,7 +85,7 @@ export default function ExperiencesPage() {
           type="search"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
-          placeholder="Search category, description"
+          placeholder="Search category, problem, or actions"
           className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
         />
         <button
@@ -100,25 +100,26 @@ export default function ExperiencesPage() {
         />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[560px] text-left text-sm">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
               <th className="px-3 py-2 font-medium">Category</th>
-              <th className="px-3 py-2 font-medium">Description</th>
+              <th className="px-3 py-2 font-medium">Problem</th>
+              <th className="px-3 py-2 font-medium">Actions</th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-muted">
+                <td colSpan={5} className="px-3 py-8 text-center text-muted">
                   Loading…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-muted">
+                <td colSpan={5} className="px-3 py-8 text-center text-muted">
                   No experiences yet.
                 </td>
               </tr>
@@ -140,8 +141,11 @@ export default function ExperiencesPage() {
                     {(page - 1) * pageSize + index + 1}
                   </td>
                   <td className="px-3 py-2 font-medium">{row.category}</td>
-                  <td className="max-w-[320px] truncate px-3 py-2 text-muted">
-                    {row.description}
+                  <td className="max-w-[240px] truncate px-3 py-2 text-muted">
+                    {row.problem}
+                  </td>
+                  <td className="max-w-[240px] truncate px-3 py-2 text-muted">
+                    {row.actions}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"

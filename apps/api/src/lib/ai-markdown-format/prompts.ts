@@ -8,8 +8,12 @@ const KIND_LABELS: Record<MarkdownFormatKind, string> = {
     "What this company is (used when generating résumés from workflow data)",
   companyDomainAndStack:
     "Domain & stack (used when generating résumés from workflow data)",
-  experienceDescription:
-    "Experience description (used when generating résumés from workflow data)",
+  experienceProblem:
+    "Experience problem (used when generating résumés from workflow data)",
+  experienceActions:
+    "Experience actions (used when generating résumés from workflow data)",
+  experienceOutcome:
+    "Experience outcome (used when generating résumés from workflow data)",
 };
 
 const PROMPT_INSTRUCTION_KINDS = new Set<MarkdownFormatKind>([

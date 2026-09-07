@@ -15,9 +15,9 @@ const SHARED_RULES = `You are an AI assistant that recommends the best saved wor
 
 Rules:
 - Score every supplied workflow from 0 to 100 for fit against the job description and optional job analysis.
-- Each workflow includes a flat \`experiences\` array with full experience details (\`id\`, \`category\`, \`description\`).
+- Each workflow includes a flat \`experiences\` array with full experience details (\`id\`, \`category\`, \`problem\`, \`actions\`, \`outcome\`).
 - Each company entry lists \`experienceIds\` that reference entries in that workflow's \`experiences\` array by \`id\` (the same experience may appear under multiple companies).
-- Score using profile name, company periods, linked experience categories and descriptions, and language versus the target role.
+- Score using profile name, company periods, linked experience categories and problem/actions/outcome content, and language versus the target role.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
 - Include one match entry per supplied workflow id.
 

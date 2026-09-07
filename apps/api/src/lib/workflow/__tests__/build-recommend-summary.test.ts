@@ -35,7 +35,9 @@ describe("buildWorkflowRecommendSummary", () => {
                 experience: {
                   id: "exp-a",
                   category: "Backend",
-                  description: "Built APIs",
+                  problem: "Slow APIs",
+                  actions: "Built APIs",
+                  outcome: "",
                 },
               },
               {
@@ -43,7 +45,9 @@ describe("buildWorkflowRecommendSummary", () => {
                 experience: {
                   id: "exp-b",
                   category: "Leadership",
-                  description: "Led a team",
+                  problem: "Team coordination",
+                  actions: "Led a team",
+                  outcome: "",
                 },
               },
             ],
@@ -56,12 +60,16 @@ describe("buildWorkflowRecommendSummary", () => {
       {
         id: "exp-a",
         category: "Backend",
-        description: "Built APIs",
+        problem: "Slow APIs",
+        actions: "Built APIs",
+        outcome: "",
       },
       {
         id: "exp-b",
         category: "Leadership",
-        description: "Led a team",
+        problem: "Team coordination",
+        actions: "Led a team",
+        outcome: "",
       },
     ]);
     expect(result.companies).toEqual([
@@ -78,7 +86,9 @@ describe("buildWorkflowRecommendSummary", () => {
     const shared = {
       id: "exp-a",
       category: "Backend",
-      description: "Built APIs",
+      problem: "Slow APIs",
+      actions: "Built APIs",
+      outcome: "",
     };
 
     const result = buildWorkflowRecommendSummary(
@@ -101,7 +111,9 @@ describe("buildWorkflowRecommendSummary", () => {
                 experience: {
                   id: "exp-c",
                   category: "DevOps",
-                  description: "CI/CD pipelines",
+                  problem: "Manual deploys",
+                  actions: "CI/CD pipelines",
+                  outcome: "",
                 },
               },
             ],
@@ -128,7 +140,9 @@ describe("buildWorkflowListFingerprint", () => {
       {
         id: "exp-a",
         category: "Backend",
-        description: "Built APIs",
+        problem: "Slow APIs",
+        actions: "Built APIs",
+        outcome: "",
       },
     ],
     companies: [
@@ -141,7 +155,7 @@ describe("buildWorkflowListFingerprint", () => {
     ],
   };
 
-  it("changes when experience description changes", () => {
+  it("changes when experience actions change", () => {
     const before = buildWorkflowListFingerprint([baseSummary]);
     const after = buildWorkflowListFingerprint([
       {
@@ -149,7 +163,7 @@ describe("buildWorkflowListFingerprint", () => {
         experiences: [
           {
             ...baseSummary.experiences[0]!,
-            description: "Built REST APIs",
+            actions: "Built REST APIs",
           },
         ],
       },

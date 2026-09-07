@@ -13,7 +13,9 @@ export type WorkflowRecommendCompanyRow = {
     experience: {
       id: string;
       category: string;
-      description: string;
+      problem: string;
+      actions: string;
+      outcome: string;
     };
   }[];
 };
@@ -41,12 +43,12 @@ export function buildWorkflowRecommendSummary(
       const experienceIds: string[] = [];
 
       for (const link of entry.experiences) {
-        const { id, category, description } = link.experience;
+        const { id, category, problem, actions, outcome } = link.experience;
         experienceIds.push(id);
 
         if (!experienceIndex.has(id)) {
           experienceIndex.set(id, experiences.length);
-          experiences.push({ id, category, description });
+          experiences.push({ id, category, problem, actions, outcome });
         }
       }
 
