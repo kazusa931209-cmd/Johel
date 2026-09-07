@@ -152,7 +152,7 @@ aiAuthorAdviseRoutes.post("/", async (c) => {
     const message =
       err instanceof Error && err.message
         ? err.message
-        : "Quick PCE advisor failed. Please try again.";
+        : "Quick Experience advisor failed. Please try again.";
     return c.json({ error: message }, 502);
   }
 });
@@ -166,7 +166,7 @@ aiAuthorAdviseRoutes.post("/apply", async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = applySchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: "Invalid Quick PCE apply payload." }, 400);
+    return c.json({ error: "Invalid Quick Experience apply payload." }, 400);
   }
 
   try {
@@ -187,7 +187,7 @@ aiAuthorAdviseRoutes.post("/apply", async (c) => {
     const message =
       err instanceof Error && err.message
         ? err.message
-        : "Quick PCE apply failed. Please try again.";
+        : "Quick Experience apply failed. Please try again.";
 
     if (message.includes("Workspace changed")) {
       return c.json({ error: message }, 409);

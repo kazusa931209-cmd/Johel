@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Drawer } from "@/components/shared/drawer";
 import type { AuthorAdviseDraft, AuthorAdviseProposal } from "@/lib/api";
+import { loadSuggestionWhereLines } from "./quick-experience-suggestion-target";
 
 const PLACEMENT_LABELS: Record<AuthorAdviseProposal["placement"], string> = {
   create_experience: "Create experience",
@@ -34,7 +36,7 @@ function DraftField({ label, value, onChange, rows = 4 }: DraftFieldProps) {
   );
 }
 
-type QuickPceSuggestionDrawerProps = {
+type QuickExperienceSuggestionDrawerProps = {
   open: boolean;
   onClose: () => void;
   proposal: AuthorAdviseProposal | null;
@@ -44,7 +46,7 @@ type QuickPceSuggestionDrawerProps = {
   applying: boolean;
 };
 
-export function QuickPceSuggestionDrawer({
+export function QuickExperienceSuggestionDrawer({
   open,
   onClose,
   proposal,
@@ -52,7 +54,30 @@ export function QuickPceSuggestionDrawer({
   onDraftChange,
   onApply,
   applying,
-}: QuickPceSuggestionDrawerProps) {
+}: QuickExperienceSuggestionDrawerProps) {
+  const [whereLines, setWhereLines] = useState<string[]>([]);
+  const [whereLoading, setWhereLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || !proposal || proposal.placement === "need_more_facts") {
+      setWhereLines([]);
+      setWhereLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setWhereLoading(true);
+    void loadSuggestionWhereLines(proposal, draft).then((lines) => {
+      if (cancelled) return;
+      setWhereLines(lines);
+      setWhereLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, proposal, draft]);
+
   if (!proposal || !draft) {
     return null;
   }
@@ -102,6 +127,25 @@ export function QuickPceSuggestionDrawer({
               {PLACEMENT_LABELS[proposal.placement]}
             </p>
           </div>
+
+          {proposal.placement !== "need_more_facts" ? (
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                Where
+              </p>
+              {whereLoading ? (
+                <p className="mt-1 text-muted">Loading target…</p>
+              ) : whereLines.length > 0 ? (
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  {whereLines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-muted">—</p>
+              )}
+            </div>
+          ) : null}
 
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted">

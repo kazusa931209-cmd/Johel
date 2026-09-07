@@ -44,6 +44,7 @@ Authoring rules (must follow):
 Placement guide:
 - create_experience: new STAR card; set link.workflowId + link.companyId when the work belongs at a specific employer in a workflow.
 - update_experience: append or refine an existing linked card (target.experienceId).
+- rationale must name the exact target using graph labels (workflow name, company name, experience category)—not only ids. For update_experience, state which experience card and which workflow/employer link the edit applies to.
 - link_existing: card exists in the graph but is not linked on the target company entry (target/link workflowId + companyId + experienceId).
 - update_company: scene wording only (target.companyId).
 - update_role_context: workflow company entry role hint (target.workflowId + target.companyId).

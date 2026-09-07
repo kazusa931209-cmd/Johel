@@ -8,7 +8,7 @@ const GENERATE_TYPE_LABELS: Record<string, string> = {
   generate: "Generate",
   evaluate: "Evaluate",
   workflowRecommend: "Workflow Recommend",
-  authorAdvise: "Quick PCE",
+  authorAdvise: "Quick Experience",
   promptHelper: "Prompt Helper",
   markdownFormat: "Markdown Format",
 };

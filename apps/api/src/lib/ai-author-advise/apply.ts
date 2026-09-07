@@ -54,7 +54,7 @@ function resolveWorkflowId(
     drawerWorkflowId !== fromTarget
   ) {
     throw new Error(
-      "Proposal workflow does not match the selected workflow in Quick PCE.",
+      "Proposal workflow does not match the selected workflow in Quick Experience.",
     );
   }
 
@@ -64,7 +64,7 @@ function resolveWorkflowId(
     drawerWorkflowId !== fromLink
   ) {
     throw new Error(
-      "Proposal link workflow does not match the selected workflow in Quick PCE.",
+      "Proposal link workflow does not match the selected workflow in Quick Experience.",
     );
   }
 
@@ -156,7 +156,7 @@ export async function applyAuthorAdviseProposal(
   );
   if (currentFingerprint !== input.workspaceFingerprint) {
     throw new Error(
-      "Workspace changed since the suggestion was created. Run Quick PCE again.",
+      "Workspace changed since the suggestion was created. Run Quick Experience again.",
     );
   }
 

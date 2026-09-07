@@ -281,6 +281,6 @@ Bad split:
 - A “Startup Experience” card whose Actions say “use when the JD asks for startup”, linked to ScalyX and AllWeb3.
 - NestJS and Go twins both linked under AllWeb3 in the same workflow.
 
-## Quick PCE
+## Quick Experience
 
-When facts are missing or misplaced, use **Quick PCE** (plus FAB) instead of editing Verdict / Generate / Evaluate prompts. The advisor places content on **Company** (scene), **Experience** (STAR), or **Workflow** links/description per the rules above. Optional workflow selection scopes the graph to one preset; with no selection, all workflows are included.
+When facts are missing or misplaced, use **Quick Experience** (plus FAB) instead of editing Verdict / Generate / Evaluate prompts. The advisor places content on **Company** (scene), **Experience** (STAR), or **Workflow** links/description per the rules above. Optional workflow selection scopes the graph to one preset; with no selection, all workflows are included.

@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { AiUsageHistory } from "@/components/app/AiUsageHistory";
-import { QuickPceDrawer } from "@/components/app/QuickPce";
+import { QuickExperienceDrawer } from "@/components/app/QuickExperience";
 import { STUDIO_FAB_CLASS, STUDIO_FAB_CLUSTER_CLASS } from "@/components/app/studio-fab";
 import { HistoryIcon, PlusIcon } from "@/components/shared/icons";
 
-type ActivePanel = "none" | "history" | "quickPce";
+type ActivePanel = "none" | "history" | "quickExperience";
 
 export function StudioBottomFabCluster() {
   const [active, setActive] = useState<ActivePanel>("none");
@@ -17,11 +17,13 @@ export function StudioBottomFabCluster() {
     setActive((current) => (current === "history" ? "none" : "history"));
   }
 
-  function openQuickPce() {
-    setActive((current) => (current === "quickPce" ? "none" : "quickPce"));
+  function openQuickExperience() {
+    setActive((current) =>
+      current === "quickExperience" ? "none" : "quickExperience",
+    );
   }
 
-  function closeQuickPce() {
+  function closeQuickExperience() {
     setSuggestionOpen(false);
     setActive("none");
   }
@@ -31,9 +33,9 @@ export function StudioBottomFabCluster() {
       <div className={STUDIO_FAB_CLUSTER_CLASS}>
         <button
           type="button"
-          aria-label="Quick PCE"
+          aria-label="Quick Experience"
           className={STUDIO_FAB_CLASS}
-          onClick={openQuickPce}
+          onClick={openQuickExperience}
         >
           <PlusIcon className="h-6 w-6" />
         </button>
@@ -53,9 +55,9 @@ export function StudioBottomFabCluster() {
         showFab={false}
       />
 
-      <QuickPceDrawer
-        open={active === "quickPce"}
-        onClose={closeQuickPce}
+      <QuickExperienceDrawer
+        open={active === "quickExperience"}
+        onClose={closeQuickExperience}
         suggestionOpen={suggestionOpen}
         onSuggestionOpenChange={setSuggestionOpen}
       />

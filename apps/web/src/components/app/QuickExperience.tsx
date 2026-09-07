@@ -21,7 +21,7 @@ import {
   type Workflow,
 } from "@/lib/api";
 import { dispatchWorkspaceUpdated } from "@/lib/workspace-updated";
-import { QuickPceSuggestionDrawer } from "./QuickPceSuggestionDrawer";
+import { QuickExperienceSuggestionDrawer } from "./QuickExperienceSuggestionDrawer";
 import { STUDIO_FAB_CLASS } from "@/components/app/studio-fab";
 import { PlusIcon } from "@/components/shared/icons";
 
@@ -29,7 +29,7 @@ const FACTS_MAX = 10_000;
 const FACTS_PLACEHOLDER =
   "e.g: Microservices are missing. I split the payment pipeline into services and workers at the Company and connected them with APIs.";
 
-type QuickPceDrawerProps = {
+type QuickExperienceDrawerProps = {
   open: boolean;
   onClose: () => void;
   suggestionOpen: boolean;
@@ -40,12 +40,12 @@ function formatWorkflowDate(iso: string) {
   return new Date(iso).toLocaleString();
 }
 
-function QuickPceDrawer({
+function QuickExperienceDrawer({
   open,
   onClose,
   suggestionOpen,
   onSuggestionOpenChange,
-}: QuickPceDrawerProps) {
+}: QuickExperienceDrawerProps) {
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
   const [selection, setSelection] = useState<WorkflowSelection>(
@@ -100,7 +100,7 @@ function QuickPceDrawer({
     setAdvising(false);
 
     if (res.error || !res.data) {
-      toast(res.error ?? "Quick PCE advisor failed.", "error");
+      toast(res.error ?? "Quick Experience advisor failed.", "error");
       return;
     }
 
@@ -157,7 +157,7 @@ function QuickPceDrawer({
   return (
     <>
       <Drawer
-        title="Quick PCE"
+        title="Quick Experience"
         open={open}
         onClose={handleClose}
         zIndex={50}
@@ -237,7 +237,7 @@ function QuickPceDrawer({
                   setUserFacts(event.target.value);
                   if (factsError) setFactsError(undefined);
                 }}
-                rows={6}
+                rows={16}
                 maxLength={FACTS_MAX}
                 placeholder={FACTS_PLACEHOLDER}
                 aria-invalid={Boolean(factsError)}
@@ -273,7 +273,7 @@ function QuickPceDrawer({
         </div>
       </Drawer>
 
-      <QuickPceSuggestionDrawer
+      <QuickExperienceSuggestionDrawer
         open={suggestionOpen}
         onClose={() => onSuggestionOpenChange(false)}
         proposal={proposal}
@@ -285,7 +285,7 @@ function QuickPceDrawer({
 
       {advising ? (
         <BusyOverlay
-          title="Quick PCE"
+          title="Quick Experience"
           description="Finding where to record your facts in the workspace…"
         />
       ) : null}
@@ -293,17 +293,17 @@ function QuickPceDrawer({
   );
 }
 
-type QuickPceProps = {
+type QuickExperienceProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   showFab?: boolean;
 };
 
-export function QuickPce({
+export function QuickExperience({
   open,
   onOpenChange,
   showFab = true,
-}: QuickPceProps) {
+}: QuickExperienceProps) {
   const [suggestionOpen, setSuggestionOpen] = useState(false);
 
   function closeAll() {
@@ -316,7 +316,7 @@ export function QuickPce({
       {showFab ? (
         <button
           type="button"
-          aria-label="Quick PCE"
+          aria-label="Quick Experience"
           className={STUDIO_FAB_CLASS}
           onClick={() => onOpenChange(!open)}
         >
@@ -324,7 +324,7 @@ export function QuickPce({
         </button>
       ) : null}
 
-      <QuickPceDrawer
+      <QuickExperienceDrawer
         open={open}
         onClose={closeAll}
         suggestionOpen={suggestionOpen}
@@ -334,4 +334,4 @@ export function QuickPce({
   );
 }
 
-export { QuickPceDrawer };
+export { QuickExperienceDrawer };
