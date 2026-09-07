@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiUsageProvider, useAiUsage } from "@/components/app/AiUsageProvider";
-import { AiUsageHistory } from "@/components/app/AiUsageHistory";
+import { StudioBottomFabCluster } from "@/components/app/StudioBottomFabCluster";
 import { StudioHeader } from "@/components/app/StudioHeader";
 import { StudioSidebar } from "@/components/app/StudioSidebar";
 import { getMe, type User } from "@/lib/api";
@@ -43,7 +43,7 @@ function AppShell({
         <StudioSidebar open={sidebarOpen} />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
       </div>
-      <AiUsageHistory />
+      <StudioBottomFabCluster />
     </div>
   );
 }

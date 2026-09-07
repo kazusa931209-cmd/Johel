@@ -127,3 +127,17 @@ export async function runOpenAiMarkdownFormatResponse(
 ): Promise<OpenAiTextResponse> {
   return runOpenAiSolResponse(apiKey, instructions, input);
 }
+
+export async function runOpenAiAuthorAdviseResponse(
+  apiKey: string,
+  instructions: string,
+  input: string,
+): Promise<OpenAiTextResponse> {
+  return createTextResponse(apiKey, {
+    model: OPENAI_VERDICT_MODEL,
+    instructions,
+    input,
+    reasoningEffort: "low",
+    jsonOutput: true,
+  });
+}

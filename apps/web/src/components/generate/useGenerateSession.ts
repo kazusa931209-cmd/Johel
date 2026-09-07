@@ -13,6 +13,10 @@ import {
   loadGenerateSession,
   saveGenerateSession,
 } from "@/lib/generate-session";
+import {
+  WORKSPACE_UPDATED_EVENT,
+  type WorkspaceUpdatedDetail,
+} from "@/lib/workspace-updated";
 
 function withoutResume(session: GenerateSession): GenerateSession {
   return {
@@ -68,6 +72,33 @@ export function useGenerateSession() {
     if (!ready || !userId) return;
     saveGenerateSession(userId, session);
   }, [ready, session, userId]);
+
+  useEffect(() => {
+    function onWorkspaceUpdated(event: Event) {
+      const detail = (event as CustomEvent<WorkspaceUpdatedDetail>).detail;
+      setSession((current) => {
+        if (!current.resume && !current.evaluationMarkdown) {
+          return current;
+        }
+        const sessionWorkflowId = current.workflow.workflowId;
+        if (!sessionWorkflowId) {
+          return withoutResume(current);
+        }
+        if (
+          detail.workflowId === sessionWorkflowId ||
+          detail.workflowId == null
+        ) {
+          return withoutResume(current);
+        }
+        return current;
+      });
+    }
+
+    window.addEventListener(WORKSPACE_UPDATED_EVENT, onWorkspaceUpdated);
+    return () => {
+      window.removeEventListener(WORKSPACE_UPDATED_EVENT, onWorkspaceUpdated);
+    };
+  }, []);
 
   const setActiveStep = useCallback((activeStep: GenerateStep) => {
     setSession((current) => ({ ...current, activeStep }));

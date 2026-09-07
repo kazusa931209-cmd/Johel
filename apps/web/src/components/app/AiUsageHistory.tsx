@@ -19,9 +19,13 @@ import {
   type AiUsageListItem,
 } from "@/lib/api";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { STUDIO_FAB_CLASS } from "@/components/app/studio-fab";
 
-const fabClass =
-  "fixed bottom-8 right-12 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-surface shadow-lg transition-colors hover:bg-surface-muted";
+type AiUsageHistoryProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showFab?: boolean;
+};
 
 type AiUsageDetailTab = "input" | "output";
 
@@ -260,9 +264,15 @@ function AiUsageHistoryDrawer({
   );
 }
 
-export function AiUsageHistory() {
+export function AiUsageHistory({
+  open: controlledOpen,
+  onOpenChange,
+  showFab = true,
+}: AiUsageHistoryProps = {}) {
   const { toast } = useToast();
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const historyOpen = controlledOpen ?? internalOpen;
+  const setHistoryOpen = onOpenChange ?? setInternalOpen;
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<AiUsageListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -331,14 +341,16 @@ export function AiUsageHistory() {
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="AI usage history"
-        className={fabClass}
-        onClick={openHistory}
-      >
-        <HistoryIcon className="h-6 w-6" />
-      </button>
+      {showFab ? (
+        <button
+          type="button"
+          aria-label="AI usage history"
+          className={STUDIO_FAB_CLASS}
+          onClick={openHistory}
+        >
+          <HistoryIcon className="h-6 w-6" />
+        </button>
+      ) : null}
 
       <AiUsageHistoryDrawer
         open={historyOpen}

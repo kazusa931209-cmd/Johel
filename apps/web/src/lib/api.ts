@@ -484,6 +484,85 @@ export function runAiWorkflowRecommend(payload: AiWorkflowRecommendRequest) {
   });
 }
 
+export type AuthorAdvisePlacement =
+  | "create_experience"
+  | "update_experience"
+  | "link_existing"
+  | "update_company"
+  | "update_role_context"
+  | "update_workflow_description"
+  | "need_more_facts";
+
+export type AuthorAdviseDraft = {
+  category: string | null;
+  problem: string | null;
+  actions: string | null;
+  outcome: string | null;
+  whatCompanyIs: string | null;
+  domainAndStack: string | null;
+  roleContext: string | null;
+  workflowDescription: string | null;
+};
+
+export type AuthorAdviseProposal = {
+  placement: AuthorAdvisePlacement;
+  rationale: string;
+  questions: string[];
+  target: {
+    workflowId: string | null;
+    experienceId: string | null;
+    companyId: string | null;
+  };
+  draft: AuthorAdviseDraft;
+  link: {
+    workflowId: string | null;
+    companyId: string | null;
+    experienceId: string | null;
+  };
+  warnings: string[];
+};
+
+export type AuthorAdviseRequest = {
+  workflowId?: string;
+  userFacts: string;
+};
+
+export type AuthorAdviseResult = {
+  proposal: AuthorAdviseProposal;
+  workspaceFingerprint: string;
+  usage: AiVerdictUsage;
+  tokenUsed: number;
+};
+
+export type AuthorAdviseApplyRequest = {
+  workflowId?: string;
+  workspaceFingerprint: string;
+  proposal: AuthorAdviseProposal;
+  draft?: Partial<AuthorAdviseDraft>;
+};
+
+export type AuthorAdviseApplyResult = {
+  ok: boolean;
+  appliedWorkflowId: string | null;
+  warnings: string[];
+};
+
+export function runAuthorAdvise(payload: AuthorAdviseRequest) {
+  return request<AuthorAdviseResult>("/ai-author-advise", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export function applyAuthorAdvise(payload: AuthorAdviseApplyRequest) {
+  return request<AuthorAdviseApplyResult>("/ai-author-advise/apply", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
 export function getAiUsageSummary() {
   return request<AiUsageSummary>("/ai-usage/summary");
 }

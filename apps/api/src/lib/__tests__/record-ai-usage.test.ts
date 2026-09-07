@@ -25,6 +25,9 @@ describe("resolveAiModelName", () => {
     expect(resolveAiModelName("openai", "workflowRecommend")).toBe(
       OPENAI_VERDICT_MODEL,
     );
+    expect(resolveAiModelName("openai", "authorAdvise")).toBe(
+      OPENAI_VERDICT_MODEL,
+    );
     expect(resolveAiModelName("openai", "markdownFormat")).toBe(
       OPENAI_FORMAT_MODEL,
     );
