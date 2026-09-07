@@ -101,14 +101,12 @@ export default function ProfilesPage() {
         />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[960px] text-left text-sm">
+        <table className="w-full min-w-120 text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
               <th className="px-3 py-2 font-medium">Full Name</th>
               <th className="px-3 py-2 font-medium">Birth date</th>
-              <th className="px-3 py-2 font-medium">Email</th>
-              <th className="px-3 py-2 font-medium">PN</th>
               <th className="px-3 py-2 font-medium">Links</th>
               <th className="px-3 py-2 font-medium">Residence</th>
               <th className="px-3 py-2 font-medium">Education</th>
@@ -151,19 +149,13 @@ export default function ProfilesPage() {
                   <td className="whitespace-nowrap px-3 py-2 text-muted">
                     {row.birthDate ?? ""}
                   </td>
-                  <td className="max-w-[180px] truncate px-3 py-2 text-muted">
-                    {row.email ?? ""}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-muted">
-                    {row.pn ?? ""}
-                  </td>
-                  <td className="max-w-[180px] truncate px-3 py-2 text-muted">
+                  <td className="max-w-30 truncate px-3 py-2 text-muted">
                     {formatLinksCell(row.links)}
                   </td>
-                  <td className="max-w-[140px] truncate px-3 py-2 text-muted">
+                  <td className="max-w-10 truncate px-3 py-2 text-muted">
                     {row.residence ?? ""}
                   </td>
-                  <td className="max-w-[160px] truncate px-3 py-2 text-muted">
+                  <td className="max-w-20 truncate px-3 py-2 text-muted">
                     {row.education ?? ""}
                   </td>
                   <td

@@ -100,7 +100,7 @@ export default function ExperiencesPage() {
         />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full min-w-60 text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
@@ -142,13 +142,13 @@ export default function ExperiencesPage() {
                     {(page - 1) * pageSize + index + 1}
                   </td>
                   <td className="px-3 py-2 font-medium">{row.category}</td>
-                  <td className="max-w-[240px] truncate px-3 py-2 text-muted">
+                  <td className="max-w-40 truncate px-3 py-2 text-muted">
                     {row.problem}
                   </td>
-                  <td className="max-w-[240px] truncate px-3 py-2 text-muted">
+                  <td className="max-w-40 truncate px-3 py-2 text-muted">
                     {row.actions}
                   </td>
-                  <td className="max-w-[240px] truncate px-3 py-2 text-muted">
+                  <td className="max-w-40 truncate px-3 py-2 text-muted">
                     {row.outcome}
                   </td>
                   <td

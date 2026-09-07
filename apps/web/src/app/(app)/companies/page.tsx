@@ -100,7 +100,7 @@ export default function CompaniesPage() {
         />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[960px] text-left text-sm">
+        <table className="w-full min-w-120 text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
