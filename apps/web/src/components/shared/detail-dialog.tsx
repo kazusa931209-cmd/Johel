@@ -11,6 +11,7 @@ type DetailDialogProps = {
   closeDisabled?: boolean;
   dismissOnBackdrop?: boolean;
   onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
+  panelClassName?: string;
 };
 
 export function DetailDialog({
@@ -21,6 +22,7 @@ export function DetailDialog({
   closeDisabled = false,
   dismissOnBackdrop = true,
   onKeyDown,
+  panelClassName,
 }: DetailDialogProps) {
   function requestClose() {
     if (closeDisabled) return;
@@ -37,7 +39,10 @@ export function DetailDialog({
         role={role}
         aria-modal="true"
         aria-label={title}
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface p-4 shadow-lg"
+        className={[
+          "max-h-[85vh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-4 shadow-lg",
+          panelClassName ?? "max-w-lg",
+        ].join(" ")}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
       >

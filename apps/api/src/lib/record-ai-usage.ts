@@ -11,7 +11,6 @@ export const AI_GENERATE_TYPES = [
   "generate",
   "evaluate",
   "workflowRecommend",
-  "promptHelper",
   "markdownFormat",
 ] as const;
 
@@ -36,7 +35,7 @@ export function resolveAiModelName(
   if (generateType === "generate") {
     return OPENAI_RESUME_MODEL;
   }
-  if (generateType === "markdownFormat" || generateType === "promptHelper") {
+  if (generateType === "markdownFormat") {
     return OPENAI_FORMAT_MODEL;
   }
   return OPENAI_VERDICT_MODEL;

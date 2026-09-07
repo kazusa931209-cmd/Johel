@@ -4,9 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { BackButton } from "@/components/shared/back-button";
-import { AddButton } from "@/components/shared/action-icon-buttons";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
-import { PromptHelperDialog } from "@/components/PromptHelperDialog";
 import { useToast } from "@/components/app/ToastProvider";
 import {
   createCompany,
@@ -52,7 +50,6 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
   const [storedDescription] = useState(initial?.description ?? "");
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [helperOpen, setHelperOpen] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -128,16 +125,10 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
       </label>
 
       <label className="block space-y-1 text-sm">
-        <div className="flex items-center justify-between gap-2">
-          <span>
-            Description
-            <RequiredMark />
-          </span>
-          <AddButton
-            label="Add to Description"
-            onClick={() => setHelperOpen(true)}
-          />
-        </div>
+        <span>
+          Description
+          <RequiredMark />
+        </span>
         <textarea
           value={description}
           onChange={(e) => {
@@ -172,16 +163,6 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
-
-      {helperOpen ? (
-        <PromptHelperDialog
-          kind="companyDescription"
-          fieldLabel="Description"
-          currentText={description}
-          onClose={() => setHelperOpen(false)}
-          onSuccess={setDescription}
-        />
-      ) : null}
 
       {converting ? (
         <BusyOverlay

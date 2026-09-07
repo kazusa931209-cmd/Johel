@@ -144,7 +144,6 @@ Aligned with the product flow above:
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole company
   * Editor fields: company name (required), description (required)
-  * Description has an **Add** (plus) control beside the label; it opens the Prompt Helper dialog (required text, max **150** characters); **Create** generates exactly one sentence from the user's request only, appended locally under a `## New` heading; page **Save** persists the company
   * Description shows a notice that contents will be automatically converted to markdown format on **Save**; when the description changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged descriptions skip conversion; fullscreen loading while conversion runs; the detail dialog renders Description as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
@@ -156,7 +155,6 @@ Aligned with the product flow above:
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience
   * Editor fields: category (required; free-text), description (required)
-  * Description has an **Add** (plus) control beside the label; it opens the Prompt Helper dialog (required text, max **150** characters); **Create** generates exactly one sentence from the user's request only, appended locally under a `## New` heading; page **Save** persists the experience
   * Description shows a notice that contents will be automatically converted to markdown format on **Save**; when the description changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged descriptions skip conversion; fullscreen loading while conversion runs; the detail dialog renders Description as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
@@ -177,12 +175,11 @@ Aligned with the product flow above:
 * **Prompts** (`/prompts`)
   * Page content is centered in a readable column
   * One signed-in user maintains a **Verdict Prompt**, a **Generate Prompt**, and an **Evaluate Prompt**
-  * Editor fields: Verdict Prompt (required), Generate Prompt (required), Evaluate Prompt (required)
-  * Each prompt field has an **Add** (plus) control beside the label; it opens a dialog with a required textbox (max **150** characters) and a **Create** action
-  * **Create** calls the AI to produce exactly **one** concise, simple sentence from the user's request only (not from existing field text); on success the sentence is appended locally under a `## New` heading (the page **Save** still persists all prompts)
+  * Editor fields: Verdict Prompt (required), Generate Prompt (required), Evaluate Prompt (required); each is shown as a read-only Markdown preview (`AiVerdictMarkdown`); empty prompts show a muted placeholder
+  * Each prompt field has an **Edit** (pencil) control beside the label; **Edit** opens a dialog with a textarea and **Apply** (local until page **Save**)
   * Each prompt field shows a notice that contents will be automatically converted to markdown format on **Save**; when a prompt changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged prompts skip conversion; changed fields convert in parallel; fullscreen loading while conversion runs; saved textareas refresh with the converted markdown
-  * **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast); empty helper text shows an inline error on **Create** (not a toast)
-  * Save and load via the API; toast on API success or failure (including the prompt helper)
+  * **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
+  * Save and load via the API; toast on API success or failure
   * The Verdict Prompt is used when checking Job Descriptions; the Generate Prompt is used when generating résumés; the Evaluate Prompt is used when evaluating résumés (none run on this page)
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Workflow and saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to those pages
@@ -285,6 +282,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-07):** `oneTimePrompt` in Generate session; Workflow step UI; `POST /ai-resume` optional body field; cache key includes one-time text. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-37-one-time-prompt.md`](./plans/2026-09-07-phase-37-one-time-prompt.md).
 * [x] **Phase 38 — Auto markdown format on save** — On **Save**, convert Verdict / Generate / Evaluate prompts and Company / Experience descriptions to markdown via the user's AI Agent; skip conversion when the field is unchanged since last save; show a notice that contents are auto-converted; fullscreen loading when conversion runs; detail dialogs render descriptions as Markdown.
   * **Outcome (2026-09-07):** `ai-markdown-format` module, `formatMarkdownOnSave` on write routes, `markdownFormat` usage type, web hints and `BusyOverlay`, markdown in detail dialogs. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-38-auto-markdown-format.md`](./plans/2026-09-07-phase-38-auto-markdown-format.md).
+* [x] **Phase 39 — Remove Prompt Helper** — Remove the Phase 34 one-sentence Add feature (API, UI Add buttons, helper dialog, client helpers). Prompts **Edit** preview + page **Save** and auto-markdown-on-save remain unchanged.
+  * **Outcome (2026-09-07):** Removed `POST /ai-prompt-helper`, `PromptHelperDialog`, Add buttons on `/prompts` and company/experience editors, and `promptHelper` from active `generateType` values; historical `promptHelper` usage rows still display in AI Usage History. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-39-remove-prompt-helper.md`](./plans/2026-09-07-phase-39-remove-prompt-helper.md).
 
 ## Cursor Rules (Documentation Governance)
 

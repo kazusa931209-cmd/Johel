@@ -3,10 +3,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { PromptHelperDialog } from "@/components/PromptHelperDialog";
-import { AddButton } from "@/components/shared/action-icon-buttons";
+import { PromptEditDialog } from "@/components/PromptEditDialog";
+import { EditButton } from "@/components/shared/action-icon-buttons";
+import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
-import { getPrompts, savePrompts, type PromptHelperKind } from "@/lib/api";
+import { getPrompts, savePrompts } from "@/lib/api";
 import {
   AUTO_MARKDOWN_FORMAT_HINT,
   needsMarkdownFormatOnSave,
@@ -36,27 +37,26 @@ type FieldErrors = {
   evaluatePrompt?: string;
 };
 
+type PromptStateKey = keyof FieldErrors;
+
 const PROMPT_FIELDS = [
   {
-    kind: "verdict" as const,
     label: "Verdict Prompt",
-    addLabel: "Add to Verdict Prompt",
+    editLabel: "Edit Verdict Prompt",
     placeholder: VERDICT_PROMPT_PLACEHOLDER,
     rows: 12,
     stateKey: "verdictPrompt" as const,
   },
   {
-    kind: "generate" as const,
     label: "Generate Prompt",
-    addLabel: "Add to Generate Prompt",
+    editLabel: "Edit Generate Prompt",
     placeholder: GENERATE_PROMPT_PLACEHOLDER,
     rows: 48,
     stateKey: "generatePrompt" as const,
   },
   {
-    kind: "evaluate" as const,
     label: "Evaluate Prompt",
-    addLabel: "Add to Evaluate Prompt",
+    editLabel: "Edit Evaluate Prompt",
     placeholder: EVALUATE_PROMPT_PLACEHOLDER,
     rows: 16,
     stateKey: "evaluatePrompt" as const,
@@ -75,7 +75,7 @@ export default function PromptsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [helperKind, setHelperKind] = useState<PromptHelperKind | null>(null);
+  const [editingField, setEditingField] = useState<PromptStateKey | null>(null);
 
   const promptValues = {
     verdictPrompt,
@@ -148,7 +148,9 @@ export default function PromptsPage() {
     toast("Prompts saved.", "success");
   }
 
-  const activeHelper = PROMPT_FIELDS.find((field) => field.kind === helperKind);
+  const activeEdit = PROMPT_FIELDS.find(
+    (field) => field.stateKey === editingField,
+  );
 
   const converting =
     saving &&
@@ -171,41 +173,35 @@ export default function PromptsPage() {
         className="space-y-4 rounded-lg border border-border bg-surface p-4"
       >
         {PROMPT_FIELDS.map((field) => (
-          <label key={field.kind} className="block space-y-1 text-sm">
+          <div key={field.stateKey} className="block space-y-1 text-sm">
             <div className="flex items-center justify-between gap-2">
               <span>
                 {field.label}
                 <RequiredMark />
               </span>
-              <AddButton
-                label={field.addLabel}
+              <EditButton
+                label={field.editLabel}
                 disabled={loading}
-                onClick={() => setHelperKind(field.kind)}
+                onClick={() => setEditingField(field.stateKey)}
               />
             </div>
             {loading ? (
               <p className="text-muted">Loading…</p>
             ) : (
-              <textarea
-                value={promptValues[field.stateKey]}
-                onChange={(e) => {
-                  promptSetters[field.stateKey](e.target.value);
-                  if (fieldErrors[field.stateKey]) {
-                    setFieldErrors((errors) => ({
-                      ...errors,
-                      [field.stateKey]: undefined,
-                    }));
-                  }
-                }}
-                placeholder={field.placeholder}
-                rows={field.rows}
+              <div
+                className="min-h-16 rounded-md border border-border bg-background px-3 py-2"
                 aria-invalid={Boolean(fieldErrors[field.stateKey])}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
-              />
+              >
+                {promptValues[field.stateKey].trim() ? (
+                  <AiVerdictMarkdown markdown={promptValues[field.stateKey]} />
+                ) : (
+                  <p className="text-muted">{field.placeholder}</p>
+                )}
+              </div>
             )}
             <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
             <FieldError message={fieldErrors[field.stateKey]} />
-          </label>
+          </div>
         ))}
 
         <button
@@ -216,14 +212,19 @@ export default function PromptsPage() {
         </button>
       </form>
 
-      {activeHelper ? (
-        <PromptHelperDialog
-          kind={activeHelper.kind}
-          fieldLabel={activeHelper.label}
-          currentText={promptValues[activeHelper.stateKey]}
-          onClose={() => setHelperKind(null)}
-          onSuccess={(nextPrompt) => {
-            promptSetters[activeHelper.stateKey](nextPrompt);
+      {activeEdit ? (
+        <PromptEditDialog
+          title={`Edit ${activeEdit.label}`}
+          value={promptValues[activeEdit.stateKey]}
+          rows={activeEdit.rows}
+          placeholder={activeEdit.placeholder}
+          onClose={() => setEditingField(null)}
+          onApply={(nextValue) => {
+            promptSetters[activeEdit.stateKey](nextValue);
+            setFieldErrors((errors) => ({
+              ...errors,
+              [activeEdit.stateKey]: undefined,
+            }));
           }}
         />
       ) : null}

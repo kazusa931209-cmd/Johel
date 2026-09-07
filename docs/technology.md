@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-prompt-helper`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
@@ -185,27 +185,21 @@ User browser (:4041)
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - `GET /ai-usage?page=` — owner-only paginated list; page size **100**; `orderBy: { createdAt: "desc" }`; returns `{ items, total, page, pageSize }` where each item has `id`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `createdAt` (omits `input` / `output`)
 - `GET /ai-usage/:id` — owner-only detail including `input` and `output`; 404 when missing or not owned
-- Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): `generateType` is `verdict`, `generate`, `evaluate`, `workflowRecommend`, `promptHelper`, or `markdownFormat`; `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/evaluate/workflow-recommend, `gpt-5.6-sol` for OpenAI prompt-helper/markdown-format, `gpt-5.6-terra` for OpenAI resume generation
+- Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): active `generateType` values are `verdict`, `generate`, `evaluate`, `workflowRecommend`, and `markdownFormat`; historical rows may still have `promptHelper` (label **Prompt Helper** in AI Usage History); `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/evaluate/workflow-recommend, `gpt-5.6-sol` for OpenAI markdown-format, `gpt-5.6-terra` for OpenAI resume generation
 - Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-luna`, reasoning `low`)
 - Markdown output sections (in order): `## Verdict` (each user question as `###` heading + answer paragraph or sub-bullet list), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
 - Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography` theme tokens); `AiUsageProvider` refreshes header total after success
 - **Note:** Phase 13 introduced this as `POST /ai-filter`; Phase 19 renamed to `ai-verdict` and wired into Generate Job **Next**
 
-## Prompts settings (Phase 18, 23, 34)
+## Prompts settings (Phase 18, 23, 34, 39)
 
 - `GET /prompts` → `{ verdictPrompt: string, generatePrompt: string, evaluatePrompt: string }` — empty strings when no row yet (owner only)
 - `PUT /prompts` → body `{ verdictPrompt, generatePrompt, evaluatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; on write, each changed prompt is converted to markdown via AI in parallel (unchanged prompts skip conversion); requires Settings provider/apiKey when any conversion runs; returns all three prompts
-- Web route `/prompts`: Verdict Prompt, Generate Prompt, and Evaluate Prompt textareas; each field has an **Add** (plus) control beside the label that opens `PromptHelperDialog` (required helper text, max **150** chars, **Create** generates exactly one sentence, footer action, Close X top-right); **Create** calls `POST /ai-prompt-helper` and appends the returned sentence locally under `## New` via `appendPromptHelperText` in `apps/web/src/lib/prompts.ts`; each field shows a notice that contents are auto-converted to markdown on **Save**; fullscreen `BusyOverlay` when conversion runs; page **Save** still persists all three prompts; Save always enabled; inline validation on submit; toast on API result (including helper); refreshes header Token Used after save
-- Company and Experience editor forms (`CompanyForm`, `ExperienceForm`): Description field uses the same `PromptHelperDialog` with `kind` `companyDescription` or `experienceDescription`; append is local until form **Save**; each Description shows the auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialogs render Description with `AiVerdictMarkdown`
+- Web route `/prompts`: Verdict Prompt, Generate Prompt, and Evaluate Prompt shown as read-only `AiVerdictMarkdown` previews (muted placeholder when empty); each field has **Edit** (pencil) beside the label; **Edit** opens `PromptEditDialog` (textarea + **Apply**, local until page **Save**); each field shows a notice that contents are auto-converted to markdown on **Save**; fullscreen `BusyOverlay` when conversion runs; page **Save** still persists all three prompts; Save always enabled; inline validation on submit; toast on API result; refreshes header Token Used after save
+- Company and Experience editor forms (`CompanyForm`, `ExperienceForm`): Description textarea; each Description shows the auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialogs render Description with `AiVerdictMarkdown`
 - Legacy web route `/verdict` redirects to `/prompts`
-- Client: `getPrompts`, `savePrompts`, `runAiPromptHelper` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
+- Client: `getPrompts`, `savePrompts` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
 - Verdict Prompt consumed by `POST /ai-verdict`; Generate Prompt consumed by `POST /ai-resume`; Evaluate Prompt consumed by `POST /ai-evaluate`
-
-## AI Prompt Helper (Phase 34)
-
-- `POST /ai-prompt-helper` — body `{ kind: "verdict" | "generate" | "evaluate" | "companyDescription" | "experienceDescription", request: string }`; `request` trim, min 1, max **150**; requires saved Settings provider/apiKey (saved prompts not required); returns `{ sentence, usage, tokenUsed }`
-- Module: `apps/api/src/lib/ai-prompt-helper/` — const system prompt outputs exactly one concise sentence from the user's request only (does not receive existing field text); strips accidental `## New` heading from model output; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiSolResponse` (`gpt-5.6-sol`, reasoning `low`); usage stored as `generateType: "promptHelper"`
-- Independent of Settings Process flags (applies only on the Prompts / company / experience helper dialogs)
 
 ## AI Markdown Format (Phase 38)
 

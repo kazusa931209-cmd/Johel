@@ -28,8 +28,5 @@ describe("resolveAiModelName", () => {
     expect(resolveAiModelName("openai", "markdownFormat")).toBe(
       OPENAI_FORMAT_MODEL,
     );
-    expect(resolveAiModelName("openai", "promptHelper")).toBe(
-      OPENAI_FORMAT_MODEL,
-    );
   });
 });
