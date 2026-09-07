@@ -8,14 +8,20 @@ export const WORKFLOW_LANGUAGES = [
 
 export type WorkflowLanguage = (typeof WORKFLOW_LANGUAGES)[number]["value"];
 
+export type WorkflowCompanyEntry = {
+  companyId: string;
+  startDate: string;
+  endDate: string;
+  experienceIds: string[];
+};
+
 export type WorkflowDetail = {
   id: string;
   name: string;
   description: string | null;
   language: WorkflowLanguage | string;
   profileId: string;
-  companyIds: string[];
-  experienceIds: string[];
+  companies: WorkflowCompanyEntry[];
   createdAt: string;
   updatedAt: string;
 };
@@ -25,6 +31,40 @@ export type WorkflowWritePayload = {
   description?: string | null;
   language: WorkflowLanguage;
   profileId: string;
-  companyIds: string[];
-  experienceIds: string[];
+  companies: WorkflowCompanyEntry[];
 };
+
+export type WorkflowEditorFieldErrors = {
+  profileId?: string;
+  companies?: string;
+};
+
+export function formatWorkflowPeriod(startDate: string, endDate: string): string {
+  return `${startDate.trim()} – ${endDate.trim()}`;
+}
+
+export function validateWorkflowEditorContent(input: {
+  profileId: string;
+  companies: WorkflowCompanyEntry[];
+}): WorkflowEditorFieldErrors {
+  const errors: WorkflowEditorFieldErrors = {};
+  if (!input.profileId) {
+    errors.profileId = "Select one profile.";
+  }
+  if (input.companies.length < 1) {
+    errors.companies = "Add at least one company entry.";
+    return errors;
+  }
+  const invalidEntry = input.companies.some(
+    (entry) =>
+      !entry.companyId ||
+      !entry.startDate.trim() ||
+      !entry.endDate.trim() ||
+      entry.experienceIds.length < 1,
+  );
+  if (invalidEntry) {
+    errors.companies =
+      "Each company entry needs a company, start and end dates, and at least one experience.";
+  }
+  return errors;
+}

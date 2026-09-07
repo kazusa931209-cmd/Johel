@@ -13,13 +13,21 @@ const PAGE_SIZE = 10;
 
 const LANGUAGES = ["en", "ja", "zh-TW", "zh-CN", "ko"] as const;
 
+const periodSchema = z.string().trim().min(1).max(50);
+
+const companyEntrySchema = z.object({
+  companyId: z.string().trim().min(1),
+  startDate: periodSchema,
+  endDate: periodSchema,
+  experienceIds: z.array(z.string().trim().min(1)).min(1),
+});
+
 const writeSchema = z.object({
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional().nullable(),
   language: z.enum(LANGUAGES),
   profileId: z.string().trim().min(1),
-  companyIds: z.array(z.string().trim().min(1)).min(1),
-  experienceIds: z.array(z.string().trim().min(1)).min(1),
+  companies: z.array(companyEntrySchema).min(1),
 });
 
 type WorkflowWithRelations = {
@@ -30,15 +38,26 @@ type WorkflowWithRelations = {
   profileId: string | null;
   createdAt: Date;
   updatedAt: Date;
-  companies: { companyId: string; sortOrder: number }[];
-  experiences: { experienceId: string; sortOrder: number }[];
+  companies: {
+    companyId: string;
+    startDate: string;
+    endDate: string;
+    sortOrder: number;
+    experiences: { experienceId: string; sortOrder: number }[];
+  }[];
 };
+
+export type WorkflowCompanyPayload = z.infer<typeof companyEntrySchema>;
 
 export const workflowsRoutes = new Hono();
 
 const relationsInclude = {
-  companies: { orderBy: { sortOrder: "asc" as const } },
-  experiences: { orderBy: { sortOrder: "asc" as const } },
+  companies: {
+    orderBy: { sortOrder: "asc" as const },
+    include: {
+      experiences: { orderBy: { sortOrder: "asc" as const } },
+    },
+  },
 };
 
 function uniqueIds(ids: string[]): string[] {
@@ -52,11 +71,28 @@ function uniqueIds(ids: string[]): string[] {
   return result;
 }
 
-async function validatePcewOwnership(
+function normalizeCompanies(
+  companies: WorkflowCompanyPayload[],
+): WorkflowCompanyPayload[] {
+  const seenCompanyIds = new Set<string>();
+  return companies.map((entry) => {
+    if (seenCompanyIds.has(entry.companyId)) {
+      throw new Error("Each company can appear only once in a workflow.");
+    }
+    seenCompanyIds.add(entry.companyId);
+    return {
+      companyId: entry.companyId,
+      startDate: entry.startDate.trim(),
+      endDate: entry.endDate.trim(),
+      experienceIds: uniqueIds(entry.experienceIds),
+    };
+  });
+}
+
+async function validateWorkflowContentOwnership(
   userId: string,
   profileId: string,
-  companyIds: string[],
-  experienceIds: string[],
+  companies: WorkflowCompanyPayload[],
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const profile = await prisma.profile.findFirst({
     where: { id: profileId, userId },
@@ -66,22 +102,27 @@ async function validatePcewOwnership(
     return { ok: false, error: "Selected profile was not found." };
   }
 
-  const companies = await prisma.company.findMany({
+  const companyIds = companies.map((entry) => entry.companyId);
+  const experienceIds = uniqueIds(
+    companies.flatMap((entry) => entry.experienceIds),
+  );
+
+  const ownedCompanies = await prisma.company.findMany({
     where: { userId, id: { in: companyIds } },
     select: { id: true },
   });
-  if (companies.length !== companyIds.length) {
+  if (ownedCompanies.length !== companyIds.length) {
     return {
       ok: false,
       error: "One or more selected companies were not found.",
     };
   }
 
-  const experiences = await prisma.experience.findMany({
+  const ownedExperiences = await prisma.experience.findMany({
     where: { userId, id: { in: experienceIds } },
     select: { id: true },
   });
-  if (experiences.length !== experienceIds.length) {
+  if (ownedExperiences.length !== experienceIds.length) {
     return {
       ok: false,
       error: "One or more selected experiences were not found.",
@@ -94,30 +135,30 @@ async function validatePcewOwnership(
 async function replaceWorkflowRelations(
   tx: Prisma.TransactionClient,
   workflowId: string,
-  companyIds: string[],
-  experienceIds: string[],
+  companies: WorkflowCompanyPayload[],
 ) {
   await tx.workflowCompany.deleteMany({ where: { workflowId } });
-  await tx.workflowExperience.deleteMany({ where: { workflowId } });
 
-  if (companyIds.length > 0) {
-    await tx.workflowCompany.createMany({
-      data: companyIds.map((companyId, index) => ({
+  for (const [index, entry] of companies.entries()) {
+    const workflowCompany = await tx.workflowCompany.create({
+      data: {
         workflowId,
-        companyId,
+        companyId: entry.companyId,
+        startDate: entry.startDate,
+        endDate: entry.endDate,
         sortOrder: index,
-      })),
+      },
     });
-  }
 
-  if (experienceIds.length > 0) {
-    await tx.workflowExperience.createMany({
-      data: experienceIds.map((experienceId, index) => ({
-        workflowId,
-        experienceId,
-        sortOrder: index,
-      })),
-    });
+    if (entry.experienceIds.length > 0) {
+      await tx.workflowCompanyExperience.createMany({
+        data: entry.experienceIds.map((experienceId, experienceIndex) => ({
+          workflowCompanyId: workflowCompany.id,
+          experienceId,
+          sortOrder: experienceIndex,
+        })),
+      });
+    }
   }
 }
 
@@ -144,12 +185,16 @@ function toDetail(row: WorkflowWithRelations) {
     description: row.description,
     language: row.language,
     profileId: row.profileId ?? "",
-    companyIds: [...row.companies]
+    companies: [...row.companies]
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((item) => item.companyId),
-    experienceIds: [...row.experiences]
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((item) => item.experienceId),
+      .map((item) => ({
+        companyId: item.companyId,
+        startDate: item.startDate,
+        endDate: item.endDate,
+        experienceIds: [...item.experiences]
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((experience) => experience.experienceId),
+      })),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -255,14 +300,21 @@ workflowsRoutes.post("/", async (c) => {
     return c.json({ error: "Invalid workflow payload" }, 400);
   }
 
-  const companyIds = uniqueIds(parsed.data.companyIds);
-  const experienceIds = uniqueIds(parsed.data.experienceIds);
+  let companies: WorkflowCompanyPayload[];
+  try {
+    companies = normalizeCompanies(parsed.data.companies);
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Invalid workflow companies.";
+    return c.json({ error: message }, 400);
+  }
 
-  const ownership = await validatePcewOwnership(
+  const ownership = await validateWorkflowContentOwnership(
     user.id,
     parsed.data.profileId,
-    companyIds,
-    experienceIds,
+    companies,
   );
   if (!ownership.ok) {
     return c.json({ error: ownership.error }, 400);
@@ -278,12 +330,7 @@ workflowsRoutes.post("/", async (c) => {
         language: parsed.data.language,
       },
     });
-    await replaceWorkflowRelations(
-      tx,
-      created.id,
-      companyIds,
-      experienceIds,
-    );
+    await replaceWorkflowRelations(tx, created.id, companies);
     return tx.workflow.findUniqueOrThrow({
       where: { id: created.id },
       include: relationsInclude,
@@ -313,14 +360,21 @@ workflowsRoutes.put("/:id", async (c) => {
     return c.json({ error: "Invalid workflow payload" }, 400);
   }
 
-  const companyIds = uniqueIds(parsed.data.companyIds);
-  const experienceIds = uniqueIds(parsed.data.experienceIds);
+  let companies: WorkflowCompanyPayload[];
+  try {
+    companies = normalizeCompanies(parsed.data.companies);
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Invalid workflow companies.";
+    return c.json({ error: message }, 400);
+  }
 
-  const ownership = await validatePcewOwnership(
+  const ownership = await validateWorkflowContentOwnership(
     user.id,
     parsed.data.profileId,
-    companyIds,
-    experienceIds,
+    companies,
   );
   if (!ownership.ok) {
     return c.json({ error: ownership.error }, 400);
@@ -336,7 +390,7 @@ workflowsRoutes.put("/:id", async (c) => {
         language: parsed.data.language,
       },
     });
-    await replaceWorkflowRelations(tx, id, companyIds, experienceIds);
+    await replaceWorkflowRelations(tx, id, companies);
     return tx.workflow.findUniqueOrThrow({
       where: { id },
       include: relationsInclude,

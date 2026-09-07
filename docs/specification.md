@@ -11,24 +11,24 @@
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
 * **Companies** — One user can manage **multiple companies** (name and description).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
-* **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more companies, one or more shared experiences, and a resume output language.
+* **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more ordered company entries (each with a required employment period and linked shared experiences), and a resume output language.
 * **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés.
 
 ### End-to-end flow
 
 A generation run combines:
 
-**one Workflow** (profile + companies + experiences preset) → **Job Description** → **Filtering** → **Workflow** → **Generate** → **Evaluate**
+**one Workflow** (profile + ordered company entries with linked experiences) → **Job Description** → **Filtering** → **Workflow** → **Generate** → **Evaluate**
 
 ```text
-Workflow (one of many; includes Profile + Companies + Experiences)
+Workflow (one of many; includes Profile + ordered Companies with Experiences)
         |
         v
 Job Description → Filtering → Workflow → Generate → Evaluate
 ```
 
 1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
-2. **Workflow** — Choose one workflow; its saved profile, companies, and experiences are used for generation.
+2. **Workflow** — Choose one workflow; its saved profile and company entries (each with period and linked experiences) are used for generation.
 3. **Generate** — Generate the résumé from the filtered JD and the selected workflow.
 4. **Evaluate** — Score the generated résumé against the job description from an ATS perspective, then download the résumé.
 
@@ -67,7 +67,7 @@ Aligned with the product flow above:
 3. Allow the user to review the AI Verdict result on the Workflow step.
 4. Generate a Resume based on:
 
-   * The profile, companies, and experiences saved in the selected workflow
+   * The profile and company entries (each with period and linked experiences) saved in the selected workflow
    * Filtered Job Description and accepted AI Verdict Markdown
    * The workflow’s resume output language
 5. Allow the user to review and edit the generated Resume.
@@ -159,16 +159,18 @@ Aligned with the product flow above:
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
-  * Each workflow saves one profile, one or more companies, one or more experiences, and a resume output language
+  * Each workflow saves one profile, one or more ordered company entries (each with required employment period and linked experiences), and a resume output language
   * Per-user list: name, optional one-line description, updated
   * Keyword filter on name and description; 10 rows per page
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
   * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean)
-  * Below the scalar fields, **Profile** (single row selection), **Companies** (multi row selection), and **Experiences** (multi row selection) tables match the Generate Workflow step UX: all items loaded at once; row click selects; View (eye icon) opens read-only detail dialogs
-  * Save validates inline: one profile, at least one company, at least one experience (not via disabling Save)
-  * Detail dialog shows the selected profile, companies, and experiences instead of metadata rules
+  * Below the scalar fields, **Profile** (single row selection table: all items loaded at once; row click selects; View opens read-only detail dialog)
+  * **Companies** section: ordered list of entries built one at a time; **Add** (plus icon) opens a dialog to pick one company, set required **Start** and **End** period (free-text), and multi-select one or more shared experiences; **Save** in the dialog validates inline and adds or updates the entry; row **Edit** (pencil) and **Delete** (red trash); company order is résumé order (first added = highest priority); the same shared experience may appear under multiple companies
+  * Company-entry edits stay local until page **Save** (same pattern as profile Links)
+  * Page Save validates inline: one profile; at least one company entry; each entry has startDate, endDate, and at least one experience (not via disabling Save)
+  * Detail dialog shows the selected profile and companies grouped with period and linked experiences (preserve company order)
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Prompts** (`/prompts`)
   * Page content is centered in a readable column
@@ -272,6 +274,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-06):** `Dockerfile`, `docker-compose.yml`, and [`docs/docker.md`](./docker.md) (Case A: local Desktop; Case B: other device Desktop). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-33-docker-environment.md`](./plans/2026-09-06-phase-33-docker-environment.md).
 * [x] **Phase 34 — User Prompt Helper with AI** — On Prompts, each prompt field has an Add control that opens a dialog (max 1,000 characters); **Create** calls AI to append one concise sentence under `## New`; page Save still persists.
   * **Outcome (2026-09-06):** `POST /ai-prompt-helper`, `PromptHelperDialog`, plus buttons on `/prompts`, `promptHelper` usage type. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-06-phase-34-prompt-helper.md`](./plans/2026-09-06-phase-34-prompt-helper.md).
+* [x] **Phase 35 — Workflow company–experience mapping** — Workflow editor adds company entries one at a time via a dialog (company, required period, linked experiences); company order is résumé order; résumé generation uses explicit company→experience mapping.
+  * **Outcome (2026-09-07):** `workflowCompanyExperiences` junction; required `startDate`/`endDate` on workflow company entries; nested workflow API payload; `WorkflowCompaniesEditor` UI. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-35-workflow-company-experiences.md`](./plans/2026-09-07-phase-35-workflow-company-experiences.md).
 
 ## Cursor Rules (Documentation Governance)
 

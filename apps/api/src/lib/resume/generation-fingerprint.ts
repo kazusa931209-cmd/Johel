@@ -2,15 +2,11 @@ import type { ResumeGenerationInput } from "../ai-resume/types.js";
 import { assembleResumeGenerationInput } from "./assemble-input.js";
 
 export function workflowContentFingerprintFromInput(
-  input: Pick<
-    ResumeGenerationInput,
-    "profile" | "companies" | "experiences" | "workflow"
-  >,
+  input: Pick<ResumeGenerationInput, "profile" | "companies" | "workflow">,
 ): string {
   return JSON.stringify({
     profile: input.profile,
     companies: input.companies,
-    experiences: input.experiences,
     workflow: input.workflow,
   });
 }

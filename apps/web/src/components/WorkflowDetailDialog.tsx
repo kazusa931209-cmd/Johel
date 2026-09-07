@@ -10,8 +10,8 @@ import {
   listProfiles,
   type WorkflowDetail,
 } from "@/lib/api";
-import { WORKFLOW_LANGUAGES } from "@/lib/workflow";
 import { fullName } from "@/lib/profile";
+import { formatWorkflowPeriod, WORKFLOW_LANGUAGES } from "@/lib/workflow";
 
 type WorkflowDetailDialogProps = {
   workflowId: string;
@@ -31,8 +31,12 @@ export function WorkflowDetailDialog({
   const { toast } = useToast();
   const [detail, setDetail] = useState<WorkflowDetail | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
-  const [companyNames, setCompanyNames] = useState<string[]>([]);
-  const [experienceLabels, setExperienceLabels] = useState<string[]>([]);
+  const [companyNameById, setCompanyNameById] = useState<Map<string, string>>(
+    new Map(),
+  );
+  const [experienceLabelById, setExperienceLabelById] = useState<
+    Map<string, string>
+  >(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,30 +59,23 @@ export function WorkflowDetailDialog({
       setDetail(workflow);
 
       const profiles = profilesRes.data?.items ?? [];
-      const companies = companiesRes.data?.items ?? [];
-      const experiences = experiencesRes.data?.items ?? [];
-
       const profile = profiles.find((item) => item.id === workflow.profileId);
       setProfileName(
         profile ? fullName(profile.firstName, profile.lastName) : null,
       );
 
-      const companyNameById = new Map(
-        companies.map((item) => [item.id, item.name]),
+      setCompanyNameById(
+        new Map(
+          (companiesRes.data?.items ?? []).map((item) => [item.id, item.name]),
+        ),
       );
-      setCompanyNames(
-        workflow.companyIds
-          .map((id) => companyNameById.get(id))
-          .filter((name): name is string => Boolean(name)),
-      );
-
-      const experienceLabelById = new Map(
-        experiences.map((item) => [item.id, item.category]),
-      );
-      setExperienceLabels(
-        workflow.experienceIds
-          .map((id) => experienceLabelById.get(id))
-          .filter((label): label is string => Boolean(label)),
+      setExperienceLabelById(
+        new Map(
+          (experiencesRes.data?.items ?? []).map((item) => [
+            item.id,
+            item.category,
+          ]),
+        ),
       );
 
       setLoading(false);
@@ -117,34 +114,38 @@ export function WorkflowDetailDialog({
             <div className="text-xs font-medium tracking-wide text-muted uppercase">
               Companies
             </div>
-            {companyNames.length === 0 ? (
-              <p className="text-muted">None selected.</p>
+            {detail.companies.length === 0 ? (
+              <p className="text-muted">None added.</p>
             ) : (
-              <ul className="space-y-1">
-                {companyNames.map((name) => (
-                  <li key={name} className="rounded-md border border-border px-3 py-2">
-                    {name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className="space-y-2">
-            <div className="text-xs font-medium tracking-wide text-muted uppercase">
-              Experiences
-            </div>
-            {experienceLabels.length === 0 ? (
-              <p className="text-muted">None selected.</p>
-            ) : (
-              <ul className="space-y-1">
-                {experienceLabels.map((label) => (
-                  <li
-                    key={label}
-                    className="rounded-md border border-border px-3 py-2"
-                  >
-                    {label}
-                  </li>
-                ))}
+              <ul className="space-y-2">
+                {detail.companies.map((entry) => {
+                  const companyName =
+                    companyNameById.get(entry.companyId) ?? entry.companyId;
+                  const experienceLabels = entry.experienceIds
+                    .map((id) => experienceLabelById.get(id))
+                    .filter((label): label is string => Boolean(label));
+
+                  return (
+                    <li
+                      key={`${entry.companyId}-${entry.startDate}-${entry.endDate}`}
+                      className="space-y-2 rounded-md border border-border px-3 py-2"
+                    >
+                      <div className="font-medium">{companyName}</div>
+                      <div className="text-muted">
+                        {formatWorkflowPeriod(entry.startDate, entry.endDate)}
+                      </div>
+                      {experienceLabels.length === 0 ? (
+                        <p className="text-muted">No experiences linked.</p>
+                      ) : (
+                        <ul className="list-inside list-disc space-y-1 text-muted">
+                          {experienceLabels.map((label) => (
+                            <li key={label}>{label}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

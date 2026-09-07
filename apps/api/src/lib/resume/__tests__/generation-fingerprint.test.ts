@@ -18,13 +18,15 @@ const baseInput = {
       id: "company-1",
       name: "Acme",
       description: "Software",
-    },
-  ],
-  experiences: [
-    {
-      id: "experience-1",
-      category: "Backend",
-      description: "Built APIs",
+      startDate: "2020",
+      endDate: "Present",
+      experiences: [
+        {
+          id: "experience-1",
+          category: "Backend",
+          description: "Built APIs",
+        },
+      ],
     },
   ],
   workflow: {
@@ -49,10 +51,29 @@ describe("workflowContentFingerprintFromInput", () => {
     const before = workflowContentFingerprintFromInput(baseInput);
     const after = workflowContentFingerprintFromInput({
       ...baseInput,
-      experiences: [
+      companies: [
         {
-          ...baseInput.experiences[0],
-          description: "Built scalable APIs",
+          ...baseInput.companies[0],
+          experiences: [
+            {
+              ...baseInput.companies[0].experiences[0],
+              description: "Built scalable APIs",
+            },
+          ],
+        },
+      ],
+    });
+    expect(before).not.toBe(after);
+  });
+
+  it("returns a different fingerprint when company period changes", () => {
+    const before = workflowContentFingerprintFromInput(baseInput);
+    const after = workflowContentFingerprintFromInput({
+      ...baseInput,
+      companies: [
+        {
+          ...baseInput.companies[0],
+          endDate: "2024",
         },
       ],
     });

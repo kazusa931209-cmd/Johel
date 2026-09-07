@@ -23,16 +23,19 @@ export type ResumeGenerationProfile = {
   links: { key: string; link: string | null }[];
 };
 
-export type ResumeGenerationCompany = {
-  id: string;
-  name: string;
-  description: string;
-};
-
 export type ResumeGenerationExperience = {
   id: string;
   category: string;
   description: string;
+};
+
+export type ResumeGenerationCompany = {
+  id: string;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  experiences: ResumeGenerationExperience[];
 };
 
 export type ResumeGenerationWorkflow = {
@@ -47,7 +50,6 @@ export type ResumeGenerationInput = {
   acceptedMarkdown: string;
   profile: ResumeGenerationProfile;
   companies: ResumeGenerationCompany[];
-  experiences: ResumeGenerationExperience[];
   workflow: ResumeGenerationWorkflow;
 };
 

@@ -14,8 +14,12 @@ export async function assembleResumeGenerationInput(
   const workflow = await prisma.workflow.findFirst({
     where: { id: params.workflowId, userId: params.userId },
     include: {
-      companies: { orderBy: { sortOrder: "asc" } },
-      experiences: { orderBy: { sortOrder: "asc" } },
+      companies: {
+        orderBy: { sortOrder: "asc" },
+        include: {
+          experiences: { orderBy: { sortOrder: "asc" } },
+        },
+      },
     },
   });
   if (!workflow) {
@@ -26,18 +30,9 @@ export async function assembleResumeGenerationInput(
       "Selected workflow is incomplete. Edit the workflow and choose a profile.",
     );
   }
-
-  const companyIds = workflow.companies.map((item) => item.companyId);
-  const experienceIds = workflow.experiences.map((item) => item.experienceId);
-
-  if (companyIds.length < 1) {
+  if (workflow.companies.length < 1) {
     throw new Error(
-      "Selected workflow is incomplete. Edit the workflow and choose at least one company.",
-    );
-  }
-  if (experienceIds.length < 1) {
-    throw new Error(
-      "Selected workflow is incomplete. Edit the workflow and choose at least one experience.",
+      "Selected workflow is incomplete. Edit the workflow and add at least one company entry.",
     );
   }
 
@@ -50,6 +45,15 @@ export async function assembleResumeGenerationInput(
   if (!profile) {
     throw new Error("Selected profile was not found.");
   }
+
+  const companyIds = workflow.companies.map((item) => item.companyId);
+  const experienceIds = [
+    ...new Set(
+      workflow.companies.flatMap((item) =>
+        item.experiences.map((experience) => experience.experienceId),
+      ),
+    ),
+  ];
 
   const companies = await prisma.company.findMany({
     where: {
@@ -76,6 +80,37 @@ export async function assembleResumeGenerationInput(
     experiences.map((experience) => [experience.id, experience]),
   );
 
+  const assembledCompanies = workflow.companies.map((entry) => {
+    const company = companyById.get(entry.companyId);
+    if (!company) {
+      throw new Error("One or more selected companies were not found.");
+    }
+    if (entry.experiences.length < 1) {
+      throw new Error(
+        "Selected workflow is incomplete. Each company entry must include at least one experience.",
+      );
+    }
+
+    return {
+      id: company.id,
+      name: company.name,
+      description: company.description,
+      startDate: entry.startDate,
+      endDate: entry.endDate,
+      experiences: entry.experiences.map((link) => {
+        const experience = experienceById.get(link.experienceId);
+        if (!experience) {
+          throw new Error("One or more selected experiences were not found.");
+        }
+        return {
+          id: experience.id,
+          category: experience.category,
+          description: experience.description,
+        };
+      }),
+    };
+  });
+
   return {
     jobDescription: params.jobDescription,
     acceptedMarkdown: params.acceptedMarkdown,
@@ -93,28 +128,7 @@ export async function assembleResumeGenerationInput(
         link: link.link,
       })),
     },
-    companies: companyIds.map((id) => {
-      const company = companyById.get(id);
-      if (!company) {
-        throw new Error("One or more selected companies were not found.");
-      }
-      return {
-        id: company.id,
-        name: company.name,
-        description: company.description,
-      };
-    }),
-    experiences: experienceIds.map((id) => {
-      const experience = experienceById.get(id);
-      if (!experience) {
-        throw new Error("One or more selected experiences were not found.");
-      }
-      return {
-        id: experience.id,
-        category: experience.category,
-        description: experience.description,
-      };
-    }),
+    companies: assembledCompanies,
     workflow: {
       id: workflow.id,
       name: workflow.name,

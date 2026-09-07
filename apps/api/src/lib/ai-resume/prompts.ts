@@ -45,6 +45,8 @@ const SHARED_RULES = `You are an AI Resume writer for a resume-generation system
 Generate a resume specifically targeted to the supplied Job Description and job analysis.
 
 Rules:
+- Use each workflow company entry's startDate and endDate as the employment date range for that company's resume experience block.
+- Map linked experiences under their company; do not redistribute experiences across companies.
 - Perform selection, prioritization, and rewriting of existing experience to match the target role.
 - Use strong, concise, professional resume language.
 - Omit information that does not support the target role.

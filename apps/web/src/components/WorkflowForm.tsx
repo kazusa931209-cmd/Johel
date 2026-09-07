@@ -3,19 +3,22 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton } from "@/components/shared/back-button";
-import { WorkflowPcewPicker } from "@/components/WorkflowPcewPicker";
+import { WorkflowCompaniesEditor } from "@/components/WorkflowCompaniesEditor";
+import { WorkflowProfilePicker } from "@/components/WorkflowPcewPicker";
 import { useToast } from "@/components/app/ToastProvider";
-import {
-  type PcewContentFieldErrors,
-  validatePcewContentSelection,
-} from "@/components/generate/pcew-types";
 import {
   createWorkflow,
   updateWorkflow,
   type WorkflowDetail,
   type WorkflowWritePayload,
 } from "@/lib/api";
-import { WORKFLOW_LANGUAGES, type WorkflowLanguage } from "@/lib/workflow";
+import {
+  WORKFLOW_LANGUAGES,
+  validateWorkflowEditorContent,
+  type WorkflowCompanyEntry,
+  type WorkflowEditorFieldErrors,
+  type WorkflowLanguage,
+} from "@/lib/workflow";
 
 type WorkflowFormProps = {
   mode: "create" | "edit";
@@ -25,7 +28,7 @@ type WorkflowFormProps = {
 
 type FieldErrors = {
   name?: string;
-} & PcewContentFieldErrors;
+} & WorkflowEditorFieldErrors;
 
 function RequiredMark() {
   return (
@@ -65,11 +68,10 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
   const [language, setLanguage] = useState<WorkflowLanguage>(
     (initial?.language as WorkflowLanguage) || "en",
   );
-  const [pcewSelection, setPcewSelection] = useState({
-    profileId: initial?.profileId ?? "",
-    companyIds: initial?.companyIds ?? [],
-    experienceIds: initial?.experienceIds ?? [],
-  });
+  const [profileId, setProfileId] = useState(initial?.profileId ?? "");
+  const [companies, setCompanies] = useState<WorkflowCompanyEntry[]>(
+    initial?.companies ?? [],
+  );
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -79,7 +81,10 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     if (!name.trim()) {
       nextErrors.name = "Name is required.";
     }
-    Object.assign(nextErrors, validatePcewContentSelection(pcewSelection));
+    Object.assign(
+      nextErrors,
+      validateWorkflowEditorContent({ profileId, companies }),
+    );
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -89,9 +94,8 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       name: name.trim(),
       description: description.trim() || null,
       language,
-      profileId: pcewSelection.profileId,
-      companyIds: pcewSelection.companyIds,
-      experienceIds: pcewSelection.experienceIds,
+      profileId,
+      companies,
     };
     setSaving(true);
     const res =
@@ -110,11 +114,6 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     router.push("/workflows");
   }
 
-  function clearPcewError(field: keyof PcewContentFieldErrors) {
-    if (!fieldErrors[field]) return;
-    setFieldErrors((errors) => ({ ...errors, [field]: undefined }));
-  }
-
   return (
     <form
       noValidate
@@ -129,8 +128,8 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure language and choose the profile, companies, and experiences
-          for this workflow preset.
+          Configure language, choose a profile, and add company entries with
+          period and linked experiences for this workflow preset.
         </p>
       </div>
 
@@ -181,11 +180,26 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
         </div>
       </label>
 
-      <WorkflowPcewPicker
-        selection={pcewSelection}
-        onSelectionChange={setPcewSelection}
+      <WorkflowProfilePicker
+        profileId={profileId}
+        onProfileIdChange={setProfileId}
         fieldErrors={fieldErrors}
-        onClearError={clearPcewError}
+        onClearError={() => {
+          if (fieldErrors.profileId) {
+            setFieldErrors((errors) => ({ ...errors, profileId: undefined }));
+          }
+        }}
+      />
+
+      <WorkflowCompaniesEditor
+        companies={companies}
+        onChange={setCompanies}
+        error={fieldErrors.companies}
+        onClearError={() => {
+          if (fieldErrors.companies) {
+            setFieldErrors((errors) => ({ ...errors, companies: undefined }));
+          }
+        }}
       />
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">

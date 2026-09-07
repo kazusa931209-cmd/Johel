@@ -51,7 +51,6 @@ model Workflow {
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
   companies       WorkflowCompany[]
-  experiences     WorkflowExperience[]
 
   @@index([userId])
   @@index([profileId])
@@ -59,14 +58,17 @@ model Workflow {
 }
 
 model WorkflowCompany {
-  id         String   @id @default(cuid())
-  workflowId String
-  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  companyId  String
-  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  sortOrder  Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String                      @id @default(cuid())
+  workflowId   String
+  workflow     Workflow                    @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  companyId    String
+  company      Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  startDate    String
+  endDate      String
+  sortOrder    Int                         @default(0)
+  createdAt    DateTime                    @default(now())
+  updatedAt    DateTime                    @updatedAt
+  experiences  WorkflowCompanyExperience[]
 
   @@unique([workflowId, companyId])
   @@index([workflowId])
@@ -74,20 +76,20 @@ model WorkflowCompany {
   @@map("workflowCompanies")
 }
 
-model WorkflowExperience {
-  id           String     @id @default(cuid())
-  workflowId   String
-  workflow     Workflow   @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  experienceId String
-  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-  sortOrder    Int        @default(0)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+model WorkflowCompanyExperience {
+  id                String          @id @default(cuid())
+  workflowCompanyId String
+  workflowCompany   WorkflowCompany @relation(fields: [workflowCompanyId], references: [id], onDelete: Cascade)
+  experienceId      String
+  experience        Experience      @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  sortOrder         Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
-  @@unique([workflowId, experienceId])
-  @@index([workflowId])
+  @@unique([workflowCompanyId, experienceId])
+  @@index([workflowCompanyId])
   @@index([experienceId])
-  @@map("workflowExperiences")
+  @@map("workflowCompanyExperiences")
 }
 
 model Profile {
@@ -147,7 +149,7 @@ model Experience {
   description String
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
-  workflows   WorkflowExperience[]
+  workflowCompanyExperiences WorkflowCompanyExperience[]
 
   @@index([userId])
   @@map("experiences")
