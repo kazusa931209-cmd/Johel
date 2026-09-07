@@ -130,9 +130,10 @@ Aligned with the product flow above:
 * The authenticated web UI uses a **studio** layout.
 * **Dark theme** is the default; users can switch between **Dark** and **Light**.
 * **Top header**
-  * Left: project title **JoHEL**
+  * Left: hamburger control (opens / collapses the left sidebar) beside project title **JoHEL**
   * Right: **Token Used** (compact K / M / G / T, e.g. `0.3K`, `12.5K`, `0.6M`) beside the user email dropdown containing **Profile** and **Sign out**
 * **Left sidebar** menus:
+  * The sidebar starts **open**; the hamburger toggles it open or collapsed. The last choice is remembered for the browser. Icon-only hamburger uses `aria-label` **Collapse sidebar** or **Open sidebar**.
   * **Workspace** (always-open submenus)
     * Profiles
     * Companies

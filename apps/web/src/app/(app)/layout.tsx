@@ -7,6 +7,7 @@ import { AiUsageHistory } from "@/components/app/AiUsageHistory";
 import { StudioHeader } from "@/components/app/StudioHeader";
 import { StudioSidebar } from "@/components/app/StudioSidebar";
 import { getMe, type User } from "@/lib/api";
+import { getStoredSidebar, persistSidebar } from "@/lib/sidebar";
 
 function AppShell({
   user,
@@ -16,12 +17,30 @@ function AppShell({
   children: React.ReactNode;
 }) {
   const { tokenUsed } = useAiUsage();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    setSidebarOpen(getStoredSidebar() === "open");
+  }, []);
+
+  function onToggleSidebar() {
+    setSidebarOpen((current) => {
+      const next = !current;
+      persistSidebar(next ? "open" : "collapsed");
+      return next;
+    });
+  }
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
-      <StudioHeader userName={user.email} tokenUsage={tokenUsed} />
+      <StudioHeader
+        userName={user.email}
+        tokenUsage={tokenUsed}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={onToggleSidebar}
+      />
       <div className="flex min-h-0 flex-1">
-        <StudioSidebar />
+        <StudioSidebar open={sidebarOpen} />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
       </div>
       <AiUsageHistory />

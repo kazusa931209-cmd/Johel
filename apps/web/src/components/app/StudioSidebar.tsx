@@ -15,7 +15,7 @@ function navLinkClass(active: boolean) {
   }`;
 }
 
-export function StudioSidebar() {
+export function StudioSidebar({ open }: { open: boolean }) {
   const pathname = usePathname();
   const profilesActive =
     pathname === "/profiles" || pathname.startsWith("/profiles/");
@@ -39,7 +39,15 @@ export function StudioSidebar() {
   const generateActive = pathname === "/";
 
   return (
-    <aside className="flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar">
+    <aside
+      id="studio-sidebar"
+      aria-hidden={!open}
+      className={
+        open
+          ? "flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar"
+          : "hidden"
+      }
+    >
       <nav className="flex flex-col gap-1 p-3">
         <div className={sectionLabelClass()}>Workspace</div>
         <Link href="/profiles" className={navLinkClass(profilesActive)}>

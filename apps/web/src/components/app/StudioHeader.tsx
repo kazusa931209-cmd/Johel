@@ -3,17 +3,22 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MenuIcon } from "@/components/shared/icons";
 import { logout } from "@/lib/api";
 import { formatTokenUsed } from "@/lib/tokens";
 
 type StudioHeaderProps = {
   userName: string;
   tokenUsage?: number;
+  sidebarOpen: boolean;
+  onToggleSidebar: () => void;
 };
 
 export function StudioHeader({
   userName,
   tokenUsage = 0,
+  sidebarOpen,
+  onToggleSidebar,
 }: StudioHeaderProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -37,7 +42,19 @@ export function StudioHeader({
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-header px-4">
-      <div className="text-base font-semibold tracking-tight">JoHEL</div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
+          aria-expanded={sidebarOpen}
+          aria-controls="studio-sidebar"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md hover:bg-surface-muted"
+        >
+          <MenuIcon className="h-5 w-5" />
+        </button>
+        <div className="text-base font-semibold tracking-tight">JoHEL</div>
+      </div>
       <div className="flex items-center gap-3">
         <span className="text-sm text-muted" title="Token usage">
           Token Used: {formatTokenUsed(tokenUsage)}
