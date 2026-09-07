@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   appendOneTimeGeneratePrompt,
   compileInstruction,
+  PROMPT_SECTION_SEPARATOR,
 } from "../compile.js";
 
 describe("compileInstruction", () => {
@@ -12,11 +13,12 @@ describe("compileInstruction", () => {
     expect(result).not.toMatch(/\n{3,}/);
   });
 
-  it("wraps user instruction in a stable fence", () => {
+  it("wraps user instruction under # Instructions with a strong separator", () => {
     const result = compileInstruction("verdict", "Answer these questions.");
-    expect(result).toContain("## User instruction");
+    expect(result).toContain("# Instructions");
     expect(result).toContain("Answer these questions.");
-    expect(result).toContain("---");
+    expect(result).toContain(PROMPT_SECTION_SEPARATOR);
+    expect(result).not.toContain("## User instruction");
   });
 
   it("does not paraphrase the user wording", () => {
@@ -25,11 +27,13 @@ describe("compileInstruction", () => {
     expect(result).toContain(original);
   });
 
-  it("adds generate honesty line only for generate kind", () => {
-    const verdict = compileInstruction("verdict", "Tailor the resume.");
+  it("uses the same compile shape for generate and evaluate", () => {
     const generate = compileInstruction("generate", "Tailor the resume.");
-    expect(verdict).not.toContain("Do not invent employers");
-    expect(generate).toContain("Do not invent employers");
+    const evaluate = compileInstruction("evaluate", "Score the resume.");
+    expect(generate).toContain("# Instructions");
+    expect(evaluate).toContain("# Instructions");
+    expect(generate).not.toContain("Do not invent employers");
+    expect(evaluate).not.toContain("Do not invent employers");
   });
 });
 
@@ -40,13 +44,14 @@ describe("appendOneTimeGeneratePrompt", () => {
     expect(appendOneTimeGeneratePrompt(compiled, "   ")).toBe(compiled);
   });
 
-  it("appends one-time prompt under a heading", () => {
+  it("appends one-time prompt under a # heading with separator", () => {
     const compiled = compileInstruction("generate", "Tailor the resume.");
     const result = appendOneTimeGeneratePrompt(
       compiled,
       "Emphasize leadership.",
     );
-    expect(result).toContain("## One-time prompt");
+    expect(result).toContain("# One-time prompt");
     expect(result).toContain("Emphasize leadership.");
+    expect(result).toContain(PROMPT_SECTION_SEPARATOR);
   });
 });

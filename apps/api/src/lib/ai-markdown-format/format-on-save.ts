@@ -1,7 +1,11 @@
 import { isAiProviderId, type AiProviderId } from "../ai-provider.js";
 import { prisma } from "../prisma.js";
 import { recordAiUsage } from "../record-ai-usage.js";
-import { isMarkdownFormatUnchanged } from "./prompts.js";
+import {
+  capPromptHeadings,
+  isMarkdownFormatUnchanged,
+  isPromptInstructionKind,
+} from "./prompts.js";
 import { runAiMarkdownFormat } from "./run.js";
 import type { MarkdownFormatKind } from "./types.js";
 
@@ -17,6 +21,17 @@ export type FormatMarkdownOnSaveResult = {
   formatted: string;
   skipped: boolean;
 };
+
+function finalizeStoredMarkdown(
+  kind: MarkdownFormatKind,
+  markdown: string,
+): string {
+  const trimmed = markdown.trim();
+  if (isPromptInstructionKind(kind)) {
+    return capPromptHeadings(trimmed);
+  }
+  return trimmed;
+}
 
 async function loadUserAiSettings(userId: string): Promise<{
   provider: AiProviderId;
@@ -41,7 +56,10 @@ export async function formatMarkdownOnSave(
 ): Promise<FormatMarkdownOnSaveResult> {
   const submitted = input.submitted.trim();
   if (isMarkdownFormatUnchanged(submitted, input.stored)) {
-    return { formatted: submitted, skipped: true };
+    return {
+      formatted: finalizeStoredMarkdown(input.kind, submitted),
+      skipped: true,
+    };
   }
 
   const { provider, apiKey } = await loadUserAiSettings(input.userId);
@@ -51,10 +69,12 @@ export async function formatMarkdownOnSave(
     apiKey,
   });
 
-  if (!result.markdown.trim()) {
+  const formatted = finalizeStoredMarkdown(input.kind, result.markdown);
+
+  if (!formatted.trim()) {
     throw new Error("Markdown conversion returned empty text.");
   }
-  if (result.markdown.length > input.maxLen) {
+  if (formatted.length > input.maxLen) {
     throw new Error(
       `Markdown conversion exceeded the maximum length of ${input.maxLen} characters.`,
     );
@@ -67,5 +87,5 @@ export async function formatMarkdownOnSave(
     usage: result.usage,
   });
 
-  return { formatted: result.markdown, skipped: false };
+  return { formatted, skipped: false };
 }

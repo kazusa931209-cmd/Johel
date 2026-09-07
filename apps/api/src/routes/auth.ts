@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
+import { DEFAULT_PROMPTS } from "@johel/prompt-defaults";
 import {
   COOKIE_NAME,
   hashPassword,
@@ -46,6 +47,13 @@ authRoutes.post("/register", async (c) => {
             DEFAULT_GENERATION_PROCESS.doWorkflowRecommendation,
           workflowRecommendationThreshold:
             DEFAULT_GENERATION_PROCESS.workflowRecommendationThreshold,
+        },
+      },
+      prompt: {
+        create: {
+          verdictPrompt: DEFAULT_PROMPTS.verdictPrompt,
+          generatePrompt: DEFAULT_PROMPTS.generatePrompt,
+          evaluatePrompt: DEFAULT_PROMPTS.evaluatePrompt,
         },
       },
     },

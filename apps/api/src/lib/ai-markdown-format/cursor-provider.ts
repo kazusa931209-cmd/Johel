@@ -3,8 +3,8 @@ import type { RunResult } from "@cursor/sdk";
 import { buildUsage } from "../ai-verdict/types.js";
 import {
   buildMarkdownFormatUserMessage,
+  finalizeFormattedMarkdown,
   getMarkdownFormatSystemMessage,
-  normalizeFormattedMarkdown,
   validateFormattedMarkdown,
 } from "./prompts.js";
 import type {
@@ -35,7 +35,7 @@ export const cursorMarkdownFormatProvider: MarkdownFormatProvider = {
         );
       }
 
-      const markdown = normalizeFormattedMarkdown(result.result ?? "");
+      const markdown = finalizeFormattedMarkdown(input.kind, result.result ?? "");
       validateFormattedMarkdown(markdown, maxLen);
 
       return {

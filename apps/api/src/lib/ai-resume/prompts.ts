@@ -1,5 +1,6 @@
 import type { ResumeGenerationInput } from "./types.js";
 import type { AiProviderId } from "../ai-provider.js";
+import { PROMPT_SECTION_SEPARATOR } from "../prompt-optimize/compile.js";
 
 const JSON_SCHEMA_DESCRIPTION = `{
   "header": {
@@ -40,18 +41,10 @@ const JSON_SCHEMA_DESCRIPTION = `{
   }]
 }`;
 
-const SHARED_RULES = `You are an AI Resume writer for a resume-generation system.
-
-Generate a resume specifically targeted to the supplied Job Description and job analysis.
-
-Rules:
-- Use each workflow company entry's startDate and endDate as the employment date range for that company's resume experience block.
-- Map linked experiences under their company; do not redistribute experiences across companies.
-- Perform selection, prioritization, and rewriting of existing experience to match the target role.
-- Use strong, concise, professional resume language.
-- Omit information that does not support the target role.
-- Keep the resume ATS-friendly.
-- Output language must follow the workflow language code supplied in the input.
+const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation system.
+- Generate a resume targeted to the supplied Job Description and input data.
+- Follow the tailoring rules and output expectations defined in Instructions above.
+- Do not invent employers, dates, skills, or experience not present in the supplied input data.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
 
 Required JSON schema:
@@ -72,7 +65,7 @@ export function getAiResumeSystemPrompt(
 ): string {
   const notes =
     provider === "cursor" ? CURSOR_PROVIDER_NOTES : OPENAI_PROVIDER_NOTES;
-  return `${generatePrompt.trim()}\n\n${SHARED_RULES}\n\n${notes}`;
+  return `${generatePrompt.trim()}\n# Execution rules\n\n${EXECUTION_RULES}\n\n${PROMPT_SECTION_SEPARATOR}\n\n${notes}`;
 }
 
 export function buildAiResumeUserPrompt(input: ResumeGenerationInput): string {

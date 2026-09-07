@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@johel/prompt-defaults": "workspace:*",
     "@johel/resume": "workspace:*",
     "@tailwindcss/typography": "^0.5.20",
     "next": "15.5.25",

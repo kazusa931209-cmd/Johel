@@ -2,8 +2,8 @@ import { runOpenAiMarkdownFormatResponse } from "../openai/responses.js";
 import { buildUsage } from "../ai-verdict/types.js";
 import {
   buildMarkdownFormatUserMessage,
+  finalizeFormattedMarkdown,
   getMarkdownFormatSystemMessage,
-  normalizeFormattedMarkdown,
   validateFormattedMarkdown,
 } from "./prompts.js";
 import type {
@@ -25,7 +25,7 @@ export const openAiMarkdownFormatProvider: MarkdownFormatProvider = {
       user,
     );
 
-    const markdown = normalizeFormattedMarkdown(response.outputText);
+    const markdown = finalizeFormattedMarkdown(input.kind, response.outputText);
     validateFormattedMarkdown(markdown, maxLen);
 
     return {

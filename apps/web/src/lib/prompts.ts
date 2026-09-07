@@ -1,8 +1,15 @@
+export {
+  DEFAULT_EVALUATE_PROMPT,
+  DEFAULT_GENERATE_PROMPT,
+  DEFAULT_PROMPTS,
+  DEFAULT_VERDICT_PROMPT,
+} from "@johel/prompt-defaults";
+
 export const VERDICT_PROMPT_PLACEHOLDER =
-  "Instructions for checking whether a Job Description is suitable.";
+  "Define Verdict sections (e.g. ## Verdict, ## Job, ## Company & contacts), questions, and answer format.";
 
 export const GENERATE_PROMPT_PLACEHOLDER =
-  "Instructions for tailoring and generating a resume from the job and your profile data.";
+  "Define resume tailoring rules, selection priorities, language/tone, and output expectations.";
 
 export const EVALUATE_PROMPT_PLACEHOLDER =
-  "Instructions for evaluating a generated resume against a job description from an ATS perspective.";
+  "Define evaluation criteria, scoring, and Markdown output structure for ATS feedback.";

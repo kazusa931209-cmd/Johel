@@ -16,6 +16,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.14.1
         version: 1.19.17(hono@4.13.5)
+      '@johel/prompt-defaults':
+        specifier: workspace:*
+        version: link:../../packages/prompt-defaults
       '@johel/resume':
         specifier: workspace:*
         version: link:../../packages/resume
@@ -59,6 +62,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@johel/prompt-defaults':
+        specifier: workspace:*
+        version: link:../../packages/prompt-defaults
       '@johel/resume':
         specifier: workspace:*
         version: link:../../packages/resume
@@ -111,6 +117,8 @@ importers:
       vitest:
         specifier: ^5.0.0
         version: 5.0.0(@types/node@20.19.43)(vite@8.2.2(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
+
+  packages/prompt-defaults: {}
 
   packages/resume:
     dependencies:

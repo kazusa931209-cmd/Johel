@@ -10,6 +10,16 @@ const KIND_LABELS: Record<MarkdownFormatKind, string> = {
     "Experience description (used when generating résumés from workflow data)",
 };
 
+const PROMPT_INSTRUCTION_KINDS = new Set<MarkdownFormatKind>([
+  "verdict",
+  "generate",
+  "evaluate",
+]);
+
+const PROMPT_HEADING_RULES = `- Use ## as the largest heading. Never use # (h1).
+- Use ### and below for subsections.
+- Preserve the author's section intent; do not invent new sections.`;
+
 const SYSTEM_MESSAGE = `You convert user-authored text into clean, well-structured Markdown.
 
 Rules:
@@ -18,6 +28,16 @@ Rules:
 - Use headings, lists, and paragraphs where they improve structure.
 - If the input contains "## New" helper blocks, fold their sentences into the document structure (do not leave a literal "## New" heading unless it is meaningful section structure).
 - Keep the tone and intent of the original text.`;
+
+export function isPromptInstructionKind(
+  kind: MarkdownFormatKind,
+): kind is "verdict" | "generate" | "evaluate" {
+  return PROMPT_INSTRUCTION_KINDS.has(kind);
+}
+
+export function capPromptHeadings(markdown: string): string {
+  return markdown.replace(/^# (?!#)/gm, "## ");
+}
 
 export function getMarkdownFormatSystemMessage(): string {
   return SYSTEM_MESSAGE;
@@ -28,13 +48,16 @@ export function buildMarkdownFormatUserMessage(input: {
   text: string;
 }): string {
   const kindLabel = KIND_LABELS[input.kind];
+  const headingRules = isPromptInstructionKind(input.kind)
+    ? `\n\nAdditional rules for this field:\n${PROMPT_HEADING_RULES}`
+    : "";
 
   return `Field type: ${kindLabel}
 
 Text to convert to Markdown:
 ---
 ${input.text.trim()}
----
+---${headingRules}
 
 Convert the text above to clean Markdown. Output only the Markdown.`;
 }
@@ -48,6 +71,17 @@ export function normalizeFormattedMarkdown(raw: string): string {
     text = fullFence[1].trim();
   }
 
+  return text;
+}
+
+export function finalizeFormattedMarkdown(
+  kind: MarkdownFormatKind,
+  raw: string,
+): string {
+  let text = normalizeFormattedMarkdown(raw);
+  if (isPromptInstructionKind(kind)) {
+    text = capPromptHeadings(text);
+  }
   return text;
 }
 

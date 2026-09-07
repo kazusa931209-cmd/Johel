@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  capPromptHeadings,
+  finalizeFormattedMarkdown,
   isMarkdownFormatUnchanged,
   normalizeFormattedMarkdown,
   validateFormattedMarkdown,
@@ -22,6 +24,34 @@ describe("isMarkdownFormatUnchanged", () => {
     expect(isMarkdownFormatUnchanged("", null)).toBe(true);
     expect(isMarkdownFormatUnchanged("", undefined)).toBe(true);
     expect(isMarkdownFormatUnchanged("x", null)).toBe(false);
+  });
+});
+
+describe("capPromptHeadings", () => {
+  it("demotes h1 headings to h2", () => {
+    expect(capPromptHeadings("# Title\n\n## Section")).toBe(
+      "## Title\n\n## Section",
+    );
+  });
+
+  it("leaves h2 and below unchanged", () => {
+    expect(capPromptHeadings("## Title\n\n### Section")).toBe(
+      "## Title\n\n### Section",
+    );
+  });
+});
+
+describe("finalizeFormattedMarkdown", () => {
+  it("caps prompt instruction kinds after normalization", () => {
+    expect(finalizeFormattedMarkdown("verdict", "# Verdict\n\nBody")).toBe(
+      "## Verdict\n\nBody",
+    );
+  });
+
+  it("does not cap company descriptions", () => {
+    expect(finalizeFormattedMarkdown("companyDescription", "# About")).toBe(
+      "# About",
+    );
   });
 });
 

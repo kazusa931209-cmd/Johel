@@ -117,11 +117,12 @@ User browser (:4041)
 - When `doEvaluate` is false: timeline is Job → Workflow → Generate; Generate **Download** is last-step action; Evaluate step hidden; stored `activeStep: "Evaluate"` normalizes to Generate on load
 - When `doWorkflowRecommendation` is true: after Job **Next** (with or without Verdict), Generate calls `POST /ai-workflow-recommend` unless session `workflowRecommendInputKey` matches; auto-selects workflow when score ≥ threshold; otherwise clears selection and toasts; when false, restores `lastSelectedWorkflowId` without AI
 
-## Prompt compile (Phase 29, revised Phase 36)
+## Prompt compile (Phase 29, revised Phase 36, 40)
 
-- Module: `apps/api/src/lib/prompt-optimize/` — `compileInstruction` only (deterministic compile before AI Verdict, Generate, and Evaluate)
-- **Deterministic compile (always):** trim, collapse extra blank lines, wrap in `## User instruction` fence; Generate adds honesty line (no invented employers/dates/skills/experience)
-- **Removed in Phase 36:** LLM rewrite, `promptOptimizations` cache, `GET/PUT /settings/prompt-optimization`, and `usePromptOptimizationAi`
+- Module: `apps/api/src/lib/prompt-optimize/` — `compileInstruction`, `PROMPT_SECTION_SEPARATOR`, `PROMPT_COMPILER_VERSION` (`2`)
+- **Deterministic compile (always):** trim, collapse extra blank lines, wrap stored prompt markdown under `# Instructions`, then append `PROMPT_SECTION_SEPARATOR` (`----------------------------------------`)
+- **Runtime system prompt:** compiled Instructions + `# Execution rules` (minimal provider-safe rules) + separator + provider notes; Verdict / Generate / Evaluate output structure and tailoring rules live in the user's stored prompt, not in fixed system sections
+- **One-time Generate prompt:** appended under `# One-time prompt` with the same separator before Execution rules
 - Generate cache keys (`buildVerdictInputKey`, `buildGenerationInputKey`, `buildEvaluationInputKey`, `buildWorkflowRecommendInputKey`) include prompt hashes via `apps/web/src/lib/prompt-hash.ts` (no optimization flag)
 
 ## Workflows (Phase 6–7, 22, 30, 35)
@@ -179,21 +180,21 @@ User browser (:4041)
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowProfilePicker`, `WorkflowCompaniesEditor`, and `WorkflowCompanyDialog`
 
-## AI Verdict (Phase 13, 19)
+## AI Verdict (Phase 13, 19, 40)
 
-- `POST /ai-verdict` — body `{ jobDescription }` (1–10,000 chars; client sends noise-filtered text); requires saved Settings provider/apiKey and non-empty `prompts.verdictPrompt`; system prompt = user Verdict Prompt + extraction rules; returns `{ markdown, usage, tokenUsed }`
+- `POST /ai-verdict` — body `{ jobDescription }` (1–10,000 chars; client sends noise-filtered text); requires saved Settings provider/apiKey and non-empty `prompts.verdictPrompt`; system prompt = compiled `# Instructions` (user Verdict Prompt) + `# Execution rules` (Markdown-only, follow Instructions, Not found); returns `{ markdown, usage, tokenUsed }`
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - `GET /ai-usage?page=` — owner-only paginated list; page size **100**; `orderBy: { createdAt: "desc" }`; returns `{ items, total, page, pageSize }` where each item has `id`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `createdAt` (omits `input` / `output`)
 - `GET /ai-usage/:id` — owner-only detail including `input` and `output`; 404 when missing or not owned
 - Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): active `generateType` values are `verdict`, `generate`, `evaluate`, `workflowRecommend`, and `markdownFormat`; historical rows may still have `promptHelper` (label **Prompt Helper** in AI Usage History); `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/evaluate/workflow-recommend, `gpt-5.6-sol` for OpenAI markdown-format, `gpt-5.6-terra` for OpenAI resume generation
 - Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-luna`, reasoning `low`)
-- Markdown output sections (in order): `## Verdict` (each user question as `###` heading + answer paragraph or sub-bullet list), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
+- Markdown output structure is **user-defined** in the Verdict Prompt (default template seeded on sign-up); JoHEL does not enforce fixed `## Verdict` / `## Job` / `## Company` sections
 - Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography` theme tokens); `AiUsageProvider` refreshes header total after success
 - **Note:** Phase 13 introduced this as `POST /ai-filter`; Phase 19 renamed to `ai-verdict` and wired into Generate Job **Next**
 
-## Prompts settings (Phase 18, 23, 34, 39)
+## Prompts settings (Phase 18, 23, 34, 39, 40)
 
-- `GET /prompts` → `{ verdictPrompt: string, generatePrompt: string, evaluatePrompt: string }` — empty strings when no row yet (owner only)
+- `GET /prompts` → `{ verdictPrompt, generatePrompt, evaluatePrompt }` — empty strings when no row yet (owner only); new sign-ups receive defaults from `@johel/prompt-defaults` via `POST /auth/register`
 - `PUT /prompts` → body `{ verdictPrompt, generatePrompt, evaluatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; on write, each changed prompt is converted to markdown via AI in parallel (unchanged prompts skip conversion); requires Settings provider/apiKey when any conversion runs; returns all three prompts
 - Web route `/prompts`: Verdict Prompt, Generate Prompt, and Evaluate Prompt shown as read-only `AiVerdictMarkdown` previews (muted placeholder when empty); each field has **Edit** (pencil) beside the label; **Edit** opens `PromptEditDialog` (textarea + **Apply**, local until page **Save**); each field shows a notice that contents are auto-converted to markdown on **Save**; fullscreen `BusyOverlay` when conversion runs; page **Save** still persists all three prompts; Save always enabled; inline validation on submit; toast on API result; refreshes header Token Used after save
 - Company and Experience editor forms (`CompanyForm`, `ExperienceForm`): Description textarea; each Description shows the auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialogs render Description with `AiVerdictMarkdown`
@@ -201,12 +202,12 @@ User browser (:4041)
 - Client: `getPrompts`, `savePrompts` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
 - Verdict Prompt consumed by `POST /ai-verdict`; Generate Prompt consumed by `POST /ai-resume`; Evaluate Prompt consumed by `POST /ai-evaluate`
 
-## AI Markdown Format (Phase 38)
+## AI Markdown Format (Phase 38, 40)
 
 - Embedded in `PUT /prompts`, `POST/PUT /companies`, `POST/PUT /experiences` write handlers (no separate endpoint)
 - Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; kinds `verdict` | `generate` | `evaluate` | `companyDescription` | `experienceDescription`
-- Skip rule: when `submitted.trim() === stored.trim()`, persist without AI (no API key required)
-- When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); strips accidental code fences; rejects empty or over-limit output
+- Skip rule: when `submitted.trim() === stored.trim()`, persist without AI (no API key required); prompt kinds still run deterministic `#`→`##` heading cap on save
+- When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); **prompt kinds** additionally require `##` as the largest heading (AI rule + `capPromptHeadings` post-process); strips accidental code fences; rejects empty or over-limit output
 - Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiMarkdownFormatResponse` (`gpt-5.6-sol`, reasoning `low`); usage stored as `generateType: "markdownFormat"`; AI Usage History label **Markdown Format**
 - Prompts: changed fields convert in parallel before upsert
 - Web: `AUTO_MARKDOWN_FORMAT_HINT` in `apps/web/src/lib/markdown-format.ts`; `BusyOverlay` during save when client detects changed fields; `refreshTokenUsed` after successful save

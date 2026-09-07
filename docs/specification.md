@@ -4,6 +4,12 @@
 
 **JoHEL** is a customized Resume / CV and résumé writing application. It helps a user combine personal profile data, companies, shared hands-on experience, and a saved workflow preset to process a Job Description and generate a tailored résumé.
 
+## Philosophy
+
+**JoHEL does not guarantee or take responsibility for output quality.**
+
+Result quality depends entirely on the user's prompt authoring and the capabilities of the AI provider they configure. JoHEL provides tooling to compose, store, compile, and run prompts—it does not warrant the suitability, accuracy, completeness, or effectiveness of AI-generated outputs. Users are free to define their own prompt structure and instructions; what the AI produces is between the user and their chosen model.
+
 ## Product concept
 
 ### What the user owns
@@ -12,7 +18,7 @@
 * **Companies** — One user can manage **multiple companies** (name and description).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
 * **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more ordered company entries (each with a required employment period and linked shared experiences), and a resume output language.
-* **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés.
+* **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés. New accounts receive default prompt templates on sign-up; users may replace them freely. Output structure and instructions are user-defined; JoHEL does not guarantee AI output quality (see **Philosophy**).
 
 ### End-to-end flow
 
@@ -63,7 +69,7 @@ Job Description → Filtering → Workflow → Generate → Evaluate
 Aligned with the product flow above:
 
 1. Process and filter the Job Description.
-2. Run **AI Verdict** using the user’s saved Verdict Prompt and structure relevant job and company information as Markdown.
+2. Run **AI Verdict** using the user’s saved Verdict Prompt; the user defines sections (e.g. fit questions, job extraction, company extraction), answer format, and Markdown output structure.
 3. Allow the user to review the AI Verdict result on the Workflow step.
 4. Generate a Resume based on:
 
@@ -79,7 +85,7 @@ Aligned with the product flow above:
 #### Filtering layers
 
 * **Noise Filter** — A deterministic preprocessing layer that removes irrelevant web-page noise before AI processing, reducing input size and token usage while preserving meaningful job and company information.
-* **AI Filter** — An AI-based **AI Verdict** layer that analyzes the cleaned text using the user’s Verdict Prompt and structures relevant Job, Verdict answers, and Company information as Markdown.
+* **AI Filter** — An AI-based **AI Verdict** layer that analyzes the cleaned text using the user’s Verdict Prompt. The user defines what to extract, what to answer, and how to format the Markdown output.
 
 ## Key Metrics / Requirements
 
@@ -174,17 +180,17 @@ Aligned with the product flow above:
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Prompts** (`/prompts`)
   * Page content is centered in a readable column
-  * One signed-in user maintains a **Verdict Prompt**, a **Generate Prompt**, and an **Evaluate Prompt**
+  * One signed-in user maintains a **Verdict Prompt**, a **Generate Prompt**, and an **Evaluate Prompt**; **sign-up** seeds all three from shared default templates (`@johel/prompt-defaults`)
   * Editor fields: Verdict Prompt (required), Generate Prompt (required), Evaluate Prompt (required); each is shown as a read-only Markdown preview (`AiVerdictMarkdown`); empty prompts show a muted placeholder
   * Each prompt field has an **Edit** (pencil) control beside the label; **Edit** opens a dialog with a textarea and **Apply** (local until page **Save**)
-  * Each prompt field shows a notice that contents will be automatically converted to markdown format on **Save**; when a prompt changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged prompts skip conversion; changed fields convert in parallel; fullscreen loading while conversion runs; saved textareas refresh with the converted markdown
+  * Each prompt field shows a notice that contents will be automatically converted to markdown format on **Save**; prompt kinds (Verdict / Generate / Evaluate) are capped at `##` as the largest heading during conversion, with deterministic `#`→`##` post-processing; when a prompt changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged prompts skip conversion but still receive heading-cap post-processing; changed fields convert in parallel; fullscreen loading while conversion runs; saved textareas refresh with the converted markdown
   * **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
   * Save and load via the API; toast on API success or failure
   * The Verdict Prompt is used when checking Job Descriptions; the Generate Prompt is used when generating résumés; the Evaluate Prompt is used when evaluating résumés (none run on this page)
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Workflow and saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to those pages
   * When ready, a timeline shows steps: Job → Workflow → Generate, and **Evaluate** when **Do Evaluate** is enabled; the page **title**, **timeline**, and round **Previous** / **Next** (or **Download** on the last step) controls share one sticky header row—the timeline sits between the side buttons—and the header stays fixed at the top of the scroll area while step content scrolls beneath
-  * **Next** on Job (Manual): validates the Job Description (inline error if empty); when **Do Verdict** is enabled, runs **Noise Filter** silently in the background (textarea unchanged), calls **AI Verdict** with the user’s saved Verdict Prompt plus extraction instructions, fullscreen loading while the request runs, on success persists token usage, saves accepted Markdown, toasts success, then advances toward **Workflow**; when **Do Verdict** is disabled, advances toward **Workflow** without calling AI Verdict; on failure stays on Job and toasts the error
+  * **Next** on Job (Manual): validates the Job Description (inline error if empty); when **Do Verdict** is enabled, runs **Noise Filter** silently in the background (textarea unchanged), calls **AI Verdict** with the user’s saved Verdict Prompt (compiled under `# Instructions` with minimal execution rules), fullscreen loading while the request runs, on success persists token usage, saves accepted Markdown, toasts success, then advances toward **Workflow**; when **Do Verdict** is disabled, advances toward **Workflow** without calling AI Verdict; on failure stays on Job and toasts the error
   * Before **Workflow**, when **Do Workflow Recommendation** is enabled in Settings, runs **AI Workflow Recommendation** using the noise-filtered Job Description and accepted Verdict Markdown when present; fullscreen loading while the request runs; auto-selects the best-matching workflow only when its score meets the user’s **Recommendation threshold** (otherwise clears selection and toasts); when recommendation is disabled, restores the user’s last manually selected workflow if it still exists; recommendation results are cached in the Generate session when Job and Verdict inputs are unchanged
   * **Workflow** step: read-only **AI Verdict result** Markdown panel at the top when **Do Verdict** is enabled (from the accepted Job-step result); then a **Workflow** section with a single-select table (all workflows loaded at once; no search or pagination). Row click selects and persists the last manual choice for reuse when recommendation is off; View opens read-only workflow detail. Below the workflow table, an optional **One-time Prompt** textarea (8 rows) accepts run-specific instructions; when non-empty, it is appended to the saved Generate Prompt for that run’s resume generation only (stored in the Generate session, not on the Prompts page). **Previous** and **Next** in the sticky step row return to Job and advance respectively; **Next** stays enabled and validates inline (one workflow selected) before advancing
   * **Workflow** **Next** runs **AI Resume generation** with the noise-filtered Job Description, accepted AI Verdict Markdown, selected workflow, saved Generate Prompt, and optional One-time Prompt when provided; fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on Workflow and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
@@ -284,6 +290,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-07):** `ai-markdown-format` module, `formatMarkdownOnSave` on write routes, `markdownFormat` usage type, web hints and `BusyOverlay`, markdown in detail dialogs. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-38-auto-markdown-format.md`](./plans/2026-09-07-phase-38-auto-markdown-format.md).
 * [x] **Phase 39 — Remove Prompt Helper** — Remove the Phase 34 one-sentence Add feature (API, UI Add buttons, helper dialog, client helpers). Prompts **Edit** preview + page **Save** and auto-markdown-on-save remain unchanged.
   * **Outcome (2026-09-07):** Removed `POST /ai-prompt-helper`, `PromptHelperDialog`, Add buttons on `/prompts` and company/experience editors, and `promptHelper` from active `generateType` values; historical `promptHelper` usage rows still display in AI Usage History. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-39-remove-prompt-helper.md`](./plans/2026-09-07-phase-39-remove-prompt-helper.md).
+* [x] **Phase 40 — User-owned prompt pipeline** — User-defined Verdict / Generate / Evaluate structure; `# Instructions` compile with strong separator; prompt markdown capped at `##` on save; default templates on sign-up; Philosophy documented (JoHEL does not guarantee output quality).
+  * **Outcome (2026-09-07):** `@johel/prompt-defaults`, unified compile + execution rules, heading cap in `ai-markdown-format`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-40-user-owned-prompt-pipeline.md`](./plans/2026-09-07-phase-40-user-owned-prompt-pipeline.md).
 
 ## Cursor Rules (Documentation Governance)
 
