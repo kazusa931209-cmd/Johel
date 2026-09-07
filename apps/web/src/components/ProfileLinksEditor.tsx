@@ -159,6 +159,7 @@ export function ProfileLinksEditor({
 
       {dialog ? (
         <DetailDialog
+          mode="form"
           title={dialog === "add" ? "Add link" : "Edit link"}
           onClose={() => setDialog(null)}
           onKeyDown={(e) => {

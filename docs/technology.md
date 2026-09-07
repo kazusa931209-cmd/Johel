@@ -71,8 +71,8 @@ User browser (:4041)
   - `(app)` — authenticated shell + placeholder home `/`
 - Session gate: client checks `GET /backend/auth/me` before rendering app routes
 - If a frontend component file exceeds **500 lines**, ask the user before growing it further; prefer splitting into smaller components/hooks
-- Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash), `CloseButton` (X) in `components/shared/action-icon-buttons.tsx`
-- Dialogs use `DetailDialog` (`components/shared/detail-dialog.tsx`) so Close (X) is always in the top-right header; the footer holds only the main action (Apply / Delete). Do not put Close beside that action. Optional `dismissOnBackdrop={false}` blocks outer-click dismiss (used by AI Filter result dialog).
+- Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash), `CopyButton` (clipboard), `CloseButton` (X) in `components/shared/action-icon-buttons.tsx`
+- Dialogs use `DetailDialog` (`components/shared/detail-dialog.tsx`) so Close (X) is always in the top-right header; the footer holds only the main action (Apply / Delete). Do not put Close beside that action. `mode="view"` (default) allows backdrop dismiss; `mode="form"` blocks backdrop dismiss for add/edit dialogs. Delete confirms use `mode="view"`. See `.cursor/rules/dialog-dismiss.mdc`.
 
 ## Studio shell (Phase 4)
 
@@ -93,7 +93,7 @@ User browser (:4041)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
-- **AI Usage History (Phase 32):** fixed bottom-right FAB (`AiUsageHistory` in app layout) opens `Drawer` history panel; row click opens nested detail `Drawer` with input/output text; `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`; labels in `apps/web/src/lib/ai-usage.ts`
+- **AI Usage History (Phase 32, 41):** fixed bottom-right FAB (`AiUsageHistory` in app layout) opens `Drawer` history panel; row click opens nested detail `Drawer` with input/output text and per-section **Copy** icon (`CopyButton` + `copyTextToClipboard`); `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`; labels in `apps/web/src/lib/ai-usage.ts`
 - Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows, Prompts — always open), **Run** (Generate — always open), Settings; section labels use normal title case (not all caps)
 
 ## AI Agent settings (Phase 5, 21)

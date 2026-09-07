@@ -1,5 +1,6 @@
 import { ButtonHTMLAttributes } from "react";
 import {
+  CopyIcon,
   EyeIcon,
   PencilIcon,
   PlusIcon,
@@ -115,6 +116,31 @@ export function ViewButton({
       {...props}
     >
       <EyeIcon className="h-4 w-4" />
+      {showLabel ? <span>{label}</span> : null}
+    </button>
+  );
+}
+
+export function CopyButton({
+  label = "Copy",
+  showLabel = false,
+  className,
+  ...props
+}: ActionButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={
+        className ??
+        (showLabel
+          ? "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-60"
+          : iconButtonClass)
+      }
+      {...props}
+    >
+      <CopyIcon className="h-4 w-4" />
       {showLabel ? <span>{label}</span> : null}
     </button>
   );

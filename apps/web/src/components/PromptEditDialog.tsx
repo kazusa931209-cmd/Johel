@@ -29,6 +29,7 @@ export function PromptEditDialog({
 
   return (
     <DetailDialog
+      mode="form"
       title={title}
       onClose={onClose}
       panelClassName="max-w-3xl"

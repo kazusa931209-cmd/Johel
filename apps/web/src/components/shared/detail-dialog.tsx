@@ -3,27 +3,45 @@
 import { KeyboardEventHandler, ReactNode } from "react";
 import { CloseButton } from "@/components/shared/action-icon-buttons";
 
+export type DetailDialogMode = "view" | "form";
+
 type DetailDialogProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
   role?: "dialog" | "alertdialog";
+  mode?: DetailDialogMode;
   closeDisabled?: boolean;
   dismissOnBackdrop?: boolean;
   onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
   panelClassName?: string;
+  contentClassName?: string;
 };
+
+function resolveDismissOnBackdrop(
+  mode: DetailDialogMode,
+  dismissOnBackdrop?: boolean,
+): boolean {
+  if (dismissOnBackdrop !== undefined) {
+    return dismissOnBackdrop;
+  }
+  return mode === "view";
+}
 
 export function DetailDialog({
   title,
   onClose,
   children,
   role = "dialog",
+  mode = "view",
   closeDisabled = false,
-  dismissOnBackdrop = true,
+  dismissOnBackdrop,
   onKeyDown,
   panelClassName,
+  contentClassName,
 }: DetailDialogProps) {
+  const canDismissOnBackdrop = resolveDismissOnBackdrop(mode, dismissOnBackdrop);
+
   function requestClose() {
     if (closeDisabled) return;
     onClose();
@@ -33,7 +51,7 @@ export function DetailDialog({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
       role="presentation"
-      onClick={dismissOnBackdrop ? requestClose : undefined}
+      onClick={canDismissOnBackdrop ? requestClose : undefined}
     >
       <div
         role={role}
@@ -50,7 +68,7 @@ export function DetailDialog({
           <h2 className="text-lg font-semibold">{title}</h2>
           <CloseButton onClick={requestClose} disabled={closeDisabled} />
         </div>
-        <div className="space-y-3 text-sm">{children}</div>
+        <div className={contentClassName ?? "space-y-3 text-sm"}>{children}</div>
       </div>
     </div>
   );

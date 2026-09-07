@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/app/ToastProvider";
+import { CopyButton } from "@/components/shared/action-icon-buttons";
 import { Drawer } from "@/components/shared/drawer";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { HistoryIcon } from "@/components/shared/icons";
@@ -16,6 +17,7 @@ import {
   type AiUsageDetail,
   type AiUsageListItem,
 } from "@/lib/api";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 const fabClass =
   "fixed bottom-8 right-12 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-surface shadow-lg transition-colors hover:bg-surface-muted";
@@ -23,18 +25,24 @@ const fabClass =
 function AiUsageTextSection({
   label,
   value,
+  onCopy,
 }: {
   label: string;
   value: string;
+  onCopy: (text: string) => void;
 }) {
   const text = value.trim() ? value : "—";
 
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-background">
-      <div className="shrink-0 border-b border-border bg-surface-muted px-3 py-2">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-surface-muted px-3 py-2">
         <h3 className="text-xs font-medium tracking-wide text-muted uppercase">
           {label}
         </h3>
+        <CopyButton
+          disabled={!value.trim()}
+          onClick={() => onCopy(value)}
+        />
       </div>
       <div className="max-h-[min(40vh,24rem)] overflow-auto p-3">
         <div className="whitespace-pre-wrap break-words text-sm text-foreground">
@@ -54,7 +62,17 @@ function AiUsageDetailDrawer({
   loading: boolean;
   onClose: () => void;
 }) {
+  const { toast } = useToast();
   const open = loading || detail != null;
+
+  async function handleCopy(text: string) {
+    const ok = await copyTextToClipboard(text);
+    if (ok) {
+      toast("Copied to clipboard.", "success");
+    } else {
+      toast("Could not copy to clipboard.", "error");
+    }
+  }
 
   return (
     <Drawer
@@ -70,8 +88,16 @@ function AiUsageDetailDrawer({
           <p className="text-sm text-muted">Loading…</p>
         ) : detail ? (
           <div className="flex flex-col gap-4 text-sm">
-            <AiUsageTextSection label="Input" value={detail.input} />
-            <AiUsageTextSection label="Output" value={detail.output} />
+            <AiUsageTextSection
+              label="Input"
+              value={detail.input}
+              onCopy={(text) => void handleCopy(text)}
+            />
+            <AiUsageTextSection
+              label="Output"
+              value={detail.output}
+              onCopy={(text) => void handleCopy(text)}
+            />
           </div>
         ) : null}
       </div>

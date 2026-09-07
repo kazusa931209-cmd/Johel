@@ -1,0 +1,34 @@
+---
+description: Dialog backdrop dismiss policy for view-only vs add/edit form dialogs
+globs: apps/web/src/**/*.tsx
+alwaysApply: false
+---
+
+# Dialog Backdrop Dismiss
+
+## Rules
+
+1. **View-only dialogs** (detail/read-only, delete confirms) — outer backdrop click **closes** the dialog.
+2. **Add/Edit form dialogs** (unsaved draft in dialog) — outer backdrop click **does not** close; user must use Close (X) or Apply/Save.
+
+## Implementation
+
+- Prefer shared `DetailDialog` from `components/shared/detail-dialog.tsx`.
+- View-only: `mode="view"` (default) or `dismissOnBackdrop={true}`.
+- Add/Edit forms: `mode="form"` or `dismissOnBackdrop={false}`.
+- Do not hand-roll modal backdrops with `onClick={onClose}` on form dialogs.
+- Drawers (`Drawer`) are view-only; backdrop dismiss stays enabled.
+
+## Examples
+
+```tsx
+// View-only detail
+<DetailDialog title="Company detail" onClose={onClose}>
+  ...
+</DetailDialog>
+
+// Add/Edit form
+<DetailDialog mode="form" title="Edit link" onClose={onClose}>
+  ...
+</DetailDialog>
+```
