@@ -33,4 +33,4 @@ cp .env.example .env   # set JWT_SECRET
 docker compose up -d --build
 ```
 
-Open `http://127.0.0.1:4041` or `http://<host-lan-ip>:4041` from other devices on the LAN.
+Open `http://127.0.0.1:4444` or `http://<host-lan-ip>:4444` from other devices on the LAN.

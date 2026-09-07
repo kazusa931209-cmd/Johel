@@ -281,14 +281,14 @@ User browser (:4041)
 
 - **Image:** one container runs API (Hono) + web (Next.js standalone); platform `linux/arm64` for Docker Desktop on Apple Silicon
 - **Files:** root `Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh`, `.dockerignore`; ops guide [`docker.md`](./docker.md)
-- **Publish:** `4041:4041` on all host interfaces (LAN access); API listens on `127.0.0.1:4042` inside the container only (`HOST` env on API)
+- **Publish:** `4444:4444` on all host interfaces (LAN access); API listens on `127.0.0.1:4042` inside the container only (`HOST` env on API)
 - **Web bind:** `HOSTNAME=0.0.0.0` in Compose (Docker sets `HOSTNAME` to the container name; Next standalone must override)
 - **Proxy:** `API_ORIGIN=http://127.0.0.1:4042` for `/backend/*` route handler
 - **Database:** SQLite at `file:/data/johel.db` on named volume `johel-data` (Docker Desktop VM — do not bind-mount to macOS for SQLite)
-- **Start:** entrypoint runs `prisma migrate deploy`, starts API, waits for `GET /health`, then starts Next on `:4041`
+- **Start:** entrypoint runs `prisma migrate deploy`, starts API, waits for `GET /health`, then starts Next on `:4444` (`WEB_PORT`)
 - **Update image:** rebuild and `docker compose up -d --force-recreate` (never `down -v`); Case B also uses `docker save` / `docker load` between Macs
 - **Secrets:** `JWT_SECRET` from root `.env` via Compose (not in image)
-- **Next build:** `output: "standalone"` and `outputFileTracingRoot` in `apps/web/next.config.ts` for monorepo tracing
+- **Next build:** `output: "standalone"` and `outputFileTracingRoot` in `apps/web/next.config.ts` for monorepo tracing; image build copies workspace packages `packages/resume` and `packages/prompt-defaults`
 - **pnpm in Docker:** `pnpm install --store-dir /pnpm/store` with pnpm **9.15.9** in the image (pnpm 12 blocks build scripts without approve-builds)
 
 ## Plans

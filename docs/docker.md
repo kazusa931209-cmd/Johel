@@ -1,6 +1,6 @@
 # Docker deployment
 
-JoHEL runs as **one Docker image** (API + web) on **Docker Desktop** for **macOS Apple Silicon** (`linux/arm64`). Port **4041** is published so **other devices on your LAN** can open the app.
+JoHEL runs as **one Docker image** (API + web) on **Docker Desktop** for **macOS Apple Silicon** (`linux/arm64`). Port **4444** is published so **other devices on your LAN** can open the app.
 
 The **database** (SQLite) lives in a Docker Desktop **named volume** on whichever Mac runs the container. When you update the image, **replace the container only** — do not remove the volume.
 
@@ -23,10 +23,10 @@ On the Mac that runs Docker Desktop, find its LAN IP (e.g. **System Settings →
 Other devices on the same network open:
 
 ```text
-http://<LAN-IP-of-host-Mac>:4041
+http://<LAN-IP-of-host-Mac>:4444
 ```
 
-If the page does not load from another device, allow incoming connections for Docker Desktop or port **4041** in the Mac firewall.
+If the page does not load from another device, allow incoming connections for Docker Desktop or port **4444** in the Mac firewall.
 
 The API (`:4042`) is **not** published — browsers use the web UI and `/backend/*` proxy only.
 
@@ -44,7 +44,7 @@ From the repo root:
 docker compose up -d --build
 ```
 
-Open `http://127.0.0.1:4041` locally, or `http://<this-mac-lan-ip>:4041` from another device.
+Open `http://127.0.0.1:4444` locally, or `http://<this-mac-lan-ip>:4444` from another device.
 
 ### Update (code or migrations changed)
 
@@ -89,7 +89,7 @@ docker load < johel-local.tar.gz
 docker compose up -d
 ```
 
-LAN devices open `http://<other-mac-lan-ip>:4041`.
+LAN devices open `http://<other-mac-lan-ip>:4444`.
 
 ### Update (code or migrations changed)
 
@@ -138,7 +138,7 @@ docker compose logs -f
 docker compose down
 
 # Health (from host)
-curl -s http://127.0.0.1:4041/backend/health
+curl -s http://127.0.0.1:4444/backend/health
 ```
 
 After Docker Desktop restarts, the container comes back automatically (`restart: unless-stopped`).

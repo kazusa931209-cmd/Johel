@@ -26,7 +26,7 @@ shutdown() {
 trap shutdown TERM INT
 
 cd /app
-PORT=4041 HOSTNAME=0.0.0.0 node apps/web/server.js &
+PORT=${WEB_PORT:-4444} HOSTNAME=0.0.0.0 node apps/web/server.js &
 WEB_PID=$!
 
 wait "$WEB_PID"

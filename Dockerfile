@@ -14,12 +14,14 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/resume/package.json packages/resume/
+COPY packages/prompt-defaults/package.json packages/prompt-defaults/
 
 RUN pnpm install --frozen-lockfile --store-dir /pnpm/store
 
 COPY apps/api apps/api
 COPY apps/web apps/web
 COPY packages/resume packages/resume
+COPY packages/prompt-defaults packages/prompt-defaults
 
 RUN pnpm --filter api exec prisma generate
 
@@ -50,6 +52,6 @@ COPY --from=build /app/apps/web/public ./apps/web/public
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-EXPOSE 4041
+EXPOSE 4444
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
