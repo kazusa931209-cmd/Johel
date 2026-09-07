@@ -12,7 +12,8 @@ import { requireUser } from "../lib/session.js";
 const JOB_TEXT_MAX = 10_000;
 
 const postSchema = z.object({
-  jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX),
+  jobContext: z.string().trim().min(1).max(JOB_TEXT_MAX).optional(),
+  jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX).optional(),
   resume: generatedResumeSchema,
 });
 
@@ -30,7 +31,19 @@ aiEvaluateRoutes.post("/", async (c) => {
     return c.json(
       {
         error:
-          "Job Description and a valid generated resume are required (max 10,000 characters for the job).",
+          "Job context and a valid generated resume are required (max 10,000 characters for the job context).",
+      },
+      400,
+    );
+  }
+
+  const jobContext =
+    parsed.data.jobContext?.trim() || parsed.data.jobDescription?.trim() || "";
+  if (!jobContext) {
+    return c.json(
+      {
+        error:
+          "Job context and a valid generated resume are required (max 10,000 characters for the job context).",
       },
       400,
     );
@@ -79,7 +92,7 @@ aiEvaluateRoutes.post("/", async (c) => {
     );
 
     const result = await runAiEvaluate(provider, {
-      jobDescription: parsed.data.jobDescription,
+      jobContext,
       resume: parsed.data.resume,
       evaluatePrompt: compiledEvaluatePrompt,
       apiKey: setting.apiKey,

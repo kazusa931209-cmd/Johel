@@ -78,6 +78,7 @@ Extract when present: company name, description, website, industry, products/ser
 Use Not found for missing items.`;
 
 export const DEFAULT_GENERATE_PROMPT = `## Targeting
+The user message is labeled Markdown (Job context, Workflow intent, Profile, Companies). Field names below map to those labels.
 Use \`jobContext\` as the only scoring rubric.
 When it is Verdict Markdown, read these sections first: Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
 Map Role.title to the target job title. Treat Technical Requirements as skills. Treat Critical JD Terminology as exact keywords to reuse when the materials support them.
@@ -129,8 +130,8 @@ Output language must follow \`workflow.language\`.`;
 
 export const DEFAULT_EVALUATE_PROMPT = `## Rubric
 Score the résumé against the same dimensions as Verdict.
-If the job text is Verdict Markdown, read these sections first: Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
-If the job text is a filtered job description without those headings, derive the same dimensions from the text. Do not require the headings to be present.
+If Job context is Verdict Markdown, read these sections first: Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
+If Job context is a filtered job description without those headings, derive the same dimensions from the text. Do not require the headings to be present.
 
 Weight Required over Preferred. Do not treat Mentioned-only items as must-haves. Do not penalize the résumé for missing Mentioned-only items.
 

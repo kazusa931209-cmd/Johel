@@ -455,10 +455,10 @@ export default function GeneratePage() {
       return;
     }
 
-    const jobDescription = noiseFilter(job.jobText.trim()).text;
+    const jobContext = buildResumeJobContext(job, processSettings.doVerdict);
     setEvaluating(true);
     try {
-      const res = await runAiEvaluate({ jobDescription, resume });
+      const res = await runAiEvaluate({ jobContext, resume });
       if (!res.data) {
         toast(res.error ?? "AI Evaluate failed.", "error");
         return;

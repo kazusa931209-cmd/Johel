@@ -195,6 +195,7 @@ describe("generate-session resume cache", () => {
     expect(key).toContain("Emphasize leadership");
     expect(key).toContain("# Verdict");
     expect(key).toContain('"jobContextSource":"verdict"');
+    expect(key).toContain('"labeledUserMessageVersion":1');
   });
 
   it("uses filtered job description in key when doVerdict is false", () => {

@@ -1,10 +1,14 @@
 import type { AiProviderId } from "./types.js";
-import { PROMPT_SECTION_SEPARATOR } from "../prompt-optimize/compile.js";
+import {
+  formatJobContextBlock,
+  PROMPT_SECTION_SEPARATOR,
+} from "../prompt-optimize/index.js";
 
 const EXECUTION_RULES = `- You are an AI assistant that evaluates résumés against job descriptions.
 - Output Markdown only. Do not output JSON. Do not wrap the answer in a code fence.
 - Follow the evaluation criteria and output structure defined in Instructions above.
-- If the job text includes Verdict Markdown headings (Role, Technical Requirements, Final Verdict, and similar), use those as the scoring rubric. Otherwise derive the same dimensions from the job description.`;
+- The user message is labeled Markdown sections (Job context, then Resume).
+- If Job context includes Verdict Markdown headings (Role, Technical Requirements, Final Verdict, and similar), use those as the scoring rubric. Otherwise derive the same dimensions from the job text.`;
 
 const CURSOR_PROVIDER_NOTES = `Provider notes (Cursor AI Agent):
 - Follow the Instructions section above for scoring and feedback layout.`;
@@ -25,18 +29,12 @@ export function getAiEvaluateSystemPrompt(
 }
 
 export function buildAiEvaluateUserPrompt(
-  jobDescription: string,
+  jobContext: string,
   resumeMarkdown: string,
 ): string {
-  return `Evaluate the resume below against the job description.
-
-Job Description:
----
-${jobDescription}
----
-
-Resume:
----
-${resumeMarkdown}
----`;
+  return [
+    "Evaluate the résumé against the Job context section. Use Verdict headings when present; otherwise derive the same dimensions from the job text.",
+    formatJobContextBlock(jobContext),
+    `## Resume\n\n${resumeMarkdown.trim()}`,
+  ].join("\n\n");
 }

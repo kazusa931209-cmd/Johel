@@ -11,7 +11,7 @@ export type AiEvaluateUsage = {
 };
 
 export type AiEvaluateRequest = {
-  jobDescription: string;
+  jobContext: string;
   resume: GeneratedResume;
   evaluatePrompt: string;
   apiKey: string;

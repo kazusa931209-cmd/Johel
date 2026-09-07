@@ -73,8 +73,8 @@ export function GenerateWorkflowStep({
           Choose one workflow. Its saved profile and company entries (with
           linked experiences) are used for generation.
           {doVerdict
-            ? " Resume generation uses the AI Verdict result above instead of the raw job description."
-            : " Resume generation uses the noise-filtered job description from the Job step."}
+            ? " Resume generation and evaluation use the AI Verdict result above instead of the raw job description."
+            : " Resume generation and evaluation use the noise-filtered job description from the Job step."}
         </p>
       </div>
 
@@ -82,9 +82,9 @@ export function GenerateWorkflowStep({
         <div className="space-y-2">
           <h3 className="text-sm font-medium">AI Verdict result</h3>
           <p className="text-xs text-muted">
-            This Markdown replaces the raw job description when generating your
-            resume. Its structure and extracted fields (defined by your Verdict
-            Prompt) directly affect tailoring quality.
+            This Markdown replaces the raw job description when generating and
+            evaluating your resume. Its structure and extracted fields (defined
+            by your Verdict Prompt) directly affect tailoring quality.
           </p>
           <div className="rounded-md border border-border bg-background px-3 py-3">
             <AiVerdictMarkdown markdown={acceptedMarkdown} />

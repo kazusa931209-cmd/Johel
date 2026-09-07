@@ -18,7 +18,7 @@ export const openAiEvaluateProvider: AiEvaluateProvider = {
     const instructions = getAiEvaluateSystemPrompt("openai", input.evaluatePrompt);
     const resumeMarkdown = resumeToMarkdown(input.resume);
     const user = buildAiEvaluateUserPrompt(
-      input.jobDescription,
+      input.jobContext,
       resumeMarkdown,
     );
 

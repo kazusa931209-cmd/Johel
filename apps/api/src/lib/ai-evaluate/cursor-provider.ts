@@ -19,7 +19,7 @@ export const cursorAiEvaluateProvider: AiEvaluateProvider = {
     const system = getAiEvaluateSystemPrompt("cursor", input.evaluatePrompt);
     const resumeMarkdown = resumeToMarkdown(input.resume);
     const user = buildAiEvaluateUserPrompt(
-      input.jobDescription,
+      input.jobContext,
       resumeMarkdown,
     );
     const prompt = `${system}\n\n${user}`;

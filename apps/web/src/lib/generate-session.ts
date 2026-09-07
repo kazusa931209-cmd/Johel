@@ -31,6 +31,9 @@ export type GenerateSession = {
 
 const STORAGE_KEY_PREFIX = "johel:generate-session:";
 
+/** Bumps Generate/Evaluate cache when the AI user-message layout changes. */
+export const LABELED_USER_MESSAGE_VERSION = 1;
+
 export const EMPTY_JOB_STATE: GenerateJobState = {
   method: "manual",
   jobText: "",
@@ -191,6 +194,7 @@ function buildGenerationInputKeyParts(
   oneTimePrompt: string,
 ) {
   return {
+    labeledUserMessageVersion: LABELED_USER_MESSAGE_VERSION,
     jobContext: buildResumeJobContext(job, doVerdict),
     jobContextSource: doVerdict ? "verdict" : "jobDescription",
     workflowId: workflow.workflowId,

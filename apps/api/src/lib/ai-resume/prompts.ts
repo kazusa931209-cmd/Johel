@@ -1,6 +1,9 @@
 import type { ResumeGenerationInput } from "./types.js";
 import type { AiProviderId } from "../ai-provider.js";
-import { PROMPT_SECTION_SEPARATOR } from "../prompt-optimize/compile.js";
+import {
+  formatJobContextBlock,
+  PROMPT_SECTION_SEPARATOR,
+} from "../prompt-optimize/index.js";
 
 const JSON_SCHEMA_DESCRIPTION = `{
   "header": {
@@ -44,7 +47,7 @@ const JSON_SCHEMA_DESCRIPTION = `{
 const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation system.
 - Generate a resume targeted to the supplied job context and input data.
 - Job context is AI Verdict Markdown when the client ran Verdict; otherwise it is the noise-filtered job description text.
-- Use the full jobContext as the scoring rubric. Do not require specific heading names. If Instructions mention headings that are absent, use the closest sections present (for example Role ≈ title, Technical Requirements ≈ skills).
+- The user message is labeled Markdown sections (Job context, Workflow intent, Profile, Companies). Use Job context as the scoring rubric. Do not require specific heading names. If Instructions mention headings that are absent, use the closest sections present (for example Role ≈ title, Technical Requirements ≈ skills). If Instructions name JSON-style fields (for example companies[].roleContext), they refer to the matching labeled subsections.
 - Follow the tailoring rules and output expectations defined in Instructions above.
 - Do not invent employers, dates, skills, or experience not present in the supplied input data.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
@@ -61,12 +64,6 @@ const OPENAI_PROVIDER_NOTES = `Provider notes (OpenAI):
 - header.name is required.
 - Return ONLY valid JSON. Do NOT wrap the answer in a code fence.`;
 
-export function extractMarkdownHeadings(markdown: string): string[] {
-  return [...markdown.matchAll(/^#{1,3}\s+(.+)$/gm)].map((match) =>
-    match[1].trim(),
-  );
-}
-
 export function getAiResumeSystemPrompt(
   provider: AiProviderId,
   generatePrompt: string,
@@ -76,17 +73,79 @@ export function getAiResumeSystemPrompt(
   return `${generatePrompt.trim()}\n# Execution rules\n\n${EXECUTION_RULES}\n\n${PROMPT_SECTION_SEPARATOR}\n\n${notes}`;
 }
 
-export function buildAiResumeUserPrompt(input: ResumeGenerationInput): string {
-  const headings = extractMarkdownHeadings(input.jobContext);
-  const headingNote =
-    headings.length > 0
-      ? `Job context Markdown headings (use these as the scoring rubric; if Instructions name headings that are absent, use the closest match):\n${headings
-          .map((heading) => `- ${heading}`)
-          .join("\n")}\n\n`
-      : "";
-  return `${headingNote}Generate a tailored resume from the following input JSON.
+function optionalLine(label: string, value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return `- ${label}: ${trimmed}`;
+}
 
----
-${JSON.stringify(input, null, 2)}
----`;
+function formatProfileSection(input: ResumeGenerationInput): string {
+  const { profile } = input;
+  const lines = [
+    `- Name: ${profile.firstName} ${profile.lastName}`.trim(),
+    optionalLine("Email", profile.email),
+    optionalLine("Phone", profile.pn),
+    optionalLine("Residence", profile.residence),
+    optionalLine("Birth date", profile.birthDate),
+  ].filter((line): line is string => Boolean(line));
+
+  const education = profile.education?.trim();
+  const linkLines = profile.links
+    .filter((link) => link.link?.trim())
+    .map((link) => `- ${link.key}: ${link.link?.trim()}`);
+
+  const blocks = [`## Profile`, lines.join("\n")];
+  if (education) {
+    blocks.push(`Education:\n${education}`);
+  }
+  if (linkLines.length > 0) {
+    blocks.push(`Links:\n${linkLines.join("\n")}`);
+  }
+  return blocks.join("\n\n");
+}
+
+function formatCompaniesSection(input: ResumeGenerationInput): string {
+  const blocks = input.companies.map((company, index) => {
+    const experienceBlocks = company.experiences.map((experience) => {
+      const parts = [
+        `#### ${experience.category}`,
+        `Problem:\n${experience.problem.trim()}`,
+        `Actions:\n${experience.actions.trim()}`,
+      ];
+      if (experience.outcome.trim()) {
+        parts.push(`Outcome:\n${experience.outcome.trim()}`);
+      }
+      return parts.join("\n\n");
+    });
+
+    return [
+      `### ${index + 1}. ${company.name} (${company.startDate} – ${company.endDate})`,
+      `Role context: ${company.roleContext.trim()}`,
+      `What this company is:\n${company.whatCompanyIs.trim()}`,
+      `Domain & stack:\n${company.domainAndStack.trim()}`,
+      `Linked experiences:\n\n${experienceBlocks.join("\n\n")}`,
+    ].join("\n\n");
+  });
+
+  return `## Companies (résumé order)\n\n${blocks.join("\n\n")}`;
+}
+
+export function buildAiResumeUserPrompt(input: ResumeGenerationInput): string {
+  const workflowDescription = input.workflow.description.trim();
+  const workflowIntent = [
+    "## Workflow intent",
+    `- Name: ${input.workflow.name}`,
+    `- Language: ${input.workflow.language}`,
+    workflowDescription
+      ? `Description:\n${workflowDescription}`
+      : "Description: (none)",
+  ].join("\n");
+
+  return [
+    "Generate a tailored résumé from the labeled sections below. Use Job context as the scoring rubric. Keep company order. Use each company name as the employer; do not use alias.",
+    formatJobContextBlock(input.jobContext),
+    workflowIntent,
+    formatProfileSection(input),
+    formatCompaniesSection(input),
+  ].join("\n\n");
 }

@@ -444,7 +444,7 @@ export function runAiResume(payload: AiResumeRequest) {
 }
 
 export type AiEvaluateRequest = {
-  jobDescription: string;
+  jobContext: string;
   resume: import("@johel/resume").GeneratedResume;
 };
 
