@@ -1,5 +1,6 @@
 import type { AiProviderId } from "./ai-provider.js";
 import {
+  OPENAI_FORMAT_MODEL,
   OPENAI_RESUME_MODEL,
   OPENAI_VERDICT_MODEL,
 } from "./openai/responses.js";
@@ -11,6 +12,7 @@ export const AI_GENERATE_TYPES = [
   "evaluate",
   "workflowRecommend",
   "promptHelper",
+  "markdownFormat",
 ] as const;
 
 export type AiGenerateType = (typeof AI_GENERATE_TYPES)[number];
@@ -33,6 +35,9 @@ export function resolveAiModelName(
   }
   if (generateType === "generate") {
     return OPENAI_RESUME_MODEL;
+  }
+  if (generateType === "markdownFormat" || generateType === "promptHelper") {
+    return OPENAI_FORMAT_MODEL;
   }
   return OPENAI_VERDICT_MODEL;
 }

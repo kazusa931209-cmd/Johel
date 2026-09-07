@@ -10,9 +10,10 @@ const KIND_LABELS: Record<PromptHelperKind, string> = {
     "Experience description (used when generating résumés from workflow data)",
 };
 
-const SYSTEM_MESSAGE = `You help a user extend text for a résumé application.
+const SYSTEM_MESSAGE = `You help a user write text for a résumé application.
 
-Output ONLY exactly one concise, simple sentence that can be appended to the existing text.
+Output ONLY exactly one concise, simple sentence based on the user's request.
+Write the sentence from scratch. Do not reference, continue, or depend on any existing field content.
 Do not output a second sentence.
 Do not wrap the answer in quotes or a code fence.
 Do not output a Markdown heading.
@@ -25,35 +26,18 @@ export function getPromptHelperSystemMessage(): string {
 
 export function buildPromptHelperUserMessage(input: {
   kind: PromptHelperKind;
-  currentPrompt: string;
   request: string;
 }): string {
   const kindLabel = KIND_LABELS[input.kind];
-  const isDescription =
-    input.kind === "companyDescription" ||
-    input.kind === "experienceDescription";
-  const currentLabel = isDescription ? "Current description" : "Current prompt";
-  const emptyLabel = isDescription
-    ? "(empty — this will be the first content in the description)"
-    : "(empty — this will be the first content in the prompt)";
-  const current =
-    input.currentPrompt.trim().length > 0
-      ? input.currentPrompt.trim()
-      : emptyLabel;
 
   return `Field type: ${kindLabel}
 
-${currentLabel}:
----
-${current}
----
-
-User request for what to add:
+User request:
 ---
 ${input.request.trim()}
 ---
 
-Write exactly one sentence to append to the current text.`;
+Write exactly one new sentence from the user request above.`;
 }
 
 export function normalizePromptHelperSentence(raw: string): string {

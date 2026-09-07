@@ -189,7 +189,6 @@ export type PromptHelperKind =
 export type AiPromptHelperRequest = {
   kind: PromptHelperKind;
   request: string;
-  currentPrompt: string;
 };
 
 export type AiPromptHelperResult = {

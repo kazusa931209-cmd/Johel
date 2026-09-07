@@ -1,10 +1,16 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { PromptHelperDialog } from "@/components/PromptHelperDialog";
 import { AddButton } from "@/components/shared/action-icon-buttons";
+import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { getPrompts, savePrompts, type PromptHelperKind } from "@/lib/api";
+import {
+  AUTO_MARKDOWN_FORMAT_HINT,
+  needsMarkdownFormatOnSave,
+} from "@/lib/markdown-format";
 import {
   EVALUATE_PROMPT_PLACEHOLDER,
   GENERATE_PROMPT_PLACEHOLDER,
@@ -59,9 +65,13 @@ const PROMPT_FIELDS = [
 
 export default function PromptsPage() {
   const { toast } = useToast();
+  const { refreshTokenUsed } = useAiUsage();
   const [verdictPrompt, setVerdictPrompt] = useState("");
   const [generatePrompt, setGeneratePrompt] = useState("");
   const [evaluatePrompt, setEvaluatePrompt] = useState("");
+  const [storedVerdictPrompt, setStoredVerdictPrompt] = useState("");
+  const [storedGeneratePrompt, setStoredGeneratePrompt] = useState("");
+  const [storedEvaluatePrompt, setStoredEvaluatePrompt] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -89,6 +99,9 @@ export default function PromptsPage() {
         setVerdictPrompt(res.data.verdictPrompt);
         setGeneratePrompt(res.data.generatePrompt);
         setEvaluatePrompt(res.data.evaluatePrompt);
+        setStoredVerdictPrompt(res.data.verdictPrompt);
+        setStoredGeneratePrompt(res.data.generatePrompt);
+        setStoredEvaluatePrompt(res.data.evaluatePrompt);
       }
       setLoading(false);
     });
@@ -128,10 +141,20 @@ export default function PromptsPage() {
     setVerdictPrompt(res.data.verdictPrompt);
     setGeneratePrompt(res.data.generatePrompt);
     setEvaluatePrompt(res.data.evaluatePrompt);
+    setStoredVerdictPrompt(res.data.verdictPrompt);
+    setStoredGeneratePrompt(res.data.generatePrompt);
+    setStoredEvaluatePrompt(res.data.evaluatePrompt);
+    await refreshTokenUsed();
     toast("Prompts saved.", "success");
   }
 
   const activeHelper = PROMPT_FIELDS.find((field) => field.kind === helperKind);
+
+  const converting =
+    saving &&
+    (needsMarkdownFormatOnSave(verdictPrompt, storedVerdictPrompt) ||
+      needsMarkdownFormatOnSave(generatePrompt, storedGeneratePrompt) ||
+      needsMarkdownFormatOnSave(evaluatePrompt, storedEvaluatePrompt));
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-6">
@@ -180,6 +203,7 @@ export default function PromptsPage() {
                 className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
               />
             )}
+            <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
             <FieldError message={fieldErrors[field.stateKey]} />
           </label>
         ))}
@@ -201,6 +225,13 @@ export default function PromptsPage() {
           onSuccess={(nextPrompt) => {
             promptSetters[activeHelper.stateKey](nextPrompt);
           }}
+        />
+      ) : null}
+
+      {converting ? (
+        <BusyOverlay
+          title="Converting to markdown…"
+          description="Please wait while your prompts are formatted."
         />
       ) : null}
     </section>

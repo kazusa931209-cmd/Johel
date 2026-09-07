@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { formatMarkdownOnSave } from "../lib/ai-markdown-format/format-on-save.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 import {
@@ -106,15 +107,31 @@ experiencesRoutes.post("/", async (c) => {
     return c.json({ error: "Invalid experience payload" }, 400);
   }
 
-  const row = await prisma.experience.create({
-    data: {
+  try {
+    const { formatted: description } = await formatMarkdownOnSave({
       userId: user.id,
-      category: parsed.data.category,
-      description: parsed.data.description,
-    },
-  });
+      kind: "experienceDescription",
+      submitted: parsed.data.description,
+      stored: "",
+      maxLen: 20_000,
+    });
 
-  return c.json(toDetail(row), 201);
+    const row = await prisma.experience.create({
+      data: {
+        userId: user.id,
+        category: parsed.data.category,
+        description,
+      },
+    });
+
+    return c.json(toDetail(row), 201);
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Markdown conversion failed. Please try again.";
+    return c.json({ error: message }, 502);
+  }
 });
 
 experiencesRoutes.put("/:id", async (c) => {
@@ -137,15 +154,31 @@ experiencesRoutes.put("/:id", async (c) => {
     return c.json({ error: "Invalid experience payload" }, 400);
   }
 
-  const row = await prisma.experience.update({
-    where: { id },
-    data: {
-      category: parsed.data.category,
-      description: parsed.data.description,
-    },
-  });
+  try {
+    const { formatted: description } = await formatMarkdownOnSave({
+      userId: user.id,
+      kind: "experienceDescription",
+      submitted: parsed.data.description,
+      stored: existing.description,
+      maxLen: 20_000,
+    });
 
-  return c.json(toDetail(row));
+    const row = await prisma.experience.update({
+      where: { id },
+      data: {
+        category: parsed.data.category,
+        description,
+      },
+    });
+
+    return c.json(toDetail(row));
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Markdown conversion failed. Please try again.";
+    return c.json({ error: message }, 502);
+  }
 });
 
 experiencesRoutes.delete("/:id", async (c) => {

@@ -46,7 +46,6 @@ export function PromptHelperDialog({
     const res = await runAiPromptHelper({
       kind,
       request: request.trim(),
-      currentPrompt: currentText,
     });
     setCreating(false);
 
@@ -78,7 +77,7 @@ export function PromptHelperDialog({
       <p className="text-muted">
         Describe what to add (max {PROMPT_HELPER_REQUEST_MAX} characters).{" "}
         <strong className="font-medium text-foreground">Create</strong> generates
-        exactly one sentence, appended under a{" "}
+        exactly one new sentence from your description, appended under a{" "}
         <code className="text-foreground">## New</code> heading.
       </p>
       <label className="block space-y-1 text-sm">

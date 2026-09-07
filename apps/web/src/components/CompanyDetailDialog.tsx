@@ -1,6 +1,7 @@
 "use client";
 
 import { DetailDialog, DetailField } from "@/components/shared/detail-dialog";
+import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import type { CompanyDetail } from "@/lib/api";
 
 type CompanyDetailDialogProps = {
@@ -15,7 +16,16 @@ export function CompanyDetailDialog({
   return (
     <DetailDialog title={company.name || "Company detail"} onClose={onClose}>
       <DetailField label="Company Name" value={company.name} />
-      <DetailField label="Description" value={company.description} />
+      <div className="space-y-1">
+        <div className="text-xs font-medium tracking-wide text-muted uppercase">
+          Description
+        </div>
+        {company.description ? (
+          <AiVerdictMarkdown markdown={company.description} />
+        ) : (
+          <div className="text-foreground">—</div>
+        )}
+      </div>
       <DetailField
         label="Created"
         value={new Date(company.createdAt).toLocaleString()}

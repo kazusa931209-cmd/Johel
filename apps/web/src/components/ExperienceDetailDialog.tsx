@@ -1,6 +1,7 @@
 "use client";
 
 import { DetailDialog, DetailField } from "@/components/shared/detail-dialog";
+import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import type { ExperienceDetail } from "@/lib/api";
 
 type ExperienceDetailDialogProps = {
@@ -18,7 +19,16 @@ export function ExperienceDetailDialog({
       onClose={onClose}
     >
       <DetailField label="Category" value={experience.category} />
-      <DetailField label="Description" value={experience.description} />
+      <div className="space-y-1">
+        <div className="text-xs font-medium tracking-wide text-muted uppercase">
+          Description
+        </div>
+        {experience.description ? (
+          <AiVerdictMarkdown markdown={experience.description} />
+        ) : (
+          <div className="text-foreground">—</div>
+        )}
+      </div>
       <DetailField
         label="Created"
         value={new Date(experience.createdAt).toLocaleString()}

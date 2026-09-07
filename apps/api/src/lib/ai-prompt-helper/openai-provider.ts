@@ -1,4 +1,4 @@
-import { runOpenAiVerdictResponse } from "../openai/responses.js";
+import { runOpenAiSolResponse } from "../openai/responses.js";
 import { buildUsage } from "../ai-verdict/types.js";
 import {
   buildPromptHelperUserMessage,
@@ -17,7 +17,7 @@ export const openAiPromptHelperProvider: PromptHelperProvider = {
   async run(input: PromptHelperRequest): Promise<PromptHelperResult> {
     const instructions = getPromptHelperSystemMessage();
     const user = buildPromptHelperUserMessage(input);
-    const response = await runOpenAiVerdictResponse(
+    const response = await runOpenAiSolResponse(
       input.apiKey,
       instructions,
       user,

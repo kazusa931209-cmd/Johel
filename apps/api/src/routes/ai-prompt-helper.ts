@@ -11,7 +11,6 @@ import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
-const PROMPT_MAX = 20_000;
 const REQUEST_MAX = 150;
 
 const postSchema = z.object({
@@ -23,7 +22,6 @@ const postSchema = z.object({
     "experienceDescription",
   ]),
   request: z.string().trim().min(1).max(REQUEST_MAX),
-  currentPrompt: z.string().max(PROMPT_MAX),
 });
 
 export const aiPromptHelperRoutes = new Hono();
@@ -70,7 +68,6 @@ aiPromptHelperRoutes.post("/", async (c) => {
   try {
     const result = await runAiPromptHelper(provider, {
       kind: parsed.data.kind as PromptHelperKind,
-      currentPrompt: parsed.data.currentPrompt,
       request: parsed.data.request,
       apiKey: setting.apiKey,
     });

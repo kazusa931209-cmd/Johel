@@ -149,7 +149,7 @@ User browser (:4041)
 - `GET /companies?q=&page=` — page size 10
 - List order: `name` ascending
 - `GET /companies/:id` — full detail for the editor (owner only)
-- `POST /companies` / `PUT /companies/:id` — `{ name, description }`
+- `POST /companies` / `PUT /companies/:id` — `{ name, description }`; on write, `description` is converted to markdown via AI when changed since last save (create always converts); unchanged descriptions skip conversion; requires Settings provider/apiKey when conversion runs
 - Search `q` across name and description
 - Web routes: `/companies` list; `/companies/new` add; `/companies/[id]/edit` edit
 
@@ -158,7 +158,7 @@ User browser (:4041)
 - `GET /experiences?q=&page=` — page size 10
 - List order: `updatedAt` descending
 - `GET /experiences/:id` — full detail for the editor (owner only)
-- `POST /experiences` / `PUT /experiences/:id` — `{ category, description }`
+- `POST /experiences` / `PUT /experiences/:id` — `{ category, description }`; on write, `description` is converted to markdown via AI when changed since last save (create always converts); unchanged descriptions skip conversion; requires Settings provider/apiKey when conversion runs
 - Search `q` across category and description
 - Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit
 
@@ -185,7 +185,7 @@ User browser (:4041)
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - `GET /ai-usage?page=` — owner-only paginated list; page size **100**; `orderBy: { createdAt: "desc" }`; returns `{ items, total, page, pageSize }` where each item has `id`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `createdAt` (omits `input` / `output`)
 - `GET /ai-usage/:id` — owner-only detail including `input` and `output`; 404 when missing or not owned
-- Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): `generateType` is `verdict`, `generate`, `evaluate`, `workflowRecommend`, or `promptHelper`; `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/evaluate/workflow-recommend/prompt-helper, `gpt-5.6-terra` for OpenAI resume generation
+- Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): `generateType` is `verdict`, `generate`, `evaluate`, `workflowRecommend`, `promptHelper`, or `markdownFormat`; `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/evaluate/workflow-recommend, `gpt-5.6-sol` for OpenAI prompt-helper/markdown-format, `gpt-5.6-terra` for OpenAI resume generation
 - Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-luna`, reasoning `low`)
 - Markdown output sections (in order): `## Verdict` (each user question as `###` heading + answer paragraph or sub-bullet list), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
 - Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography` theme tokens); `AiUsageProvider` refreshes header total after success
@@ -194,18 +194,29 @@ User browser (:4041)
 ## Prompts settings (Phase 18, 23, 34)
 
 - `GET /prompts` → `{ verdictPrompt: string, generatePrompt: string, evaluatePrompt: string }` — empty strings when no row yet (owner only)
-- `PUT /prompts` → body `{ verdictPrompt, generatePrompt, evaluatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; returns all three prompts
-- Web route `/prompts`: Verdict Prompt, Generate Prompt, and Evaluate Prompt textareas; each field has an **Add** (plus) control beside the label that opens `PromptHelperDialog` (required helper text, max **150** chars, **Create** generates exactly one sentence, footer action, Close X top-right); **Create** calls `POST /ai-prompt-helper` and appends the returned sentence locally under `## New` via `appendPromptHelperText` in `apps/web/src/lib/prompts.ts`; page **Save** still persists all three prompts; Save always enabled; inline validation on submit; toast on API result (including helper)
-- Company and Experience editor forms (`CompanyForm`, `ExperienceForm`): Description field uses the same `PromptHelperDialog` with `kind` `companyDescription` or `experienceDescription`; append is local until form **Save**
+- `PUT /prompts` → body `{ verdictPrompt, generatePrompt, evaluatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; on write, each changed prompt is converted to markdown via AI in parallel (unchanged prompts skip conversion); requires Settings provider/apiKey when any conversion runs; returns all three prompts
+- Web route `/prompts`: Verdict Prompt, Generate Prompt, and Evaluate Prompt textareas; each field has an **Add** (plus) control beside the label that opens `PromptHelperDialog` (required helper text, max **150** chars, **Create** generates exactly one sentence, footer action, Close X top-right); **Create** calls `POST /ai-prompt-helper` and appends the returned sentence locally under `## New` via `appendPromptHelperText` in `apps/web/src/lib/prompts.ts`; each field shows a notice that contents are auto-converted to markdown on **Save**; fullscreen `BusyOverlay` when conversion runs; page **Save** still persists all three prompts; Save always enabled; inline validation on submit; toast on API result (including helper); refreshes header Token Used after save
+- Company and Experience editor forms (`CompanyForm`, `ExperienceForm`): Description field uses the same `PromptHelperDialog` with `kind` `companyDescription` or `experienceDescription`; append is local until form **Save**; each Description shows the auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialogs render Description with `AiVerdictMarkdown`
 - Legacy web route `/verdict` redirects to `/prompts`
 - Client: `getPrompts`, `savePrompts`, `runAiPromptHelper` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
 - Verdict Prompt consumed by `POST /ai-verdict`; Generate Prompt consumed by `POST /ai-resume`; Evaluate Prompt consumed by `POST /ai-evaluate`
 
 ## AI Prompt Helper (Phase 34)
 
-- `POST /ai-prompt-helper` — body `{ kind: "verdict" | "generate" | "evaluate" | "companyDescription" | "experienceDescription", request: string, currentPrompt: string }`; `request` trim, min 1, max **150**; `currentPrompt` max 20,000; requires saved Settings provider/apiKey (saved prompts not required); returns `{ sentence, usage, tokenUsed }`
-- Module: `apps/api/src/lib/ai-prompt-helper/` — const system prompt outputs exactly one concise appendable sentence; strips accidental `## New` heading from model output; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiVerdictResponse` (`gpt-5.6-luna`, reasoning `low`); usage stored as `generateType: "promptHelper"`
+- `POST /ai-prompt-helper` — body `{ kind: "verdict" | "generate" | "evaluate" | "companyDescription" | "experienceDescription", request: string }`; `request` trim, min 1, max **150**; requires saved Settings provider/apiKey (saved prompts not required); returns `{ sentence, usage, tokenUsed }`
+- Module: `apps/api/src/lib/ai-prompt-helper/` — const system prompt outputs exactly one concise sentence from the user's request only (does not receive existing field text); strips accidental `## New` heading from model output; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiSolResponse` (`gpt-5.6-sol`, reasoning `low`); usage stored as `generateType: "promptHelper"`
 - Independent of Settings Process flags (applies only on the Prompts / company / experience helper dialogs)
+
+## AI Markdown Format (Phase 38)
+
+- Embedded in `PUT /prompts`, `POST/PUT /companies`, `POST/PUT /experiences` write handlers (no separate endpoint)
+- Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; kinds `verdict` | `generate` | `evaluate` | `companyDescription` | `experienceDescription`
+- Skip rule: when `submitted.trim() === stored.trim()`, persist without AI (no API key required)
+- When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); strips accidental code fences; rejects empty or over-limit output
+- Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiMarkdownFormatResponse` (`gpt-5.6-sol`, reasoning `low`); usage stored as `generateType: "markdownFormat"`; AI Usage History label **Markdown Format**
+- Prompts: changed fields convert in parallel before upsert
+- Web: `AUTO_MARKDOWN_FORMAT_HINT` in `apps/web/src/lib/markdown-format.ts`; `BusyOverlay` during save when client detects changed fields; `refreshTokenUsed` after successful save
+- Independent of Settings Process flags
 
 ## AI Workflow Recommendation (Phase 36)
 

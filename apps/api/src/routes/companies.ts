@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { formatMarkdownOnSave } from "../lib/ai-markdown-format/format-on-save.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 import {
@@ -103,15 +104,31 @@ companiesRoutes.post("/", async (c) => {
     return c.json({ error: "Invalid company payload" }, 400);
   }
 
-  const row = await prisma.company.create({
-    data: {
+  try {
+    const { formatted: description } = await formatMarkdownOnSave({
       userId: user.id,
-      name: parsed.data.name,
-      description: parsed.data.description,
-    },
-  });
+      kind: "companyDescription",
+      submitted: parsed.data.description,
+      stored: "",
+      maxLen: 20_000,
+    });
 
-  return c.json(toDetail(row), 201);
+    const row = await prisma.company.create({
+      data: {
+        userId: user.id,
+        name: parsed.data.name,
+        description,
+      },
+    });
+
+    return c.json(toDetail(row), 201);
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Markdown conversion failed. Please try again.";
+    return c.json({ error: message }, 502);
+  }
 });
 
 companiesRoutes.put("/:id", async (c) => {
@@ -134,15 +151,31 @@ companiesRoutes.put("/:id", async (c) => {
     return c.json({ error: "Invalid company payload" }, 400);
   }
 
-  const row = await prisma.company.update({
-    where: { id },
-    data: {
-      name: parsed.data.name,
-      description: parsed.data.description,
-    },
-  });
+  try {
+    const { formatted: description } = await formatMarkdownOnSave({
+      userId: user.id,
+      kind: "companyDescription",
+      submitted: parsed.data.description,
+      stored: existing.description,
+      maxLen: 20_000,
+    });
 
-  return c.json(toDetail(row));
+    const row = await prisma.company.update({
+      where: { id },
+      data: {
+        name: parsed.data.name,
+        description,
+      },
+    });
+
+    return c.json(toDetail(row));
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Markdown conversion failed. Please try again.";
+    return c.json({ error: message }, 502);
+  }
 });
 
 companiesRoutes.delete("/:id", async (c) => {

@@ -1,25 +1,25 @@
 import type { AiProviderId } from "../ai-provider.js";
 import type { AiVerdictUsage } from "../ai-verdict/types.js";
 
-export type PromptHelperKind =
+export type MarkdownFormatKind =
   | "verdict"
   | "generate"
   | "evaluate"
   | "companyDescription"
   | "experienceDescription";
 
-export type PromptHelperRequest = {
-  kind: PromptHelperKind;
-  request: string;
+export type MarkdownFormatRequest = {
+  kind: MarkdownFormatKind;
+  text: string;
   apiKey: string;
 };
 
-export type PromptHelperResult = {
-  sentence: string;
+export type MarkdownFormatResult = {
+  markdown: string;
   usage: AiVerdictUsage;
 };
 
-export type PromptHelperProvider = {
+export type MarkdownFormatProvider = {
   id: AiProviderId;
-  run(input: PromptHelperRequest): Promise<PromptHelperResult>;
+  run(input: MarkdownFormatRequest): Promise<MarkdownFormatResult>;
 };

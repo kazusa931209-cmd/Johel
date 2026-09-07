@@ -3,6 +3,7 @@ import { createOpenAiClient, extractOpenAiTokenUsage, mapOpenAiError } from "./c
 
 export const OPENAI_VERDICT_MODEL = "gpt-5.6-luna";
 export const OPENAI_RESUME_MODEL = "gpt-5.6-terra";
+export const OPENAI_FORMAT_MODEL = "gpt-5.6-sol";
 
 type ReasoningEffort = "low" | "medium" | "high";
 
@@ -104,4 +105,25 @@ export async function runOpenAiWorkflowRecommendResponse(
     reasoningEffort: "low",
     jsonOutput: true,
   });
+}
+
+export async function runOpenAiSolResponse(
+  apiKey: string,
+  instructions: string,
+  input: string,
+): Promise<OpenAiTextResponse> {
+  return createTextResponse(apiKey, {
+    model: OPENAI_FORMAT_MODEL,
+    instructions,
+    input,
+    reasoningEffort: "low",
+  });
+}
+
+export async function runOpenAiMarkdownFormatResponse(
+  apiKey: string,
+  instructions: string,
+  input: string,
+): Promise<OpenAiTextResponse> {
+  return runOpenAiSolResponse(apiKey, instructions, input);
 }

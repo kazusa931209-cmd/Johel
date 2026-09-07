@@ -9,6 +9,7 @@ const GENERATE_TYPE_LABELS: Record<string, string> = {
   evaluate: "Evaluate",
   workflowRecommend: "Workflow Recommend",
   promptHelper: "Prompt Helper",
+  markdownFormat: "Markdown Format",
 };
 
 export function formatAiProvider(aiProvider: string): string {

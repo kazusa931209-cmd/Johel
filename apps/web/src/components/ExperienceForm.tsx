@@ -2,8 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { AddButton } from "@/components/shared/action-icon-buttons";
+import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { PromptHelperDialog } from "@/components/PromptHelperDialog";
 import { useToast } from "@/components/app/ToastProvider";
 import {
@@ -12,6 +14,10 @@ import {
   type ExperienceDetail,
   type ExperienceWritePayload,
 } from "@/lib/api";
+import {
+  AUTO_MARKDOWN_FORMAT_HINT,
+  needsMarkdownFormatOnSave,
+} from "@/lib/markdown-format";
 
 type ExperienceFormProps = {
   mode: "create" | "edit";
@@ -44,8 +50,10 @@ export function ExperienceForm({
 }: ExperienceFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { refreshTokenUsed } = useAiUsage();
   const [category, setCategory] = useState(initial?.category ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [storedDescription] = useState(initial?.description ?? "");
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [helperOpen, setHelperOpen] = useState(false);
@@ -78,12 +86,16 @@ export function ExperienceForm({
       toast(res.error ?? "Save failed", "error");
       return;
     }
+    await refreshTokenUsed();
     toast(
       mode === "edit" ? "Experience updated." : "Experience created.",
       "success",
     );
     router.push("/experiences");
   }
+
+  const converting =
+    saving && needsMarkdownFormatOnSave(description, storedDescription);
 
   return (
     <form
@@ -148,6 +160,7 @@ export function ExperienceForm({
           aria-invalid={Boolean(fieldErrors.description)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
+        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
         <FieldError message={fieldErrors.description} />
       </label>
 
@@ -174,6 +187,13 @@ export function ExperienceForm({
           currentText={description}
           onClose={() => setHelperOpen(false)}
           onSuccess={setDescription}
+        />
+      ) : null}
+
+      {converting ? (
+        <BusyOverlay
+          title="Converting to markdown…"
+          description="Please wait while the description is formatted."
         />
       ) : null}
     </form>

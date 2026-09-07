@@ -4,6 +4,7 @@ import {
   resolveAiModelName,
 } from "../record-ai-usage.js";
 import {
+  OPENAI_FORMAT_MODEL,
   OPENAI_RESUME_MODEL,
   OPENAI_VERDICT_MODEL,
 } from "../openai/responses.js";
@@ -23,6 +24,12 @@ describe("resolveAiModelName", () => {
     expect(resolveAiModelName("openai", "evaluate")).toBe(OPENAI_VERDICT_MODEL);
     expect(resolveAiModelName("openai", "workflowRecommend")).toBe(
       OPENAI_VERDICT_MODEL,
+    );
+    expect(resolveAiModelName("openai", "markdownFormat")).toBe(
+      OPENAI_FORMAT_MODEL,
+    );
+    expect(resolveAiModelName("openai", "promptHelper")).toBe(
+      OPENAI_FORMAT_MODEL,
     );
   });
 });

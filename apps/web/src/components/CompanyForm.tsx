@@ -2,8 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { AddButton } from "@/components/shared/action-icon-buttons";
+import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { PromptHelperDialog } from "@/components/PromptHelperDialog";
 import { useToast } from "@/components/app/ToastProvider";
 import {
@@ -12,6 +14,10 @@ import {
   type CompanyDetail,
   type CompanyWritePayload,
 } from "@/lib/api";
+import {
+  AUTO_MARKDOWN_FORMAT_HINT,
+  needsMarkdownFormatOnSave,
+} from "@/lib/markdown-format";
 
 type CompanyFormProps = {
   mode: "create" | "edit";
@@ -40,8 +46,10 @@ function FieldError({ message }: { message?: string }) {
 export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { refreshTokenUsed } = useAiUsage();
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [storedDescription] = useState(initial?.description ?? "");
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [helperOpen, setHelperOpen] = useState(false);
@@ -74,9 +82,13 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
       toast(res.error ?? "Save failed", "error");
       return;
     }
+    await refreshTokenUsed();
     toast(mode === "edit" ? "Company updated." : "Company created.", "success");
     router.push("/companies");
   }
+
+  const converting =
+    saving && needsMarkdownFormatOnSave(description, storedDescription);
 
   return (
     <form
@@ -141,6 +153,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           aria-invalid={Boolean(fieldErrors.description)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
+        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
         <FieldError message={fieldErrors.description} />
       </label>
 
@@ -167,6 +180,13 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           currentText={description}
           onClose={() => setHelperOpen(false)}
           onSuccess={setDescription}
+        />
+      ) : null}
+
+      {converting ? (
+        <BusyOverlay
+          title="Converting to markdown…"
+          description="Please wait while the description is formatted."
         />
       ) : null}
     </form>
