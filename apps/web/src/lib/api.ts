@@ -446,6 +446,7 @@ export type AiResumeRequest = {
   jobDescription: string;
   acceptedMarkdown: string;
   workflowId: string;
+  oneTimePrompt?: string;
 };
 
 export type AiResumeResult = {

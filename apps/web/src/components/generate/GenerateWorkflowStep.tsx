@@ -15,8 +15,10 @@ import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNa
 type GenerateWorkflowStepProps = {
   acceptedMarkdown: string | null;
   selection: WorkflowSelection;
+  oneTimePrompt: string;
   generating: boolean;
   onSelectionChange: (selection: WorkflowSelection) => void;
+  onOneTimePromptChange: (value: string) => void;
   onPrev: () => void;
   onNext: () => void | Promise<void>;
 };
@@ -28,8 +30,10 @@ function formatWorkflowDate(iso: string) {
 export function GenerateWorkflowStep({
   acceptedMarkdown,
   selection,
+  oneTimePrompt,
   generating,
   onSelectionChange,
+  onOneTimePromptChange,
   onPrev,
   onNext,
 }: GenerateWorkflowStepProps) {
@@ -113,6 +117,24 @@ export function GenerateWorkflowStep({
           />
         )}
       />
+
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium">One-time Prompt</h3>
+        <p className="text-sm text-muted">
+          Optional instructions for this run only. When filled in, they are
+          appended to your saved Generate Prompt for resume generation.
+        </p>
+        <label className="block space-y-1 text-sm">
+          <span className="sr-only">One-time Prompt</span>
+          <textarea
+            value={oneTimePrompt}
+            onChange={(e) => onOneTimePromptChange(e.target.value)}
+            rows={8}
+            placeholder="Add run-specific guidance for this resume…"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
+          />
+        </label>
+      </div>
 
       {generating ? (
         <div

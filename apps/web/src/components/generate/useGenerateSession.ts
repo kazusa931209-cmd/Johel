@@ -87,6 +87,15 @@ export function useGenerateSession() {
     setSession((current) => withoutResume({ ...current, workflow }));
   }, []);
 
+  const setOneTimePrompt = useCallback((oneTimePrompt: string) => {
+    setSession((current) => {
+      if (oneTimePrompt === current.oneTimePrompt) {
+        return current;
+      }
+      return withoutResume({ ...current, oneTimePrompt });
+    });
+  }, []);
+
   const setVerdictResult = useCallback(
     (acceptedMarkdown: string, verdictInputKey: string) => {
       setSession((current) =>
@@ -153,6 +162,8 @@ export function useGenerateSession() {
     patchJob,
     workflow: session.workflow,
     setWorkflow,
+    oneTimePrompt: session.oneTimePrompt,
+    setOneTimePrompt,
     verdictInputKey: session.verdictInputKey,
     workflowRecommendInputKey: session.workflowRecommendInputKey,
     setVerdictResult,

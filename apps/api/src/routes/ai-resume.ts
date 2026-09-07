@@ -3,7 +3,7 @@ import { z } from "zod";
 import { isAiProviderId } from "../lib/ai-provider.js";
 import { runAiResume, type AiProviderId } from "../lib/ai-resume/index.js";
 import { assembleResumeGenerationInput } from "../lib/resume/assemble-input.js";
-import { compileInstruction } from "../lib/prompt-optimize/index.js";
+import { compileInstruction, appendOneTimeGeneratePrompt } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
@@ -15,6 +15,7 @@ const postSchema = z.object({
   jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX),
   acceptedMarkdown: z.string().trim().max(JOB_TEXT_MAX),
   workflowId: z.string().trim().min(1),
+  oneTimePrompt: z.string().trim().max(JOB_TEXT_MAX).optional(),
 });
 
 export const aiResumeRoutes = new Hono();
@@ -88,9 +89,9 @@ aiResumeRoutes.post("/", async (c) => {
   }
 
   try {
-    const compiledGeneratePrompt = compileInstruction(
-      "generate",
-      generatePrompt,
+    const compiledGeneratePrompt = appendOneTimeGeneratePrompt(
+      compileInstruction("generate", generatePrompt),
+      parsed.data.oneTimePrompt,
     );
 
     const result = await runAiResume(provider, {

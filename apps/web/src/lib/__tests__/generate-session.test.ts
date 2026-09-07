@@ -181,10 +181,59 @@ describe("generate-session resume cache", () => {
   };
 
   it("includes workflow content fingerprint in generation input key", () => {
-    const key = buildGenerationInputKey(job, workflow, "fp-v1", promptContext);
+    const key = buildGenerationInputKey(
+      job,
+      workflow,
+      "fp-v1",
+      promptContext,
+      "Emphasize leadership",
+    );
     expect(key).toContain("fp-v1");
     expect(key).toContain("wf-1");
     expect(key).toContain("generatePromptHash");
+    expect(key).toContain("Emphasize leadership");
+  });
+
+  it("does not reuse stored resume when one-time prompt changes", () => {
+    const storedKey = buildGenerationInputKey(
+      job,
+      workflow,
+      "fp-v1",
+      promptContext,
+      "First prompt",
+    );
+    const currentKey = buildGenerationInputKey(
+      job,
+      workflow,
+      "fp-v1",
+      promptContext,
+      "Second prompt",
+    );
+    expect(
+      canReuseStoredResume(
+        {
+          ...EMPTY_GENERATE_SESSION,
+          job,
+          workflow,
+          oneTimePrompt: "First prompt",
+          generationInputKey: storedKey,
+          resume: {
+            header: {
+              name: "Jane Doe",
+              title: "Engineer",
+              contact: { email: "jane@example.com" },
+            },
+            summary: "Summary",
+            skills: [],
+            experiences: [],
+            education: [],
+            projects: [],
+            certifications: [],
+          },
+        },
+        currentKey,
+      ),
+    ).toBe(false);
   });
 
   it("does not reuse stored resume when fingerprint changes", () => {

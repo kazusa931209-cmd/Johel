@@ -81,6 +81,8 @@ export default function GeneratePage() {
     setJob,
     workflow,
     setWorkflow,
+    oneTimePrompt,
+    setOneTimePrompt,
     verdictInputKey,
     workflowRecommendInputKey,
     setVerdictResult,
@@ -324,6 +326,7 @@ export default function GeneratePage() {
       workflow,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
+      oneTimePrompt,
     );
     if (
       canReuseStoredResume(
@@ -331,6 +334,7 @@ export default function GeneratePage() {
           activeStep: normalizedActiveStep,
           job,
           workflow,
+          oneTimePrompt,
           verdictInputKey,
           workflowRecommendInputKey,
           resume,
@@ -359,10 +363,14 @@ export default function GeneratePage() {
     const jobDescription = noiseFilter(job.jobText.trim()).text;
     setGeneratingResume(true);
     try {
+      const trimmedOneTimePrompt = oneTimePrompt.trim();
       const res = await runAiResume({
         jobDescription,
         acceptedMarkdown: acceptedMarkdown ?? "",
         workflowId: workflow.workflowId,
+        ...(trimmedOneTimePrompt
+          ? { oneTimePrompt: trimmedOneTimePrompt }
+          : {}),
       });
       if (!res.data) {
         toast(res.error ?? "AI Resume generation failed.", "error");
@@ -409,6 +417,7 @@ export default function GeneratePage() {
       workflow,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
+      oneTimePrompt,
     );
     if (currentInputKey !== generationInputKey) {
       toast(
@@ -423,6 +432,7 @@ export default function GeneratePage() {
       workflow,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
+      oneTimePrompt,
     );
     if (
       canReuseStoredEvaluation(
@@ -430,6 +440,7 @@ export default function GeneratePage() {
           activeStep: normalizedActiveStep,
           job,
           workflow,
+          oneTimePrompt,
           verdictInputKey,
           workflowRecommendInputKey,
           resume,
@@ -528,8 +539,10 @@ export default function GeneratePage() {
                 processSettings.doVerdict ? job.acceptedMarkdown : null
               }
               selection={workflow}
+              oneTimePrompt={oneTimePrompt}
               generating={generatingResume}
               onSelectionChange={setWorkflow}
+              onOneTimePromptChange={setOneTimePrompt}
               onPrev={() => goToAdjacentStep("prev")}
               onNext={onWorkflowNext}
             />

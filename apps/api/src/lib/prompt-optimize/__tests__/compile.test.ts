@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { compileInstruction } from "../compile.js";
+import {
+  appendOneTimeGeneratePrompt,
+  compileInstruction,
+} from "../compile.js";
 
 describe("compileInstruction", () => {
   it("trims and collapses extra blank lines", () => {
@@ -27,5 +30,23 @@ describe("compileInstruction", () => {
     const generate = compileInstruction("generate", "Tailor the resume.");
     expect(verdict).not.toContain("Do not invent employers");
     expect(generate).toContain("Do not invent employers");
+  });
+});
+
+describe("appendOneTimeGeneratePrompt", () => {
+  it("returns compiled prompt unchanged when one-time prompt is empty", () => {
+    const compiled = compileInstruction("generate", "Tailor the resume.");
+    expect(appendOneTimeGeneratePrompt(compiled, "")).toBe(compiled);
+    expect(appendOneTimeGeneratePrompt(compiled, "   ")).toBe(compiled);
+  });
+
+  it("appends one-time prompt under a heading", () => {
+    const compiled = compileInstruction("generate", "Tailor the resume.");
+    const result = appendOneTimeGeneratePrompt(
+      compiled,
+      "Emphasize leadership.",
+    );
+    expect(result).toContain("## One-time prompt");
+    expect(result).toContain("Emphasize leadership.");
   });
 });

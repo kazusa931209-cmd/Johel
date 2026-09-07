@@ -20,6 +20,7 @@ export type GenerateSession = {
   activeStep: GenerateStep;
   job: GenerateJobState;
   workflow: WorkflowSelection;
+  oneTimePrompt: string;
   verdictInputKey: string | null;
   workflowRecommendInputKey: string | null;
   resume: GeneratedResume | null;
@@ -40,6 +41,7 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   activeStep: "Job",
   job: EMPTY_JOB_STATE,
   workflow: EMPTY_WORKFLOW_SELECTION,
+  oneTimePrompt: "",
   verdictInputKey: null,
   workflowRecommendInputKey: null,
   resume: null,
@@ -175,6 +177,7 @@ function buildGenerationInputKeyParts(
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt">,
+  oneTimePrompt: string,
 ) {
   return {
     jobText: job.jobText.trim(),
@@ -182,6 +185,7 @@ function buildGenerationInputKeyParts(
     workflowId: workflow.workflowId,
     workflowContentFingerprint,
     generatePromptHash: hashPromptForCache(prompts.generatePrompt ?? ""),
+    oneTimePrompt: oneTimePrompt.trim(),
   };
 }
 
@@ -190,6 +194,7 @@ export function buildGenerationInputKey(
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt">,
+  oneTimePrompt = "",
 ): string {
   return JSON.stringify(
     buildGenerationInputKeyParts(
@@ -197,6 +202,7 @@ export function buildGenerationInputKey(
       workflow,
       workflowContentFingerprint,
       prompts,
+      oneTimePrompt,
     ),
   );
 }
@@ -206,6 +212,7 @@ export function buildEvaluationInputKey(
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt" | "evaluatePrompt">,
+  oneTimePrompt = "",
 ): string {
   return JSON.stringify({
     ...buildGenerationInputKeyParts(
@@ -213,6 +220,7 @@ export function buildEvaluationInputKey(
       workflow,
       workflowContentFingerprint,
       prompts,
+      oneTimePrompt,
     ),
     evaluatePromptHash: hashPromptForCache(prompts.evaluatePrompt ?? ""),
   });
@@ -259,6 +267,8 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
     activeStep: normalizeActiveStep(raw.activeStep),
     job,
     workflow,
+    oneTimePrompt:
+      typeof raw.oneTimePrompt === "string" ? raw.oneTimePrompt : "",
     verdictInputKey,
     workflowRecommendInputKey:
       typeof raw.workflowRecommendInputKey === "string"

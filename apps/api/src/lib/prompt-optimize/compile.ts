@@ -15,3 +15,14 @@ export function compileInstruction(
 
   return wrapped;
 }
+
+export function appendOneTimeGeneratePrompt(
+  compiledGeneratePrompt: string,
+  oneTimePrompt?: string,
+): string {
+  const trimmed = oneTimePrompt?.trim();
+  if (!trimmed) {
+    return compiledGeneratePrompt;
+  }
+  return `${compiledGeneratePrompt}\n\n## One-time prompt\n\n${trimmed}`;
+}
