@@ -16,6 +16,7 @@ import {
   AUTO_MARKDOWN_FORMAT_HINT,
   needsMarkdownFormatOnSave,
 } from "@/lib/markdown-format";
+import { DESCRIPTION_AS_RESUME_PROMPT_HINT } from "@/lib/entity-description";
 
 type CompanyFormProps = {
   mode: "create" | "edit";
@@ -101,7 +102,8 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure company name and description.
+          Configure company name and a description used as a resume-generation
+          prompt.
         </p>
       </div>
 
@@ -144,6 +146,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           aria-invalid={Boolean(fieldErrors.description)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
+        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
         <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
         <FieldError message={fieldErrors.description} />
       </label>

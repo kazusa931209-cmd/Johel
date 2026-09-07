@@ -12,6 +12,7 @@ import {
   type WorkflowDetail,
   type WorkflowWritePayload,
 } from "@/lib/api";
+import { DESCRIPTION_AS_RESUME_PROMPT_HINT } from "@/lib/entity-description";
 import {
   WORKFLOW_LANGUAGES,
   validateWorkflowEditorContent,
@@ -28,6 +29,7 @@ type WorkflowFormProps = {
 
 type FieldErrors = {
   name?: string;
+  description?: string;
 } & WorkflowEditorFieldErrors;
 
 function RequiredMark() {
@@ -81,6 +83,9 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     if (!name.trim()) {
       nextErrors.name = "Name is required.";
     }
+    if (!description.trim()) {
+      nextErrors.description = "Description is required.";
+    }
     Object.assign(
       nextErrors,
       validateWorkflowEditorContent({ profileId, companies }),
@@ -92,7 +97,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
 
     const payload: WorkflowWritePayload = {
       name: name.trim(),
-      description: description.trim() || null,
+      description: description.trim(),
       language,
       profileId,
       companies,
@@ -153,13 +158,27 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       </label>
 
       <label className="block space-y-1 text-sm">
-        <span>Description</span>
+        <span>
+          Description
+          <RequiredMark />
+        </span>
         <textarea
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
+          onChange={(e) => {
+            setDescription(e.target.value);
+            if (fieldErrors.description) {
+              setFieldErrors((errors) => ({
+                ...errors,
+                description: undefined,
+              }));
+            }
+          }}
+          rows={6}
+          aria-invalid={Boolean(fieldErrors.description)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
+        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
+        <FieldError message={fieldErrors.description} />
       </label>
 
       <label className="block space-y-1 text-sm">

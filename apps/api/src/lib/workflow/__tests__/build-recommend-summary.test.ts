@@ -121,7 +121,7 @@ describe("buildWorkflowListFingerprint", () => {
   const baseSummary: WorkflowRecommendSummary = {
     id: "wf-1",
     name: "Backend",
-    description: null,
+    description: "",
     language: "en",
     profileName: "Jane Doe",
     experiences: [

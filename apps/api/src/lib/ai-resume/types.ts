@@ -41,7 +41,7 @@ export type ResumeGenerationCompany = {
 export type ResumeGenerationWorkflow = {
   id: string;
   name: string;
-  description: string | null;
+  description: string;
   language: string;
 };
 

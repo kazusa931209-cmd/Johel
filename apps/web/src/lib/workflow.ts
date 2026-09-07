@@ -18,7 +18,7 @@ export type WorkflowCompanyEntry = {
 export type WorkflowDetail = {
   id: string;
   name: string;
-  description: string | null;
+  description: string;
   language: WorkflowLanguage | string;
   profileId: string;
   companies: WorkflowCompanyEntry[];
@@ -28,7 +28,7 @@ export type WorkflowDetail = {
 
 export type WorkflowWritePayload = {
   name: string;
-  description?: string | null;
+  description: string;
   language: WorkflowLanguage;
   profileId: string;
   companies: WorkflowCompanyEntry[];

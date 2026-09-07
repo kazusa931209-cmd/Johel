@@ -16,6 +16,7 @@ import {
   AUTO_MARKDOWN_FORMAT_HINT,
   needsMarkdownFormatOnSave,
 } from "@/lib/markdown-format";
+import { DESCRIPTION_AS_RESUME_PROMPT_HINT } from "@/lib/entity-description";
 
 type ExperienceFormProps = {
   mode: "create" | "edit";
@@ -108,7 +109,8 @@ export function ExperienceForm({
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure category and description for this experience.
+          Configure category and a description used as a resume-generation
+          prompt.
         </p>
       </div>
 
@@ -151,6 +153,7 @@ export function ExperienceForm({
           aria-invalid={Boolean(fieldErrors.description)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
+        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
         <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
         <FieldError message={fieldErrors.description} />
       </label>

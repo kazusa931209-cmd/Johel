@@ -24,7 +24,7 @@ const companyEntrySchema = z.object({
 
 const writeSchema = z.object({
   name: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(2000).optional().nullable(),
+  description: z.string().trim().min(1).max(2000),
   language: z.enum(LANGUAGES),
   profileId: z.string().trim().min(1),
   companies: z.array(companyEntrySchema).min(1),
@@ -33,7 +33,7 @@ const writeSchema = z.object({
 type WorkflowWithRelations = {
   id: string;
   name: string;
-  description: string | null;
+  description: string;
   language: string;
   profileId: string | null;
   createdAt: Date;
@@ -165,7 +165,7 @@ async function replaceWorkflowRelations(
 function toListItem(row: {
   id: string;
   name: string;
-  description: string | null;
+  description: string;
   createdAt: Date;
   updatedAt: Date;
 }) {
@@ -326,7 +326,7 @@ workflowsRoutes.post("/", async (c) => {
         userId: user.id,
         profileId: parsed.data.profileId,
         name: parsed.data.name,
-        description: parsed.data.description || null,
+        description: parsed.data.description,
         language: parsed.data.language,
       },
     });
@@ -386,7 +386,7 @@ workflowsRoutes.put("/:id", async (c) => {
       data: {
         profileId: parsed.data.profileId,
         name: parsed.data.name,
-        description: parsed.data.description || null,
+        description: parsed.data.description,
         language: parsed.data.language,
       },
     });

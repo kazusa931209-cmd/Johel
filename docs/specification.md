@@ -15,9 +15,9 @@ Result quality depends entirely on the user's prompt authoring and the capabilit
 ### What the user owns
 
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
-* **Companies** — One user can manage **multiple companies** (name and description).
-* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone).
-* **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more ordered company entries (each with a required employment period and linked shared experiences), and a resume output language.
+* **Companies** — One user can manage **multiple companies** (name and a required description used as a resume-generation prompt).
+* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone). Each experience has a required category and a required description used as a resume-generation prompt.
+* **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more ordered company entries (each with a required employment period and linked shared experiences), a resume output language, and a required description used as a resume-generation prompt.
 * **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés. New accounts receive default prompt templates on sign-up; users may replace them freely. Output structure and instructions are user-defined; JoHEL does not guarantee AI output quality (see **Philosophy**).
 
 ### End-to-end flow
@@ -149,8 +149,8 @@ Aligned with the product flow above:
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole company
-  * Editor fields: company name (required), description (required)
-  * Description shows a notice that contents will be automatically converted to markdown format on **Save**; when the description changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged descriptions skip conversion; fullscreen loading while conversion runs; the detail dialog renders Description as Markdown
+  * Editor fields: company name (required), description (required; used as a resume-generation prompt)
+  * Description shows a notice that it is used as a prompt during resume generation and that contents will be automatically converted to markdown format on **Save**; when the description changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged descriptions skip conversion; fullscreen loading while conversion runs; the detail dialog renders Description as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
@@ -160,8 +160,8 @@ Aligned with the product flow above:
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience
-  * Editor fields: category (required; free-text), description (required)
-  * Description shows a notice that contents will be automatically converted to markdown format on **Save**; when the description changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged descriptions skip conversion; fullscreen loading while conversion runs; the detail dialog renders Description as Markdown
+  * Editor fields: category (required; free-text), description (required; used as a resume-generation prompt)
+  * Description shows a notice that it is used as a prompt during resume generation and that contents will be automatically converted to markdown format on **Save**; when the description changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged descriptions skip conversion; fullscreen loading while conversion runs; the detail dialog renders Description as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Workflows**
   * One signed-in user can manage **multiple** workflows
@@ -171,7 +171,7 @@ Aligned with the product flow above:
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
-  * Editor fields: name (required), description (optional), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean)
+  * Editor fields: name (required), description (required; used as a resume-generation prompt), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean)
   * Below the scalar fields, **Profile** (single row selection table: all items loaded at once; row click selects; View opens read-only detail dialog)
   * **Companies** section: ordered list of entries built one at a time; **Add** (plus icon) opens a dialog to pick one company, set required **Start** and **End** period (free-text), and multi-select one or more shared experiences; **Save** in the dialog validates inline and adds or updates the entry; row **Edit** (pencil) and **Delete** (red trash); company order is résumé order (first added = highest priority); the same shared experience may appear under multiple companies
   * Company-entry edits stay local until page **Save** (same pattern as profile Links)
@@ -295,6 +295,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-07):** `@johel/prompt-defaults`, unified compile + execution rules, heading cap in `ai-markdown-format`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-40-user-owned-prompt-pipeline.md`](./plans/2026-09-07-phase-40-user-owned-prompt-pipeline.md).
 * [x] **Phase 41 — Copyable text & dialog rule** — Copy icon on AI Usage Detail Input/Output; view-only dialogs dismiss on backdrop click; add/edit form dialogs do not.
   * **Outcome (2026-09-07):** `CopyButton`, `copyTextToClipboard`, `DetailDialog` `mode="view"|"form"`, `WorkflowCompanyDialog` on `DetailDialog`; AI Usage Detail uses Input/Output tabs with Markdown preview and raw-text copy. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-41-copyable-text-dialog-rule.md`](./plans/2026-09-07-phase-41-copyable-text-dialog-rule.md).
+* [x] **Phase 42 — Descriptions as resume prompts** — Company, Experience, and Workflow description fields are required; editors explain that descriptions are used as prompts during resume generation.
+  * **Outcome (2026-09-07):** `DESCRIPTION_AS_RESUME_PROMPT_HINT`, workflow description required in API/schema. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-42-descriptions-as-prompt.md`](./plans/2026-09-07-phase-42-descriptions-as-prompt.md).
 
 ## Cursor Rules (Documentation Governance)
 

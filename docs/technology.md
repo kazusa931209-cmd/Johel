@@ -129,12 +129,13 @@ User browser (:4041)
 
 - `GET /workflows?q=&page=` — page size 10; lean list items (name, description, dates)
 - `GET /workflows/:id` — full detail for the editor (owner only): `profileId`, ordered `companies[]` (`companyId`, `startDate`, `endDate`, `experienceIds[]`), plus scalar fields
-- `POST /workflows` / `PUT /workflows/:id` — `{ name, description?, language, profileId, companies: [{ companyId, startDate, endDate, experienceIds[] }] }`; validates one profile, ≥1 company entry, required period per entry, ≥1 experience per entry (all owned by user); unique `companyId` per workflow; on write, replaces `workflowCompanies` and nested `workflowCompanyExperiences`
+- `POST /workflows` / `PUT /workflows/:id` — `{ name, description, language, profileId, companies: [{ companyId, startDate, endDate, experienceIds[] }] }`; `description` required (trim, min 1, max 2000; used as a resume-generation prompt); validates one profile, ≥1 company entry, required period per entry, ≥1 experience per entry (all owned by user); unique `companyId` per workflow; on write, replaces `workflowCompanies` and nested `workflowCompanyExperiences`
 - Language codes: `en`, `ja`, `zh-TW`, `zh-CN`, `ko` (default `en`)
-- Web routes: `/workflows` list (table columns: No, Name, Description, Updated, actions); `/workflows/new` add; `/workflows/[id]/edit` edit; editor has name/description/language, `WorkflowProfilePicker`, and `WorkflowCompaniesEditor` (Add/Edit dialog with company, period, experiences)
+- Web routes: `/workflows` list (table columns: No, Name, Description, Updated, actions); `/workflows/new` add; `/workflows/[id]/edit` edit; editor has name, required description (resume-generation prompt hint), language, `WorkflowProfilePicker`, and `WorkflowCompaniesEditor` (Add/Edit dialog with company, period, experiences)
 - Generate Workflow step workflow table columns: Name, Description, Updated
 - **Phase 22 migration note:** `workflowMetadata` dropped; existing workflows need profile/companies/experiences re-selected in the editor
 - **Phase 35 migration note:** `workflowExperiences` dropped; company entries now store required `startDate`/`endDate` and nested experience links via `workflowCompanyExperiences`; existing workflows need company entries re-added in the editor
+- **Phase 42 migration note:** `workflows.description` is required (non-null, default `""`); existing null descriptions are backfilled to empty string—edit and save a description before using the workflow if it was previously blank
 
 ## Profiles (Phase 8)
 
@@ -152,7 +153,7 @@ User browser (:4041)
 - `GET /companies/:id` — full detail for the editor (owner only)
 - `POST /companies` / `PUT /companies/:id` — `{ name, description }`; on write, `description` is converted to markdown via AI when changed since last save (create always converts); unchanged descriptions skip conversion; requires Settings provider/apiKey when conversion runs
 - Search `q` across name and description
-- Web routes: `/companies` list; `/companies/new` add; `/companies/[id]/edit` edit
+- Web routes: `/companies` list; `/companies/new` add; `/companies/[id]/edit` edit; editor shows `DESCRIPTION_AS_RESUME_PROMPT_HINT` on Description (required resume-generation prompt)
 
 ## Experiences (Phase 10, 30)
 
@@ -161,7 +162,7 @@ User browser (:4041)
 - `GET /experiences/:id` — full detail for the editor (owner only)
 - `POST /experiences` / `PUT /experiences/:id` — `{ category, description }`; on write, `description` is converted to markdown via AI when changed since last save (create always converts); unchanged descriptions skip conversion; requires Settings provider/apiKey when conversion runs
 - Search `q` across category and description
-- Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit
+- Web routes: `/experiences` list; `/experiences/new` add; `/experiences/[id]/edit` edit; editor shows `DESCRIPTION_AS_RESUME_PROMPT_HINT` on Description (required resume-generation prompt)
 
 ## Generate UI (Phase 11–20, 22, 24, 25, 26, 27, 28)
 

@@ -32,7 +32,7 @@ const baseInput = {
   workflow: {
     id: "workflow-1",
     name: "Senior Backend",
-    description: null,
+    description: "",
     language: "en",
   },
 };
