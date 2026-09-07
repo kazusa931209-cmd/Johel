@@ -265,7 +265,7 @@ function QuickPceDrawer({
             <button
               type="button"
               onClick={() => void handleNext()}
-              className="rounded-md bg-accent-fg px-4 py-2 text-sm font-medium text-accent hover:opacity-90"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
             >
               {advising ? "Running…" : "Next"}
             </button>

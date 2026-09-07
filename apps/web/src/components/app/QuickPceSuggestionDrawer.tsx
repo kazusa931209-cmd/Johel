@@ -197,7 +197,7 @@ export function QuickPceSuggestionDrawer({
             <button
               type="button"
               onClick={onApply}
-              className="rounded-md bg-accent-fg px-4 py-2 text-sm font-medium text-accent hover:opacity-90"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
             >
               {applying ? "Applying…" : "Apply"}
             </button>
