@@ -21,7 +21,6 @@ model User {
   aiUsages     AiUsage[]
   prompt       Prompt?
   generationProcess GenerationProcess?
-  promptOptimizations PromptOptimization[]
 
   // SQLite table names are case-insensitive; plural avoids colliding with former PascalCase names.
   @@map("users")
@@ -50,7 +49,8 @@ model Workflow {
   language        String               @default("en")
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
-  companies       WorkflowCompany[]
+  companies              WorkflowCompany[]
+  lastSelectedByProcess  GenerationProcess[] @relation("LastSelectedWorkflow")
 
   @@index([userId])
   @@index([profileId])
@@ -187,29 +187,18 @@ model Prompt {
 }
 
 model GenerationProcess {
-  id                      String   @id @default(cuid())
-  userId                  String   @unique
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  doVerdict               Boolean  @default(true)
-  doEvaluate              Boolean  @default(true)
-  usePromptOptimizationAi Boolean  @default(true)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                              String    @id @default(cuid())
+  userId                          String    @unique
+  user                            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doVerdict                       Boolean   @default(true)
+  doEvaluate                      Boolean   @default(true)
+  doWorkflowRecommendation        Boolean   @default(false)
+  workflowRecommendationThreshold Int       @default(70)
+  lastSelectedWorkflowId          String?
+  lastSelectedWorkflow            Workflow? @relation("LastSelectedWorkflow", fields: [lastSelectedWorkflowId], references: [id], onDelete: SetNull)
+  createdAt                       DateTime  @default(now())
+  updatedAt                       DateTime  @updatedAt
 
+  @@index([lastSelectedWorkflowId])
   @@map("generationProcess")
-}
-
-model PromptOptimization {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  kind            String
-  sourceHash      String
-  optimizedPrompt String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@unique([userId, kind, sourceHash])
-  @@index([userId, kind])
-  @@map("promptOptimizations")
 }

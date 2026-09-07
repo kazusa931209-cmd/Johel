@@ -134,33 +134,31 @@ export function saveSettings(provider: AiProviderId, apiKey: string) {
 export type GenerationProcessSettings = {
   doVerdict: boolean;
   doEvaluate: boolean;
+  doWorkflowRecommendation: boolean;
+  workflowRecommendationThreshold: number;
+  lastSelectedWorkflowId: string | null;
 };
 
 export function getGenerationProcess() {
   return request<GenerationProcessSettings>("/settings/process");
 }
 
-export function saveGenerationProcess(payload: GenerationProcessSettings) {
+export function saveGenerationProcess(payload: {
+  doVerdict: boolean;
+  doEvaluate: boolean;
+  doWorkflowRecommendation: boolean;
+  workflowRecommendationThreshold: number;
+}) {
   return request<GenerationProcessSettings>("/settings/process", {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
-export type PromptOptimizationSettings = {
-  usePromptOptimizationAi: boolean;
-};
-
-export function getPromptOptimizationSettings() {
-  return request<PromptOptimizationSettings>("/settings/prompt-optimization");
-}
-
-export function savePromptOptimizationSettings(
-  payload: PromptOptimizationSettings,
-) {
-  return request<PromptOptimizationSettings>("/settings/prompt-optimization", {
+export function saveLastSelectedWorkflow(workflowId: string) {
+  return request<GenerationProcessSettings>("/settings/process/last-workflow", {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ workflowId }),
   });
 }
 
@@ -477,6 +475,28 @@ export type AiEvaluateResult = {
 
 export function runAiEvaluate(payload: AiEvaluateRequest) {
   return request<AiEvaluateResult>("/ai-evaluate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export type AiWorkflowRecommendRequest = {
+  jobDescription: string;
+  acceptedMarkdown?: string;
+};
+
+export type AiWorkflowRecommendResult = {
+  workflowId: string | null;
+  workflowName: string | null;
+  score: number | null;
+  threshold: number;
+  usage: AiVerdictUsage;
+  tokenUsed: number;
+};
+
+export function runAiWorkflowRecommend(payload: AiWorkflowRecommendRequest) {
+  return request<AiWorkflowRecommendResult>("/ai-workflow-recommend", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,

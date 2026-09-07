@@ -4,7 +4,6 @@ import { AI_PROVIDER_IDS } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
 import { maskApiKey, requireUser } from "../lib/session.js";
 import { settingsProcessRoutes } from "./settings-process.js";
-import { settingsPromptOptimizationRoutes } from "./settings-prompt-optimization.js";
 
 const putSchema = z.object({
   provider: z.enum(AI_PROVIDER_IDS),
@@ -14,7 +13,6 @@ const putSchema = z.object({
 export const settingsRoutes = new Hono();
 
 settingsRoutes.route("/process", settingsProcessRoutes);
-settingsRoutes.route("/prompt-optimization", settingsPromptOptimizationRoutes);
 
 settingsRoutes.get("/", async (c) => {
   const user = await requireUser(c);

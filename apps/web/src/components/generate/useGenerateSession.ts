@@ -36,6 +36,9 @@ function applyJobUpdate(
     ...current,
     job: nextJob,
     verdictInputKey: jobTextChanged ? null : current.verdictInputKey,
+    workflowRecommendInputKey: jobTextChanged
+      ? null
+      : current.workflowRecommendInputKey,
   });
 }
 
@@ -91,6 +94,20 @@ export function useGenerateSession() {
           ...current,
           job: { ...current.job, acceptedMarkdown },
           verdictInputKey,
+          workflowRecommendInputKey: null,
+        }),
+      );
+    },
+    [],
+  );
+
+  const setWorkflowRecommendResult = useCallback(
+    (workflow: WorkflowSelection, workflowRecommendInputKey: string) => {
+      setSession((current) =>
+        withoutResume({
+          ...current,
+          workflow,
+          workflowRecommendInputKey,
         }),
       );
     },
@@ -137,7 +154,9 @@ export function useGenerateSession() {
     workflow: session.workflow,
     setWorkflow,
     verdictInputKey: session.verdictInputKey,
+    workflowRecommendInputKey: session.workflowRecommendInputKey,
     setVerdictResult,
+    setWorkflowRecommendResult,
     resume: session.resume,
     generationInputKey: session.generationInputKey,
     setResumeResult,

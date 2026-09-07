@@ -3,10 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { runAiEvaluate, type AiProviderId } from "../lib/ai-evaluate/index.js";
 import { isAiProviderId } from "../lib/ai-provider.js";
-import {
-  getUsePromptOptimizationAi,
-  optimizeInstruction,
-} from "../lib/prompt-optimize/index.js";
+import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
@@ -76,30 +73,15 @@ aiEvaluateRoutes.post("/", async (c) => {
   const provider: AiProviderId = setting.provider;
 
   try {
-    const usePromptOptimizationAi = await getUsePromptOptimizationAi(user.id);
-    const { instruction: optimizedEvaluatePrompt, rewriteUsage } =
-      await optimizeInstruction({
-        userId: user.id,
-        kind: "evaluate",
-        originalPrompt: evaluatePrompt,
-        provider,
-        apiKey: setting.apiKey,
-        usePromptOptimizationAi,
-      });
-
-    if (rewriteUsage) {
-      await recordAiUsage({
-        userId: user.id,
-        aiProvider: provider,
-        generateType: "promptOptimize",
-        usage: rewriteUsage,
-      });
-    }
+    const compiledEvaluatePrompt = compileInstruction(
+      "evaluate",
+      evaluatePrompt,
+    );
 
     const result = await runAiEvaluate(provider, {
       jobDescription: parsed.data.jobDescription,
       resume: parsed.data.resume,
-      evaluatePrompt: optimizedEvaluatePrompt,
+      evaluatePrompt: compiledEvaluatePrompt,
       apiKey: setting.apiKey,
     });
 

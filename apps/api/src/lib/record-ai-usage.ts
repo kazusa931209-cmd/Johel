@@ -9,7 +9,7 @@ export const AI_GENERATE_TYPES = [
   "verdict",
   "generate",
   "evaluate",
-  "promptOptimize",
+  "workflowRecommend",
   "promptHelper",
 ] as const;
 

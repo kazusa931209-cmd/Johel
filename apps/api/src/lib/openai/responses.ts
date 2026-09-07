@@ -91,3 +91,17 @@ export async function runOpenAiEvaluateResponse(
     reasoningEffort: "low",
   });
 }
+
+export async function runOpenAiWorkflowRecommendResponse(
+  apiKey: string,
+  instructions: string,
+  input: string,
+): Promise<OpenAiTextResponse> {
+  return createTextResponse(apiKey, {
+    model: OPENAI_VERDICT_MODEL,
+    instructions,
+    input,
+    reasoningEffort: "low",
+    jsonOutput: true,
+  });
+}

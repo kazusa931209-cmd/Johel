@@ -21,7 +21,7 @@ describe("resolveAiModelName", () => {
   it("returns verdict model for OpenAI non-generate types", () => {
     expect(resolveAiModelName("openai", "verdict")).toBe(OPENAI_VERDICT_MODEL);
     expect(resolveAiModelName("openai", "evaluate")).toBe(OPENAI_VERDICT_MODEL);
-    expect(resolveAiModelName("openai", "promptOptimize")).toBe(
+    expect(resolveAiModelName("openai", "workflowRecommend")).toBe(
       OPENAI_VERDICT_MODEL,
     );
   });

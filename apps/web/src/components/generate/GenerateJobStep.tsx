@@ -17,11 +17,10 @@ type GenerateJobStepProps = {
   job: GenerateJobState;
   verdictInputKey: string | null;
   verdictPrompt: string;
-  usePromptOptimizationAi: boolean;
   doVerdict: boolean;
   onJobChange: (job: GenerateJobState) => void;
   onVerdictResult: (markdown: string, verdictInputKey: string) => void;
-  onAdvanceToWorkflow: () => void;
+  onAdvanceToWorkflow: () => void | Promise<void>;
   onRunningChange?: (running: boolean) => void;
 };
 
@@ -46,7 +45,6 @@ export function GenerateJobStep({
   job,
   verdictInputKey,
   verdictPrompt,
-  usePromptOptimizationAi,
   doVerdict,
   onJobChange,
   onVerdictResult,
@@ -88,18 +86,13 @@ export function GenerateJobStep({
 
     if (!doVerdict) {
       updateJob({ acceptedMarkdown: null });
-      onAdvanceToWorkflow();
+      await onAdvanceToWorkflow();
       return;
     }
 
-    const inputKey = buildVerdictInputKey(job, {
-      verdictPrompt,
-      usePromptOptimizationAi,
-    });
-    if (
-      canReuseStoredVerdict({ job, verdictInputKey }, inputKey)
-    ) {
-      onAdvanceToWorkflow();
+    const inputKey = buildVerdictInputKey(job, { verdictPrompt });
+    if (canReuseStoredVerdict({ job, verdictInputKey }, inputKey)) {
+      await onAdvanceToWorkflow();
       return;
     }
 
@@ -115,7 +108,7 @@ export function GenerateJobStep({
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
       toast("AI Verdict completed.", "success");
-      onAdvanceToWorkflow();
+      await onAdvanceToWorkflow();
     } catch {
       toast("AI Verdict failed.", "error");
     } finally {
@@ -132,7 +125,6 @@ export function GenerateJobStep({
     setRunningState,
     setTokenUsed,
     toast,
-    usePromptOptimizationAi,
     verdictInputKey,
     verdictPrompt,
   ]);

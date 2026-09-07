@@ -7,7 +7,7 @@ const GENERATE_TYPE_LABELS: Record<string, string> = {
   verdict: "Verdict",
   generate: "Generate",
   evaluate: "Evaluate",
-  promptOptimize: "Prompt Optimize",
+  workflowRecommend: "Workflow Recommend",
   promptHelper: "Prompt Helper",
 };
 

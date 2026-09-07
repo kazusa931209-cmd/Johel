@@ -1,8 +1,11 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { isAiProviderId } from "../lib/ai-provider.js";
-import { compileInstruction } from "../lib/prompt-optimize/index.js";
-import { runAiVerdict, type AiProviderId } from "../lib/ai-verdict/index.js";
+import {
+  pickRecommendedWorkflow,
+  runAiWorkflowRecommend,
+} from "../lib/ai-workflow-recommend/index.js";
+import { isAiProviderId, type AiProviderId } from "../lib/ai-provider.js";
+import { loadWorkflowRecommendSummaries } from "../lib/workflow/load-recommend-summaries.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
@@ -12,11 +15,12 @@ const JOB_TEXT_MAX = 10_000;
 
 const postSchema = z.object({
   jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX),
+  acceptedMarkdown: z.string().trim().max(JOB_TEXT_MAX).optional(),
 });
 
-export const aiVerdictRoutes = new Hono();
+export const aiWorkflowRecommendRoutes = new Hono();
 
-aiVerdictRoutes.post("/", async (c) => {
+aiWorkflowRecommendRoutes.post("/", async (c) => {
   const user = await requireUser(c);
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
@@ -27,20 +31,6 @@ aiVerdictRoutes.post("/", async (c) => {
   if (!parsed.success) {
     return c.json(
       { error: "Job Description is required (max 10,000 characters)." },
-      400,
-    );
-  }
-
-  const prompts = await prisma.prompt.findUnique({
-    where: { userId: user.id },
-  });
-  const verdictPrompt = prompts?.verdictPrompt?.trim() ?? "";
-  if (!verdictPrompt) {
-    return c.json(
-      {
-        error:
-          "Verdict Prompt is not configured. Save your prompts on the Prompts page first.",
-      },
       400,
     );
   }
@@ -67,26 +57,52 @@ aiVerdictRoutes.post("/", async (c) => {
 
   const provider: AiProviderId = setting.provider;
 
-  try {
-    const compiledVerdictPrompt = compileInstruction("verdict", verdictPrompt);
+  const process = await prisma.generationProcess.findUnique({
+    where: { userId: user.id },
+  });
+  const threshold = process?.workflowRecommendationThreshold ?? 70;
 
-    const result = await runAiVerdict(provider, {
-      jobDescription: parsed.data.jobDescription,
-      verdictPrompt: compiledVerdictPrompt,
+  const workflows = await loadWorkflowRecommendSummaries(user.id);
+  if (workflows.length < 1) {
+    return c.json(
+      { error: "Add at least one workflow before running recommendation." },
+      400,
+    );
+  }
+
+  const validIds = new Set(workflows.map((item) => item.id));
+
+  try {
+    const result = await runAiWorkflowRecommend(provider, {
       apiKey: setting.apiKey,
+      jobDescription: parsed.data.jobDescription,
+      acceptedMarkdown: parsed.data.acceptedMarkdown,
+      workflows,
     });
+
+    const filteredMatches = result.matches.filter((item) =>
+      validIds.has(item.workflowId),
+    );
+    const picked = pickRecommendedWorkflow(filteredMatches, threshold);
+    const workflowName =
+      picked.workflowId != null
+        ? workflows.find((item) => item.id === picked.workflowId)?.name ?? null
+        : null;
 
     await recordAiUsage({
       userId: user.id,
       aiProvider: provider,
-      generateType: "verdict",
+      generateType: "workflowRecommend",
       usage: result.usage,
     });
 
     const tokenUsed = await sumTokenUsed(user.id);
 
     return c.json({
-      markdown: result.markdown,
+      workflowId: picked.workflowId,
+      workflowName,
+      score: picked.score,
+      threshold,
       usage: result.usage,
       tokenUsed,
     });
@@ -94,7 +110,7 @@ aiVerdictRoutes.post("/", async (c) => {
     const message =
       err instanceof Error && err.message
         ? err.message
-        : "AI Verdict failed. Please try again.";
+        : "AI Workflow recommendation failed. Please try again.";
     return c.json({ error: message }, 502);
   }
 });

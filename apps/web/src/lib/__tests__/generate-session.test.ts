@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildGenerationInputKey,
   buildVerdictInputKey,
+  buildWorkflowListFingerprint,
+  buildWorkflowRecommendInputKey,
   canReuseStoredResume,
   canReuseStoredVerdict,
+  canReuseStoredWorkflowRecommend,
   EMPTY_GENERATE_SESSION,
   EMPTY_JOB_STATE,
   parseGenerateSession,
@@ -13,7 +16,6 @@ import { EMPTY_WORKFLOW_SELECTION } from "@/components/generate/pcew-types";
 describe("generate-session verdict cache", () => {
   const promptContext = {
     verdictPrompt: "Check fit",
-    usePromptOptimizationAi: true,
   };
 
   it("builds verdict input key from noise-filtered job text", () => {
@@ -25,7 +27,7 @@ describe("generate-session verdict cache", () => {
       promptContext,
     );
     expect(key).toContain("Senior Engineer role");
-    expect(key).toContain("usePromptOptimizationAi");
+    expect(key).toContain("verdictPromptHash");
   });
 
   it("reuses stored verdict when keys match", () => {
@@ -99,10 +101,7 @@ describe("generate-session verdict cache", () => {
           job: parsed!.job,
           verdictInputKey: parsed!.verdictInputKey,
         },
-        buildVerdictInputKey(parsed!.job, {
-          verdictPrompt: "",
-          usePromptOptimizationAi: true,
-        }),
+        buildVerdictInputKey(parsed!.job, { verdictPrompt: "" }),
       ),
     ).toBe(true);
   });
@@ -125,6 +124,47 @@ describe("generate-session verdict cache", () => {
   });
 });
 
+describe("generate-session workflow recommend cache", () => {
+  const job = {
+    ...EMPTY_JOB_STATE,
+    jobText: "Engineer role",
+    acceptedMarkdown: "# Verdict",
+  };
+  const fingerprint = buildWorkflowListFingerprint([
+    {
+      id: "wf-1",
+      name: "Backend",
+      description: null,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    },
+  ]);
+
+  it("builds recommend input key from job, threshold, and workflows", () => {
+    const key = buildWorkflowRecommendInputKey({
+      job,
+      threshold: 70,
+      workflowsFingerprint: fingerprint,
+    });
+    expect(key).toContain("Engineer role");
+    expect(key).toContain("# Verdict");
+    expect(key).toContain("70");
+  });
+
+  it("reuses stored recommendation when keys match", () => {
+    const inputKey = buildWorkflowRecommendInputKey({
+      job,
+      threshold: 70,
+      workflowsFingerprint: fingerprint,
+    });
+    expect(
+      canReuseStoredWorkflowRecommend(
+        { workflowRecommendInputKey: inputKey },
+        inputKey,
+      ),
+    ).toBe(true);
+  });
+});
+
 describe("generate-session resume cache", () => {
   const job = {
     ...EMPTY_JOB_STATE,
@@ -138,7 +178,6 @@ describe("generate-session resume cache", () => {
   };
   const promptContext = {
     generatePrompt: "Generate a resume",
-    usePromptOptimizationAi: true,
   };
 
   it("includes workflow content fingerprint in generation input key", () => {
@@ -176,7 +215,7 @@ describe("generate-session resume cache", () => {
             },
             summary: "Summary",
             skills: [],
-            experience: [],
+            experiences: [],
             education: [],
             projects: [],
             certifications: [],

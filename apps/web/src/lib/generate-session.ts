@@ -21,6 +21,7 @@ export type GenerateSession = {
   job: GenerateJobState;
   workflow: WorkflowSelection;
   verdictInputKey: string | null;
+  workflowRecommendInputKey: string | null;
   resume: GeneratedResume | null;
   generationInputKey: string | null;
   evaluationMarkdown: string | null;
@@ -40,6 +41,7 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   job: EMPTY_JOB_STATE,
   workflow: EMPTY_WORKFLOW_SELECTION,
   verdictInputKey: null,
+  workflowRecommendInputKey: null,
   resume: null,
   generationInputKey: null,
   evaluationMarkdown: null,
@@ -122,17 +124,15 @@ export type PromptCacheContext = {
   verdictPrompt?: string;
   generatePrompt?: string;
   evaluatePrompt?: string;
-  usePromptOptimizationAi: boolean;
 };
 
 export function buildVerdictInputKey(
   job: GenerateJobState,
-  prompts: Pick<PromptCacheContext, "verdictPrompt" | "usePromptOptimizationAi">,
+  prompts: Pick<PromptCacheContext, "verdictPrompt">,
 ): string {
   return JSON.stringify({
     jobText: noiseFilter(job.jobText.trim()).text,
     verdictPromptHash: hashPromptForCache(prompts.verdictPrompt ?? ""),
-    usePromptOptimizationAi: prompts.usePromptOptimizationAi,
   });
 }
 
@@ -147,11 +147,34 @@ export function canReuseStoredVerdict(
   );
 }
 
+export function buildWorkflowRecommendInputKey(input: {
+  job: GenerateJobState;
+  threshold: number;
+  workflowsFingerprint: string;
+}): string {
+  return JSON.stringify({
+    jobText: noiseFilter(input.job.jobText.trim()).text,
+    acceptedMarkdown: input.job.acceptedMarkdown ?? "",
+    threshold: input.threshold,
+    workflowsFingerprint: input.workflowsFingerprint,
+  });
+}
+
+export function canReuseStoredWorkflowRecommend(
+  session: Pick<GenerateSession, "workflowRecommendInputKey">,
+  inputKey: string,
+): boolean {
+  return Boolean(
+    session.workflowRecommendInputKey &&
+      session.workflowRecommendInputKey === inputKey,
+  );
+}
+
 function buildGenerationInputKeyParts(
   job: GenerateJobState,
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
-  prompts: Pick<PromptCacheContext, "generatePrompt" | "usePromptOptimizationAi">,
+  prompts: Pick<PromptCacheContext, "generatePrompt">,
 ) {
   return {
     jobText: job.jobText.trim(),
@@ -159,7 +182,6 @@ function buildGenerationInputKeyParts(
     workflowId: workflow.workflowId,
     workflowContentFingerprint,
     generatePromptHash: hashPromptForCache(prompts.generatePrompt ?? ""),
-    usePromptOptimizationAi: prompts.usePromptOptimizationAi,
   };
 }
 
@@ -167,7 +189,7 @@ export function buildGenerationInputKey(
   job: GenerateJobState,
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
-  prompts: Pick<PromptCacheContext, "generatePrompt" | "usePromptOptimizationAi">,
+  prompts: Pick<PromptCacheContext, "generatePrompt">,
 ): string {
   return JSON.stringify(
     buildGenerationInputKeyParts(
@@ -183,10 +205,7 @@ export function buildEvaluationInputKey(
   job: GenerateJobState,
   workflow: WorkflowSelection,
   workflowContentFingerprint: string,
-  prompts: Pick<
-    PromptCacheContext,
-    "generatePrompt" | "evaluatePrompt" | "usePromptOptimizationAi"
-  >,
+  prompts: Pick<PromptCacheContext, "generatePrompt" | "evaluatePrompt">,
 ): string {
   return JSON.stringify({
     ...buildGenerationInputKeyParts(
@@ -234,7 +253,6 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
   if (job.acceptedMarkdown && !verdictInputKey) {
     verdictInputKey = buildVerdictInputKey(job, {
       verdictPrompt: "",
-      usePromptOptimizationAi: true,
     });
   }
   return {
@@ -242,6 +260,10 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
     job,
     workflow,
     verdictInputKey,
+    workflowRecommendInputKey:
+      typeof raw.workflowRecommendInputKey === "string"
+        ? raw.workflowRecommendInputKey
+        : null,
     resume: parseStoredResume(raw.resume),
     generationInputKey:
       typeof raw.generationInputKey === "string"
@@ -299,4 +321,17 @@ export function clearGenerateSession(userId: string) {
   } catch {
     // Ignore storage errors.
   }
+}
+
+export function buildWorkflowListFingerprint(
+  items: { id: string; name: string; description: string | null; updatedAt: string }[],
+): string {
+  return JSON.stringify(
+    items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      updatedAt: item.updatedAt,
+    })),
+  );
 }

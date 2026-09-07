@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { AddButton } from "@/components/shared/action-icon-buttons";
@@ -19,12 +19,16 @@ import {
   GenerateStepNavProvider,
 } from "@/components/generate/GenerateStepNav";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
+import { EMPTY_WORKFLOW_SELECTION } from "@/components/generate/pcew-types";
 import { validateWorkflowSelection } from "@/components/generate/pcew-types";
 import {
   buildEvaluationInputKey,
   buildGenerationInputKey,
+  buildWorkflowListFingerprint,
+  buildWorkflowRecommendInputKey,
   canReuseStoredEvaluation,
   canReuseStoredResume,
+  canReuseStoredWorkflowRecommend,
 } from "@/lib/generate-session";
 import {
   getAdjacentGenerateStep,
@@ -34,27 +38,27 @@ import {
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
   getGenerationProcess,
-  getPromptOptimizationSettings,
   getPrompts,
   getWorkflowGenerationFingerprint,
   listWorkflows,
   runAiEvaluate,
   runAiResume,
+  runAiWorkflowRecommend,
+  type Workflow,
 } from "@/lib/api";
 
 const DEFAULT_PROCESS = {
   doVerdict: true,
   doEvaluate: true,
+  doWorkflowRecommendation: false,
+  workflowRecommendationThreshold: 70,
+  lastSelectedWorkflowId: null as string | null,
 };
 
 const DEFAULT_PROMPTS = {
   verdictPrompt: "",
   generatePrompt: "",
   evaluatePrompt: "",
-};
-
-const DEFAULT_PROMPT_OPTIMIZATION = {
-  usePromptOptimizationAi: true,
 };
 
 export default function GeneratePage() {
@@ -64,12 +68,11 @@ export default function GeneratePage() {
   const [generatingResume, setGeneratingResume] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [verdictRunning, setVerdictRunning] = useState(false);
+  const [recommending, setRecommending] = useState(false);
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
   const [processSettings, setProcessSettings] = useState(DEFAULT_PROCESS);
   const [promptSettings, setPromptSettings] = useState(DEFAULT_PROMPTS);
-  const [promptOptimizationSettings, setPromptOptimizationSettings] = useState(
-    DEFAULT_PROMPT_OPTIMIZATION,
-  );
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const {
     ready: sessionReady,
     activeStep,
@@ -79,7 +82,9 @@ export default function GeneratePage() {
     workflow,
     setWorkflow,
     verdictInputKey,
+    workflowRecommendInputKey,
     setVerdictResult,
+    setWorkflowRecommendResult,
     resume,
     generationInputKey,
     setResumeResult,
@@ -89,7 +94,8 @@ export default function GeneratePage() {
     resetSession,
   } = useGenerateSession();
 
-  const processBusy = verdictRunning || generatingResume || evaluating;
+  const processBusy =
+    verdictRunning || recommending || generatingResume || evaluating;
 
   const visibleSteps = useMemo(
     () => getGenerateSteps(processSettings.doEvaluate),
@@ -99,6 +105,11 @@ export default function GeneratePage() {
   const normalizedActiveStep = useMemo(
     () => normalizeGenerateActiveStep(activeStep, processSettings.doEvaluate),
     [activeStep, processSettings.doEvaluate],
+  );
+
+  const workflowsFingerprint = useMemo(
+    () => buildWorkflowListFingerprint(workflows),
+    [workflows],
   );
 
   useEffect(() => {
@@ -111,66 +122,62 @@ export default function GeneratePage() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      listWorkflows("", 1),
+      listWorkflows("", null),
       getPrompts(),
       getGenerationProcess(),
-      getPromptOptimizationSettings(),
-    ]).then(
-      ([workflows, prompts, process, promptOptimization]) => {
-        if (cancelled) return;
-        const errors = [
-          workflows.error,
-          prompts.error,
-          process.error,
-          promptOptimization.error,
-        ].filter(Boolean);
-        if (errors.length > 0) {
-          toast(
-            errors[0] ?? "Failed to check Generate prerequisites",
-            "error",
-          );
-          setLoading(false);
-          setMissing([
-            { label: "Workflows", href: "/workflows" },
-            { label: "Prompts", href: "/prompts" },
-          ]);
-          return;
-        }
-
-        const nextProcess = {
-          doVerdict: process.data?.doVerdict ?? DEFAULT_PROCESS.doVerdict,
-          doEvaluate: process.data?.doEvaluate ?? DEFAULT_PROCESS.doEvaluate,
-        };
-        setProcessSettings(nextProcess);
-        setPromptSettings({
-          verdictPrompt: prompts.data?.verdictPrompt ?? "",
-          generatePrompt: prompts.data?.generatePrompt ?? "",
-          evaluatePrompt: prompts.data?.evaluatePrompt ?? "",
-        });
-        setPromptOptimizationSettings({
-          usePromptOptimizationAi:
-            promptOptimization.data?.usePromptOptimizationAi ??
-            DEFAULT_PROMPT_OPTIMIZATION.usePromptOptimizationAi,
-        });
-
-        const nextMissing: MissingPrerequisite[] = [];
-        if ((workflows.data?.total ?? 0) < 1) {
-          nextMissing.push({ label: "Workflows", href: "/workflows" });
-        }
-        if (nextProcess.doVerdict && !prompts.data?.verdictPrompt.trim()) {
-          nextMissing.push({ label: "Verdict Prompt", href: "/prompts" });
-        }
-        if (!prompts.data?.generatePrompt.trim()) {
-          nextMissing.push({ label: "Generate Prompt", href: "/prompts" });
-        }
-        if (nextProcess.doEvaluate && !prompts.data?.evaluatePrompt.trim()) {
-          nextMissing.push({ label: "Evaluate Prompt", href: "/prompts" });
-        }
-
-        setMissing(nextMissing.length > 0 ? nextMissing : null);
+    ]).then(([workflowsRes, prompts, process]) => {
+      if (cancelled) return;
+      const errors = [workflowsRes.error, prompts.error, process.error].filter(
+        Boolean,
+      );
+      if (errors.length > 0) {
+        toast(errors[0] ?? "Failed to check Generate prerequisites", "error");
         setLoading(false);
-      },
-    );
+        setMissing([
+          { label: "Workflows", href: "/workflows" },
+          { label: "Prompts", href: "/prompts" },
+        ]);
+        return;
+      }
+
+      const nextProcess = {
+        doVerdict: process.data?.doVerdict ?? DEFAULT_PROCESS.doVerdict,
+        doEvaluate: process.data?.doEvaluate ?? DEFAULT_PROCESS.doEvaluate,
+        doWorkflowRecommendation:
+          process.data?.doWorkflowRecommendation ??
+          DEFAULT_PROCESS.doWorkflowRecommendation,
+        workflowRecommendationThreshold:
+          process.data?.workflowRecommendationThreshold ??
+          DEFAULT_PROCESS.workflowRecommendationThreshold,
+        lastSelectedWorkflowId:
+          process.data?.lastSelectedWorkflowId ??
+          DEFAULT_PROCESS.lastSelectedWorkflowId,
+      };
+      setProcessSettings(nextProcess);
+      setWorkflows(workflowsRes.data?.items ?? []);
+      setPromptSettings({
+        verdictPrompt: prompts.data?.verdictPrompt ?? "",
+        generatePrompt: prompts.data?.generatePrompt ?? "",
+        evaluatePrompt: prompts.data?.evaluatePrompt ?? "",
+      });
+
+      const nextMissing: MissingPrerequisite[] = [];
+      if ((workflowsRes.data?.total ?? 0) < 1) {
+        nextMissing.push({ label: "Workflows", href: "/workflows" });
+      }
+      if (nextProcess.doVerdict && !prompts.data?.verdictPrompt.trim()) {
+        nextMissing.push({ label: "Verdict Prompt", href: "/prompts" });
+      }
+      if (!prompts.data?.generatePrompt.trim()) {
+        nextMissing.push({ label: "Generate Prompt", href: "/prompts" });
+      }
+      if (nextProcess.doEvaluate && !prompts.data?.evaluatePrompt.trim()) {
+        nextMissing.push({ label: "Evaluate Prompt", href: "/prompts" });
+      }
+
+      setMissing(nextMissing.length > 0 ? nextMissing : null);
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
@@ -196,11 +203,103 @@ export default function GeneratePage() {
       verdictPrompt: promptSettings.verdictPrompt,
       generatePrompt: promptSettings.generatePrompt,
       evaluatePrompt: promptSettings.evaluatePrompt,
-      usePromptOptimizationAi:
-        promptOptimizationSettings.usePromptOptimizationAi,
     }),
-    [promptOptimizationSettings.usePromptOptimizationAi, promptSettings],
+    [promptSettings],
   );
+
+  const onAdvanceToWorkflow = useCallback(async () => {
+    if (recommending) return;
+
+    if (!processSettings.doWorkflowRecommendation) {
+      const lastId = processSettings.lastSelectedWorkflowId;
+      if (lastId) {
+        const match = workflows.find((item) => item.id === lastId);
+        if (match) {
+          setWorkflow({ workflowId: match.id, workflowName: match.name });
+        } else {
+          setWorkflow({ ...EMPTY_WORKFLOW_SELECTION });
+        }
+      } else {
+        setWorkflow({ ...EMPTY_WORKFLOW_SELECTION });
+      }
+      goToStep("Workflow");
+      return;
+    }
+
+    const recommendInputKey = buildWorkflowRecommendInputKey({
+      job,
+      threshold: processSettings.workflowRecommendationThreshold,
+      workflowsFingerprint,
+    });
+
+    if (canReuseStoredWorkflowRecommend({ workflowRecommendInputKey }, recommendInputKey)) {
+      goToStep("Workflow");
+      return;
+    }
+
+    const jobDescription = noiseFilter(job.jobText.trim()).text;
+    const acceptedMarkdown = job.acceptedMarkdown?.trim() || undefined;
+
+    setRecommending(true);
+    try {
+      const res = await runAiWorkflowRecommend({
+        jobDescription,
+        acceptedMarkdown,
+      });
+      if (!res.data) {
+        toast(res.error ?? "AI Workflow recommendation failed.", "error");
+        return;
+      }
+
+      setTokenUsed(res.data.tokenUsed);
+      await refreshTokenUsed();
+
+      if (res.data.workflowId && res.data.workflowName) {
+        setWorkflowRecommendResult(
+          {
+            workflowId: res.data.workflowId,
+            workflowName: res.data.workflowName,
+          },
+          recommendInputKey,
+        );
+        toast(
+          `Recommended workflow: ${res.data.workflowName} (score ${res.data.score}).`,
+          "success",
+        );
+      } else {
+        setWorkflowRecommendResult(
+          { ...EMPTY_WORKFLOW_SELECTION },
+          recommendInputKey,
+        );
+        const scoreText =
+          res.data.score != null ? ` (best score ${res.data.score})` : "";
+        toast(
+          `No workflow met the recommendation threshold${scoreText}.`,
+          "warning",
+        );
+      }
+
+      goToStep("Workflow");
+    } catch {
+      toast("AI Workflow recommendation failed.", "error");
+    } finally {
+      setRecommending(false);
+    }
+  }, [
+    job,
+    recommending,
+    processSettings.doWorkflowRecommendation,
+    processSettings.lastSelectedWorkflowId,
+    processSettings.workflowRecommendationThreshold,
+    refreshTokenUsed,
+    setTokenUsed,
+    setWorkflow,
+    setWorkflowRecommendResult,
+    toast,
+    workflowRecommendInputKey,
+    workflows,
+    workflowsFingerprint,
+  ]);
 
   async function onWorkflowNext() {
     if (generatingResume) return;
@@ -233,6 +332,7 @@ export default function GeneratePage() {
           job,
           workflow,
           verdictInputKey,
+          workflowRecommendInputKey,
           resume,
           generationInputKey,
           evaluationMarkdown,
@@ -331,6 +431,7 @@ export default function GeneratePage() {
           job,
           workflow,
           verdictInputKey,
+          workflowRecommendInputKey,
           resume,
           generationInputKey,
           evaluationMarkdown,
@@ -414,13 +515,10 @@ export default function GeneratePage() {
               job={job}
               verdictInputKey={verdictInputKey}
               verdictPrompt={promptSettings.verdictPrompt}
-              usePromptOptimizationAi={
-                promptOptimizationSettings.usePromptOptimizationAi
-              }
               doVerdict={processSettings.doVerdict}
               onJobChange={setJob}
               onVerdictResult={setVerdictResult}
-              onAdvanceToWorkflow={() => goToStep("Workflow")}
+              onAdvanceToWorkflow={onAdvanceToWorkflow}
               onRunningChange={setVerdictRunning}
             />
           ) : null}
@@ -456,6 +554,22 @@ export default function GeneratePage() {
           ) : null}
         </div>
       </section>
+
+      {recommending ? (
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
+            <p className="text-sm font-medium">Recommending workflow…</p>
+            <p className="mt-1 text-xs text-muted">
+              Please wait while the AI matches your job to a workflow.
+            </p>
+          </div>
+        </div>
+      ) : null}
     </GenerateStepNavProvider>
   );
 }

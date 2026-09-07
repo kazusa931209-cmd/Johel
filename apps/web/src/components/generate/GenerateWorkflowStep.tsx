@@ -9,7 +9,7 @@ import {
   validateWorkflowSelection,
 } from "@/components/generate/pcew-types";
 import { WorkflowDetailDialog } from "@/components/WorkflowDetailDialog";
-import { listWorkflows, type Workflow } from "@/lib/api";
+import { listWorkflows, saveLastSelectedWorkflow, type Workflow } from "@/lib/api";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 
 type GenerateWorkflowStepProps = {
@@ -40,6 +40,7 @@ export function GenerateWorkflowStep({
 
   function onWorkflowSelect(id: string, row: Workflow) {
     onSelectionChange({ workflowId: id, workflowName: row.name });
+    void saveLastSelectedWorkflow(id);
     if (fieldErrors.workflowId) {
       setFieldErrors((errors) => ({ ...errors, workflowId: undefined }));
     }
@@ -63,8 +64,8 @@ export function GenerateWorkflowStep({
       <div className="space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">Workflow</h2>
         <p className="text-sm text-muted">
-          Choose one workflow. Its saved profile, companies, and experiences
-          are used for generation.
+          Choose one workflow. Its saved profile and company entries (with
+          linked experiences) are used for generation.
         </p>
       </div>
 

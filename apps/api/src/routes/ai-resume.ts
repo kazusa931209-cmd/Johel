@@ -3,10 +3,7 @@ import { z } from "zod";
 import { isAiProviderId } from "../lib/ai-provider.js";
 import { runAiResume, type AiProviderId } from "../lib/ai-resume/index.js";
 import { assembleResumeGenerationInput } from "../lib/resume/assemble-input.js";
-import {
-  getUsePromptOptimizationAi,
-  optimizeInstruction,
-} from "../lib/prompt-optimize/index.js";
+import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
@@ -91,29 +88,14 @@ aiResumeRoutes.post("/", async (c) => {
   }
 
   try {
-    const usePromptOptimizationAi = await getUsePromptOptimizationAi(user.id);
-    const { instruction: optimizedGeneratePrompt, rewriteUsage } =
-      await optimizeInstruction({
-        userId: user.id,
-        kind: "generate",
-        originalPrompt: generatePrompt,
-        provider,
-        apiKey: setting.apiKey,
-        usePromptOptimizationAi,
-      });
-
-    if (rewriteUsage) {
-      await recordAiUsage({
-        userId: user.id,
-        aiProvider: provider,
-        generateType: "promptOptimize",
-        usage: rewriteUsage,
-      });
-    }
+    const compiledGeneratePrompt = compileInstruction(
+      "generate",
+      generatePrompt,
+    );
 
     const result = await runAiResume(provider, {
       apiKey: setting.apiKey,
-      generatePrompt: optimizedGeneratePrompt,
+      generatePrompt: compiledGeneratePrompt,
       input: generationInput,
     });
 

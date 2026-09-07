@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { getSettings, getGenerationProcess, getMe, getPromptOptimizationSettings, saveGenerationProcess, savePromptOptimizationSettings, saveSettings } from "@/lib/api";
+import { getSettings, getGenerationProcess, getMe, saveGenerationProcess, saveSettings } from "@/lib/api";
 import { clearGenerateSession } from "@/lib/generate-session";
 import type { AiProviderId } from "@/lib/api";
 import type { Theme } from "@/lib/theme";
@@ -76,6 +76,7 @@ function EyeOffIcon({ className }: { className?: string }) {
 type FormErrors = {
   provider?: string;
   apiKey?: string;
+  workflowRecommendationThreshold?: string;
 };
 
 export default function SettingsPage() {
@@ -91,18 +92,19 @@ export default function SettingsPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [doVerdict, setDoVerdict] = useState(true);
   const [doEvaluate, setDoEvaluate] = useState(true);
+  const [doWorkflowRecommendation, setDoWorkflowRecommendation] = useState(false);
+  const [workflowRecommendationThreshold, setWorkflowRecommendationThreshold] =
+    useState("70");
   const [savedDoVerdict, setSavedDoVerdict] = useState(true);
   const [savedDoEvaluate, setSavedDoEvaluate] = useState(true);
+  const [savedDoWorkflowRecommendation, setSavedDoWorkflowRecommendation] =
+    useState(false);
+  const [savedWorkflowRecommendationThreshold, setSavedWorkflowRecommendationThreshold] =
+    useState("70");
   const [userId, setUserId] = useState<string | null>(null);
   const [processLoading, setProcessLoading] = useState(true);
   const [processSaving, setProcessSaving] = useState(false);
-  const [usePromptOptimizationAi, setUsePromptOptimizationAi] = useState(true);
-  const [savedUsePromptOptimizationAi, setSavedUsePromptOptimizationAi] =
-    useState(true);
-  const [promptOptimizationLoading, setPromptOptimizationLoading] =
-    useState(true);
-  const [promptOptimizationSaving, setPromptOptimizationSaving] =
-    useState(false);
+  const [processErrors, setProcessErrors] = useState<FormErrors>({});
 
   const providerMatchesSaved = savedProvider === provider;
   const showMaskedKey = providerMatchesSaved && masked;
@@ -125,18 +127,18 @@ export default function SettingsPage() {
       if (res.data) {
         setDoVerdict(res.data.doVerdict);
         setDoEvaluate(res.data.doEvaluate);
+        setDoWorkflowRecommendation(res.data.doWorkflowRecommendation);
+        setWorkflowRecommendationThreshold(
+          String(res.data.workflowRecommendationThreshold),
+        );
         setSavedDoVerdict(res.data.doVerdict);
         setSavedDoEvaluate(res.data.doEvaluate);
+        setSavedDoWorkflowRecommendation(res.data.doWorkflowRecommendation);
+        setSavedWorkflowRecommendationThreshold(
+          String(res.data.workflowRecommendationThreshold),
+        );
       }
       setProcessLoading(false);
-    });
-    getPromptOptimizationSettings().then((res) => {
-      if (cancelled) return;
-      if (res.data) {
-        setUsePromptOptimizationAi(res.data.usePromptOptimizationAi);
-        setSavedUsePromptOptimizationAi(res.data.usePromptOptimizationAi);
-      }
-      setPromptOptimizationLoading(false);
     });
     getMe().then((res) => {
       if (cancelled) return;
@@ -179,8 +181,29 @@ export default function SettingsPage() {
 
   async function onSaveProcess(e: FormEvent) {
     e.preventDefault();
+    const nextErrors: FormErrors = {};
+    const threshold = Number.parseInt(workflowRecommendationThreshold, 10);
+    if (
+      Number.isNaN(threshold) ||
+      threshold < 0 ||
+      threshold > 100 ||
+      !Number.isInteger(threshold)
+    ) {
+      nextErrors.workflowRecommendationThreshold =
+        "Recommendation threshold must be an integer from 0 to 100.";
+    }
+    setProcessErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
     setProcessSaving(true);
-    const res = await saveGenerationProcess({ doVerdict, doEvaluate });
+    const res = await saveGenerationProcess({
+      doVerdict,
+      doEvaluate,
+      doWorkflowRecommendation,
+      workflowRecommendationThreshold: threshold,
+    });
     setProcessSaving(false);
     if (res.error || !res.data) {
       toast(res.error ?? "Save failed.", "error");
@@ -188,36 +211,26 @@ export default function SettingsPage() {
     }
     setDoVerdict(res.data.doVerdict);
     setDoEvaluate(res.data.doEvaluate);
+    setDoWorkflowRecommendation(res.data.doWorkflowRecommendation);
+    setWorkflowRecommendationThreshold(
+      String(res.data.workflowRecommendationThreshold),
+    );
     const processChanged =
       res.data.doVerdict !== savedDoVerdict ||
-      res.data.doEvaluate !== savedDoEvaluate;
+      res.data.doEvaluate !== savedDoEvaluate ||
+      res.data.doWorkflowRecommendation !== savedDoWorkflowRecommendation ||
+      res.data.workflowRecommendationThreshold !==
+        Number.parseInt(savedWorkflowRecommendationThreshold, 10);
     if (processChanged && userId) {
       clearGenerateSession(userId);
     }
     setSavedDoVerdict(res.data.doVerdict);
     setSavedDoEvaluate(res.data.doEvaluate);
+    setSavedDoWorkflowRecommendation(res.data.doWorkflowRecommendation);
+    setSavedWorkflowRecommendationThreshold(
+      String(res.data.workflowRecommendationThreshold),
+    );
     toast("Process settings saved.", "success");
-  }
-
-  async function onSavePromptOptimization(e: FormEvent) {
-    e.preventDefault();
-    setPromptOptimizationSaving(true);
-    const res = await savePromptOptimizationSettings({
-      usePromptOptimizationAi,
-    });
-    setPromptOptimizationSaving(false);
-    if (res.error || !res.data) {
-      toast(res.error ?? "Save failed.", "error");
-      return;
-    }
-    setUsePromptOptimizationAi(res.data.usePromptOptimizationAi);
-    const settingChanged =
-      res.data.usePromptOptimizationAi !== savedUsePromptOptimizationAi;
-    if (settingChanged && userId) {
-      clearGenerateSession(userId);
-    }
-    setSavedUsePromptOptimizationAi(res.data.usePromptOptimizationAi);
-    toast("Prompt optimization settings saved.", "success");
   }
 
   return (
@@ -248,73 +261,6 @@ export default function SettingsPage() {
           })}
         </div>
       </div>
-      <form
-        onSubmit={onSaveProcess}
-        className="space-y-3 rounded-lg border border-border bg-surface p-4"
-      >
-        <h2 className="text-sm font-medium">Process</h2>
-        <p className="text-sm text-muted">
-          Choose which AI steps run during Generate.
-        </p>
-        {processLoading ? (
-          <p className="text-sm text-muted">Loading…</p>
-        ) : (
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={doVerdict}
-                onChange={(e) => setDoVerdict(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
-              />
-              <span>Do Verdict</span>
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={doEvaluate}
-                onChange={(e) => setDoEvaluate(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
-              />
-              <span>Do Evaluate</span>
-            </label>
-          </div>
-        )}
-        <button
-          type="submit"
-          className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
-        >
-          {processSaving ? "Saving…" : "Save"}
-        </button>
-      </form>
-      <form
-        onSubmit={onSavePromptOptimization}
-        className="space-y-3 rounded-lg border border-border bg-surface p-4"
-      >
-        <h2 className="text-sm font-medium">Prompt Optimization</h2>
-        <p className="text-sm text-muted">
-          Improve saved prompts before AI Verdict, Generate, and Evaluate run.
-        </p>
-        {promptOptimizationLoading ? (
-          <p className="text-sm text-muted">Loading…</p>
-        ) : (
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={usePromptOptimizationAi}
-              onChange={(e) => setUsePromptOptimizationAi(e.target.checked)}
-              className="h-4 w-4 rounded border-border"
-            />
-            <span>Use prompt optimization using AI</span>
-          </label>
-        )}
-        <button
-          type="submit"
-          className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
-        >
-          {promptOptimizationSaving ? "Saving…" : "Save"}
-        </button>
-      </form>
       <form
         onSubmit={onSave}
         className="space-y-3 rounded-lg border border-border bg-surface p-4"
@@ -403,6 +349,94 @@ export default function SettingsPage() {
           {saving ? "Saving…" : "Save"}
         </button>
       </form>
+      <form
+        onSubmit={onSaveProcess}
+        className="space-y-3 rounded-lg border border-border bg-surface p-4"
+      >
+        <h2 className="text-sm font-medium">Process</h2>
+        <p className="text-sm text-muted">
+          Choose which AI steps run during Generate.
+        </p>
+        {processLoading ? (
+          <p className="text-sm text-muted">Loading…</p>
+        ) : (
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={doVerdict}
+                onChange={(e) => setDoVerdict(e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <span>Do Verdict</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={doWorkflowRecommendation}
+                onChange={(e) => setDoWorkflowRecommendation(e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <span>Do Workflow Recommendation</span>
+            </label>
+            {doWorkflowRecommendation ? (
+              <label className="block space-y-1 space-x-2 text-sm">
+                <span>
+                  Recommendation threshold
+                  <span className="ml-0.5 text-danger" aria-hidden>
+                    *
+                  </span>
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={workflowRecommendationThreshold}
+                  onChange={(e) => {
+                    setWorkflowRecommendationThreshold(e.target.value);
+                    if (processErrors.workflowRecommendationThreshold) {
+                      setProcessErrors((prev) => ({
+                        ...prev,
+                        workflowRecommendationThreshold: undefined,
+                      }));
+                    }
+                  }}
+                  aria-invalid={Boolean(
+                    processErrors.workflowRecommendationThreshold,
+                  )}
+                  className="w-full max-w-32 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+                />
+                <p className="text-xs text-muted">
+                  Integer from 0 to 100. The best-matching workflow is selected
+                  only when its score meets or exceeds this value.
+                </p>
+                {processErrors.workflowRecommendationThreshold ? (
+                  <p className="text-sm text-danger">
+                    {processErrors.workflowRecommendationThreshold}
+                  </p>
+                ) : null}
+              </label>
+            ) : null}
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={doEvaluate}
+                onChange={(e) => setDoEvaluate(e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <span>Do Evaluate</span>
+            </label>
+          </div>
+        )}
+        <button
+          type="submit"
+          className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
+        >
+          {processSaving ? "Saving…" : "Save"}
+        </button>
+      </form>
+      
     </section>
   );
 }

@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `GET /settings/prompt-optimization`, `PUT /settings/prompt-optimization`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-prompt-helper`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-prompt-helper`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts`
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
@@ -55,8 +55,8 @@ User browser (:4041)
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
-- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `usePromptOptimizationAi`, `createdAt`, `updatedAt`; defaults all three booleans `true`
-- Prisma `PromptOptimization` → table `promptOptimizations`: `id`, `userId`, `kind` (`verdict` | `generate` | `evaluate`), `sourceHash`, `optimizedPrompt`, `createdAt`, `updatedAt`; unique `(userId, kind, sourceHash)`
+- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `doWorkflowRecommendation`, `workflowRecommendationThreshold`, `lastSelectedWorkflowId?` (FK → `workflows`, SetNull on delete), `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `doWorkflowRecommendation` false, threshold `70`
+- **Phase 36:** `PromptOptimization` / `promptOptimizations` and `usePromptOptimizationAi` removed; AI routes use deterministic `compileInstruction` only (see `apps/api/src/lib/prompt-optimize/compile.ts`)
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
 
@@ -106,31 +106,23 @@ User browser (:4041)
 - Full `apiKey` is stored plaintext in SQLite; never returned to the client
 - Web Settings: enabled provider dropdown; masked key shown only when the selected provider matches the saved provider; Save stays enabled with inline validation on submit; toast on API result
 
-## Process settings (Phase 26)
+## Process settings (Phase 26, 36)
 
-- `GET /settings/process` → `{ doVerdict, doEvaluate }` (defaults both `true` when no row)
-- `PUT /settings/process` → `{ doVerdict, doEvaluate }`; upsert by `userId`; returns saved values
-- Web Settings **Process** section: **Do Verdict** and **Do Evaluate** checkboxes; Save always enabled; toast on API result
+- `GET /settings/process` → `{ doVerdict, doEvaluate, doWorkflowRecommendation, workflowRecommendationThreshold, lastSelectedWorkflowId }` (defaults: Verdict/Evaluate true, recommendation false, threshold 70, last workflow null)
+- `PUT /settings/process` → `{ doVerdict, doEvaluate, doWorkflowRecommendation, workflowRecommendationThreshold }` (threshold integer 0–100); upsert by `userId`; returns saved values including `lastSelectedWorkflowId`
+- `PUT /settings/process/last-workflow` → `{ workflowId }`; validates owned workflow; upserts `lastSelectedWorkflowId` on `generationProcess`
+- Web Settings **Process** section: **Do Verdict**, **Do Evaluate**, **Do Workflow Recommendation** checkboxes; **Recommendation threshold** (0–100) when recommendation enabled; Save always enabled; inline validation on submit; toast on API result; saving changed Process flags or threshold clears in-progress Generate session
 - Generate reads process settings on load; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
 - When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel; `POST /ai-resume` receives `acceptedMarkdown: ""`
 - When `doEvaluate` is false: timeline is Job → Workflow → Generate; Generate **Download** is last-step action; Evaluate step hidden; stored `activeStep: "Evaluate"` normalizes to Generate on load
+- When `doWorkflowRecommendation` is true: after Job **Next** (with or without Verdict), Generate calls `POST /ai-workflow-recommend` unless session `workflowRecommendInputKey` matches; auto-selects workflow when score ≥ threshold; otherwise clears selection and toasts; when false, restores `lastSelectedWorkflowId` without AI
 
-## Prompt optimization settings (Phase 29)
+## Prompt compile (Phase 29, revised Phase 36)
 
-- `GET /settings/prompt-optimization` → `{ usePromptOptimizationAi }` (default `true` when no row)
-- `PUT /settings/prompt-optimization` → `{ usePromptOptimizationAi }`; upsert on `generationProcess` by `userId`; returns saved value
-- Web Settings **Prompt Optimization** section (between Process and AI Agent): **Use prompt optimization using AI** checkbox; Save always enabled; toast on API result
-- Saving a changed value clears the in-progress Generate session (same pattern as Process flags)
-- When `usePromptOptimizationAi` is false: `POST /ai-verdict`, `POST /ai-resume`, and `POST /ai-evaluate` use deterministic compile only (no LLM rewrite, no extra tokens)
-
-## Prompt optimization pipeline (Phase 29)
-
-- Module: `apps/api/src/lib/prompt-optimize/` — `compileInstruction`, `hashPromptSource`, `optimizeInstruction`
-- Runs in AI routes immediately before existing `getAi*SystemPrompt` concat; does not change saved prompts or const `SHARED_RULES` / provider notes
+- Module: `apps/api/src/lib/prompt-optimize/` — `compileInstruction` only (deterministic compile before AI Verdict, Generate, and Evaluate)
 - **Deterministic compile (always):** trim, collapse extra blank lines, wrap in `## User instruction` fence; Generate adds honesty line (no invented employers/dates/skills/experience)
-- **LLM rewrite (when enabled):** rewrites compiled instruction only; cached in `promptOptimizations` by `(userId, kind, sourceHash)` where `sourceHash = sha256(compilerVersion + kind + originalPrompt)`; rewrite failure falls back to compiled instruction; rewrite usage stored in `aiUsage`
-- OpenAI rewrite uses `gpt-5.6-luna` (reasoning `low`); Cursor uses `auto`
-- Generate cache keys (`buildVerdictInputKey`, `buildGenerationInputKey`, `buildEvaluationInputKey`) include prompt hashes and `usePromptOptimizationAi` via `apps/web/src/lib/prompt-hash.ts`
+- **Removed in Phase 36:** LLM rewrite, `promptOptimizations` cache, `GET/PUT /settings/prompt-optimization`, and `usePromptOptimizationAi`
+- Generate cache keys (`buildVerdictInputKey`, `buildGenerationInputKey`, `buildEvaluationInputKey`, `buildWorkflowRecommendInputKey`) include prompt hashes via `apps/web/src/lib/prompt-hash.ts` (no optimization flag)
 
 ## Workflows (Phase 6–7, 22, 30, 35)
 
@@ -177,12 +169,12 @@ User browser (:4041)
 - Sticky header: page title row includes **New** (plus icon + label) to reset the in-progress Generate session to a blank Job step; step row (`GenerateStepNavPrevButton` + `GenerateTimeline` + `GenerateStepNavNextButton`) uses `sticky top-0` with `-mt-6 pt-6` to cover main padding and prevent content showing through the gap above; `bg-background` and bottom border
 - Step navigation: steps register handlers via `useRegisterGenerateStepNav`; large round controls flank the timeline on the same row
 - Job UI (Manual): Job text max 10,000 chars + right **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
-- Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text when `doVerdict` and inputs changed, or reuses stored verdict when `verdictInputKey` matches; fullscreen loading; on success saves `acceptedMarkdown` + `verdictInputKey`, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
-- Workflow: read-only **AI Verdict result** Markdown panel at top (`acceptedMarkdown`); then one `PcewSection` workflow table (single-select); loads all workflows via `GET /workflows` with `page=null`; **Next** fetches `GET /workflows/:id/generation-fingerprint`, builds `generationInputKey` including that fingerprint, then runs `POST /ai-resume` or reuses stored resume when job + workflow + PCE content are unchanged
+- Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text when `doVerdict` and inputs changed, or reuses stored verdict when `verdictInputKey` matches; then workflow recommendation or last-workflow restore (see Process settings); fullscreen loading during Verdict and recommendation; on success saves results, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
+- Workflow: read-only **AI Verdict result** Markdown panel at top when `doVerdict` (`acceptedMarkdown`); then one `PcewSection` workflow table (single-select); loads all workflows via `GET /workflows` with `page=null`; row select persists `lastSelectedWorkflowId`; **Next** fetches `GET /workflows/:id/generation-fingerprint`, builds `generationInputKey` including that fingerprint, then runs `POST /ai-resume` or reuses stored resume when job + workflow + PCE content are unchanged
 - Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Previous** → Workflow; **Next** fetches workflow fingerprint and blocks with an error toast if PCE changed since resume generation; otherwise runs `POST /ai-evaluate` or reuses stored evaluation when fingerprint matches; fullscreen loading while evaluating; **Download** on this step when `doEvaluate` is false
 - Evaluate: `GenerateEvaluateStep` renders evaluation Markdown via `AiVerdictMarkdown`; **Previous** → Generate; **Download** calls `POST /resume/docx` with stored JSON
-- One Generate **process** spans Job through DOCX download; session persists after download until **New** or until Settings **Process** flags change (Do Verdict / Do Evaluate saved with different values)
-- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId, workflowName? }`, `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + workflow id + server PCE fingerprint), `evaluationMarkdown`, and `evaluationInputKey`; legacy `pcew` session keys are parsed for `workflowId`; changing Job text clears verdict, resume, and evaluation; changing workflow clears resume and evaluation; editing linked Profile / Companies / Experiences changes the server fingerprint so resume and evaluation are regenerated on next forward navigation
+- One Generate **process** spans Job through DOCX download; session persists after download until **New** or until Settings **Process** flags/threshold change (Do Verdict / Do Evaluate / Do Workflow Recommendation / Recommendation threshold saved with different values)
+- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId, workflowName? }`, `verdictInputKey`, `workflowRecommendInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + workflow id + server PCE fingerprint), `evaluationMarkdown`, and `evaluationInputKey`; legacy `pcew` session keys are parsed for `workflowId`; changing Job text clears verdict, recommendation cache, resume, and evaluation; changing workflow clears resume and evaluation; editing linked Profile / Companies / Experiences changes the server fingerprint so resume and evaluation are regenerated on next forward navigation
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowProfilePicker`, `WorkflowCompaniesEditor`, and `WorkflowCompanyDialog`
@@ -193,7 +185,7 @@ User browser (:4041)
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - `GET /ai-usage?page=` — owner-only paginated list; page size **100**; `orderBy: { createdAt: "desc" }`; returns `{ items, total, page, pageSize }` where each item has `id`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `createdAt` (omits `input` / `output`)
 - `GET /ai-usage/:id` — owner-only detail including `input` and `output`; 404 when missing or not owned
-- Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): `generateType` is `verdict`, `generate`, `evaluate`, `promptOptimize`, or `promptHelper`; `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/evaluate/prompt-optimize/prompt-helper, `gpt-5.6-terra` for OpenAI resume generation
+- Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): `generateType` is `verdict`, `generate`, `evaluate`, `workflowRecommend`, or `promptHelper`; `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/evaluate/workflow-recommend/prompt-helper, `gpt-5.6-terra` for OpenAI resume generation
 - Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-luna`, reasoning `low`)
 - Markdown output sections (in order): `## Verdict` (each user question as `###` heading + answer paragraph or sub-bullet list), `## Job`, `## Job post Company & contacts`; unknowns as `Not found`
 - Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography` theme tokens); `AiUsageProvider` refreshes header total after success
@@ -213,7 +205,13 @@ User browser (:4041)
 
 - `POST /ai-prompt-helper` — body `{ kind: "verdict" | "generate" | "evaluate" | "companyDescription" | "experienceDescription", request: string, currentPrompt: string }`; `request` trim, min 1, max **150**; `currentPrompt` max 20,000; requires saved Settings provider/apiKey (saved prompts not required); returns `{ sentence, usage, tokenUsed }`
 - Module: `apps/api/src/lib/ai-prompt-helper/` — const system prompt outputs exactly one concise appendable sentence; strips accidental `## New` heading from model output; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiVerdictResponse` (`gpt-5.6-luna`, reasoning `low`); usage stored as `generateType: "promptHelper"`
-- Independent of Settings **Use prompt optimization using AI** (that flag applies only during Generate AI steps)
+- Independent of Settings Process flags (applies only on the Prompts / company / experience helper dialogs)
+
+## AI Workflow Recommendation (Phase 36)
+
+- `POST /ai-workflow-recommend` — body `{ jobDescription, acceptedMarkdown? }` (job 1–10,000 chars noise-filtered text; optional verdict markdown); requires saved Settings provider/apiKey and ≥1 owned workflow; loads workflow summaries (name, description, language, profile name, deduplicated flat `experiences` with id/category/description, company periods with `experienceIds` referencing that list); AI returns structured `{ matches: [{ workflowId, score }] }` (scores 0–100); server picks highest score and applies user’s `workflowRecommendationThreshold` from `generationProcess`; returns `{ workflowId, workflowName, score, threshold, usage, tokenUsed }` where `workflowId` is null when best score is below threshold
+- Module: `apps/api/src/lib/ai-workflow-recommend/` — prompts, `parse-response`, `pickRecommendedWorkflow`, Cursor/OpenAI provider adapters; summaries via `loadWorkflowRecommendSummaries`
+- Web: `runAiWorkflowRecommend` in `apps/web/src/lib/api.ts`; Generate page runs after Job **Next** when `doWorkflowRecommendation`; session caches via `buildWorkflowRecommendInputKey` + `workflowRecommendInputKey`; manual workflow row select calls `PUT /settings/process/last-workflow`
 
 ## AI Resume (Phase 20, 22, 23, 28)
 
