@@ -11,6 +11,7 @@ import {
 } from "../lib/auth.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
+import { DEFAULT_GENERATION_PROCESS } from "./settings-process.js";
 
 const credentialsSchema = z.object({
   email: z.string().email().max(320),
@@ -34,7 +35,20 @@ authRoutes.post("/register", async (c) => {
 
   const passwordHash = await hashPassword(parsed.data.password);
   const user = await prisma.user.create({
-    data: { email, passwordHash },
+    data: {
+      email,
+      passwordHash,
+      generationProcess: {
+        create: {
+          doVerdict: DEFAULT_GENERATION_PROCESS.doVerdict,
+          doEvaluate: DEFAULT_GENERATION_PROCESS.doEvaluate,
+          doWorkflowRecommendation:
+            DEFAULT_GENERATION_PROCESS.doWorkflowRecommendation,
+          workflowRecommendationThreshold:
+            DEFAULT_GENERATION_PROCESS.workflowRecommendationThreshold,
+        },
+      },
+    },
   });
 
   const token = await signSessionToken(user.id, user.email);

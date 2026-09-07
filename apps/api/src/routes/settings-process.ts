@@ -116,6 +116,12 @@ settingsProcessRoutes.put("/last-workflow", async (c) => {
     where: { userId: user.id },
     create: {
       userId: user.id,
+      doVerdict: DEFAULT_GENERATION_PROCESS.doVerdict,
+      doEvaluate: DEFAULT_GENERATION_PROCESS.doEvaluate,
+      doWorkflowRecommendation:
+        DEFAULT_GENERATION_PROCESS.doWorkflowRecommendation,
+      workflowRecommendationThreshold:
+        DEFAULT_GENERATION_PROCESS.workflowRecommendationThreshold,
       lastSelectedWorkflowId: workflow.id,
     },
     update: {
