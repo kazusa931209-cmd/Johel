@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/app/ToastProvider";
+import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { CopyButton } from "@/components/shared/action-icon-buttons";
 import { Drawer } from "@/components/shared/drawer";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
@@ -22,32 +23,75 @@ import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 const fabClass =
   "fixed bottom-8 right-12 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-surface shadow-lg transition-colors hover:bg-surface-muted";
 
-function AiUsageTextSection({
-  label,
-  value,
+type AiUsageDetailTab = "input" | "output";
+
+const AI_USAGE_DETAIL_TABS: { id: AiUsageDetailTab; label: string }[] = [
+  { id: "input", label: "Input" },
+  { id: "output", label: "Output" },
+];
+
+function AiUsageDetailPanel({
+  detail,
   onCopy,
 }: {
-  label: string;
-  value: string;
+  detail: AiUsageDetail;
   onCopy: (text: string) => void;
 }) {
-  const text = value.trim() ? value : "—";
+  const [activeTab, setActiveTab] = useState<AiUsageDetailTab>("input");
+
+  useEffect(() => {
+    setActiveTab("input");
+  }, [detail.id]);
+
+  const rawText = activeTab === "input" ? detail.input : detail.output;
+  const tabPanelId = `ai-usage-detail-${activeTab}`;
 
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-background">
+    <section
+      className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-background text-sm"
+      aria-label="AI usage detail content"
+    >
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-surface-muted px-3 py-2">
-        <h3 className="text-xs font-medium tracking-wide text-muted uppercase">
-          {label}
-        </h3>
+        <div className="flex gap-1" role="tablist" aria-label="Input and output">
+          {AI_USAGE_DETAIL_TABS.map((tab) => {
+            const selected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                id={`ai-usage-detail-tab-${tab.id}`}
+                aria-selected={selected}
+                aria-controls={tabPanelId}
+                className={[
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  selected
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted hover:text-foreground",
+                ].join(" ")}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
         <CopyButton
-          disabled={!value.trim()}
-          onClick={() => onCopy(value)}
+          disabled={!rawText.trim()}
+          onClick={() => onCopy(rawText)}
         />
       </div>
-      <div className="max-h-[min(40vh,24rem)] overflow-auto p-3">
-        <div className="whitespace-pre-wrap break-words text-sm text-foreground">
-          {text}
-        </div>
+      <div
+        id={tabPanelId}
+        role="tabpanel"
+        aria-labelledby={`ai-usage-detail-tab-${activeTab}`}
+        className="min-h-0 flex-1 overflow-auto p-3"
+      >
+        {rawText.trim() ? (
+          <AiVerdictMarkdown markdown={rawText} />
+        ) : (
+          <p className="text-sm text-muted">—</p>
+        )}
       </div>
     </section>
   );
@@ -83,22 +127,14 @@ function AiUsageDetailDrawer({
       zIndex={60}
       closeOnEscape
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         {loading ? (
           <p className="text-sm text-muted">Loading…</p>
         ) : detail ? (
-          <div className="flex flex-col gap-4 text-sm">
-            <AiUsageTextSection
-              label="Input"
-              value={detail.input}
-              onCopy={(text) => void handleCopy(text)}
-            />
-            <AiUsageTextSection
-              label="Output"
-              value={detail.output}
-              onCopy={(text) => void handleCopy(text)}
-            />
-          </div>
+          <AiUsageDetailPanel
+            detail={detail}
+            onCopy={(text) => void handleCopy(text)}
+          />
         ) : null}
       </div>
     </Drawer>

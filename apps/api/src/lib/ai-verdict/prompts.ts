@@ -29,7 +29,7 @@ export function getAiVerdictSystemPrompt(
 export function buildAiVerdictUserPrompt(jobDescription: string): string {
   return `Analyze the following Job Description and produce the required Markdown sections.
 
----
+----------------------------------------
 ${jobDescription}
----`;
+----------------------------------------`;
 }

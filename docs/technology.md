@@ -93,7 +93,7 @@ User browser (:4041)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
-- **AI Usage History (Phase 32, 41):** fixed bottom-right FAB (`AiUsageHistory` in app layout) opens `Drawer` history panel; row click opens nested detail `Drawer` with input/output text and per-section **Copy** icon (`CopyButton` + `copyTextToClipboard`); `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`; labels in `apps/web/src/lib/ai-usage.ts`
+- **AI Usage History (Phase 32, 41):** fixed bottom-right FAB (`AiUsageHistory` in app layout) opens `Drawer` history panel; row click opens nested detail `Drawer` with **Input** / **Output** tabs (Input default), `AiVerdictMarkdown` preview, and **Copy** for the active tab’s raw text (`CopyButton` + `copyTextToClipboard`); `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`; labels in `apps/web/src/lib/ai-usage.ts`
 - Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows, Prompts — always open), **Run** (Generate — always open), Settings; section labels use normal title case (not all caps)
 
 ## AI Agent settings (Phase 5, 21)
