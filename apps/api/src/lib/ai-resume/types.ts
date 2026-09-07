@@ -47,7 +47,6 @@ export type ResumeGenerationWorkflow = {
 
 export type ResumeGenerationInput = {
   jobDescription: string;
-  acceptedMarkdown: string;
   profile: ResumeGenerationProfile;
   companies: ResumeGenerationCompany[];
   workflow: ResumeGenerationWorkflow;

@@ -19,7 +19,6 @@ export async function buildWorkflowGenerationFingerprint(
     userId,
     workflowId,
     jobDescription: "",
-    acceptedMarkdown: "",
   });
   return workflowContentFingerprintFromInput(assembled);
 }

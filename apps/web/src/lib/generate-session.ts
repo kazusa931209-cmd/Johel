@@ -181,7 +181,6 @@ function buildGenerationInputKeyParts(
 ) {
   return {
     jobText: job.jobText.trim(),
-    acceptedMarkdown: job.acceptedMarkdown ?? "",
     workflowId: workflow.workflowId,
     workflowContentFingerprint,
     generatePromptHash: hashPromptForCache(prompts.generatePrompt ?? ""),

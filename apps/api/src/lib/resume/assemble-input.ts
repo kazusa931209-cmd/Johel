@@ -4,7 +4,6 @@ import type { ResumeGenerationInput } from "../ai-resume/types.js";
 type AssembleGenerationInputParams = {
   userId: string;
   jobDescription: string;
-  acceptedMarkdown: string;
   workflowId: string;
 };
 
@@ -113,7 +112,6 @@ export async function assembleResumeGenerationInput(
 
   return {
     jobDescription: params.jobDescription,
-    acceptedMarkdown: params.acceptedMarkdown,
     profile: {
       id: profile.id,
       firstName: profile.firstName,
@@ -132,7 +130,7 @@ export async function assembleResumeGenerationInput(
     workflow: {
       id: workflow.id,
       name: workflow.name,
-      description: workflow.description,
+      description: workflow.description ?? "",
       language: workflow.language,
     },
   };

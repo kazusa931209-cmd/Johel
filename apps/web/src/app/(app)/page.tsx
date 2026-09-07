@@ -349,24 +349,12 @@ export default function GeneratePage() {
       return;
     }
 
-    const acceptedMarkdown = processSettings.doVerdict
-      ? job.acceptedMarkdown?.trim()
-      : "";
-    if (processSettings.doVerdict && !acceptedMarkdown) {
-      toast(
-        "AI Verdict result is missing. Go back to Job and run analysis first.",
-        "error",
-      );
-      return;
-    }
-
     const jobDescription = noiseFilter(job.jobText.trim()).text;
     setGeneratingResume(true);
     try {
       const trimmedOneTimePrompt = oneTimePrompt.trim();
       const res = await runAiResume({
         jobDescription,
-        acceptedMarkdown: acceptedMarkdown ?? "",
         workflowId: workflow.workflowId,
         ...(trimmedOneTimePrompt
           ? { oneTimePrompt: trimmedOneTimePrompt }

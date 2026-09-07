@@ -13,7 +13,6 @@ const JOB_TEXT_MAX = 10_000;
 
 const postSchema = z.object({
   jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX),
-  acceptedMarkdown: z.string().trim().max(JOB_TEXT_MAX),
   workflowId: z.string().trim().min(1),
   oneTimePrompt: z.string().trim().max(JOB_TEXT_MAX).optional(),
 });
@@ -94,6 +93,9 @@ aiResumeRoutes.post("/", async (c) => {
       parsed.data.oneTimePrompt,
     );
 
+    console.log("compiledGeneratePrompt", compiledGeneratePrompt);
+    console.log("generationInput", generationInput);
+    
     const result = await runAiResume(provider, {
       apiKey: setting.apiKey,
       generatePrompt: compiledGeneratePrompt,

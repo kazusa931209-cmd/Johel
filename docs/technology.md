@@ -113,7 +113,7 @@ User browser (:4041)
 - `PUT /settings/process/last-workflow` → `{ workflowId }`; validates owned workflow; upserts `lastSelectedWorkflowId` on `generationProcess`
 - Web Settings **Process** section: **Do Verdict**, **Do Evaluate**, **Do Workflow Recommendation** checkboxes; **Recommendation threshold** (0–100) when recommendation enabled; Save always enabled; inline validation on submit; toast on API result; saving changed Process flags or threshold clears in-progress Generate session
 - Generate reads process settings on load; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
-- When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel; `POST /ai-resume` receives `acceptedMarkdown: ""`
+- When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel
 - When `doEvaluate` is false: timeline is Job → Workflow → Generate; Generate **Download** is last-step action; Evaluate step hidden; stored `activeStep: "Evaluate"` normalizes to Generate on load
 - When `doWorkflowRecommendation` is true: after Job **Next** (with or without Verdict), Generate calls `POST /ai-workflow-recommend` unless session `workflowRecommendInputKey` matches; auto-selects workflow when score ≥ threshold; otherwise clears selection and toasts; when false, restores `lastSelectedWorkflowId` without AI
 
@@ -222,7 +222,7 @@ User browser (:4041)
 
 ## AI Resume (Phase 20, 22, 23, 28)
 
-- `POST /ai-resume` — body `{ jobDescription, acceptedMarkdown, workflowId, oneTimePrompt? }`; requires saved Settings provider/apiKey and non-empty `prompts.generatePrompt`; server loads the owned workflow (profile, ordered company entries with period and linked experiences) and assembles generation input; system prompt = compiled user Generate Prompt + optional `## One-time prompt` section when `oneTimePrompt` is non-empty + shared resume rules; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
+- `POST /ai-resume` — body `{ jobDescription, workflowId, oneTimePrompt? }`; requires saved Settings provider/apiKey and non-empty `prompts.generatePrompt`; server loads the owned workflow (profile, ordered company entries with period and linked experiences) and assembles generation input (job description + PCEW data only; AI Verdict markdown is not passed to resume generation); system prompt = compiled user Generate Prompt + optional `## One-time prompt` section when `oneTimePrompt` is non-empty + shared resume rules; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
 - `GET /workflows/:id/generation-fingerprint` — returns `{ fingerprint }` where `fingerprint` is a stable JSON string of the assembled profile, nested companies (with period and linked experiences), and workflow fields (same source as `assembleResumeGenerationInput`, excluding job text); used by Generate to detect PCE edits without re-running AI on unchanged content
 - Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`
 - Web: `runAiResume` in `apps/web/src/lib/api.ts`; Workflow **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown; Evaluate step downloads DOCX without re-calling AI when inputs are unchanged
