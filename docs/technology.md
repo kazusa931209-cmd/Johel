@@ -161,7 +161,7 @@ User browser (:4041)
 ## Experiences (Phase 10, 30, 45)
 
 - `GET /experiences?q=&page=` — page size 10
-- List order: `updatedAt` descending
+- List order: `category` ascending (same order in the workflow experience picker, which uses the same list API)
 - `GET /experiences/:id` — full detail for the editor (owner only)
 - `POST /experiences` / `PUT /experiences/:id` — `{ category, problem, actions, outcome }` (all required); on write, `problem`, `actions`, and `outcome` are converted to markdown via AI when changed since last save (create always converts); unchanged fields skip conversion; requires Settings provider/apiKey when conversion runs
 - Search `q` across category, problem, actions, and outcome

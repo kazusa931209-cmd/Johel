@@ -90,7 +90,7 @@ experiencesRoutes.get("/", async (c) => {
     prisma.experience.count({ where }),
     prisma.experience.findMany({
       where,
-      orderBy: { updatedAt: "desc" },
+      orderBy: { category: "asc" },
       ...(pagination.skip != null ? { skip: pagination.skip } : {}),
       ...(pagination.take != null ? { take: pagination.take } : {}),
     }),

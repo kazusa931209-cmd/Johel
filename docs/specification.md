@@ -170,7 +170,7 @@ Aligned with the product flow above:
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
   * Per-user list: No, Category, Problem, Actions, Outcome
   * Keyword filter on category, problem, actions, and outcome; 10 rows per page
-  * List is ordered by most recently updated first
+  * List is ordered by Category name
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience; Save is right-aligned
