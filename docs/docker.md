@@ -122,6 +122,8 @@ Again, do **not** use `-v`. The database stays in `johel-data` on **that** Mac.
 
 Migrations run automatically when the container starts. Pending migrations apply to the existing SQLite file at `/data/johel.db`.
 
+**After a migration squash:** if the volume was created with older migration names, `migrate deploy` fails. Remove the volume (`docker compose down -v`) and start again, or keep the volume only if you rebaseline `_prisma_migrations` manually (not documented here).
+
 Keep the same `JWT_SECRET` in `.env` across image updates. Changing it only forces users to log in again; data remains in SQLite.
 
 Each Mac that runs the container has its **own** `johel-data` volume. Case A and Case B are separate databases unless you back up and restore manually (not covered here).

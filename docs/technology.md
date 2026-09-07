@@ -59,6 +59,7 @@ User browser (:4041)
 - **Phase 36:** `PromptOptimization` / `promptOptimizations` and `usePromptOptimizationAi` removed; AI routes use deterministic `compileInstruction` only (see `apps/api/src/lib/prompt-optimize/compile.ts`)
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
+- **Migrations:** squashed to a single migration `20260908100000_init` (2026-09-08). Fresh installs and Docker entrypoint use `prisma migrate deploy`. If a database already applied the pre-squash migration history, reset before deploy: local `pnpm --filter api exec prisma migrate reset` (or delete `apps/api/prisma/dev.db` and run `migrate deploy`); Docker `docker compose down -v` then `docker compose up -d` (wipes `johel-data`)
 
 ## Frontend (Phase 3)
 
