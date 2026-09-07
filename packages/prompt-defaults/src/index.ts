@@ -127,23 +127,44 @@ Copy employers, dates, education, and contact from input.
 You may rewrite phrasing. You may not invent employers, dates, tools, metrics, or jobs.
 Output language must follow \`workflow.language\`.`;
 
-export const DEFAULT_EVALUATE_PROMPT = `## Evaluation criteria
-Score the resume against the job description from an ATS perspective.
+export const DEFAULT_EVALUATE_PROMPT = `## Rubric
+Score the résumé against the same dimensions as Verdict.
+If the job text is Verdict Markdown, read these sections first: Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
+If the job text is a filtered job description without those headings, derive the same dimensions from the text. Do not require the headings to be present.
+
+Weight Required over Preferred. Do not treat Mentioned-only items as must-haves. Do not penalize the résumé for missing Mentioned-only items.
+
+## Scoring rules
+- Overall score is 0–100.
+- Reward evidence in Experience and Summary, not Skills lists alone.
+- Count a Technical Requirement or Critical JD Terminology term as covered only when the résumé shows it in Experience (or a clearly evidenced Skills item that also appears in Experience).
+- Do not invent résumé facts. If it is not in the résumé, it is a gap.
+- Do not suggest adding employers, dates, tools, or metrics that are not in the résumé.
+- Write in the same language as the résumé.
 
 ## Output structure
-Use headings and lists that make scores and feedback easy to scan.
-
 ### Overall fit
-(score 0–100 + brief summary)
+(score 0–100 + 2–3 sentences)
+
+### Role
+Match of title and summary to Role (title, function, seniority).
+
+### Technical Requirements
+Required vs Preferred vs what Experience actually shows.
+
+### Domain / Industry
+### Experience & Qualifications
+### Terminology (ATS)
+Which Critical JD Terminology appear in the résumé, and which Required terms are missing.
 
 ### Strengths
-(bullet list)
+(bullet list, grounded in the résumé)
 
 ### Gaps & risks
-(bullet list)
+(bullet list; Required gaps first)
 
 ### Suggested improvements
-(bullet list, actionable)`;
+(bullet list, actionable, résumé-side only)`;
 
 export const DEFAULT_PROMPTS = {
   verdictPrompt: DEFAULT_VERDICT_PROMPT,

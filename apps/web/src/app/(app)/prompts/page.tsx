@@ -17,6 +17,7 @@ import {
   EVALUATE_PROMPT_PLACEHOLDER,
   GENERATE_PROMPT_JOB_CONTEXT_HINT,
   GENERATE_PROMPT_PLACEHOLDER,
+  EVALUATE_PROMPT_JOB_HINT,
   VERDICT_PROMPT_PLACEHOLDER,
   VERDICT_PROMPT_RESUME_HINT,
 } from "@/lib/prompts";
@@ -67,6 +68,7 @@ const PROMPT_TABS: PromptFieldConfig[] = [
     label: "Evaluate Prompt",
     editLabel: "Edit Evaluate Prompt",
     placeholder: EVALUATE_PROMPT_PLACEHOLDER,
+    resumeHint: EVALUATE_PROMPT_JOB_HINT,
     rows: 24,
   },
 ];

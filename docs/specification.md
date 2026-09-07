@@ -36,7 +36,7 @@ Job Description → Filtering → Workflow → Generate → Evaluate
 1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
 2. **Workflow** — Choose one workflow; its saved profile and company entries (each with period and linked experiences) are used for generation.
 3. **Generate** — Generate the résumé from the filtered JD and the selected workflow.
-4. **Evaluate** — Score the generated résumé against the job description from an ATS perspective, then download the résumé.
+4. **Evaluate** — Score the generated résumé against the same Verdict dimensions (Role, Technical Requirements, Final Verdict, and related sections), then download the résumé.
 
 ## Deployment
 
@@ -189,7 +189,7 @@ Aligned with the product flow above:
   * Each tab shows a notice that contents will be automatically converted to markdown format on **Save**; prompt kinds (Verdict / Generate / Evaluate) are capped at `##` as the largest heading during conversion, with deterministic `#`→`##` post-processing; when a prompt changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged prompts skip conversion but still receive heading-cap post-processing; fullscreen loading while conversion runs; saved preview refreshes with the converted markdown
   * Each tab’s **Save** persists only that prompt; **Save** stays enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
   * Load all prompts via `GET /prompts`; save per tab via `PUT /prompts/verdict`, `PUT /prompts/generate`, or `PUT /prompts/evaluate`; toast on API success or failure
-  * The Verdict Prompt is used when checking Job Descriptions; when **Do Verdict** is enabled its Markdown output replaces the raw job description as job context for resume generation (Verdict structure and extracted fields affect resume quality); the Generate Prompt is used when generating résumés; the Evaluate Prompt is used when evaluating résumés (none run on this page)
+  * The Verdict Prompt is used when checking Job Descriptions; when **Do Verdict** is enabled its Markdown output replaces the raw job description as job context for resume generation (Verdict structure and extracted fields affect resume quality); the Generate Prompt is used when generating résumés; the Evaluate Prompt scores the résumé against the same Verdict dimensions (Role, Technical Requirements, Final Verdict, and related sections)—today the Evaluate step still sends the noise-filtered job description, so the default prompt derives those dimensions from that text when Verdict headings are absent (none run on this page)
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Workflow and saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to the matching Prompts tab
   * When ready, a timeline shows steps: Job → Workflow → Generate, and **Evaluate** when **Do Evaluate** is enabled; the page **title**, **timeline**, and round **Previous** / **Next** (or **Download** on the last step) controls share one sticky header row—the timeline sits between the side buttons—and the header stays fixed at the top of the scroll area while step content scrolls beneath
@@ -308,6 +308,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-08):** `experiences` schema with `problem`, `actions`, `outcome`; updated Experiences API, form, list, detail, workflow picker, and resume assembly input. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-45-experience-structure-update.md`](./plans/2026-09-08-phase-45-experience-structure-update.md).
 * [x] **Phase 46 — Resume section order and prompt seeds** — Preview and DOCX use Summary → Experience → Skills → Education (then optional Certifications and Projects). Sign-up prompt seeds match the Verdict heading contract used for resume generation.
   * **Outcome (2026-09-08):** Markdown and default DOCX template section order aligned; `@johel/prompt-defaults` Verdict/Generate templates updated. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-46-resume-section-order.md`](./plans/2026-09-08-phase-46-resume-section-order.md).
+* [x] **Phase 47 — Evaluate Prompt aligned with Verdict** — Default Evaluate Prompt scores the same Verdict dimensions as Generate (Role, Technical Requirements, Final Verdict, and related sections). New sign-ups receive it from `@johel/prompt-defaults`.
+  * **Outcome (2026-09-08):** Evaluate seed template and execution-rule heading fallback; Prompts Evaluate tab hint. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-47-evaluate-prompt-verdict-rubric.md`](./plans/2026-09-08-phase-47-evaluate-prompt-verdict-rubric.md).
 
 ## Cursor Rules (Documentation Governance)
 

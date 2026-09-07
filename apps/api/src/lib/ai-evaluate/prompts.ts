@@ -3,7 +3,8 @@ import { PROMPT_SECTION_SEPARATOR } from "../prompt-optimize/compile.js";
 
 const EXECUTION_RULES = `- You are an AI assistant that evaluates résumés against job descriptions.
 - Output Markdown only. Do not output JSON. Do not wrap the answer in a code fence.
-- Follow the evaluation criteria and output structure defined in Instructions above.`;
+- Follow the evaluation criteria and output structure defined in Instructions above.
+- If the job text includes Verdict Markdown headings (Role, Technical Requirements, Final Verdict, and similar), use those as the scoring rubric. Otherwise derive the same dimensions from the job description.`;
 
 const CURSOR_PROVIDER_NOTES = `Provider notes (Cursor AI Agent):
 - Follow the Instructions section above for scoring and feedback layout.`;

@@ -18,4 +18,7 @@ export const GENERATE_PROMPT_JOB_CONTEXT_HINT =
   "Resume generation targets the AI Verdict result when Do Verdict is enabled; otherwise it uses the noise-filtered job description from the Job step.";
 
 export const EVALUATE_PROMPT_PLACEHOLDER =
-  "Define evaluation criteria, scoring, and Markdown output structure for ATS feedback.";
+  "Define evaluation criteria against Verdict dimensions (Role, Technical Requirements, Final Verdict), scoring, and Markdown output structure.";
+
+export const EVALUATE_PROMPT_JOB_HINT =
+  "Resume evaluation currently receives the noise-filtered job description (not the AI Verdict Markdown). The default prompt still scores the same Verdict dimensions: it reads those headings when present, otherwise it derives them from the job text.";
