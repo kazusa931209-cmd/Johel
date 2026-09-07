@@ -17,6 +17,15 @@ import {
   needsMarkdownFormatOnSave,
 } from "@/lib/markdown-format";
 import { DESCRIPTION_AS_RESUME_PROMPT_HINT } from "@/lib/entity-description";
+import {
+  COMPANY_DOMAIN_STACK_BAD,
+  COMPANY_DOMAIN_STACK_GOOD,
+  COMPANY_DOMAIN_STACK_GUIDELINE,
+  COMPANY_SHARED_GUIDANCE,
+  COMPANY_WHAT_IT_IS_BAD,
+  COMPANY_WHAT_IT_IS_GOOD,
+  COMPANY_WHAT_IT_IS_GUIDELINE,
+} from "@/lib/company-field-guidance";
 
 type CompanyFormProps = {
   mode: "create" | "edit";
@@ -25,8 +34,10 @@ type CompanyFormProps = {
 };
 
 type FieldErrors = {
+  alias?: string;
   name?: string;
-  description?: string;
+  whatCompanyIs?: string;
+  domainAndStack?: string;
 };
 
 function RequiredMark() {
@@ -42,24 +53,64 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-sm text-danger">{message}</p>;
 }
 
+function FieldExamples({
+  good,
+  bad,
+}: {
+  good: string | string[];
+  bad: string;
+}) {
+  const goodItems = Array.isArray(good) ? good : [good];
+  return (
+    <div className="space-y-1 text-xs text-muted">
+      <p>
+        <span className="font-medium text-foreground">Good:</span>{" "}
+        {goodItems.map((item, index) => (
+          <span key={item}>
+            {index > 0 ? " / " : ""}
+            &ldquo;{item}&rdquo;
+          </span>
+        ))}
+      </p>
+      <p>
+        <span className="font-medium text-foreground">Bad:</span>{" "}
+        &ldquo;{bad}&rdquo;
+      </p>
+    </div>
+  );
+}
+
 export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { refreshTokenUsed } = useAiUsage();
+  const [alias, setAlias] = useState(initial?.alias ?? "");
   const [name, setName] = useState(initial?.name ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
-  const [storedDescription] = useState(initial?.description ?? "");
+  const [whatCompanyIs, setWhatCompanyIs] = useState(
+    initial?.whatCompanyIs ?? "",
+  );
+  const [domainAndStack, setDomainAndStack] = useState(
+    initial?.domainAndStack ?? "",
+  );
+  const [storedWhatCompanyIs] = useState(initial?.whatCompanyIs ?? "");
+  const [storedDomainAndStack] = useState(initial?.domainAndStack ?? "");
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const nextErrors: FieldErrors = {};
+    if (!alias.trim()) {
+      nextErrors.alias = "Alias is required.";
+    }
     if (!name.trim()) {
       nextErrors.name = "Company Name is required.";
     }
-    if (!description.trim()) {
-      nextErrors.description = "Description is required.";
+    if (!whatCompanyIs.trim()) {
+      nextErrors.whatCompanyIs = "What this company is is required.";
+    }
+    if (!domainAndStack.trim()) {
+      nextErrors.domainAndStack = "Domain & Stack is required.";
     }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -67,8 +118,10 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     }
 
     const payload: CompanyWritePayload = {
+      alias: alias.trim(),
       name: name.trim(),
-      description: description.trim(),
+      whatCompanyIs: whatCompanyIs.trim(),
+      domainAndStack: domainAndStack.trim(),
     };
     setSaving(true);
     const res =
@@ -85,8 +138,15 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     router.push("/companies");
   }
 
-  const converting =
-    saving && needsMarkdownFormatOnSave(description, storedDescription);
+  const convertingWhat = needsMarkdownFormatOnSave(
+    whatCompanyIs,
+    storedWhatCompanyIs,
+  );
+  const convertingDomain = needsMarkdownFormatOnSave(
+    domainAndStack,
+    storedDomainAndStack,
+  );
+  const converting = saving && (convertingWhat || convertingDomain);
 
   return (
     <form
@@ -102,10 +162,29 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure company name and a description used as a resume-generation
-          prompt.
+          Configure alias, company name, and structured context fields used as
+          resume-generation prompts.
         </p>
       </div>
+
+      <label className="block space-y-1 text-sm">
+        <span>
+          Alias
+          <RequiredMark />
+        </span>
+        <input
+          value={alias}
+          onChange={(e) => {
+            setAlias(e.target.value);
+            if (fieldErrors.alias) {
+              setFieldErrors((errors) => ({ ...errors, alias: undefined }));
+            }
+          }}
+          aria-invalid={Boolean(fieldErrors.alias)}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+        />
+        <FieldError message={fieldErrors.alias} />
+      </label>
 
       <label className="block space-y-1 text-sm">
         <span>
@@ -128,28 +207,62 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
 
       <label className="block space-y-1 text-sm">
         <span>
-          Description
+          What this company is
           <RequiredMark />
         </span>
+        <p className="text-xs text-muted">{COMPANY_WHAT_IT_IS_GUIDELINE}</p>
         <textarea
-          value={description}
+          value={whatCompanyIs}
           onChange={(e) => {
-            setDescription(e.target.value);
-            if (fieldErrors.description) {
+            setWhatCompanyIs(e.target.value);
+            if (fieldErrors.whatCompanyIs) {
               setFieldErrors((errors) => ({
                 ...errors,
-                description: undefined,
+                whatCompanyIs: undefined,
               }));
             }
           }}
-          rows={24}
-          aria-invalid={Boolean(fieldErrors.description)}
+          rows={6}
+          aria-invalid={Boolean(fieldErrors.whatCompanyIs)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+        />
+        <FieldExamples good={COMPANY_WHAT_IT_IS_GOOD} bad={COMPANY_WHAT_IT_IS_BAD} />
+        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
+        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
+        <FieldError message={fieldErrors.whatCompanyIs} />
+      </label>
+
+      <label className="block space-y-1 text-sm">
+        <span>
+          Domain & Stack
+          <RequiredMark />
+        </span>
+        <p className="text-xs text-muted">{COMPANY_DOMAIN_STACK_GUIDELINE}</p>
+        <textarea
+          value={domainAndStack}
+          onChange={(e) => {
+            setDomainAndStack(e.target.value);
+            if (fieldErrors.domainAndStack) {
+              setFieldErrors((errors) => ({
+                ...errors,
+                domainAndStack: undefined,
+              }));
+            }
+          }}
+          rows={10}
+          aria-invalid={Boolean(fieldErrors.domainAndStack)}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+        />
+        <FieldExamples
+          good={COMPANY_DOMAIN_STACK_GOOD}
+          bad={COMPANY_DOMAIN_STACK_BAD}
         />
         <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
         <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
-        <FieldError message={fieldErrors.description} />
+        <FieldError message={fieldErrors.domainAndStack} />
       </label>
+
+      <p className="text-xs text-muted">{COMPANY_SHARED_GUIDANCE}</p>
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
@@ -170,7 +283,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
       {converting ? (
         <BusyOverlay
           title="Converting to markdown…"
-          description="Please wait while the description is formatted."
+          description="Please wait while the fields are formatted."
         />
       ) : null}
     </form>

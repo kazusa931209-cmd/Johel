@@ -11,6 +11,7 @@ import {
   type CompanyDetail,
   type ExperienceDetail,
 } from "@/lib/api";
+import { WORKFLOW_ROLE_CONTEXT_GUIDELINE } from "@/lib/workflow-field-guidance";
 
 type WorkflowCompanyDialogProps = {
   mode: "add" | "edit";
@@ -18,6 +19,7 @@ type WorkflowCompanyDialogProps = {
     companyId: string;
     startDate: string;
     endDate: string;
+    roleContext: string;
     experienceIds: string[];
   };
   companyName?: string;
@@ -26,6 +28,7 @@ type WorkflowCompanyDialogProps = {
     companyId: string;
     startDate: string;
     endDate: string;
+    roleContext: string;
     experienceIds: string[];
   }) => void;
   onClose: () => void;
@@ -55,6 +58,7 @@ export function WorkflowCompanyDialog({
   const [companyId, setCompanyId] = useState(initial.companyId);
   const [startDate, setStartDate] = useState(initial.startDate);
   const [endDate, setEndDate] = useState(initial.endDate);
+  const [roleContext, setRoleContext] = useState(initial.roleContext);
   const [experienceIds, setExperienceIds] = useState(initial.experienceIds);
   const [viewingCompany, setViewingCompany] = useState<CompanyDetail | null>(
     null,
@@ -65,6 +69,7 @@ export function WorkflowCompanyDialog({
     companyId?: string;
     startDate?: string;
     endDate?: string;
+    roleContext?: string;
     experienceIds?: string;
   }>({});
 
@@ -95,6 +100,9 @@ export function WorkflowCompanyDialog({
     if (!endDate.trim()) {
       nextErrors.endDate = "End is required.";
     }
+    if (!roleContext.trim()) {
+      nextErrors.roleContext = "Role Context is required.";
+    }
     if (experienceIds.length < 1) {
       nextErrors.experienceIds = "Select at least one experience.";
     }
@@ -107,6 +115,7 @@ export function WorkflowCompanyDialog({
       companyId,
       startDate: startDate.trim(),
       endDate: endDate.trim(),
+      roleContext: roleContext.trim(),
       experienceIds,
     });
   }
@@ -119,7 +128,7 @@ export function WorkflowCompanyDialog({
       panelClassName="flex max-h-[90vh] max-w-3xl flex-col overflow-hidden"
       contentClassName="flex min-h-0 flex-1 flex-col overflow-hidden text-sm"
     >
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4">
         {mode === "edit" && companyName ? (
           <div className="space-y-1">
             <div className="text-xs font-medium tracking-wide text-muted uppercase">
@@ -149,15 +158,17 @@ export function WorkflowCompanyDialog({
             minWidthClass="min-w-[560px]"
             columns={[
               {
-                header: "Company Name",
-                cell: (row) => (
-                  <span className="font-medium">{row.name}</span>
-                ),
+                header: "Alias",
+                cell: (row) => <span className="font-medium">{row.alias}</span>,
               },
               {
-                header: "Description",
+                header: "Company Name",
+                cell: (row) => row.name,
+              },
+              {
+                header: "What this company is",
                 className: "max-w-[280px] truncate text-muted",
-                cell: (row) => row.description,
+                cell: (row) => row.whatCompanyIs,
               },
             ]}
             renderDetailDialog={(row) => (
@@ -207,6 +218,26 @@ export function WorkflowCompanyDialog({
             <FieldError message={errors.endDate} />
           </label>
         </div>
+
+        <label className="block space-y-1 text-sm">
+          <span>
+            Role Context
+            <RequiredMark />
+          </span>
+          <p className="text-xs text-muted">{WORKFLOW_ROLE_CONTEXT_GUIDELINE}</p>
+          <input
+            value={roleContext}
+            onChange={(e) => {
+              setRoleContext(e.target.value);
+              if (errors.roleContext) {
+                setErrors((prev) => ({ ...prev, roleContext: undefined }));
+              }
+            }}
+            aria-invalid={Boolean(errors.roleContext)}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          />
+          <FieldError message={errors.roleContext} />
+        </label>
 
         <PcewSection<ExperienceDetail>
           title="Experiences"

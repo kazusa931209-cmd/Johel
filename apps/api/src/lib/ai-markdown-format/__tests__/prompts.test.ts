@@ -48,8 +48,8 @@ describe("finalizeFormattedMarkdown", () => {
     );
   });
 
-  it("does not cap company descriptions", () => {
-    expect(finalizeFormattedMarkdown("companyDescription", "# About")).toBe(
+  it("does not cap company what-it-is fields", () => {
+    expect(finalizeFormattedMarkdown("companyWhatItIs", "# About")).toBe(
       "# About",
     );
   });

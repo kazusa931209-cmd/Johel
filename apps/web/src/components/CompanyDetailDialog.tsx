@@ -15,13 +15,24 @@ export function CompanyDetailDialog({
 }: CompanyDetailDialogProps) {
   return (
     <DetailDialog title={company.name || "Company detail"} onClose={onClose}>
+      <DetailField label="Alias" value={company.alias} />
       <DetailField label="Company Name" value={company.name} />
       <div className="space-y-1">
         <div className="text-xs font-medium tracking-wide text-muted uppercase">
-          Description
+          What this company is
         </div>
-        {company.description ? (
-          <AiVerdictMarkdown markdown={company.description} />
+        {company.whatCompanyIs ? (
+          <AiVerdictMarkdown markdown={company.whatCompanyIs} />
+        ) : (
+          <div className="text-foreground">—</div>
+        )}
+      </div>
+      <div className="space-y-1">
+        <div className="text-xs font-medium tracking-wide text-muted uppercase">
+          Domain & Stack
+        </div>
+        {company.domainAndStack ? (
+          <AiVerdictMarkdown markdown={company.domainAndStack} />
         ) : (
           <div className="text-foreground">—</div>
         )}

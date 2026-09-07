@@ -4,8 +4,10 @@ const KIND_LABELS: Record<MarkdownFormatKind, string> = {
   verdict: "Verdict Prompt (used when checking Job Descriptions)",
   generate: "Generate Prompt (used when generating résumés)",
   evaluate: "Evaluate Prompt (used when evaluating résumés)",
-  companyDescription:
-    "Company description (used when generating résumés from workflow data)",
+  companyWhatItIs:
+    "What this company is (used when generating résumés from workflow data)",
+  companyDomainAndStack:
+    "Domain & stack (used when generating résumés from workflow data)",
   experienceDescription:
     "Experience description (used when generating résumés from workflow data)",
 };

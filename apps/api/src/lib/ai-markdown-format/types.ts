@@ -5,7 +5,8 @@ export type MarkdownFormatKind =
   | "verdict"
   | "generate"
   | "evaluate"
-  | "companyDescription"
+  | "companyWhatItIs"
+  | "companyDomainAndStack"
   | "experienceDescription";
 
 export type MarkdownFormatRequest = {

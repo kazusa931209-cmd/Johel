@@ -12,6 +12,7 @@ export type WorkflowCompanyEntry = {
   companyId: string;
   startDate: string;
   endDate: string;
+  roleContext: string;
   experienceIds: string[];
 };
 
@@ -60,11 +61,12 @@ export function validateWorkflowEditorContent(input: {
       !entry.companyId ||
       !entry.startDate.trim() ||
       !entry.endDate.trim() ||
+      !entry.roleContext.trim() ||
       entry.experienceIds.length < 1,
   );
   if (invalidEntry) {
     errors.companies =
-      "Each company entry needs a company, start and end dates, and at least one experience.";
+      "Each company entry needs a company, start and end dates, role context, and at least one experience.";
   }
   return errors;
 }

@@ -18,6 +18,7 @@ describe("validateWorkflowEditorContent", () => {
             companyId: "company-1",
             startDate: "2020",
             endDate: "Present",
+            roleContext: "Backend engineer",
             experienceIds: ["experience-1"],
           },
         ],

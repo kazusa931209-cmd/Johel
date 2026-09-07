@@ -12,14 +12,18 @@ import {
 const PAGE_SIZE = 10;
 
 const writeSchema = z.object({
+  alias: z.string().trim().min(1).max(200),
   name: z.string().trim().min(1).max(200),
-  description: z.string().trim().min(1).max(20000),
+  whatCompanyIs: z.string().trim().min(1).max(20000),
+  domainAndStack: z.string().trim().min(1).max(20000),
 });
 
 type CompanyRow = {
   id: string;
+  alias: string;
   name: string;
-  description: string;
+  whatCompanyIs: string;
+  domainAndStack: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -29,8 +33,10 @@ export const companiesRoutes = new Hono();
 function toDetail(row: CompanyRow) {
   return {
     id: row.id,
+    alias: row.alias,
     name: row.name,
-    description: row.description,
+    whatCompanyIs: row.whatCompanyIs,
+    domainAndStack: row.domainAndStack,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -51,7 +57,12 @@ companiesRoutes.get("/", async (c) => {
 
   const searchFilter: Prisma.CompanyWhereInput = q
     ? {
-        OR: [{ name: { contains: q } }, { description: { contains: q } }],
+        OR: [
+          { alias: { contains: q } },
+          { name: { contains: q } },
+          { whatCompanyIs: { contains: q } },
+          { domainAndStack: { contains: q } },
+        ],
       }
     : {};
 
@@ -105,19 +116,31 @@ companiesRoutes.post("/", async (c) => {
   }
 
   try {
-    const { formatted: description } = await formatMarkdownOnSave({
-      userId: user.id,
-      kind: "companyDescription",
-      submitted: parsed.data.description,
-      stored: "",
-      maxLen: 20_000,
-    });
+    const [{ formatted: whatCompanyIs }, { formatted: domainAndStack }] =
+      await Promise.all([
+        formatMarkdownOnSave({
+          userId: user.id,
+          kind: "companyWhatItIs",
+          submitted: parsed.data.whatCompanyIs,
+          stored: "",
+          maxLen: 20_000,
+        }),
+        formatMarkdownOnSave({
+          userId: user.id,
+          kind: "companyDomainAndStack",
+          submitted: parsed.data.domainAndStack,
+          stored: "",
+          maxLen: 20_000,
+        }),
+      ]);
 
     const row = await prisma.company.create({
       data: {
         userId: user.id,
+        alias: parsed.data.alias,
         name: parsed.data.name,
-        description,
+        whatCompanyIs,
+        domainAndStack,
       },
     });
 
@@ -152,19 +175,31 @@ companiesRoutes.put("/:id", async (c) => {
   }
 
   try {
-    const { formatted: description } = await formatMarkdownOnSave({
-      userId: user.id,
-      kind: "companyDescription",
-      submitted: parsed.data.description,
-      stored: existing.description,
-      maxLen: 20_000,
-    });
+    const [{ formatted: whatCompanyIs }, { formatted: domainAndStack }] =
+      await Promise.all([
+        formatMarkdownOnSave({
+          userId: user.id,
+          kind: "companyWhatItIs",
+          submitted: parsed.data.whatCompanyIs,
+          stored: existing.whatCompanyIs,
+          maxLen: 20_000,
+        }),
+        formatMarkdownOnSave({
+          userId: user.id,
+          kind: "companyDomainAndStack",
+          submitted: parsed.data.domainAndStack,
+          stored: existing.domainAndStack,
+          maxLen: 20_000,
+        }),
+      ]);
 
     const row = await prisma.company.update({
       where: { id },
       data: {
+        alias: parsed.data.alias,
         name: parsed.data.name,
-        description,
+        whatCompanyIs,
+        domainAndStack,
       },
     });
 

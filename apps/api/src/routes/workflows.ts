@@ -19,6 +19,7 @@ const companyEntrySchema = z.object({
   companyId: z.string().trim().min(1),
   startDate: periodSchema,
   endDate: periodSchema,
+  roleContext: z.string().trim().min(1).max(2000),
   experienceIds: z.array(z.string().trim().min(1)).min(1),
 });
 
@@ -42,6 +43,7 @@ type WorkflowWithRelations = {
     companyId: string;
     startDate: string;
     endDate: string;
+    roleContext: string;
     sortOrder: number;
     experiences: { experienceId: string; sortOrder: number }[];
   }[];
@@ -84,6 +86,7 @@ function normalizeCompanies(
       companyId: entry.companyId,
       startDate: entry.startDate.trim(),
       endDate: entry.endDate.trim(),
+      roleContext: entry.roleContext.trim(),
       experienceIds: uniqueIds(entry.experienceIds),
     };
   });
@@ -146,6 +149,7 @@ async function replaceWorkflowRelations(
         companyId: entry.companyId,
         startDate: entry.startDate,
         endDate: entry.endDate,
+        roleContext: entry.roleContext,
         sortOrder: index,
       },
     });
@@ -191,6 +195,7 @@ function toDetail(row: WorkflowWithRelations) {
         companyId: item.companyId,
         startDate: item.startDate,
         endDate: item.endDate,
+        roleContext: item.roleContext,
         experienceIds: [...item.experiences]
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map((experience) => experience.experienceId),

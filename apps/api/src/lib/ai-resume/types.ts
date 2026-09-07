@@ -31,10 +31,13 @@ export type ResumeGenerationExperience = {
 
 export type ResumeGenerationCompany = {
   id: string;
+  alias: string;
   name: string;
-  description: string;
+  whatCompanyIs: string;
+  domainAndStack: string;
   startDate: string;
   endDate: string;
+  roleContext: string;
   experiences: ResumeGenerationExperience[];
 };
 

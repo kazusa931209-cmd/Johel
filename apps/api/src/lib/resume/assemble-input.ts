@@ -92,10 +92,13 @@ export async function assembleResumeGenerationInput(
 
     return {
       id: company.id,
+      alias: company.alias,
       name: company.name,
-      description: company.description,
+      whatCompanyIs: company.whatCompanyIs,
+      domainAndStack: company.domainAndStack,
       startDate: entry.startDate,
       endDate: entry.endDate,
+      roleContext: entry.roleContext,
       experiences: entry.experiences.map((link) => {
         const experience = experienceById.get(link.experienceId);
         if (!experience) {

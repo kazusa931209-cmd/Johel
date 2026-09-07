@@ -85,7 +85,7 @@ export default function CompaniesPage() {
           type="search"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
-          placeholder="Search name, description"
+          placeholder="Search alias, name, or description"
           className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
         />
         <button
@@ -100,25 +100,27 @@ export default function CompaniesPage() {
         />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[560px] text-left text-sm">
+        <table className="w-full min-w-[960px] text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">No</th>
+              <th className="px-3 py-2 font-medium">Alias</th>
               <th className="px-3 py-2 font-medium">Company Name</th>
-              <th className="px-3 py-2 font-medium">Description</th>
+              <th className="px-3 py-2 font-medium">What this company is</th>
+              <th className="px-3 py-2 font-medium">Domain & Stack</th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-muted">
+                <td colSpan={6} className="px-3 py-8 text-center text-muted">
                   Loading…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-muted">
+                <td colSpan={6} className="px-3 py-8 text-center text-muted">
                   No companies yet.
                 </td>
               </tr>
@@ -139,9 +141,13 @@ export default function CompaniesPage() {
                   <td className="px-3 py-2 text-muted">
                     {(page - 1) * pageSize + index + 1}
                   </td>
-                  <td className="px-3 py-2 font-medium">{row.name}</td>
+                  <td className="px-3 py-2 font-medium">{row.alias}</td>
+                  <td className="px-3 py-2">{row.name}</td>
+                  <td className="max-w-[220px] truncate px-3 py-2 text-muted">
+                    {row.whatCompanyIs}
+                  </td>
                   <td className="max-w-[280px] truncate px-3 py-2 text-muted">
-                    {row.description}
+                    {row.domainAndStack || "—"}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"

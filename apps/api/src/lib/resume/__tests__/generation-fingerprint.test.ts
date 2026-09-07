@@ -16,10 +16,13 @@ const baseInput = {
   companies: [
     {
       id: "company-1",
+      alias: "Acme",
       name: "Acme",
-      description: "Software",
+      whatCompanyIs: "Software",
+      domainAndStack: "Web APIs",
       startDate: "2020",
       endDate: "Present",
+      roleContext: "Backend engineer",
       experiences: [
         {
           id: "experience-1",

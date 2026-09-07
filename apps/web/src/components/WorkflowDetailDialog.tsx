@@ -134,6 +134,14 @@ export function WorkflowDetailDialog({
                       <div className="text-muted">
                         {formatWorkflowPeriod(entry.startDate, entry.endDate)}
                       </div>
+                      {entry.roleContext ? (
+                        <div className="text-muted">
+                          <span className="font-medium text-foreground">
+                            Role context:
+                          </span>{" "}
+                          {entry.roleContext}
+                        </div>
+                      ) : null}
                       {experienceLabels.length === 0 ? (
                         <p className="text-muted">No experiences linked.</p>
                       ) : (

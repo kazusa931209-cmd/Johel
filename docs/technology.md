@@ -47,11 +47,11 @@ User browser (:4041)
 - Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
-- Prisma `WorkflowCompany` → table `workflowCompanies`: `id`, `workflowId`, `companyId`, `startDate`, `endDate`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, companyId)`; cascade delete with workflow
+- Prisma `WorkflowCompany` → table `workflowCompanies`: `id`, `workflowId`, `companyId`, `startDate`, `endDate`, `roleContext`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, companyId)`; cascade delete with workflow
 - Prisma `WorkflowCompanyExperience` → table `workflowCompanyExperiences`: `id`, `workflowCompanyId`, `experienceId`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowCompanyId, experienceId)`; cascade delete with workflow company row
 - Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `education?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
-- Prisma `Company` → table `companies` (per user): `id`, `userId`, `name`, `description`, `createdAt`, `updatedAt`
+- Prisma `Company` → table `companies` (per user): `id`, `userId`, `alias`, `name`, `whatCompanyIs`, `domainAndStack`, `createdAt`, `updatedAt`
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `description`, `createdAt`, `updatedAt`
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
@@ -130,7 +130,7 @@ User browser (:4041)
 
 - `GET /workflows?q=&page=` — page size 10; lean list items (name, description, dates)
 - `GET /workflows/:id` — full detail for the editor (owner only): `profileId`, ordered `companies[]` (`companyId`, `startDate`, `endDate`, `experienceIds[]`), plus scalar fields
-- `POST /workflows` / `PUT /workflows/:id` — `{ name, description, language, profileId, companies: [{ companyId, startDate, endDate, experienceIds[] }] }`; `description` required (trim, min 1, max 2000; used as a resume-generation prompt); validates one profile, ≥1 company entry, required period per entry, ≥1 experience per entry (all owned by user); unique `companyId` per workflow; on write, replaces `workflowCompanies` and nested `workflowCompanyExperiences`
+- `POST /workflows` / `PUT /workflows/:id` — `{ name, description, language, profileId, companies: [{ companyId, startDate, endDate, roleContext, experienceIds[] }] }`; `description` required (trim, min 1, max 2000; used as a resume-generation prompt); validates one profile, ≥1 company entry, required period and role context per entry, ≥1 experience per entry (all owned by user); unique `companyId` per workflow; on write, replaces `workflowCompanies` and nested `workflowCompanyExperiences`
 - Language codes: `en`, `ja`, `zh-TW`, `zh-CN`, `ko` (default `en`)
 - Web routes: `/workflows` list (table columns: No, Name, Description, Updated, actions); `/workflows/new` add; `/workflows/[id]/edit` edit; editor has name, required description (resume-generation prompt hint), language, `WorkflowProfilePicker`, and `WorkflowCompaniesEditor` (Add/Edit dialog with company, period, experiences)
 - Generate Workflow step workflow table columns: Name, Description, Updated
@@ -147,14 +147,15 @@ User browser (:4041)
 - Links: `{ key, link | null }`; keys unique per profile
 - Web routes: `/profiles` list; `/profiles/new` add; `/profiles/[id]/edit` edit; Links UX mirrors workflow Metadata
 
-## Companies (Phase 9, 30, 31)
+## Companies (Phase 9, 30, 31, 44)
 
 - `GET /companies?q=&page=` — page size 10
 - List order: `name` ascending
 - `GET /companies/:id` — full detail for the editor (owner only)
-- `POST /companies` / `PUT /companies/:id` — `{ name, description }`; on write, `description` is converted to markdown via AI when changed since last save (create always converts); unchanged descriptions skip conversion; requires Settings provider/apiKey when conversion runs
-- Search `q` across name and description
-- Web routes: `/companies` list; `/companies/new` add; `/companies/[id]/edit` edit; editor shows `DESCRIPTION_AS_RESUME_PROMPT_HINT` on Description (required resume-generation prompt)
+- `POST /companies` / `PUT /companies/:id` — `{ alias, name, whatCompanyIs, domainAndStack }`; on write, `whatCompanyIs` and `domainAndStack` are converted to markdown via AI when changed since last save (create always converts); unchanged fields skip conversion; requires Settings provider/apiKey when conversion runs
+- Search `q` across alias, name, whatCompanyIs, and domainAndStack
+- Web routes: `/companies` list (columns: Alias, Company Name, What this company is, Domain & Stack); `/companies/new` add; `/companies/[id]/edit` edit; editor fields in order: alias, company name, what this company is, domain & stack; English guidelines and good/bad examples on the two prompt fields; shared guidance that personal achievements belong in shared experiences
+- **Phase 44 migration note:** `companies.description` dropped; existing rows backfill `alias` and `name` from former `name`, `whatCompanyIs` from former `description`, `domainAndStack` to empty string — users must fill domain & stack on next edit
 
 ## Experiences (Phase 10, 30)
 
@@ -199,7 +200,7 @@ User browser (:4041)
 - `GET /prompts` → `{ verdictPrompt, generatePrompt, evaluatePrompt }` — empty strings when no row yet (owner only); new sign-ups receive defaults from `@johel/prompt-defaults` via `POST /auth/register`
 - `PUT /prompts/verdict` → body `{ verdictPrompt }`; `PUT /prompts/generate` → `{ generatePrompt }`; `PUT /prompts/evaluate` → `{ evaluatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; on write, only the submitted prompt is converted to markdown via AI when changed (unchanged skip conversion); requires Settings provider/apiKey when conversion runs; each endpoint returns all three prompts
 - Web route `/prompts`: **Verdict**, **Generate**, and **Evaluate** tabs (`?tab=verdict|generate|evaluate`, default Verdict); each tab shows one read-only `AiVerdictMarkdown` preview (muted placeholder when empty); **Edit** (pencil) opens `PromptEditDialog` (textarea + **Apply**, local until that tab’s **Save**); auto-markdown notice and resume-context hints where applicable; fullscreen `BusyOverlay` when conversion runs; per-tab **Save** (always enabled; inline validation on submit); toast on API result; refreshes header Token Used after save
-- Company and Experience editor forms (`CompanyForm`, `ExperienceForm`): Description textarea; each Description shows the auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialogs render Description with `AiVerdictMarkdown`
+- Company editor form (`CompanyForm`): alias, company name, what this company is, and domain & stack; prompt fields show auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialog renders prompt fields with `AiVerdictMarkdown`. Experience editor form (`ExperienceForm`): Description textarea with the same auto-markdown behavior.
 - Legacy web route `/verdict` redirects to `/prompts`
 - Client: `getPrompts`, `savePrompt` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
 - Verdict Prompt consumed by `POST /ai-verdict`; Generate Prompt consumed by `POST /ai-resume`; Evaluate Prompt consumed by `POST /ai-evaluate`
@@ -207,7 +208,7 @@ User browser (:4041)
 ## AI Markdown Format (Phase 38, 40)
 
 - Embedded in `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`, `POST/PUT /companies`, `POST/PUT /experiences` write handlers (no separate endpoint)
-- Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; kinds `verdict` | `generate` | `evaluate` | `companyDescription` | `experienceDescription`
+- Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; kinds `verdict` | `generate` | `evaluate` | `companyWhatItIs` | `companyDomainAndStack` | `experienceDescription`
 - Skip rule: when `submitted.trim() === stored.trim()`, persist without AI (no API key required); prompt kinds still run deterministic `#`→`##` heading cap on save
 - When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); **prompt kinds** additionally require `##` as the largest heading (AI rule + `capPromptHeadings` post-process); strips accidental code fences; rejects empty or over-limit output
 - Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiMarkdownFormatResponse` (`gpt-5.6-sol`, reasoning `low`); usage stored as `generateType: "markdownFormat"`; AI Usage History label **Markdown Format**

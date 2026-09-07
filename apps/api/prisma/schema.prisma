@@ -65,6 +65,7 @@ model WorkflowCompany {
   company      Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   startDate    String
   endDate      String
+  roleContext  String
   sortOrder    Int                         @default(0)
   createdAt    DateTime                    @default(now())
   updatedAt    DateTime                    @updatedAt
@@ -128,14 +129,16 @@ model ProfileLink {
 }
 
 model Company {
-  id          String            @id @default(cuid())
-  userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  description String
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  workflows   WorkflowCompany[]
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alias          String
+  name           String
+  whatCompanyIs  String
+  domainAndStack String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  workflows      WorkflowCompany[]
 
   @@index([userId])
   @@map("companies")

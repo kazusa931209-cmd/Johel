@@ -112,6 +112,7 @@ export function WorkflowCompaniesEditor({
           companyId: "",
           startDate: "",
           endDate: "",
+          roleContext: "",
           experienceIds: [],
         };
 

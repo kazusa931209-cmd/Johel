@@ -15,7 +15,7 @@ Result quality depends entirely on the user's prompt authoring and the capabilit
 ### What the user owns
 
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
-* **Companies** — One user can manage **multiple companies** (name and a required description used as a resume-generation prompt).
+* **Companies** — One user can manage **multiple companies** (alias, name, what this company is, and domain & stack — all required; used as resume-generation prompts).
 * **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone). Each experience has a required category and a required description used as a resume-generation prompt.
 * **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more ordered company entries (each with a required employment period and linked shared experiences), a resume output language, and a required description used as a resume-generation prompt.
 * **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés. New accounts receive default prompt templates on sign-up; users may replace them freely. Output structure and instructions are user-defined; JoHEL does not guarantee AI output quality (see **Philosophy**).
@@ -143,14 +143,15 @@ Aligned with the product flow above:
   * Distinct from header menu **Profile** (account email page)
 * **Companies**
   * One signed-in user can manage **multiple** companies
-  * Per-user list: No, Company Name, Description
-  * Keyword filter on name and description; 10 rows per page
+  * Per-user list: No, Alias, Company Name, What this company is (truncated), Domain & Stack (truncated)
+  * Keyword filter on alias, name, what this company is, and domain & stack; 10 rows per page
   * List is ordered by Company Name
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole company
-  * Editor fields: company name (required), description (required; used as a resume-generation prompt)
-  * Description shows a notice that it is used as a prompt during resume generation and that contents will be automatically converted to markdown format on **Save**; when the description changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged descriptions skip conversion; fullscreen loading while conversion runs; the detail dialog renders Description as Markdown
+  * Editor fields in order: alias (required), company name (required), what this company is (required; used as a resume-generation prompt), domain & stack (required; used as a resume-generation prompt)
+  * What this company is shows guideline *(One sentence: industry, product, customer)* with good and bad examples; domain & stack shows guideline *(What they handle, tech, regulation/scale — bullets)* with good and bad examples; shared note that personal achievements belong in shared experiences because the same experience can link to multiple companies
+  * What this company is and domain & stack show a notice that they are used as prompts during resume generation and that contents will be automatically converted to markdown format on **Save**; when a field changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged fields skip conversion; fullscreen loading while conversion runs; the detail dialog renders both fields as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
   * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
@@ -173,9 +174,9 @@ Aligned with the product flow above:
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
   * Editor fields: name (required), description (required; used as a resume-generation prompt), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean)
   * Below the scalar fields, **Profile** (single row selection table: all items loaded at once; row click selects; View opens read-only detail dialog)
-  * **Companies** section: ordered list of entries built one at a time; **Add** (plus icon) opens a dialog to pick one company, set required **Start** and **End** period (free-text), and multi-select one or more shared experiences; **Save** in the dialog validates inline and adds or updates the entry; row **Edit** (pencil) and **Delete** (red trash); company order is résumé order (first added = highest priority); the same shared experience may appear under multiple companies
+  * **Companies** section: ordered list of entries built one at a time; **Add** (plus icon) opens a dialog to pick one company, set required **Start** and **End** period (free-text), required **Role Context** (nature of the role held in this employment; not personal achievements), and multi-select one or more shared experiences; **Save** in the dialog validates inline and adds or updates the entry; row **Edit** (pencil) and **Delete** (red trash); company order is résumé order (first added = highest priority); the same shared experience may appear under multiple companies
   * Company-entry edits stay local until page **Save** (same pattern as profile Links)
-  * Page Save validates inline: one profile; at least one company entry; each entry has startDate, endDate, and at least one experience (not via disabling Save)
+  * Page Save validates inline: one profile; at least one company entry; each entry has startDate, endDate, roleContext, and at least one experience (not via disabling Save)
   * Detail dialog shows the selected profile and companies grouped with period and linked experiences (preserve company order)
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Prompts** (`/prompts`)
@@ -300,6 +301,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-07):** `DESCRIPTION_AS_RESUME_PROMPT_HINT`, workflow description required in API/schema. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-42-descriptions-as-prompt.md`](./plans/2026-09-07-phase-42-descriptions-as-prompt.md).
 * [x] **Phase 43 — Prompts tabbed save** — Split Workspace Prompts into Verdict / Generate / Evaluate tabs; each tab saves its prompt independently.
   * **Outcome (2026-09-07):** `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`; tabbed `/prompts?tab=` UI with per-tab Save. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-07-phase-43-prompts-tabbed-save.md`](./plans/2026-09-07-phase-43-prompts-tabbed-save.md).
+* [x] **Phase 44 — Company structure** — Replace the single company description with structured fields: alias (required, first field), company name (required), what this company is (required; one-sentence industry/product/customer context), and domain & stack (required; bullet-style scope, tech, regulation/scale). Editor shows English guidelines, good/bad examples, and guidance that personal achievements belong in shared experiences, not company descriptions. List, detail, search, and resume generation use the new fields; existing companies are migrated (alias from name, what this company is from old description; domain & stack must be filled on next edit).
+  * **Outcome (2026-09-08):** `companies` schema with `alias`, `whatCompanyIs`, `domainAndStack`; updated Companies API, form, list, detail, workflow picker, and resume assembly input. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-44-company-structure-update.md`](./plans/2026-09-08-phase-44-company-structure-update.md).
 
 ## Cursor Rules (Documentation Governance)
 
