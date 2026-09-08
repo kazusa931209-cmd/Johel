@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { resumeToMarkdown } from "@johel/resume";
 import type { GeneratedResume } from "@johel/resume";
+import { useT } from "@/components/app/LocaleProvider";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
@@ -24,6 +25,7 @@ export function GenerateGenerateStep({
   onPrev,
   onNext,
 }: GenerateGenerateStepProps) {
+  const t = useT();
   const { onDownload, downloading } = useResumeDocxDownload(resume, workflowName);
   const markdown = useMemo(
     () => (resume ? resumeToMarkdown(resume) : ""),
@@ -45,8 +47,7 @@ export function GenerateGenerateStep({
   if (!resume) {
     return (
       <div className="rounded-md border border-border bg-background px-4 py-6 text-sm text-muted">
-        No generated resume is available for this session. Go back to Workflow
-        and run resume generation again.
+        {t("generate.generateStep.noResume")}
       </div>
     );
   }
@@ -54,7 +55,7 @@ export function GenerateGenerateStep({
   return (
     <div className="space-y-2">
       <h2 className="text-center text-lg font-semibold tracking-tight">
-        Generated Resume
+        {t("generate.generateStep.title")}
       </h2>
       <div className="rounded-md border border-border bg-background px-4 py-4">
         <ResumeMarkdown markdown={markdown} />
@@ -68,9 +69,11 @@ export function GenerateGenerateStep({
           aria-busy="true"
         >
           <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
-            <p className="text-sm font-medium">Evaluating Resume…</p>
+            <p className="text-sm font-medium">
+              {t("generate.generateStep.evaluating.title")}
+            </p>
             <p className="mt-1 text-xs text-muted">
-              Please wait while the AI scores your resume against the job.
+              {t("generate.generateStep.evaluating.description")}
             </p>
           </div>
         </div>

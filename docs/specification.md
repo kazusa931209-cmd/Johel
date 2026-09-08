@@ -217,6 +217,7 @@ Aligned with the product flow above:
 * **Settings**
   * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here
   * Theme (Dark / Light)
+  * **Language** (English / Korean; English default; applies immediately and is remembered per browser)
   * **Process**: **Do Verdict**, **Do Evaluate**, and **Do Workflow Recommendation** checkboxes (Verdict and Evaluate default on; Workflow Recommendation default off); when **Do Workflow Recommendation** is enabled, **Recommendation threshold** (integer 0–100, default 70) is shown and validated inline on Save (Save stays enabled); Save persists per user; controls which optional AI steps run during Generate; changing any Process flag or threshold resets an in-progress Generate session
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
@@ -330,6 +331,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-08):** Structured Generate user prompt (Job context, Workflow intent, Profile, Companies); Evaluate user prompt (Job context, Resume); Evaluate API `jobContext`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-48-labeled-user-messages.md`](./plans/2026-09-08-phase-48-labeled-user-messages.md).
 * [x] **Phase 49 — Quick Experience authoring advisor** — Global plus FAB beside AI Usage History opens Quick Experience: optional workflow scope, required “What do you need?”, advisor suggestion drawer, and confirmed Apply to Company / Experience / Workflow links.
   * **Outcome (2026-09-08):** `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `StudioBottomFabCluster`, `authorAdvise` usage type. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-49-quick-experience.md`](./plans/2026-09-08-phase-49-quick-experience.md).
+* [x] **Phase 50 — UI Language (English / Korean)** — Settings / Environment adds a Language control (English default, Korean); choice applies immediately and is stored per browser. All JoHEL UI copy (shell, CRUD, Generate, Settings, Quick Experience, AI Usage History, login/register, toasts, validation, field guidance) follows the selected language. Workflow résumé output language remains per-workflow and separate from UI locale.
+  * **Outcome (2026-09-08):** `LocaleProvider`, `johel-locale` in `localStorage`, message catalogs (`messages/en.ts`, `messages/ko.ts`), bootstrap script for `document.documentElement.lang`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-50-ui-language.md`](./plans/2026-09-08-phase-50-ui-language.md).
 
 ## Cursor Rules (Documentation Governance)
 

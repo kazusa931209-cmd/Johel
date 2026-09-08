@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useT } from "@/components/app/LocaleProvider";
 import { WorkflowForm } from "@/components/WorkflowForm";
 import { useToast } from "@/components/app/ToastProvider";
 import { getWorkflow, type WorkflowDetail } from "@/lib/api";
@@ -9,6 +10,7 @@ import { getWorkflow, type WorkflowDetail } from "@/lib/api";
 export default function EditWorkflowPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const t = useT();
   const { toast } = useToast();
   const [workflow, setWorkflow] = useState<WorkflowDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ export default function EditWorkflowPage() {
     getWorkflow(params.id).then((res) => {
       if (cancelled) return;
       if (res.error || !res.data) {
-        toast(res.error ?? "Failed to load workflow", "error");
+        toast(res.error ?? t("toast.workflowLoadFailed"), "error");
         router.replace("/workflows");
         return;
       }
@@ -28,12 +30,12 @@ export default function EditWorkflowPage() {
     return () => {
       cancelled = true;
     };
-  }, [params.id, router, toast]);
+  }, [params.id, router, t, toast]);
 
   if (loading || !workflow) {
     return (
       <main className="flex min-h-[40vh] items-center justify-center text-sm text-muted">
-        Loading…
+        {t("crud.common.loading")}
       </main>
     );
   }

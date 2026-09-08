@@ -5,12 +5,14 @@ import type { GeneratedResume } from "@johel/resume";
 import { buildResumeDocxFileName } from "@johel/resume";
 import { downloadResumeDocx } from "@/lib/api";
 import { useToast } from "@/components/app/ToastProvider";
+import { useT } from "@/components/app/LocaleProvider";
 
 export function useResumeDocxDownload(
   resume: GeneratedResume | null,
   workflowName?: string,
 ) {
   const { toast } = useToast();
+  const t = useT();
   const [downloading, setDownloading] = useState(false);
 
   const onDownload = useCallback(async () => {
@@ -19,7 +21,7 @@ export function useResumeDocxDownload(
     try {
       const res = await downloadResumeDocx(resume, workflowName);
       if (!res.blob) {
-        toast(res.error ?? "DOCX download failed.", "error");
+        toast(res.error ?? t("generate.download.failed"), "error");
         return;
       }
 
@@ -31,13 +33,13 @@ export function useResumeDocxDownload(
       anchor.download = fileName;
       anchor.click();
       URL.revokeObjectURL(url);
-      toast("Resume downloaded.", "success");
+      toast(t("generate.download.success"), "success");
     } catch {
-      toast("DOCX download failed.", "error");
+      toast(t("generate.download.failed"), "error");
     } finally {
       setDownloading(false);
     }
-  }, [downloading, resume, toast, workflowName]);
+  }, [downloading, resume, t, toast, workflowName]);
 
   return { onDownload, downloading };
 }

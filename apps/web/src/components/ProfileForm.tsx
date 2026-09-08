@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/app/LocaleProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { ProfileLinksEditor } from "@/components/ProfileLinksEditor";
 import { useToast } from "@/components/app/ToastProvider";
@@ -39,6 +40,7 @@ function FieldError({ message }: { message?: string }) {
 
 export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
   const router = useRouter();
+  const t = useT();
   const { toast } = useToast();
   const [firstName, setFirstName] = useState(initial?.firstName ?? "");
   const [lastName, setLastName] = useState(initial?.lastName ?? "");
@@ -55,10 +57,10 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
     e.preventDefault();
     const nextErrors: FieldErrors = {};
     if (!firstName.trim()) {
-      nextErrors.firstName = "First Name is required.";
+      nextErrors.firstName = t("validation.firstNameRequired");
     }
     if (!lastName.trim()) {
-      nextErrors.lastName = "Last Name is required.";
+      nextErrors.lastName = t("validation.lastNameRequired");
     }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -82,10 +84,13 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
         : await createProfile(payload);
     setSaving(false);
     if (res.error || !res.data) {
-      toast(res.error ?? "Save failed", "error");
+      toast(res.error ?? t("toast.profileSaveFailed"), "error");
       return;
     }
-    toast(mode === "edit" ? "Profile updated." : "Profile created.", "success");
+    toast(
+      mode === "edit" ? t("toast.profileUpdated") : t("toast.profileCreated"),
+      "success",
+    );
     router.push("/profiles");
   }
 
@@ -97,20 +102,25 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
     >
       <div className="space-y-1">
         <div className="flex items-center gap-3">
-          <BackButton href="/profiles" aria-label="Back to profiles" />
+          <BackButton
+            href="/profiles"
+            aria-label={t("crud.profiles.form.backAria")}
+          />
           <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "edit" ? "Edit profile" : "Add profile"}
+            {mode === "edit"
+              ? t("crud.profiles.form.editTitle")
+              : t("crud.profiles.form.addTitle")}
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure personal details and links for this profile.
+          {t("crud.profiles.form.description")}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block space-y-1 text-sm">
           <span>
-            First Name
+            {t("crud.profiles.form.firstName")}
             <RequiredMark />
           </span>
           <input
@@ -131,7 +141,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
         </label>
         <label className="block space-y-1 text-sm">
           <span>
-            Last Name
+            {t("crud.profiles.form.lastName")}
             <RequiredMark />
           </span>
           <input
@@ -153,7 +163,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       </div>
 
       <label className="block space-y-1 text-sm">
-        <span>Birth date</span>
+        <span>{t("crud.profiles.form.birthDate")}</span>
         <input
           type="date"
           value={birthDate}
@@ -163,7 +173,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       </label>
 
       <label className="block space-y-1 text-sm">
-        <span>Email</span>
+        <span>{t("crud.profiles.form.email")}</span>
         <input
           type="email"
           value={email}
@@ -173,7 +183,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       </label>
 
       <label className="block space-y-1 text-sm">
-        <span>PN</span>
+        <span>{t("crud.profiles.form.pn")}</span>
         <input
           value={pn}
           onChange={(e) => setPn(e.target.value)}
@@ -182,7 +192,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       </label>
 
       <label className="block space-y-1 text-sm">
-        <span>Residence</span>
+        <span>{t("crud.profiles.form.residence")}</span>
         <input
           value={residence}
           onChange={(e) => setResidence(e.target.value)}
@@ -191,7 +201,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       </label>
 
       <label className="block space-y-1 text-sm">
-        <span>Education</span>
+        <span>{t("crud.profiles.form.education")}</span>
         <textarea
           value={education}
           onChange={(e) => setEducation(e.target.value)}
@@ -208,13 +218,13 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
           onClick={() => router.push("/profiles")}
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
-          Cancel
+          {t("crud.common.cancel")}
         </button>
         <button
           type="submit"
           className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("crud.common.saving") : t("crud.common.save")}
         </button>
       </div>
     </form>

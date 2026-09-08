@@ -1,21 +1,24 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useLocale } from "@/components/app/LocaleProvider";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { getSettings, getGenerationProcess, getMe, saveGenerationProcess, saveSettings } from "@/lib/api";
+import {
+  getGenerationProcess,
+  getMe,
+  getSettings,
+  saveGenerationProcess,
+  saveSettings,
+} from "@/lib/api";
 import { clearGenerateSession } from "@/lib/generate-session";
 import type { AiProviderId } from "@/lib/api";
+import type { Locale } from "@/lib/locale";
 import type { Theme } from "@/lib/theme";
 
-const OPTIONS: { value: Theme; label: string }[] = [
-  { value: "dark", label: "Dark" },
-  { value: "light", label: "Light" },
-];
-
-const PROVIDER_OPTIONS: { value: AiProviderId; label: string }[] = [
-  { value: "cursor", label: "Cursor AI Agent" },
-  { value: "openai", label: "OpenAI" },
+const LANGUAGE_OPTIONS: { value: Locale; labelKey: string }[] = [
+  { value: "en", labelKey: "settings.environment.language.english" },
+  { value: "ko", labelKey: "settings.environment.language.korean" },
 ];
 
 function ChevronDownIcon({ className }: { className?: string }) {
@@ -81,6 +84,7 @@ type FormErrors = {
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { locale, setLocale, t } = useLocale();
   const { toast } = useToast();
   const [savedProvider, setSavedProvider] = useState<AiProviderId | null>(null);
   const [provider, setProvider] = useState<AiProviderId>("cursor");
@@ -92,7 +96,8 @@ export default function SettingsPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [doVerdict, setDoVerdict] = useState(true);
   const [doEvaluate, setDoEvaluate] = useState(true);
-  const [doWorkflowRecommendation, setDoWorkflowRecommendation] = useState(false);
+  const [doWorkflowRecommendation, setDoWorkflowRecommendation] =
+    useState(false);
   const [workflowRecommendationThreshold, setWorkflowRecommendationThreshold] =
     useState("70");
   const [savedDoVerdict, setSavedDoVerdict] = useState(true);
@@ -105,6 +110,16 @@ export default function SettingsPage() {
   const [processLoading, setProcessLoading] = useState(true);
   const [processSaving, setProcessSaving] = useState(false);
   const [processErrors, setProcessErrors] = useState<FormErrors>({});
+
+  const themeOptions: { value: Theme; label: string }[] = [
+    { value: "dark", label: t("settings.environment.theme.dark") },
+    { value: "light", label: t("settings.environment.theme.light") },
+  ];
+
+  const providerOptions: { value: AiProviderId; label: string }[] = [
+    { value: "cursor", label: t("settings.environment.aiAgent.providerCursor") },
+    { value: "openai", label: t("settings.environment.aiAgent.providerOpenai") },
+  ];
 
   const providerMatchesSaved = savedProvider === provider;
   const showMaskedKey = providerMatchesSaved && masked;
@@ -153,10 +168,10 @@ export default function SettingsPage() {
     e.preventDefault();
     const nextErrors: FormErrors = {};
     if (!provider) {
-      nextErrors.provider = "Provider is required.";
+      nextErrors.provider = t("validation.providerRequired");
     }
     if (apiKey.trim().length < 8) {
-      nextErrors.apiKey = "API key must be at least 8 characters.";
+      nextErrors.apiKey = t("validation.apiKeyMinLength");
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -167,7 +182,7 @@ export default function SettingsPage() {
     const res = await saveSettings(provider, apiKey);
     setSaving(false);
     if (res.error || !res.data) {
-      toast(res.error ?? "Save failed", "error");
+      toast(res.error ?? t("toast.aiAgentSaveFailed"), "error");
       return;
     }
     setSavedProvider(res.data.provider);
@@ -176,7 +191,7 @@ export default function SettingsPage() {
     setApiKey("");
     setShowApiKey(false);
     setErrors({});
-    toast("AI Agent settings saved.", "success");
+    toast(t("toast.aiAgentSaved"), "success");
   }
 
   async function onSaveProcess(e: FormEvent) {
@@ -189,8 +204,7 @@ export default function SettingsPage() {
       threshold > 100 ||
       !Number.isInteger(threshold)
     ) {
-      nextErrors.workflowRecommendationThreshold =
-        "Recommendation threshold must be an integer from 0 to 100.";
+      nextErrors.workflowRecommendationThreshold = t("validation.thresholdRange");
     }
     setProcessErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -206,7 +220,7 @@ export default function SettingsPage() {
     });
     setProcessSaving(false);
     if (res.error || !res.data) {
-      toast(res.error ?? "Save failed.", "error");
+      toast(res.error ?? t("toast.processSaveFailed"), "error");
       return;
     }
     setDoVerdict(res.data.doVerdict);
@@ -230,21 +244,21 @@ export default function SettingsPage() {
     setSavedWorkflowRecommendationThreshold(
       String(res.data.workflowRecommendationThreshold),
     );
-    toast("Process settings saved.", "success");
+    toast(t("toast.processSaved"), "success");
   }
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Environment</h1>
-        <p className="text-muted">
-          Theme, AI agent, and generation process options.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("settings.environment.title")}
+        </h1>
+        <p className="text-muted">{t("settings.environment.description")}</p>
       </div>
       <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
-        <h2 className="text-sm font-medium">Theme</h2>
+        <h2 className="text-sm font-medium">{t("settings.environment.theme.title")}</h2>
         <div className="flex gap-2">
-          {OPTIONS.map((option) => {
+          {themeOptions.map((option) => {
             const active = theme === option.value;
             return (
               <button
@@ -263,17 +277,39 @@ export default function SettingsPage() {
           })}
         </div>
       </div>
+      <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
+        <h2 className="text-sm font-medium">
+          {t("settings.environment.language.title")}
+        </h2>
+        <div className="flex gap-2">
+          {LANGUAGE_OPTIONS.map((option) => {
+            const active = locale === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setLocale(option.value)}
+                className={`rounded-md px-3 py-2 text-sm ${
+                  active
+                    ? "bg-accent text-accent-fg"
+                    : "border border-border bg-surface-muted text-foreground hover:opacity-90"
+                }`}
+              >
+                {t(option.labelKey)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <form
         onSubmit={onSave}
         className="space-y-3 rounded-lg border border-border bg-surface p-4"
       >
-        <h2 className="text-sm font-medium">AI Agent</h2>
+        <h2 className="text-sm font-medium">{t("settings.environment.aiAgent.title")}</h2>
         <label className="block space-y-1 text-sm">
           <span>
-            Provider
-            <span className="ml-0.5 text-danger" aria-hidden>
-              *
-            </span>
+            {t("settings.environment.aiAgent.provider")}
+            <span className="ml-0.5 text-danger" aria-hidden>*</span>
           </span>
           <div className="relative">
             <select
@@ -285,7 +321,7 @@ export default function SettingsPage() {
               aria-invalid={Boolean(errors.provider)}
               className="w-full appearance-none rounded-md border border-border bg-background py-2 pl-3 pr-10 outline-none"
             >
-              {PROVIDER_OPTIONS.map((option) => (
+              {providerOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -299,17 +335,17 @@ export default function SettingsPage() {
         </label>
         <label className="block space-y-1 text-sm">
           <span>
-            API Key
-            <span className="ml-0.5 text-danger" aria-hidden>
-              *
-            </span>
+            {t("settings.environment.aiAgent.apiKey")}
+            <span className="ml-0.5 text-danger" aria-hidden>*</span>
           </span>
           {loading ? (
-            <p className="text-muted">Loading…</p>
+            <p className="text-muted">{t("settings.environment.aiAgent.loading")}</p>
           ) : showMaskedKey ? (
             <p className="font-mono text-sm text-muted">{masked}</p>
           ) : (
-            <p className="text-sm text-muted">No key saved yet for this provider.</p>
+            <p className="text-sm text-muted">
+              {t("settings.environment.aiAgent.noKeySaved")}
+            </p>
           )}
           <div className="relative">
             <input
@@ -321,7 +357,9 @@ export default function SettingsPage() {
                 setErrors((prev) => ({ ...prev, apiKey: undefined }));
               }}
               placeholder={
-                showMaskedKey ? "Enter a new key to replace" : "Enter API key"
+                showMaskedKey
+                  ? t("settings.environment.aiAgent.placeholderNewKey")
+                  : t("settings.environment.aiAgent.placeholderEnterKey")
               }
               aria-invalid={Boolean(errors.apiKey)}
               className="w-full rounded-md border border-border bg-background py-2 pr-10 pl-3 outline-none focus:border-muted"
@@ -330,7 +368,11 @@ export default function SettingsPage() {
               type="button"
               onClick={() => setShowApiKey((value) => !value)}
               className="absolute top-1/2 right-2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted hover:bg-surface-muted hover:text-foreground"
-              aria-label={showApiKey ? "Hide API key" : "Show API key"}
+              aria-label={
+                showApiKey
+                  ? t("settings.environment.aiAgent.hideApiKey")
+                  : t("settings.environment.aiAgent.showApiKey")
+              }
             >
               {showApiKey ? (
                 <EyeOffIcon className="h-4 w-4" />
@@ -349,7 +391,9 @@ export default function SettingsPage() {
             disabled={saving}
             className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Save"}
+            {saving
+              ? t("settings.environment.aiAgent.saving")
+              : t("settings.environment.aiAgent.save")}
           </button>
         </div>
       </form>
@@ -357,12 +401,12 @@ export default function SettingsPage() {
         onSubmit={onSaveProcess}
         className="space-y-3 rounded-lg border border-border bg-surface p-4"
       >
-        <h2 className="text-sm font-medium">Process</h2>
+        <h2 className="text-sm font-medium">{t("settings.environment.process.title")}</h2>
         <p className="text-sm text-muted">
-          Choose which AI steps run during Generate.
+          {t("settings.environment.process.description")}
         </p>
         {processLoading ? (
-          <p className="text-sm text-muted">Loading…</p>
+          <p className="text-sm text-muted">{t("settings.environment.process.loading")}</p>
         ) : (
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm">
@@ -372,7 +416,7 @@ export default function SettingsPage() {
                 onChange={(e) => setDoVerdict(e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <span>Do Verdict</span>
+              <span>{t("settings.environment.process.doVerdict")}</span>
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -381,15 +425,13 @@ export default function SettingsPage() {
                 onChange={(e) => setDoWorkflowRecommendation(e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <span>Do Workflow Recommendation</span>
+              <span>{t("settings.environment.process.doWorkflowRecommendation")}</span>
             </label>
             {doWorkflowRecommendation ? (
               <label className="block space-y-1 space-x-2 text-sm">
                 <span>
-                  Recommendation threshold
-                  <span className="ml-0.5 text-danger" aria-hidden>
-                    *
-                  </span>
+                  {t("settings.environment.process.recommendationThreshold")}
+                  <span className="ml-0.5 text-danger" aria-hidden>*</span>
                 </span>
                 <input
                   type="number"
@@ -412,8 +454,7 @@ export default function SettingsPage() {
                   className="w-full max-w-32 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
                 />
                 <p className="text-xs text-muted">
-                  Integer from 0 to 100. The best-matching workflow is selected
-                  only when its score meets or exceeds this value.
+                  {t("settings.environment.process.thresholdHint")}
                 </p>
                 {processErrors.workflowRecommendationThreshold ? (
                   <p className="text-sm text-danger">
@@ -429,7 +470,7 @@ export default function SettingsPage() {
                 onChange={(e) => setDoEvaluate(e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <span>Do Evaluate</span>
+              <span>{t("settings.environment.process.doEvaluate")}</span>
             </label>
           </div>
         )}
@@ -438,11 +479,12 @@ export default function SettingsPage() {
             type="submit"
             className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
           >
-            {processSaving ? "Saving…" : "Save"}
+            {processSaving
+              ? t("settings.environment.process.saving")
+              : t("settings.environment.process.save")}
           </button>
         </div>
       </form>
-      
     </section>
   );
 }

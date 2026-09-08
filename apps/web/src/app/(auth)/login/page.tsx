@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/app/LocaleProvider";
 import { getMe, login } from "@/lib/api";
 
 export default function LoginPage() {
+  const t = useT();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +37,7 @@ export default function LoginPage() {
     const res = await login(email, password);
     setLoading(false);
     if (res.error || !res.data) {
-      setError(res.error ?? "Login failed");
+      setError(res.error ?? t("validation.loginFailed"));
       return;
     }
     router.replace("/");
@@ -44,7 +46,7 @@ export default function LoginPage() {
   if (checking) {
     return (
       <main className="flex min-h-screen items-center justify-center text-sm text-muted">
-        Checking session…
+        {t("auth.checkingSession")}
       </main>
     );
   }
@@ -56,11 +58,11 @@ export default function LoginPage() {
         className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-surface p-6 shadow-sm"
       >
         <div>
-          <h1 className="text-xl font-semibold">Log in</h1>
-          <p className="mt-1 text-sm text-muted">Sign in with your email</p>
+          <h1 className="text-xl font-semibold">{t("auth.login.title")}</h1>
+          <p className="mt-1 text-sm text-muted">{t("auth.login.subtitle")}</p>
         </div>
         <label className="block space-y-1 text-sm">
-          <span>Email</span>
+          <span>{t("auth.email")}</span>
           <input
             type="email"
             required
@@ -70,7 +72,7 @@ export default function LoginPage() {
           />
         </label>
         <label className="block space-y-1 text-sm">
-          <span>Password</span>
+          <span>{t("auth.password")}</span>
           <input
             type="password"
             required
@@ -86,12 +88,12 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
         >
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? t("auth.login.submitting") : t("auth.login.submit")}
         </button>
         <p className="text-center text-sm text-muted">
-          No account?{" "}
+          {t("auth.login.noAccount")}{" "}
           <Link href="/register" className="text-foreground underline">
-            Register
+            {t("auth.login.registerLink")}
           </Link>
         </p>
       </form>

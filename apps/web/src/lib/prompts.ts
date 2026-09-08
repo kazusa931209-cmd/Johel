@@ -5,23 +5,50 @@ export {
   DEFAULT_VERDICT_PROMPT,
 } from "@johel/prompt-defaults";
 
-export const SYSTEM_PROMPT_QUALITY_NOTICE =
-  "Changes to these system prompts directly affect resume generation quality. Review edits carefully before saving.";
+import type { TranslateParams } from "@/messages/translate";
 
-export const VERDICT_PROMPT_PLACEHOLDER =
-  "Define Verdict sections (e.g. ## Fit questions, ## Role, ## Technical Requirements, ## Company & Contacts), questions, and answer format.";
+export type PromptTranslateFn = (key: string, params?: TranslateParams) => string;
 
-export const VERDICT_PROMPT_RESUME_HINT =
-  "When Do Verdict is enabled in Settings, this prompt shapes the Markdown that replaces the raw job description during resume generation and evaluation. Its sections and extracted fields directly affect resume tailoring quality.";
+export function getSystemPromptQualityNotice(t: PromptTranslateFn) {
+  return t("guidance.systemPromptQualityNotice");
+}
 
-export const GENERATE_PROMPT_PLACEHOLDER =
-  "Define resume tailoring rules, selection priorities, language/tone, and output expectations.";
+export function getVerdictPromptPlaceholder(t: PromptTranslateFn) {
+  return t("guidance.verdictPromptPlaceholder");
+}
 
-export const GENERATE_PROMPT_JOB_CONTEXT_HINT =
-  "Resume generation targets the AI Verdict result when Do Verdict is enabled; otherwise it uses the noise-filtered job description from the Job step. The model receives that job context as labeled Markdown, then Workflow intent, Profile, and Companies (not a JSON dump).";
+export function getVerdictPromptResumeHint(t: PromptTranslateFn) {
+  return t("guidance.verdictPromptResumeHint");
+}
 
-export const EVALUATE_PROMPT_PLACEHOLDER =
-  "Define evaluation criteria against Verdict dimensions (Role, Technical Requirements, Final Verdict), scoring, and Markdown output structure.";
+export function getGeneratePromptPlaceholder(t: PromptTranslateFn) {
+  return t("guidance.generatePromptPlaceholder");
+}
 
-export const EVALUATE_PROMPT_JOB_HINT =
-  "Resume evaluation uses the same job context as generation: AI Verdict Markdown when Do Verdict is enabled; otherwise the noise-filtered job description. The model receives labeled Job context and Resume Markdown.";
+export function getGeneratePromptJobContextHint(t: PromptTranslateFn) {
+  return t("guidance.generatePromptJobContextHint");
+}
+
+export function getEvaluatePromptPlaceholder(t: PromptTranslateFn) {
+  return t("guidance.evaluatePromptPlaceholder");
+}
+
+export function getEvaluatePromptJobHint(t: PromptTranslateFn) {
+  return t("guidance.evaluatePromptJobHint");
+}
+
+export function getAutoMarkdownFormatHint(t: PromptTranslateFn) {
+  return t("guidance.autoMarkdownFormat");
+}
+
+export function getPromptFieldLabel(t: PromptTranslateFn, kind: "verdict" | "generate" | "evaluate") {
+  return t(`settings.prompts.fields.${kind}Prompt`);
+}
+
+export function getPromptEditLabel(t: PromptTranslateFn, kind: "verdict" | "generate" | "evaluate") {
+  return t(`settings.prompts.edit.${kind}`);
+}
+
+export function getPromptTabLabel(t: PromptTranslateFn, kind: "verdict" | "generate" | "evaluate") {
+  return t(`settings.prompts.tabs.${kind}`);
+}

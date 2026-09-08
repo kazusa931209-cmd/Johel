@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { PcewSection } from "@/components/generate/PcewSection";
 import {
@@ -24,10 +25,6 @@ type GenerateWorkflowStepProps = {
   onNext: () => void | Promise<void>;
 };
 
-function formatWorkflowDate(iso: string) {
-  return new Date(iso).toLocaleString();
-}
-
 export function GenerateWorkflowStep({
   doVerdict,
   acceptedMarkdown,
@@ -39,6 +36,8 @@ export function GenerateWorkflowStep({
   onPrev,
   onNext,
 }: GenerateWorkflowStepProps) {
+  const t = useT();
+  const { locale } = useLocale();
   const [fieldErrors, setFieldErrors] = useState<WorkflowFieldErrors>({});
   const [viewingWorkflow, setViewingWorkflow] = useState<Workflow | null>(null);
 
@@ -54,10 +53,13 @@ export function GenerateWorkflowStep({
 
   const handleNext = useCallback(() => {
     const errors = validateWorkflowSelection(selection);
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (errors.workflowId) {
+      setFieldErrors({ workflowId: t("validation.workflowRequired") });
+      return;
+    }
+    setFieldErrors({});
     void onNext();
-  }, [onNext, selection]);
+  }, [onNext, selection, t]);
 
   useRegisterGenerateStepNav({
     onPrev,
@@ -65,26 +67,31 @@ export function GenerateWorkflowStep({
     nextBusy: generating,
   });
 
+  function formatWorkflowDate(iso: string) {
+    return new Date(iso).toLocaleString(locale);
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">Workflow</h2>
+        <h2 className="text-lg font-semibold tracking-tight">
+          {t("generate.workflow.title")}
+        </h2>
         <p className="text-sm text-muted">
-          Choose one workflow. Its saved profile and company entries (with
-          linked experiences) are used for generation.
+          {t("generate.workflow.description")}
           {doVerdict
-            ? " Resume generation and evaluation use the AI Verdict result above instead of the raw job description."
-            : " Resume generation and evaluation use the noise-filtered job description from the Job step."}
+            ? t("generate.workflow.descriptionWithVerdict")
+            : t("generate.workflow.descriptionWithoutVerdict")}
         </p>
       </div>
 
       {acceptedMarkdown ? (
         <div className="space-y-2">
-          <h3 className="text-sm font-medium">AI Verdict result</h3>
+          <h3 className="text-sm font-medium">
+            {t("generate.workflow.verdictResult.title")}
+          </h3>
           <p className="text-xs text-muted">
-            This Markdown replaces the raw job description when generating and
-            evaluating your resume. Its structure and extracted fields (defined
-            by your Verdict Prompt) directly affect tailoring quality.
+            {t("generate.workflow.verdictResult.description")}
           </p>
           <div className="rounded-md border border-border bg-background px-3 py-3">
             <AiVerdictMarkdown markdown={acceptedMarkdown} />
@@ -93,29 +100,29 @@ export function GenerateWorkflowStep({
       ) : null}
 
       <PcewSection<Workflow>
-        title="Workflow"
-        emptyLabel="No workflows found."
+        title={t("generate.workflow.sectionTitle")}
+        emptyLabel={t("generate.workflow.emptyWorkflows")}
         error={fieldErrors.workflowId}
         selectionMode="single"
         isSelected={(id) => selection.workflowId === id}
         onRowSelect={onWorkflowSelect}
         fetchAll={fetchWorkflows}
-        loadErrorLabel="Failed to load workflows"
+        loadErrorLabel={t("generate.workflow.loadError")}
         viewing={viewingWorkflow}
         onView={setViewingWorkflow}
         minWidthClass="min-w-[720px]"
         columns={[
           {
-            header: "Name",
+            header: t("generate.workflow.columns.name"),
             cell: (row) => <span className="font-medium">{row.name}</span>,
           },
           {
-            header: "Description",
+            header: t("generate.workflow.columns.description"),
             className: "max-w-[220px] truncate text-muted",
             cell: (row) => row.description ?? "",
           },
           {
-            header: "Updated",
+            header: t("generate.workflow.columns.updated"),
             className: "whitespace-nowrap text-muted",
             cell: (row) => formatWorkflowDate(row.updatedAt),
           },
@@ -129,18 +136,21 @@ export function GenerateWorkflowStep({
       />
 
       <div className="space-y-2">
-        <h3 className="text-sm font-medium">One-time Prompt</h3>
+        <h3 className="text-sm font-medium">
+          {t("generate.workflow.oneTimePrompt.title")}
+        </h3>
         <p className="text-sm text-muted">
-          Optional instructions for this run only. When filled in, they are
-          appended to your saved Generate Prompt for resume generation.
+          {t("generate.workflow.oneTimePrompt.description")}
         </p>
         <label className="block space-y-1 text-sm">
-          <span className="sr-only">One-time Prompt</span>
+          <span className="sr-only">
+            {t("generate.workflow.oneTimePrompt.label")}
+          </span>
           <textarea
             value={oneTimePrompt}
             onChange={(e) => onOneTimePromptChange(e.target.value)}
             rows={8}
-            placeholder="Add run-specific guidance for this resume…"
+            placeholder={t("generate.workflow.oneTimePrompt.placeholder")}
             className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
           />
         </label>
@@ -154,9 +164,11 @@ export function GenerateWorkflowStep({
           aria-busy="true"
         >
           <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
-            <p className="text-sm font-medium">Generating Resume…</p>
+            <p className="text-sm font-medium">
+              {t("generate.workflow.generating.title")}
+            </p>
             <p className="mt-1 text-xs text-muted">
-              Please wait while the AI tailors your resume to the job.
+              {t("generate.workflow.generating.description")}
             </p>
           </div>
         </div>

@@ -78,7 +78,7 @@ User browser (:4041)
 ## Studio shell (Phase 4)
 
 - Layout: top bar + left sidebar + main content (full-height studio chrome)
-- Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`; sidebar open/collapsed via `johel-sidebar` in `localStorage` (`open` default, `collapsed`). Hamburger in the header toggles `StudioSidebar` (`hidden` when collapsed; `aria-controls="studio-sidebar"`).
+- Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`; UI locale via `LocaleProvider` + `johel-locale` in `localStorage` (`en` default, `ko`); bootstrap script in root layout sets `document.documentElement.lang` before paint; message catalogs in `apps/web/src/messages/` (`en.ts`, `ko.ts`, `translate.ts`); components use `useT()` / `useLocale()` from `LocaleProvider`; sidebar open/collapsed via `johel-sidebar` in `localStorage` (`open` default, `collapsed`). Hamburger in the header toggles `StudioSidebar` (`hidden` when collapsed; `aria-controls="studio-sidebar"`).
 - Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light. Tailwind `dark:` uses the `.dark` class (`@custom-variant dark` in `globals.css`), not `prefers-color-scheme`.
 - Prompts (`/settings/prompts`) and Environment (`/settings/environment`) content is centered at `max-w-3xl`, matching other form pages.
 - `react-markdown` preview (`AiVerdictMarkdown`, `ResumeMarkdown`) uses `@tailwindcss/typography` `prose` with `--tw-prose-*` mapped to theme tokens (`--foreground`, `--muted`, `--border`) so body text stays readable in Light and Dark. Do not use `dark:prose-invert` (it follows OS color-scheme unless the class variant is set, and it ignores app tokens).
@@ -89,7 +89,7 @@ User browser (:4041)
   - `/companies` — Workspace / Companies
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
-  - `/settings/environment` — Settings / Environment (theme, AI Agent, Process); `/settings` redirects here
+  - `/settings/environment` — Settings / Environment (theme, language, AI Agent, Process); `/settings` redirects here
   - `/settings/prompts` — Settings / Prompts
   - `/prompts` — legacy redirect to `/settings/prompts`
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
@@ -291,6 +291,15 @@ User browser (:4041)
 - **Secrets:** `JWT_SECRET` from root `.env` via Compose (not in image)
 - **Next build:** `output: "standalone"` and `outputFileTracingRoot` in `apps/web/next.config.ts` for monorepo tracing; image build copies workspace packages `packages/resume` and `packages/prompt-defaults`
 - **pnpm in Docker:** `pnpm install --store-dir /pnpm/store` with pnpm **9.15.9** in the image (pnpm 12 blocks build scripts without approve-builds)
+
+## UI locale (Phase 50)
+
+- **Storage:** `johel-locale` in `localStorage`; values `en` (default) or `ko`
+- **Bootstrap:** `LOCALE_BOOTSTRAP_SCRIPT` in root layout `<head>` sets `document.documentElement.lang` before paint (alongside theme bootstrap)
+- **Provider:** `LocaleProvider` (`components/app/LocaleProvider.tsx`) exposes `locale`, `setLocale`, `t`, `tLines`
+- **Catalogs:** `apps/web/src/messages/en.ts` (source of key shape), `ko.ts` (`MessageTree` via `DeepStringify<typeof en>`), `translate.ts` (`translate`, `translateLines`)
+- **Settings:** `/settings/environment` Language section after Theme; toggles apply immediately (no Save)
+- **Scope:** All JoHEL UI strings including login/register; not workflow résumé output language or server/API error text
 
 ## Plans
 

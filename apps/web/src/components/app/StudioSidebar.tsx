@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/components/app/LocaleProvider";
 
 function sectionLabelClass() {
   return "px-3 py-2 text-xs font-semibold tracking-wide text-muted";
@@ -16,6 +17,7 @@ function navLinkClass(active: boolean) {
 }
 
 export function StudioSidebar({ open }: { open: boolean }) {
+  const t = useT();
   const pathname = usePathname();
   const profilesActive =
     pathname === "/profiles" || pathname.startsWith("/profiles/");
@@ -49,34 +51,36 @@ export function StudioSidebar({ open }: { open: boolean }) {
       }
     >
       <nav className="flex flex-col gap-1 p-3">
-        <div className={sectionLabelClass()}>Workspace</div>
+        <div className={sectionLabelClass()}>{t("nav.sidebar.workspace")}</div>
         <Link href="/profiles" className={navLinkClass(profilesActive)}>
-          Profiles
+          {t("nav.sidebar.profiles")}
         </Link>
         <Link href="/companies" className={navLinkClass(companiesActive)}>
-          Companies
+          {t("nav.sidebar.companies")}
         </Link>
         <Link href="/experiences" className={navLinkClass(experiencesActive)}>
-          Experiences
+          {t("nav.sidebar.experiences")}
         </Link>
         <Link href="/workflows" className={navLinkClass(workflowsActive)}>
-          Workflows
+          {t("nav.sidebar.workflows")}
         </Link>
 
-        <div className={`${sectionLabelClass()} mt-2`}>Run</div>
+        <div className={`${sectionLabelClass()} mt-2`}>{t("nav.sidebar.run")}</div>
         <Link href="/" className={navLinkClass(generateActive)}>
-          Generate
+          {t("nav.sidebar.generate")}
         </Link>
 
-        <div className={`${sectionLabelClass()} mt-2`}>Settings</div>
+        <div className={`${sectionLabelClass()} mt-2`}>
+          {t("nav.sidebar.settings")}
+        </div>
         <Link
           href="/settings/environment"
           className={navLinkClass(environmentActive)}
         >
-          Environment
+          {t("nav.sidebar.environment")}
         </Link>
         <Link href="/settings/prompts" className={navLinkClass(promptsActive)}>
-          Prompts
+          {t("nav.sidebar.prompts")}
         </Link>
       </nav>
     </aside>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/components/app/LocaleProvider";
+
 export const GENERATE_STEPS = [
   "Job",
   "Workflow",
@@ -9,15 +11,24 @@ export const GENERATE_STEPS = [
 
 export type GenerateStep = (typeof GENERATE_STEPS)[number];
 
+const STEP_LABEL_KEYS: Record<GenerateStep, string> = {
+  Job: "generate.steps.job",
+  Workflow: "generate.steps.workflow",
+  Generate: "generate.steps.generate",
+  Evaluate: "generate.steps.evaluate",
+};
+
 type GenerateTimelineProps = {
   active: GenerateStep;
   steps: readonly GenerateStep[];
 };
 
 export function GenerateTimeline({ active, steps }: GenerateTimelineProps) {
+  const t = useT();
+
   return (
     <nav
-      aria-label="Generate steps"
+      aria-label={t("generate.steps.ariaLabel")}
       className="w-full overflow-x-auto overflow-y-hidden"
     >
       <ol className="flex min-w-[320px] items-center gap-1">
@@ -42,7 +53,7 @@ export function GenerateTimeline({ active, steps }: GenerateTimelineProps) {
                 >
                   {index + 1}
                 </span>
-                <span>{step}</span>
+                <span>{t(STEP_LABEL_KEYS[step])}</span>
               </div>
               {index < steps.length - 1 ? (
                 <span

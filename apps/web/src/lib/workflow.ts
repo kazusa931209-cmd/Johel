@@ -44,16 +44,19 @@ export function formatWorkflowPeriod(startDate: string, endDate: string): string
   return `${startDate.trim()} – ${endDate.trim()}`;
 }
 
-export function validateWorkflowEditorContent(input: {
-  profileId: string;
-  companies: WorkflowCompanyEntry[];
-}): WorkflowEditorFieldErrors {
+export function validateWorkflowEditorContent(
+  input: {
+    profileId: string;
+    companies: WorkflowCompanyEntry[];
+  },
+  t: (key: string) => string,
+): WorkflowEditorFieldErrors {
   const errors: WorkflowEditorFieldErrors = {};
   if (!input.profileId) {
-    errors.profileId = "Select one profile.";
+    errors.profileId = t("validation.profileRequired");
   }
   if (input.companies.length < 1) {
-    errors.companies = "Add at least one company entry.";
+    errors.companies = t("validation.companiesMinOne");
     return errors;
   }
   const invalidEntry = input.companies.some(
@@ -65,8 +68,7 @@ export function validateWorkflowEditorContent(input: {
       entry.experienceIds.length < 1,
   );
   if (invalidEntry) {
-    errors.companies =
-      "Each company entry needs a company, start and end dates, role context, and at least one experience.";
+    errors.companies = t("validation.companyEntryIncomplete");
   }
   return errors;
 }

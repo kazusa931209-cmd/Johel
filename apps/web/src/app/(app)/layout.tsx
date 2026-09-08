@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiUsageProvider, useAiUsage } from "@/components/app/AiUsageProvider";
+import { useT } from "@/components/app/LocaleProvider";
 import { StudioBottomFabCluster } from "@/components/app/StudioBottomFabCluster";
 import { StudioHeader } from "@/components/app/StudioHeader";
 import { StudioSidebar } from "@/components/app/StudioSidebar";
@@ -53,6 +54,7 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useT();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +78,7 @@ export default function AppLayout({
   if (loading || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center text-sm text-muted">
-        Loading…
+        {t("auth.checkingSession")}
       </main>
     );
   }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/app/LocaleProvider";
 import { MenuIcon } from "@/components/shared/icons";
 import { logout } from "@/lib/api";
 import { formatTokenUsed } from "@/lib/tokens";
@@ -20,6 +21,7 @@ export function StudioHeader({
   sidebarOpen,
   onToggleSidebar,
 }: StudioHeaderProps) {
+  const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -46,18 +48,27 @@ export function StudioHeader({
         <button
           type="button"
           onClick={onToggleSidebar}
-          aria-label={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
+          aria-label={
+            sidebarOpen
+              ? t("nav.header.collapseSidebar")
+              : t("nav.header.openSidebar")
+          }
           aria-expanded={sidebarOpen}
           aria-controls="studio-sidebar"
           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md hover:bg-surface-muted"
         >
           <MenuIcon className="h-5 w-5" />
         </button>
-        <div className="text-base font-semibold tracking-tight">JoHEL</div>
+        <div className="text-base font-semibold tracking-tight">
+          {t("nav.brand")}
+        </div>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-sm text-muted" title="Token usage">
-          Token Used: {formatTokenUsed(tokenUsage)}
+        <span
+          className="text-sm text-muted"
+          title={t("nav.header.tokenUsageTitle")}
+        >
+          {t("nav.header.tokenUsed", { count: formatTokenUsed(tokenUsage) })}
         </span>
         <div className="relative" ref={menuRef}>
           <button
@@ -80,7 +91,7 @@ export function StudioHeader({
                 onClick={() => setOpen(false)}
                 className="block px-3 py-2 text-sm hover:bg-surface-muted"
               >
-                Profile
+                {t("nav.header.profile")}
               </Link>
               <button
                 type="button"
@@ -88,7 +99,7 @@ export function StudioHeader({
                 onClick={onSignOut}
                 className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-muted"
               >
-                Sign out
+                {t("nav.header.signOut")}
               </button>
             </div>
           ) : null}

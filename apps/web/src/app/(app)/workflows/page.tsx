@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import {
   AddButton,
@@ -21,6 +22,7 @@ function formatDate(iso: string) {
 
 export default function WorkflowsPage() {
   const router = useRouter();
+  const t = useT();
   const { toast } = useToast();
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
@@ -41,7 +43,7 @@ export default function WorkflowsPage() {
       const res = await listWorkflows(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
-        toast(res.error ?? "Failed to load workflows", "error");
+        toast(res.error ?? t("toast.workflowsLoadFailed"), "error");
         return;
       }
       setItems(res.data.items);
@@ -49,7 +51,7 @@ export default function WorkflowsPage() {
       setPageSize(res.data.pageSize);
       setPage(res.data.page);
     },
-    [toast],
+    [t, toast],
   );
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function WorkflowsPage() {
       return;
     }
     setDeleting(null);
-    toast("Workflow deleted.", "success");
+    toast(t("toast.workflowDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     void load(q, nextPage);
   }
@@ -79,20 +81,22 @@ export default function WorkflowsPage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Workflows</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {t("crud.workflows.title")}
+      </h1>
       <form onSubmit={onFilter} className="flex items-center gap-2">
         <input
           type="search"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
-          placeholder="Search name or description"
+          placeholder={t("crud.workflows.searchPlaceholder")}
           className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
         />
         <button
           type="submit"
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
-          Search
+          {t("crud.common.search")}
         </button>
         <AddButton
           onClick={() => router.push("/workflows/new")}
@@ -103,10 +107,16 @@ export default function WorkflowsPage() {
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">No</th>
-              <th className="px-3 py-2 font-medium">Name</th>
-              <th className="px-3 py-2 font-medium">Description</th>
-              <th className="px-3 py-2 font-medium">Updated</th>
+              <th className="px-3 py-2 font-medium">{t("crud.common.no")}</th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.workflows.columns.name")}
+              </th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.workflows.columns.description")}
+              </th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.workflows.columns.updated")}
+              </th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
@@ -114,13 +124,13 @@ export default function WorkflowsPage() {
             {loading ? (
               <tr>
                 <td colSpan={5} className="px-3 py-8 text-center text-muted">
-                  Loading…
+                  {t("crud.common.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-3 py-8 text-center text-muted">
-                  No workflows yet.
+                  {t("crud.workflows.empty")}
                 </td>
               </tr>
             ) : (
@@ -169,7 +179,7 @@ export default function WorkflowsPage() {
       </div>
       <div className="flex items-center justify-end gap-2 text-sm text-muted">
         <span>
-          Page {page} of {totalPages}
+          {t("crud.common.pageOf", { page, totalPages })}
         </span>
         <button
           type="button"
@@ -177,7 +187,7 @@ export default function WorkflowsPage() {
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
         >
-          Prev
+          {t("crud.common.prev")}
         </button>
         <button
           type="button"
@@ -185,7 +195,7 @@ export default function WorkflowsPage() {
           onClick={() => setPage((p) => p + 1)}
           className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
         >
-          Next
+          {t("crud.common.next")}
         </button>
       </div>
 
@@ -198,13 +208,13 @@ export default function WorkflowsPage() {
 
       {deleting ? (
         <DetailDialog
-          title="Delete workflow"
+          title={t("crud.workflows.delete.title")}
           role="alertdialog"
           closeDisabled={deletingBusy}
           onClose={() => setDeleting(null)}
         >
           <p className="text-muted">
-            Delete workflow “{deleting.name}”? This cannot be undone.
+            {t("crud.workflows.delete.body", { name: deleting.name })}
           </p>
           <div className="flex justify-end">
             <button
@@ -213,7 +223,9 @@ export default function WorkflowsPage() {
               onClick={() => void onConfirmDelete()}
               className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg disabled:opacity-60"
             >
-              {deletingBusy ? "Deleting…" : "Delete"}
+              {deletingBusy
+                ? t("crud.common.deleting")
+                : t("crud.common.delete")}
             </button>
           </div>
         </DetailDialog>

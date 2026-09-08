@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/app/LocaleProvider";
 import { DetailDialog, DetailField } from "@/components/shared/detail-dialog";
 import { useToast } from "@/components/app/ToastProvider";
 import {
@@ -18,16 +19,11 @@ type WorkflowDetailDialogProps = {
   onClose: () => void;
 };
 
-function languageLabel(code: string) {
-  return (
-    WORKFLOW_LANGUAGES.find((item) => item.value === code)?.label ?? code
-  );
-}
-
 export function WorkflowDetailDialog({
   workflowId,
   onClose,
 }: WorkflowDetailDialogProps) {
+  const t = useT();
   const { toast } = useToast();
   const [detail, setDetail] = useState<WorkflowDetail | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
@@ -38,6 +34,13 @@ export function WorkflowDetailDialog({
     Map<string, string>
   >(new Map());
   const [loading, setLoading] = useState(true);
+
+  function languageLabel(code: string) {
+    const known = WORKFLOW_LANGUAGES.find((item) => item.value === code);
+    return known
+      ? t(`crud.workflows.form.languages.${known.value}`)
+      : code;
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -50,7 +53,7 @@ export function WorkflowDetailDialog({
     ]).then(([workflowRes, profilesRes, companiesRes, experiencesRes]) => {
       if (cancelled) return;
       if (workflowRes.error || !workflowRes.data) {
-        toast(workflowRes.error ?? "Failed to load workflow", "error");
+        toast(workflowRes.error ?? t("toast.workflowLoadFailed"), "error");
         onClose();
         return;
       }
@@ -84,38 +87,41 @@ export function WorkflowDetailDialog({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open once per workflowId
-  }, [workflowId, toast]);
+  }, [workflowId, toast, t]);
 
   return (
-    <DetailDialog title="Workflow detail" onClose={onClose}>
+    <DetailDialog title={t("crud.workflows.detailTitle")} onClose={onClose}>
       {loading || !detail ? (
-        <p className="text-muted">Loading…</p>
+        <p className="text-muted">{t("shared.detail.loading")}</p>
       ) : (
         <>
-          <DetailField label="Name" value={detail.name} />
-          <DetailField label="Description" value={detail.description} />
+          <DetailField label={t("crud.workflows.columns.name")} value={detail.name} />
           <DetailField
-            label="Language"
+            label={t("crud.workflows.columns.description")}
+            value={detail.description}
+          />
+          <DetailField
+            label={t("crud.workflows.form.language")}
             value={languageLabel(detail.language)}
           />
           <DetailField
-            label="Created"
+            label={t("crud.common.created")}
             value={new Date(detail.createdAt).toLocaleString()}
           />
           <DetailField
-            label="Updated"
+            label={t("crud.common.updated")}
             value={new Date(detail.updatedAt).toLocaleString()}
           />
           <DetailField
-            label="Profile"
-            value={profileName ?? "Not selected"}
+            label={t("crud.workflows.form.profile")}
+            value={profileName ?? t("crud.workflows.notSelected")}
           />
           <div className="space-y-2">
             <div className="text-xs font-medium tracking-wide text-muted uppercase">
-              Companies
+              {t("crud.workflows.form.companies")}
             </div>
             {detail.companies.length === 0 ? (
-              <p className="text-muted">None added.</p>
+              <p className="text-muted">{t("crud.workflows.noneAdded")}</p>
             ) : (
               <ul className="space-y-2">
                 {detail.companies.map((entry) => {
@@ -137,13 +143,15 @@ export function WorkflowDetailDialog({
                       {entry.roleContext ? (
                         <div className="text-muted">
                           <span className="font-medium text-foreground">
-                            Role context:
+                            {t("crud.workflows.roleContextLabel")}
                           </span>{" "}
                           {entry.roleContext}
                         </div>
                       ) : null}
                       {experienceLabels.length === 0 ? (
-                        <p className="text-muted">No experiences linked.</p>
+                        <p className="text-muted">
+                          {t("crud.workflows.noExperiencesLinked")}
+                        </p>
                       ) : (
                         <ul className="list-inside list-disc space-y-1 text-muted">
                           {experienceLabels.map((label) => (

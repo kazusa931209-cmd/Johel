@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/app/LocaleProvider";
 import { DetailDialog, DetailField } from "@/components/shared/detail-dialog";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import type { CompanyDetail } from "@/lib/api";
@@ -13,36 +14,44 @@ export function CompanyDetailDialog({
   company,
   onClose,
 }: CompanyDetailDialogProps) {
+  const t = useT();
+
   return (
-    <DetailDialog title={company.name || "Company detail"} onClose={onClose}>
-      <DetailField label="Alias" value={company.alias} />
-      <DetailField label="Company Name" value={company.name} />
+    <DetailDialog
+      title={company.name || t("crud.companies.detailTitle")}
+      onClose={onClose}
+    >
+      <DetailField label={t("crud.companies.columns.alias")} value={company.alias} />
+      <DetailField
+        label={t("crud.companies.columns.companyName")}
+        value={company.name}
+      />
       <div className="space-y-1">
         <div className="text-xs font-medium tracking-wide text-muted uppercase">
-          What this company is
+          {t("crud.companies.columns.whatCompanyIs")}
         </div>
         {company.whatCompanyIs ? (
           <AiVerdictMarkdown markdown={company.whatCompanyIs} />
         ) : (
-          <div className="text-foreground">—</div>
+          <div className="text-foreground">{t("crud.common.emDash")}</div>
         )}
       </div>
       <div className="space-y-1">
         <div className="text-xs font-medium tracking-wide text-muted uppercase">
-          Domain & Stack
+          {t("crud.companies.columns.domainAndStack")}
         </div>
         {company.domainAndStack ? (
           <AiVerdictMarkdown markdown={company.domainAndStack} />
         ) : (
-          <div className="text-foreground">—</div>
+          <div className="text-foreground">{t("crud.common.emDash")}</div>
         )}
       </div>
       <DetailField
-        label="Created"
+        label={t("crud.common.created")}
         value={new Date(company.createdAt).toLocaleString()}
       />
       <DetailField
-        label="Updated"
+        label={t("crud.common.updated")}
         value={new Date(company.updatedAt).toLocaleString()}
       />
     </DetailDialog>

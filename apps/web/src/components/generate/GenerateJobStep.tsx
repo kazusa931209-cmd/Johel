@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
+import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { formatThousandsSeparated } from "@/lib/helper";
 import {
@@ -25,13 +26,17 @@ type GenerateJobStepProps = {
 };
 
 function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
+  const t = useT();
+
   return (
     <div
       role="status"
       className="rounded-md border border-border bg-toast-info-bg px-3 py-3 text-sm text-toast-info-fg"
     >
-      <p className="font-medium">{methodLabel} is not implemented yet.</p>
-      <p className="mt-1 opacity-90">It’ll be coming soon…</p>
+      <p className="font-medium">
+        {t("generate.job.comingSoon.notImplemented", { method: methodLabel })}
+      </p>
+      <p className="mt-1 opacity-90">{t("generate.job.comingSoon.soon")}</p>
     </div>
   );
 }
@@ -52,6 +57,7 @@ export function GenerateJobStep({
   onRunningChange,
 }: GenerateJobStepProps) {
   const { toast } = useToast();
+  const t = useT();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
   const { method, jobText } = job;
   const [running, setRunning] = useState(false);
@@ -77,7 +83,7 @@ export function GenerateJobStep({
     if (running) return;
     const text = jobText.trim();
     if (!text) {
-      setJobError("Job Description is required.");
+      setJobError(t("validation.jobDescriptionRequired"));
       return;
     }
     setJobError(undefined);
@@ -100,17 +106,17 @@ export function GenerateJobStep({
     try {
       const res = await runAiVerdict(filtered);
       if (!res.data) {
-        toast(res.error ?? "AI Verdict failed.", "error");
+        toast(res.error ?? t("toast.verdictFailed"), "error");
         return;
       }
 
       onVerdictResult(res.data.markdown, inputKey);
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
-      toast("AI Verdict completed.", "success");
+      toast(t("toast.verdictCompleted"), "success");
       await onAdvanceToWorkflow();
     } catch {
-      toast("AI Verdict failed.", "error");
+      toast(t("toast.verdictFailed"), "error");
     } finally {
       setRunningState(false);
     }
@@ -124,6 +130,7 @@ export function GenerateJobStep({
     running,
     setRunningState,
     setTokenUsed,
+    t,
     toast,
     verdictInputKey,
     verdictPrompt,
@@ -134,17 +141,25 @@ export function GenerateJobStep({
     nextBusy: running,
   });
 
+  const methodLabels = {
+    manual: t("generate.job.methods.manual"),
+    url: t("generate.job.methods.url"),
+    file: t("generate.job.methods.fileUpload"),
+  } as const;
+
   return (
     <>
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold tracking-tight">Job</h2>
+        <h2 className="text-lg font-semibold tracking-tight">
+          {t("generate.job.title")}
+        </h2>
 
         <div className="flex flex-wrap gap-1 rounded-md border border-border p-1">
           {(
             [
-              ["manual", "Manual"],
-              ["url", "URL"],
-              ["file", "File upload"],
+              ["manual", methodLabels.manual],
+              ["url", methodLabels.url],
+              ["file", methodLabels.file],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -162,16 +177,18 @@ export function GenerateJobStep({
           ))}
         </div>
 
-        {method === "url" ? <ComingSoonAlert methodLabel="URL" /> : null}
+        {method === "url" ? (
+          <ComingSoonAlert methodLabel={methodLabels.url} />
+        ) : null}
         {method === "file" ? (
-          <ComingSoonAlert methodLabel="File upload" />
+          <ComingSoonAlert methodLabel={methodLabels.file} />
         ) : null}
 
         {method === "manual" ? (
           <label className="block space-y-1 text-sm">
             <span className="flex items-center justify-between gap-2">
               <span>
-                Job Description
+                {t("generate.job.jobDescription")}
                 <span className="ml-0.5 text-danger" aria-hidden>*</span>
               </span>
               <span className="text-xs text-muted">
@@ -187,7 +204,7 @@ export function GenerateJobStep({
               }}
               rows={24}
               maxLength={JOB_TEXT_MAX}
-              placeholder="Paste or enter the job description…"
+              placeholder={t("generate.job.placeholder")}
               aria-invalid={Boolean(jobError)}
               className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
             />
@@ -204,9 +221,11 @@ export function GenerateJobStep({
           aria-busy="true"
         >
           <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
-            <p className="text-sm font-medium">Running AI Verdict…</p>
+            <p className="text-sm font-medium">
+              {t("generate.job.runningVerdict.title")}
+            </p>
             <p className="mt-1 text-xs text-muted">
-              Please wait. Noise filter and AI analysis are in progress.
+              {t("generate.job.runningVerdict.description")}
             </p>
           </div>
         </div>

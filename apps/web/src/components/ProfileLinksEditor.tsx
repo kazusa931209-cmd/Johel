@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "@/components/app/LocaleProvider";
 import {
   AddButton,
   DeleteButton,
@@ -40,6 +41,7 @@ export function ProfileLinksEditor({
   links,
   onChange,
 }: ProfileLinksEditorProps) {
+  const t = useT();
   const [dialog, setDialog] = useState<"add" | "edit" | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<LinkDraft>({ key: "", link: "" });
@@ -65,7 +67,7 @@ export function ProfileLinksEditor({
   function applyDialog() {
     const key = draft.key.trim();
     if (!key) {
-      setKeyError("Key is required.");
+      setKeyError(t("validation.keyRequired"));
       return;
     }
     const nextItem: ProfileLinkItem = {
@@ -77,7 +79,7 @@ export function ProfileLinksEditor({
         item.key.toLowerCase() === key.toLowerCase() && i !== editIndex,
     );
     if (duplicate) {
-      setKeyError("Link keys must be unique.");
+      setKeyError(t("validation.keyUnique"));
       return;
     }
     if (dialog === "edit" && editIndex !== null) {
@@ -92,9 +94,11 @@ export function ProfileLinksEditor({
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-medium">Links</h2>
+          <h2 className="text-sm font-medium">
+            {t("crud.profiles.links.title")}
+          </h2>
           <p className="text-xs text-muted">
-            Edits stay on this page until you Save the profile.
+            {t("crud.profiles.links.draftHint")}
           </p>
         </div>
         <AddButton onClick={openAdd} />
@@ -103,8 +107,10 @@ export function ProfileLinksEditor({
         <table className="w-full min-w-[480px] text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">Key</th>
-              <th className="px-3 py-2 font-medium">Value</th>
+              <th className="px-3 py-2 font-medium">{t("crud.common.key")}</th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.common.value")}
+              </th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
@@ -112,7 +118,7 @@ export function ProfileLinksEditor({
             {links.length === 0 ? (
               <tr>
                 <td colSpan={3} className="px-3 py-6 text-center text-muted">
-                  No links yet.
+                  {t("crud.profiles.links.empty")}
                 </td>
               </tr>
             ) : (
@@ -151,16 +157,23 @@ export function ProfileLinksEditor({
       </div>
 
       {viewing ? (
-        <DetailDialog title="Link detail" onClose={() => setViewing(null)}>
-          <DetailField label="Key" value={viewing.key} />
-          <DetailField label="Value" value={viewing.link} />
+        <DetailDialog
+          title={t("crud.profiles.links.linkDetail")}
+          onClose={() => setViewing(null)}
+        >
+          <DetailField label={t("crud.common.key")} value={viewing.key} />
+          <DetailField label={t("crud.common.value")} value={viewing.link} />
         </DetailDialog>
       ) : null}
 
       {dialog ? (
         <DetailDialog
           mode="form"
-          title={dialog === "add" ? "Add link" : "Edit link"}
+          title={
+            dialog === "add"
+              ? t("crud.profiles.links.addLink")
+              : t("crud.profiles.links.editLink")
+          }
           onClose={() => setDialog(null)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -171,7 +184,7 @@ export function ProfileLinksEditor({
         >
           <label className="block space-y-1 text-sm">
             <span>
-              Key
+              {t("crud.common.key")}
               <RequiredMark />
             </span>
             <input
@@ -186,7 +199,7 @@ export function ProfileLinksEditor({
             <FieldError message={keyError} />
           </label>
           <label className="block space-y-1 text-sm">
-            <span>Value</span>
+            <span>{t("crud.common.value")}</span>
             <input
               value={draft.link}
               onChange={(e) =>
@@ -201,7 +214,7 @@ export function ProfileLinksEditor({
               onClick={applyDialog}
               className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
             >
-              Apply
+              {t("crud.common.apply")}
             </button>
           </div>
         </DetailDialog>
@@ -209,13 +222,14 @@ export function ProfileLinksEditor({
 
       {deletingIndex !== null ? (
         <DetailDialog
-          title="Delete link"
+          title={t("crud.profiles.links.deleteLink")}
           role="alertdialog"
           onClose={() => setDeletingIndex(null)}
         >
           <p className="text-muted">
-            Remove link key “{links[deletingIndex]?.key}” from this form? It is
-            stored only when you Save the profile.
+            {t("crud.profiles.links.deleteDraftBody", {
+              key: links[deletingIndex]?.key ?? "",
+            })}
           </p>
           <div className="flex justify-end">
             <button
@@ -226,7 +240,7 @@ export function ProfileLinksEditor({
               }}
               className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg"
             >
-              Delete
+              {t("crud.common.delete")}
             </button>
           </div>
         </DetailDialog>

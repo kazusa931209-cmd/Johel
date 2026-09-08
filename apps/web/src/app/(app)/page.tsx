@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
+import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { AddButton } from "@/components/shared/action-icon-buttons";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
@@ -64,6 +65,7 @@ const DEFAULT_PROMPTS = {
 
 export default function GeneratePage() {
   const { toast } = useToast();
+  const t = useT();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
   const [loading, setLoading] = useState(true);
   const [generatingResume, setGeneratingResume] = useState(false);
@@ -134,11 +136,17 @@ export default function GeneratePage() {
         Boolean,
       );
       if (errors.length > 0) {
-        toast(errors[0] ?? "Failed to check Generate prerequisites", "error");
+        toast(errors[0] ?? t("toast.prerequisitesCheckFailed"), "error");
         setLoading(false);
         setMissing([
-          { label: "Workflows", href: "/workflows" },
-          { label: "Prompts", href: "/settings/prompts?tab=generate" },
+          {
+            label: t("generate.prerequisites.labels.workflows"),
+            href: "/workflows",
+          },
+          {
+            label: t("generate.prerequisites.labels.prompts"),
+            href: "/settings/prompts?tab=generate",
+          },
         ]);
         return;
       }
@@ -166,16 +174,28 @@ export default function GeneratePage() {
 
       const nextMissing: MissingPrerequisite[] = [];
       if ((workflowsRes.data?.total ?? 0) < 1) {
-        nextMissing.push({ label: "Workflows", href: "/workflows" });
+        nextMissing.push({
+          label: t("generate.prerequisites.labels.workflows"),
+          href: "/workflows",
+        });
       }
       if (nextProcess.doVerdict && !prompts.data?.verdictPrompt.trim()) {
-        nextMissing.push({ label: "Verdict Prompt", href: "/settings/prompts?tab=verdict" });
+        nextMissing.push({
+          label: t("generate.prerequisites.labels.verdictPrompt"),
+          href: "/settings/prompts?tab=verdict",
+        });
       }
       if (!prompts.data?.generatePrompt.trim()) {
-        nextMissing.push({ label: "Generate Prompt", href: "/settings/prompts?tab=generate" });
+        nextMissing.push({
+          label: t("generate.prerequisites.labels.generatePrompt"),
+          href: "/settings/prompts?tab=generate",
+        });
       }
       if (nextProcess.doEvaluate && !prompts.data?.evaluatePrompt.trim()) {
-        nextMissing.push({ label: "Evaluate Prompt", href: "/settings/prompts?tab=evaluate" });
+        nextMissing.push({
+          label: t("generate.prerequisites.labels.evaluatePrompt"),
+          href: "/settings/prompts?tab=evaluate",
+        });
       }
 
       setMissing(nextMissing.length > 0 ? nextMissing : null);
@@ -184,7 +204,7 @@ export default function GeneratePage() {
     return () => {
       cancelled = true;
     };
-  }, [toast]);
+  }, [t, toast]);
 
   function goToStep(step: typeof activeStep) {
     setActiveStep(step);
@@ -250,7 +270,7 @@ export default function GeneratePage() {
         acceptedMarkdown,
       });
       if (!res.data) {
-        toast(res.error ?? "AI Workflow recommendation failed.", "error");
+        toast(res.error ?? t("toast.workflowRecommendFailed"), "error");
         return;
       }
 
@@ -266,7 +286,10 @@ export default function GeneratePage() {
           recommendInputKey,
         );
         toast(
-          `Recommended workflow: ${res.data.workflowName} (score ${res.data.score}).`,
+          t("toast.workflowRecommended", {
+            workflowName: res.data.workflowName,
+            score: res.data.score ?? "",
+          }),
           "success",
         );
       } else {
@@ -274,17 +297,19 @@ export default function GeneratePage() {
           { ...EMPTY_WORKFLOW_SELECTION },
           recommendInputKey,
         );
-        const scoreText =
-          res.data.score != null ? ` (best score ${res.data.score})` : "";
+        const bestScoreSuffix =
+          res.data.score != null
+            ? t("toast.workflowBestScoreSuffix", { score: res.data.score })
+            : "";
         toast(
-          `No workflow met the recommendation threshold${scoreText}.`,
+          t("toast.workflowThresholdNotMet", { bestScoreSuffix }),
           "warning",
         );
       }
 
       goToStep("Workflow");
     } catch {
-      toast("AI Workflow recommendation failed.", "error");
+      toast(t("toast.workflowRecommendFailed"), "error");
     } finally {
       setRecommending(false);
     }
@@ -298,6 +323,7 @@ export default function GeneratePage() {
     setTokenUsed,
     setWorkflow,
     setWorkflowRecommendResult,
+    t,
     toast,
     workflowRecommendInputKey,
     workflows,
@@ -315,8 +341,7 @@ export default function GeneratePage() {
     );
     if (!fingerprintRes.data?.fingerprint) {
       toast(
-        fingerprintRes.error ??
-          "Failed to load workflow content for resume generation.",
+        fingerprintRes.error ?? t("toast.workflowFingerprintFailed"),
         "error",
       );
       return;
@@ -353,10 +378,7 @@ export default function GeneratePage() {
 
     const jobContext = buildResumeJobContext(job, processSettings.doVerdict);
     if (processSettings.doVerdict && !jobContext) {
-      toast(
-        "AI Verdict result is missing. Go back to Job and run analysis first.",
-        "error",
-      );
+      toast(t("toast.verdictMissing"), "error");
       return;
     }
 
@@ -371,17 +393,17 @@ export default function GeneratePage() {
           : {}),
       });
       if (!res.data) {
-        toast(res.error ?? "AI Resume generation failed.", "error");
+        toast(res.error ?? t("toast.resumeGenerateFailed"), "error");
         return;
       }
 
       setResumeResult(res.data.resume, inputKey);
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
-      toast("Resume generated.", "success");
+      toast(t("toast.resumeGenerated"), "success");
       setActiveStep("Generate");
     } catch {
-      toast("AI Resume generation failed.", "error");
+      toast(t("toast.resumeGenerateFailed"), "error");
     } finally {
       setGeneratingResume(false);
     }
@@ -391,10 +413,7 @@ export default function GeneratePage() {
     if (evaluating) return;
 
     if (!resume || !generationInputKey) {
-      toast(
-        "No generated resume is available. Go back to Workflow and run generation first.",
-        "error",
-      );
+      toast(t("toast.noResumeForEvaluate"), "error");
       return;
     }
 
@@ -403,8 +422,7 @@ export default function GeneratePage() {
     );
     if (!fingerprintRes.data?.fingerprint) {
       toast(
-        fingerprintRes.error ??
-          "Failed to load workflow content for evaluation.",
+        fingerprintRes.error ?? t("toast.evaluationFingerprintFailed"),
         "error",
       );
       return;
@@ -419,10 +437,7 @@ export default function GeneratePage() {
       oneTimePrompt,
     );
     if (currentInputKey !== generationInputKey) {
-      toast(
-        "Workflow content changed. Go back to Workflow to regenerate your resume.",
-        "error",
-      );
+      toast(t("toast.workflowContentChanged"), "error");
       return;
     }
 
@@ -460,17 +475,17 @@ export default function GeneratePage() {
     try {
       const res = await runAiEvaluate({ jobContext, resume });
       if (!res.data) {
-        toast(res.error ?? "AI Evaluate failed.", "error");
+        toast(res.error ?? t("toast.evaluateFailed"), "error");
         return;
       }
 
       setEvaluationResult(res.data.markdown, nextEvaluationInputKey);
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
-      toast("Resume evaluated.", "success");
+      toast(t("toast.resumeEvaluated"), "success");
       setActiveStep("Evaluate");
     } catch {
-      toast("AI Evaluate failed.", "error");
+      toast(t("toast.evaluateFailed"), "error");
     } finally {
       setEvaluating(false);
     }
@@ -479,7 +494,7 @@ export default function GeneratePage() {
   if (loading || !sessionReady) {
     return (
       <main className="flex min-h-[40vh] items-center justify-center text-sm text-muted">
-        Loading…
+        {t("generate.loading")}
       </main>
     );
   }
@@ -496,18 +511,16 @@ export default function GeneratePage() {
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-3">
                 <h1 className="text-2xl font-semibold tracking-tight">
-                  Generate
+                  {t("generate.title")}
                 </h1>
                 <AddButton
                   showLabel
-                  label="New"
+                  label={t("generate.new")}
                   onClick={resetSession}
                   disabled={processBusy}
                 />
               </div>
-              <p className="text-sm text-muted">
-                Prepare the Job Description, then choose a workflow preset.
-              </p>
+              <p className="text-sm text-muted">{t("generate.description")}</p>
             </div>
             <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-3">
               <GenerateStepNavPrevButton />
@@ -577,9 +590,11 @@ export default function GeneratePage() {
           aria-busy="true"
         >
           <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
-            <p className="text-sm font-medium">Recommending workflow…</p>
+            <p className="text-sm font-medium">
+              {t("generate.recommending.title")}
+            </p>
             <p className="mt-1 text-xs text-muted">
-              Please wait while the AI matches your job to a workflow.
+              {t("generate.recommending.description")}
             </p>
           </div>
         </div>

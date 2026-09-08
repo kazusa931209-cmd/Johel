@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/components/app/LocaleProvider";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
@@ -12,21 +13,7 @@ import {
   type CompanyDetail,
   type CompanyWritePayload,
 } from "@/lib/api";
-import {
-  AUTO_MARKDOWN_FORMAT_HINT,
-  needsMarkdownFormatOnSave,
-} from "@/lib/markdown-format";
-import { DESCRIPTION_AS_RESUME_PROMPT_HINT } from "@/lib/entity-description";
-import {
-  COMPANY_DOMAIN_STACK_BAD,
-  COMPANY_DOMAIN_STACK_GOOD,
-  COMPANY_DOMAIN_STACK_GUIDELINE,
-  COMPANY_SHARED_GUIDANCE,
-  COMPANY_STRUCTURED_FIELD_FORMAT,
-  COMPANY_WHAT_IT_IS_BAD,
-  COMPANY_WHAT_IT_IS_GOOD,
-  COMPANY_WHAT_IT_IS_GUIDELINE,
-} from "@/lib/company-field-guidance";
+import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 
 type CompanyFormProps = {
   mode: "create" | "edit";
@@ -58,21 +45,27 @@ function FieldExamples({
   good,
   bad,
   multiline = false,
+  t,
 }: {
   good: string | string[];
   bad: string;
   multiline?: boolean;
+  t: (key: string) => string;
 }) {
   const goodItems = Array.isArray(good) ? good : [good];
   if (multiline) {
     return (
       <div className="space-y-1 text-xs text-muted">
         <p>
-          <span className="font-medium text-foreground">Example:</span>
+          <span className="font-medium text-foreground">
+            {t("crud.companies.form.exampleLabel")}
+          </span>
         </p>
         <pre className="whitespace-pre-wrap font-sans">{goodItems.join("\n")}</pre>
         <p>
-          <span className="font-medium text-foreground">Bad:</span>{" "}
+          <span className="font-medium text-foreground">
+            {t("crud.companies.form.badLabel")}
+          </span>{" "}
           &ldquo;{bad}&rdquo;
         </p>
       </div>
@@ -81,7 +74,9 @@ function FieldExamples({
   return (
     <div className="space-y-1 text-xs text-muted">
       <p>
-        <span className="font-medium text-foreground">Good:</span>{" "}
+        <span className="font-medium text-foreground">
+          {t("crud.companies.form.goodLabel")}
+        </span>{" "}
         {goodItems.map((item, index) => (
           <span key={item}>
             {index > 0 ? " / " : ""}
@@ -90,7 +85,9 @@ function FieldExamples({
         ))}
       </p>
       <p>
-        <span className="font-medium text-foreground">Bad:</span>{" "}
+        <span className="font-medium text-foreground">
+          {t("crud.companies.form.badLabel")}
+        </span>{" "}
         &ldquo;{bad}&rdquo;
       </p>
     </div>
@@ -99,6 +96,7 @@ function FieldExamples({
 
 export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
   const router = useRouter();
+  const { t, tLines } = useLocale();
   const { toast } = useToast();
   const { refreshTokenUsed } = useAiUsage();
   const [alias, setAlias] = useState(initial?.alias ?? "");
@@ -118,16 +116,16 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     e.preventDefault();
     const nextErrors: FieldErrors = {};
     if (!alias.trim()) {
-      nextErrors.alias = "Alias is required.";
+      nextErrors.alias = t("validation.aliasRequired");
     }
     if (!name.trim()) {
-      nextErrors.name = "Company Name is required.";
+      nextErrors.name = t("validation.companyNameRequired");
     }
     if (!whatCompanyIs.trim()) {
-      nextErrors.whatCompanyIs = "What this company is is required.";
+      nextErrors.whatCompanyIs = t("validation.whatCompanyIsRequired");
     }
     if (!domainAndStack.trim()) {
-      nextErrors.domainAndStack = "Domain & Stack is required.";
+      nextErrors.domainAndStack = t("validation.domainAndStackRequired");
     }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -147,11 +145,14 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
         : await createCompany(payload);
     setSaving(false);
     if (res.error || !res.data) {
-      toast(res.error ?? "Save failed", "error");
+      toast(res.error ?? t("toast.companySaveFailed"), "error");
       return;
     }
     await refreshTokenUsed();
-    toast(mode === "edit" ? "Company updated." : "Company created.", "success");
+    toast(
+      mode === "edit" ? t("toast.companyUpdated") : t("toast.companyCreated"),
+      "success",
+    );
     router.push("/companies");
   }
 
@@ -173,20 +174,24 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     >
       <div className="space-y-1">
         <div className="flex items-center gap-3">
-          <BackButton href="/companies" aria-label="Back to companies" />
+          <BackButton
+            href="/companies"
+            aria-label={t("crud.companies.form.backAria")}
+          />
           <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "edit" ? "Edit company" : "Add company"}
+            {mode === "edit"
+              ? t("crud.companies.form.editTitle")
+              : t("crud.companies.form.addTitle")}
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure alias, company name, and structured context fields used as
-          resume-generation prompts.
+          {t("crud.companies.form.description")}
         </p>
       </div>
 
       <label className="block space-y-1 text-sm">
         <span>
-          Alias
+          {t("crud.companies.form.alias")}
           <RequiredMark />
         </span>
         <input
@@ -205,7 +210,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
 
       <label className="block space-y-1 text-sm">
         <span>
-          Company Name
+          {t("crud.companies.form.companyName")}
           <RequiredMark />
         </span>
         <input
@@ -224,10 +229,12 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
 
       <label className="block space-y-1 text-sm">
         <span>
-          What this company is
+          {t("crud.companies.form.whatCompanyIs")}
           <RequiredMark />
         </span>
-        <p className="text-xs text-muted">{COMPANY_WHAT_IT_IS_GUIDELINE}</p>
+        <p className="text-xs text-muted">
+          {t("guidance.company.whatItIsGuideline")}
+        </p>
         <textarea
           value={whatCompanyIs}
           onChange={(e) => {
@@ -243,19 +250,29 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           aria-invalid={Boolean(fieldErrors.whatCompanyIs)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
-        <FieldExamples good={COMPANY_WHAT_IT_IS_GOOD} bad={COMPANY_WHAT_IT_IS_BAD} />
-        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
-        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
+        <FieldExamples
+          t={t}
+          good={t("guidance.company.whatItIsGood")}
+          bad={t("guidance.company.whatItIsBad")}
+        />
+        <p className="text-xs text-muted">
+          {t("guidance.descriptionAsResumePrompt")}
+        </p>
+        <p className="text-xs text-muted">{t("guidance.autoMarkdownFormat")}</p>
         <FieldError message={fieldErrors.whatCompanyIs} />
       </label>
 
       <label className="block space-y-1 text-sm">
         <span>
-          Domain & Stack
+          {t("crud.companies.form.domainAndStack")}
           <RequiredMark />
         </span>
-        <p className="text-xs text-muted">{COMPANY_DOMAIN_STACK_GUIDELINE}</p>
-        <p className="text-xs text-muted">{COMPANY_STRUCTURED_FIELD_FORMAT}</p>
+        <p className="text-xs text-muted">
+          {t("guidance.company.domainStackGuideline")}
+        </p>
+        <p className="text-xs text-muted">
+          {t("guidance.company.structuredFieldFormat")}
+        </p>
         <textarea
           value={domainAndStack}
           onChange={(e) => {
@@ -272,16 +289,19 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
         <FieldExamples
-          good={COMPANY_DOMAIN_STACK_GOOD}
-          bad={COMPANY_DOMAIN_STACK_BAD}
+          t={t}
+          good={tLines("guidance.company.domainStackGood")}
+          bad={t("guidance.company.domainStackBad")}
           multiline
         />
-        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
-        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
+        <p className="text-xs text-muted">
+          {t("guidance.descriptionAsResumePrompt")}
+        </p>
+        <p className="text-xs text-muted">{t("guidance.autoMarkdownFormat")}</p>
         <FieldError message={fieldErrors.domainAndStack} />
       </label>
 
-      <p className="text-xs text-muted">{COMPANY_SHARED_GUIDANCE}</p>
+      <p className="text-xs text-muted">{t("guidance.company.shared")}</p>
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
@@ -289,20 +309,20 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           onClick={() => router.push("/companies")}
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
-          Cancel
+          {t("crud.common.cancel")}
         </button>
         <button
           type="submit"
           className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("crud.common.saving") : t("crud.common.save")}
         </button>
       </div>
 
       {converting ? (
         <BusyOverlay
-          title="Converting to markdown…"
-          description="Please wait while the fields are formatted."
+          title={t("crud.companies.form.convertingTitle")}
+          description={t("crud.companies.form.convertingDescription")}
         />
       ) : null}
     </form>

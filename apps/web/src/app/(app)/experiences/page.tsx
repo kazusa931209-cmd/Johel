@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import {
   AddButton,
@@ -21,6 +22,7 @@ import {
 
 export default function ExperiencesPage() {
   const router = useRouter();
+  const t = useT();
   const { toast } = useToast();
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
@@ -41,7 +43,7 @@ export default function ExperiencesPage() {
       const res = await listExperiences(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
-        toast(res.error ?? "Failed to load experiences", "error");
+        toast(res.error ?? t("toast.experiencesLoadFailed"), "error");
         return;
       }
       setItems(res.data.items);
@@ -49,7 +51,7 @@ export default function ExperiencesPage() {
       setPageSize(res.data.pageSize);
       setPage(res.data.page);
     },
-    [toast],
+    [t, toast],
   );
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function ExperiencesPage() {
       return;
     }
     setDeleting(null);
-    toast("Experience deleted.", "success");
+    toast(t("toast.experienceDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     void load(q, nextPage);
   }
@@ -79,20 +81,22 @@ export default function ExperiencesPage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Experiences</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {t("crud.experiences.title")}
+      </h1>
       <form onSubmit={onFilter} className="flex items-center gap-2">
         <input
           type="search"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
-          placeholder="Search category, problem, actions, or outcome"
+          placeholder={t("crud.experiences.searchPlaceholder")}
           className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
         />
         <button
           type="submit"
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
-          Search
+          {t("crud.common.search")}
         </button>
         <AddButton
           onClick={() => router.push("/experiences/new")}
@@ -103,11 +107,19 @@ export default function ExperiencesPage() {
         <table className="w-full min-w-60 text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">No</th>
-              <th className="px-3 py-2 font-medium">Category</th>
-              <th className="px-3 py-2 font-medium">Problem</th>
-              <th className="px-3 py-2 font-medium">Actions</th>
-              <th className="px-3 py-2 font-medium">Outcome</th>
+              <th className="px-3 py-2 font-medium">{t("crud.common.no")}</th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.experiences.columns.category")}
+              </th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.experiences.columns.problem")}
+              </th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.experiences.columns.actions")}
+              </th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.experiences.columns.outcome")}
+              </th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
@@ -115,13 +127,13 @@ export default function ExperiencesPage() {
             {loading ? (
               <tr>
                 <td colSpan={6} className="px-3 py-8 text-center text-muted">
-                  Loading…
+                  {t("crud.common.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-3 py-8 text-center text-muted">
-                  No experiences yet.
+                  {t("crud.experiences.empty")}
                 </td>
               </tr>
             ) : (
@@ -173,7 +185,7 @@ export default function ExperiencesPage() {
       </div>
       <div className="flex items-center justify-end gap-2 text-sm text-muted">
         <span>
-          Page {page} of {totalPages}
+          {t("crud.common.pageOf", { page, totalPages })}
         </span>
         <button
           type="button"
@@ -181,7 +193,7 @@ export default function ExperiencesPage() {
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
         >
-          Prev
+          {t("crud.common.prev")}
         </button>
         <button
           type="button"
@@ -189,7 +201,7 @@ export default function ExperiencesPage() {
           onClick={() => setPage((p) => p + 1)}
           className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
         >
-          Next
+          {t("crud.common.next")}
         </button>
       </div>
 
@@ -202,13 +214,13 @@ export default function ExperiencesPage() {
 
       {deleting ? (
         <DetailDialog
-          title="Delete experience"
+          title={t("crud.experiences.delete.title")}
           role="alertdialog"
           closeDisabled={deletingBusy}
           onClose={() => setDeleting(null)}
         >
           <p className="text-muted">
-            Delete experience “{deleting.category}”? This cannot be undone.
+            {t("crud.experiences.delete.body", { name: deleting.category })}
           </p>
           <div className="flex justify-end">
             <button
@@ -217,7 +229,9 @@ export default function ExperiencesPage() {
               onClick={() => void onConfirmDelete()}
               className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg disabled:opacity-60"
             >
-              {deletingBusy ? "Deleting…" : "Delete"}
+              {deletingBusy
+                ? t("crud.common.deleting")
+                : t("crud.common.delete")}
             </button>
           </div>
         </DetailDialog>

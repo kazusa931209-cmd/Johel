@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/app/LocaleProvider";
 import {
   AddButton,
   DeleteButton,
@@ -30,6 +31,7 @@ export function WorkflowCompaniesEditor({
   error,
   onClearError,
 }: WorkflowCompaniesEditorProps) {
+  const t = useT();
   const [companyNameById, setCompanyNameById] = useState<Map<string, string>>(
     new Map(),
   );
@@ -90,7 +92,9 @@ export function WorkflowCompaniesEditor({
       .map((id) => experienceLabelById.get(id))
       .filter((label): label is string => Boolean(label));
     if (labels.length === 0) {
-      return `${entry.experienceIds.length} selected`;
+      return t("crud.workflows.companiesEditor.selectedCount", {
+        count: entry.experienceIds.length,
+      });
     }
     if (labels.length <= 2) {
       return labels.join(", ");
@@ -121,14 +125,21 @@ export function WorkflowCompaniesEditor({
       ? companyNameById.get(companies[editIndex].companyId)
       : undefined;
 
+  const deletingCompanyName =
+    deletingIndex !== null
+      ? companyNameById.get(companies[deletingIndex]?.companyId ?? "") ??
+        t("crud.workflows.companiesEditor.thisCompany")
+      : "";
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-medium">Companies</h2>
+          <h2 className="text-sm font-medium">
+            {t("crud.workflows.form.companies")}
+          </h2>
           <p className="text-xs text-muted">
-            Add company entries with period and linked experiences. Edits stay
-            on this page until you Save the workflow.
+            {t("crud.workflows.companiesEditor.draftHint")}
           </p>
         </div>
         <AddButton onClick={openAdd} />
@@ -140,9 +151,15 @@ export function WorkflowCompaniesEditor({
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">Company</th>
-              <th className="px-3 py-2 font-medium">Period</th>
-              <th className="px-3 py-2 font-medium">Experiences</th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.workflows.companiesEditor.company")}
+              </th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.workflows.companiesEditor.period")}
+              </th>
+              <th className="px-3 py-2 font-medium">
+                {t("crud.workflows.companiesEditor.experiences")}
+              </th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
@@ -150,7 +167,7 @@ export function WorkflowCompaniesEditor({
             {companies.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-3 py-6 text-center text-muted">
-                  No company entries yet.
+                  {t("crud.workflows.companiesEditor.empty")}
                 </td>
               </tr>
             ) : (
@@ -198,15 +215,14 @@ export function WorkflowCompaniesEditor({
 
       {deletingIndex !== null ? (
         <DetailDialog
-          title="Delete company entry"
+          title={t("crud.workflows.companiesEditor.deleteEntry")}
           role="alertdialog"
           onClose={() => setDeletingIndex(null)}
         >
           <p className="text-muted">
-            Remove “
-            {companyNameById.get(companies[deletingIndex]?.companyId ?? "") ??
-              "this company"}
-            ” from this workflow? It is stored only when you Save the workflow.
+            {t("crud.workflows.companiesEditor.deleteDraftBody", {
+              name: deletingCompanyName,
+            })}
           </p>
           <div className="flex justify-end">
             <button
@@ -218,7 +234,7 @@ export function WorkflowCompaniesEditor({
               }}
               className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg"
             >
-              Delete
+              {t("crud.common.delete")}
             </button>
           </div>
         </DetailDialog>

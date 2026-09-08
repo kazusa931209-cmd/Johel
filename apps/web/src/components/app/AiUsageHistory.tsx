@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { CopyButton } from "@/components/shared/action-icon-buttons";
@@ -29,11 +30,6 @@ type AiUsageHistoryProps = {
 
 type AiUsageDetailTab = "input" | "output";
 
-const AI_USAGE_DETAIL_TABS: { id: AiUsageDetailTab; label: string }[] = [
-  { id: "input", label: "Input" },
-  { id: "output", label: "Output" },
-];
-
 function AiUsageDetailPanel({
   detail,
   onCopy,
@@ -41,7 +37,13 @@ function AiUsageDetailPanel({
   detail: AiUsageDetail;
   onCopy: (text: string) => void;
 }) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<AiUsageDetailTab>("input");
+
+  const detailTabs: { id: AiUsageDetailTab; label: string }[] = [
+    { id: "input", label: t("aiUsage.input") },
+    { id: "output", label: t("aiUsage.output") },
+  ];
 
   useEffect(() => {
     setActiveTab("input");
@@ -53,11 +55,11 @@ function AiUsageDetailPanel({
   return (
     <section
       className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-background text-sm"
-      aria-label="AI usage detail content"
+      aria-label={t("aiUsage.detailContentAria")}
     >
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-surface-muted px-3 py-2">
-        <div className="flex gap-1" role="tablist" aria-label="Input and output">
-          {AI_USAGE_DETAIL_TABS.map((tab) => {
+        <div className="flex gap-1" role="tablist" aria-label={t("aiUsage.tabsAria")}>
+          {detailTabs.map((tab) => {
             const selected = activeTab === tab.id;
             return (
               <button
@@ -94,7 +96,7 @@ function AiUsageDetailPanel({
         {rawText.trim() ? (
           <AiVerdictMarkdown markdown={rawText} />
         ) : (
-          <p className="text-sm text-muted">—</p>
+          <p className="text-sm text-muted">{t("crud.common.emDash")}</p>
         )}
       </div>
     </section>
@@ -111,20 +113,21 @@ function AiUsageDetailDrawer({
   onClose: () => void;
 }) {
   const { toast } = useToast();
+  const t = useT();
   const open = loading || detail != null;
 
   async function handleCopy(text: string) {
     const ok = await copyTextToClipboard(text);
     if (ok) {
-      toast("Copied to clipboard.", "success");
+      toast(t("toast.copied"), "success");
     } else {
-      toast("Could not copy to clipboard.", "error");
+      toast(t("toast.copyFailed"), "error");
     }
   }
 
   return (
     <Drawer
-      title="AI Usage Detail"
+      title={t("aiUsage.detailTitle")}
       open={open}
       onClose={onClose}
       widthClass="w-[min(56rem,85vw)]"
@@ -133,7 +136,7 @@ function AiUsageDetailDrawer({
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         {loading ? (
-          <p className="text-sm text-muted">Loading…</p>
+          <p className="text-sm text-muted">{t("aiUsage.loading")}</p>
         ) : detail ? (
           <AiUsageDetailPanel
             detail={detail}
@@ -168,9 +171,12 @@ function AiUsageHistoryDrawer({
   onRowClick: (id: string) => void;
   closeOnEscape: boolean;
 }) {
+  const t = useT();
+  const { locale } = useLocale();
+
   return (
     <Drawer
-      title="AI Usage History"
+      title={t("aiUsage.historyTitle")}
       open={open}
       onClose={onClose}
       zIndex={50}
@@ -181,26 +187,34 @@ function AiUsageHistoryDrawer({
           <table className="w-full min-w-240 text-left text-sm">
             <thead className="sticky top-0 z-10 border-b border-border bg-surface-muted text-muted">
               <tr>
-                <th className="px-3 py-2 font-medium">No</th>
-                <th className="px-3 py-2 font-medium">AI</th>
-                <th className="px-3 py-2 font-medium">Model</th>
-                <th className="px-3 py-2 font-medium">Generate Type</th>
-                <th className="px-3 py-2 font-medium">Input Token</th>
-                <th className="px-3 py-2 font-medium">Output Token</th>
-                <th className="px-3 py-2 font-medium">Created At</th>
+                <th className="px-3 py-2 font-medium">{t("aiUsage.columns.no")}</th>
+                <th className="px-3 py-2 font-medium">{t("aiUsage.columns.ai")}</th>
+                <th className="px-3 py-2 font-medium">{t("aiUsage.columns.model")}</th>
+                <th className="px-3 py-2 font-medium">
+                  {t("aiUsage.columns.generateType")}
+                </th>
+                <th className="px-3 py-2 font-medium">
+                  {t("aiUsage.columns.inputToken")}
+                </th>
+                <th className="px-3 py-2 font-medium">
+                  {t("aiUsage.columns.outputToken")}
+                </th>
+                <th className="px-3 py-2 font-medium">
+                  {t("aiUsage.columns.createdAt")}
+                </th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-3 py-8 text-center text-muted">
-                    Loading…
+                    {t("aiUsage.loading")}
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-3 py-8 text-center text-muted">
-                    No AI usage yet.
+                    {t("aiUsage.empty")}
                   </td>
                 </tr>
               ) : (
@@ -221,16 +235,16 @@ function AiUsageHistoryDrawer({
                       {(page - 1) * pageSize + index + 1}
                     </td>
                     <td className="px-3 py-2">
-                      {formatAiProvider(row.aiProvider)}
+                      {formatAiProvider(row.aiProvider, locale)}
                     </td>
                     <td className="px-3 py-2 text-muted">{row.modelName}</td>
                     <td className="px-3 py-2">
-                      {formatGenerateType(row.generateType)}
+                      {formatGenerateType(row.generateType, locale)}
                     </td>
                     <td className="px-3 py-2 tabular-nums">{row.inputToken}</td>
                     <td className="px-3 py-2 tabular-nums">{row.outputToken}</td>
                     <td className="px-3 py-2 text-muted">
-                      {formatAiUsageDate(row.createdAt)}
+                      {formatAiUsageDate(row.createdAt, locale)}
                     </td>
                   </tr>
                 ))
@@ -240,7 +254,7 @@ function AiUsageHistoryDrawer({
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-4 py-3 text-sm text-muted">
           <span>
-            Page {page} of {totalPages}
+            {t("crud.common.pageOf", { page, totalPages })}
           </span>
           <button
             type="button"
@@ -248,7 +262,7 @@ function AiUsageHistoryDrawer({
             onClick={() => onPageChange(Math.max(1, page - 1))}
             className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
           >
-            Prev
+            {t("crud.common.prev")}
           </button>
           <button
             type="button"
@@ -256,7 +270,7 @@ function AiUsageHistoryDrawer({
             onClick={() => onPageChange(page + 1)}
             className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
           >
-            Next
+            {t("crud.common.next")}
           </button>
         </div>
       </div>
@@ -270,6 +284,7 @@ export function AiUsageHistory({
   showFab = true,
 }: AiUsageHistoryProps = {}) {
   const { toast } = useToast();
+  const t = useT();
   const [internalOpen, setInternalOpen] = useState(false);
   const historyOpen = controlledOpen ?? internalOpen;
   const setHistoryOpen = onOpenChange ?? setInternalOpen;
@@ -291,7 +306,7 @@ export function AiUsageHistory({
       const res = await listAiUsage(nextPage);
       setLoading(false);
       if (res.error || !res.data) {
-        toast(res.error ?? "Failed to load AI usage history", "error");
+        toast(res.error ?? t("toast.historyLoadFailed"), "error");
         return;
       }
       setItems(res.data.items);
@@ -299,7 +314,7 @@ export function AiUsageHistory({
       setPageSize(res.data.pageSize);
       setPage(res.data.page);
     },
-    [toast],
+    [t, toast],
   );
 
   useEffect(() => {
@@ -333,7 +348,7 @@ export function AiUsageHistory({
     setDetailLoading(false);
     if (res.error || !res.data) {
       setDetailId(null);
-      toast(res.error ?? "Failed to load AI usage detail", "error");
+      toast(res.error ?? t("toast.detailLoadFailed"), "error");
       return;
     }
     setDetail(res.data);
@@ -344,7 +359,7 @@ export function AiUsageHistory({
       {showFab ? (
         <button
           type="button"
-          aria-label="AI usage history"
+          aria-label={t("aiUsage.fabAria")}
           className={STUDIO_FAB_CLASS}
           onClick={openHistory}
         >

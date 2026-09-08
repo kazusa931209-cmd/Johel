@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/components/app/LocaleProvider";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
@@ -12,21 +13,7 @@ import {
   type ExperienceDetail,
   type ExperienceWritePayload,
 } from "@/lib/api";
-import {
-  AUTO_MARKDOWN_FORMAT_HINT,
-  needsMarkdownFormatOnSave,
-} from "@/lib/markdown-format";
-import { DESCRIPTION_AS_RESUME_PROMPT_HINT } from "@/lib/entity-description";
-import {
-  EXPERIENCE_ACTIONS_GOOD,
-  EXPERIENCE_ACTIONS_GUIDELINE,
-  EXPERIENCE_OUTCOME_GOOD,
-  EXPERIENCE_OUTCOME_GUIDELINE,
-  EXPERIENCE_PROBLEM_GOOD,
-  EXPERIENCE_PROBLEM_GUIDELINE,
-  EXPERIENCE_SHARED_GUIDANCE,
-  EXPERIENCE_STRUCTURED_FIELD_FORMAT,
-} from "@/lib/experience-field-guidance";
+import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 
 type ExperienceFormProps = {
   mode: "create" | "edit";
@@ -54,11 +41,19 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-sm text-danger">{message}</p>;
 }
 
-function FieldExamples({ lines }: { lines: string[] }) {
+function FieldExamples({
+  lines,
+  t,
+}: {
+  lines: string[];
+  t: (key: string) => string;
+}) {
   return (
     <div className="space-y-1 text-xs text-muted">
       <p>
-        <span className="font-medium text-foreground">Example:</span>
+        <span className="font-medium text-foreground">
+          {t("crud.experiences.form.exampleLabel")}
+        </span>
       </p>
       <pre className="whitespace-pre-wrap font-sans">{lines.join("\n")}</pre>
     </div>
@@ -71,6 +66,7 @@ export function ExperienceForm({
   initial,
 }: ExperienceFormProps) {
   const router = useRouter();
+  const { t, tLines } = useLocale();
   const { toast } = useToast();
   const { refreshTokenUsed } = useAiUsage();
   const [category, setCategory] = useState(initial?.category ?? "");
@@ -87,16 +83,16 @@ export function ExperienceForm({
     e.preventDefault();
     const nextErrors: FieldErrors = {};
     if (!category.trim()) {
-      nextErrors.category = "Category is required.";
+      nextErrors.category = t("validation.categoryRequired");
     }
     if (!problem.trim()) {
-      nextErrors.problem = "Problem is required.";
+      nextErrors.problem = t("validation.problemRequired");
     }
     if (!actions.trim()) {
-      nextErrors.actions = "Actions is required.";
+      nextErrors.actions = t("validation.actionsRequired");
     }
     if (!outcome.trim()) {
-      nextErrors.outcome = "Outcome is required.";
+      nextErrors.outcome = t("validation.outcomeRequired");
     }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -116,12 +112,14 @@ export function ExperienceForm({
         : await createExperience(payload);
     setSaving(false);
     if (res.error || !res.data) {
-      toast(res.error ?? "Save failed", "error");
+      toast(res.error ?? t("toast.experienceSaveFailed"), "error");
       return;
     }
     await refreshTokenUsed();
     toast(
-      mode === "edit" ? "Experience updated." : "Experience created.",
+      mode === "edit"
+        ? t("toast.experienceUpdated")
+        : t("toast.experienceCreated"),
       "success",
     );
     router.push("/experiences");
@@ -141,20 +139,24 @@ export function ExperienceForm({
     >
       <div className="space-y-1">
         <div className="flex items-center gap-3">
-          <BackButton href="/experiences" aria-label="Back to experiences" />
+          <BackButton
+            href="/experiences"
+            aria-label={t("crud.experiences.form.backAria")}
+          />
           <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "edit" ? "Edit experience" : "Add experience"}
+            {mode === "edit"
+              ? t("crud.experiences.form.editTitle")
+              : t("crud.experiences.form.addTitle")}
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure category and structured fields used as resume-generation
-          prompts.
+          {t("crud.experiences.form.description")}
         </p>
       </div>
 
       <label className="block space-y-1 text-sm">
         <span>
-          Category
+          {t("crud.experiences.form.category")}
           <RequiredMark />
         </span>
         <input
@@ -173,11 +175,15 @@ export function ExperienceForm({
 
       <label className="block space-y-1 text-sm">
         <span>
-          Problem
+          {t("crud.experiences.form.problem")}
           <RequiredMark />
         </span>
-        <p className="text-xs text-muted">{EXPERIENCE_PROBLEM_GUIDELINE}</p>
-        <p className="text-xs text-muted">{EXPERIENCE_STRUCTURED_FIELD_FORMAT}</p>
+        <p className="text-xs text-muted">
+          {t("guidance.experience.problemGuideline")}
+        </p>
+        <p className="text-xs text-muted">
+          {t("guidance.experience.structuredFieldFormat")}
+        </p>
         <textarea
           value={problem}
           onChange={(e) => {
@@ -190,19 +196,25 @@ export function ExperienceForm({
           aria-invalid={Boolean(fieldErrors.problem)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
-        <FieldExamples lines={EXPERIENCE_PROBLEM_GOOD} />
-        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
-        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
+        <FieldExamples t={t} lines={tLines("guidance.experience.problemGood")} />
+        <p className="text-xs text-muted">
+          {t("guidance.descriptionAsResumePrompt")}
+        </p>
+        <p className="text-xs text-muted">{t("guidance.autoMarkdownFormat")}</p>
         <FieldError message={fieldErrors.problem} />
       </label>
 
       <label className="block space-y-1 text-sm">
         <span>
-          Actions
+          {t("crud.experiences.form.actions")}
           <RequiredMark />
         </span>
-        <p className="text-xs text-muted">{EXPERIENCE_ACTIONS_GUIDELINE}</p>
-        <p className="text-xs text-muted">{EXPERIENCE_STRUCTURED_FIELD_FORMAT}</p>
+        <p className="text-xs text-muted">
+          {t("guidance.experience.actionsGuideline")}
+        </p>
+        <p className="text-xs text-muted">
+          {t("guidance.experience.structuredFieldFormat")}
+        </p>
         <textarea
           value={actions}
           onChange={(e) => {
@@ -215,19 +227,25 @@ export function ExperienceForm({
           aria-invalid={Boolean(fieldErrors.actions)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
-        <FieldExamples lines={EXPERIENCE_ACTIONS_GOOD} />
-        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
-        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
+        <FieldExamples t={t} lines={tLines("guidance.experience.actionsGood")} />
+        <p className="text-xs text-muted">
+          {t("guidance.descriptionAsResumePrompt")}
+        </p>
+        <p className="text-xs text-muted">{t("guidance.autoMarkdownFormat")}</p>
         <FieldError message={fieldErrors.actions} />
       </label>
 
       <label className="block space-y-1 text-sm">
         <span>
-          Outcome
+          {t("crud.experiences.form.outcome")}
           <RequiredMark />
         </span>
-        <p className="text-xs text-muted">{EXPERIENCE_OUTCOME_GUIDELINE}</p>
-        <p className="text-xs text-muted">{EXPERIENCE_STRUCTURED_FIELD_FORMAT}</p>
+        <p className="text-xs text-muted">
+          {t("guidance.experience.outcomeGuideline")}
+        </p>
+        <p className="text-xs text-muted">
+          {t("guidance.experience.structuredFieldFormat")}
+        </p>
         <textarea
           value={outcome}
           onChange={(e) => {
@@ -240,13 +258,15 @@ export function ExperienceForm({
           aria-invalid={Boolean(fieldErrors.outcome)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
-        <FieldExamples lines={EXPERIENCE_OUTCOME_GOOD} />
-        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
-        <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
+        <FieldExamples t={t} lines={tLines("guidance.experience.outcomeGood")} />
+        <p className="text-xs text-muted">
+          {t("guidance.descriptionAsResumePrompt")}
+        </p>
+        <p className="text-xs text-muted">{t("guidance.autoMarkdownFormat")}</p>
         <FieldError message={fieldErrors.outcome} />
       </label>
 
-      <p className="text-xs text-muted">{EXPERIENCE_SHARED_GUIDANCE}</p>
+      <p className="text-xs text-muted">{t("guidance.experience.shared")}</p>
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
@@ -254,20 +274,20 @@ export function ExperienceForm({
           onClick={() => router.push("/experiences")}
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
-          Cancel
+          {t("crud.common.cancel")}
         </button>
         <button
           type="submit"
           className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("crud.common.saving") : t("crud.common.save")}
         </button>
       </div>
 
       {converting ? (
         <BusyOverlay
-          title="Converting to markdown…"
-          description="Please wait while the fields are formatted."
+          title={t("crud.experiences.form.convertingTitle")}
+          description={t("crud.experiences.form.convertingDescription")}
         />
       ) : null}
     </form>

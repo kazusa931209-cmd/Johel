@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, Suspense, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
+import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { PromptEditDialog } from "@/components/PromptEditDialog";
 import { EditButton } from "@/components/shared/action-icon-buttons";
@@ -10,21 +11,22 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 import { getPrompts, savePrompt, type PromptKind } from "@/lib/api";
-import {
-  AUTO_MARKDOWN_FORMAT_HINT,
-  needsMarkdownFormatOnSave,
-} from "@/lib/markdown-format";
+import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 import {
   DEFAULT_EVALUATE_PROMPT,
   DEFAULT_GENERATE_PROMPT,
   DEFAULT_VERDICT_PROMPT,
-  EVALUATE_PROMPT_PLACEHOLDER,
-  GENERATE_PROMPT_JOB_CONTEXT_HINT,
-  GENERATE_PROMPT_PLACEHOLDER,
-  EVALUATE_PROMPT_JOB_HINT,
-  SYSTEM_PROMPT_QUALITY_NOTICE,
-  VERDICT_PROMPT_PLACEHOLDER,
-  VERDICT_PROMPT_RESUME_HINT,
+  getAutoMarkdownFormatHint,
+  getEvaluatePromptJobHint,
+  getEvaluatePromptPlaceholder,
+  getGeneratePromptJobContextHint,
+  getGeneratePromptPlaceholder,
+  getPromptEditLabel,
+  getPromptFieldLabel,
+  getPromptTabLabel,
+  getSystemPromptQualityNotice,
+  getVerdictPromptPlaceholder,
+  getVerdictPromptResumeHint,
 } from "@/lib/prompts";
 
 function RequiredMark() {
@@ -44,41 +46,16 @@ type PromptTab = PromptKind;
 
 type PromptFieldConfig = {
   kind: PromptTab;
-  label: string;
-  editLabel: string;
-  placeholder: string;
-  resumeHint?: string;
   rows: number;
 };
 
-const PROMPT_TABS: PromptFieldConfig[] = [
-  {
-    kind: "verdict",
-    label: "Verdict Prompt",
-    editLabel: "Edit Verdict Prompt",
-    placeholder: VERDICT_PROMPT_PLACEHOLDER,
-    resumeHint: VERDICT_PROMPT_RESUME_HINT,
-    rows: 24,
-  },
-  {
-    kind: "generate",
-    label: "Generate Prompt",
-    editLabel: "Edit Generate Prompt",
-    placeholder: GENERATE_PROMPT_PLACEHOLDER,
-    resumeHint: GENERATE_PROMPT_JOB_CONTEXT_HINT,
-    rows: 24,
-  },
-  {
-    kind: "evaluate",
-    label: "Evaluate Prompt",
-    editLabel: "Edit Evaluate Prompt",
-    placeholder: EVALUATE_PROMPT_PLACEHOLDER,
-    resumeHint: EVALUATE_PROMPT_JOB_HINT,
-    rows: 24,
-  },
+const PROMPT_TAB_CONFIGS: PromptFieldConfig[] = [
+  { kind: "verdict", rows: 24 },
+  { kind: "generate", rows: 24 },
+  { kind: "evaluate", rows: 24 },
 ];
 
-const PROMPT_TAB_IDS = new Set(PROMPT_TABS.map((tab) => tab.kind));
+const PROMPT_TAB_IDS = new Set(PROMPT_TAB_CONFIGS.map((tab) => tab.kind));
 
 const DEFAULT_PROMPT_BY_KIND: Record<PromptTab, string> = {
   verdict: DEFAULT_VERDICT_PROMPT,
@@ -111,18 +88,24 @@ const EMPTY_PROMPTS: PromptValues = {
   evaluatePrompt: "",
 };
 
+function PromptsPageFallback() {
+  const t = useT();
+
+  return (
+    <section className="mx-auto w-full max-w-3xl space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("settings.prompts.title")}
+        </h1>
+        <p className="text-muted">{t("settings.prompts.loading")}</p>
+      </div>
+    </section>
+  );
+}
+
 export default function PromptsPage() {
   return (
-    <Suspense
-      fallback={
-        <section className="mx-auto w-full max-w-3xl space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Prompts</h1>
-            <p className="text-muted">Loading…</p>
-          </div>
-        </section>
-      }
-    >
+    <Suspense fallback={<PromptsPageFallback />}>
       <PromptsPageContent />
     </Suspense>
   );
@@ -132,9 +115,35 @@ function PromptsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const t = useT();
   const { refreshTokenUsed } = useAiUsage();
   const activeTab = parsePromptTab(searchParams.get("tab"));
-  const activeField = PROMPT_TABS.find((tab) => tab.kind === activeTab)!;
+  const activeField = PROMPT_TAB_CONFIGS.find((tab) => tab.kind === activeTab)!;
+
+  const promptTabs = useMemo(
+    () =>
+      PROMPT_TAB_CONFIGS.map((tab) => ({
+        ...tab,
+        label: getPromptFieldLabel(t, tab.kind),
+        editLabel: getPromptEditLabel(t, tab.kind),
+        tabLabel: getPromptTabLabel(t, tab.kind),
+        placeholder:
+          tab.kind === "verdict"
+            ? getVerdictPromptPlaceholder(t)
+            : tab.kind === "generate"
+              ? getGeneratePromptPlaceholder(t)
+              : getEvaluatePromptPlaceholder(t),
+        resumeHint:
+          tab.kind === "verdict"
+            ? getVerdictPromptResumeHint(t)
+            : tab.kind === "generate"
+              ? getGeneratePromptJobContextHint(t)
+              : getEvaluatePromptJobHint(t),
+      })),
+    [t],
+  );
+
+  const activeTabConfig = promptTabs.find((tab) => tab.kind === activeTab)!;
 
   const [prompts, setPrompts] = useState<PromptValues>(EMPTY_PROMPTS);
   const [storedPrompts, setStoredPrompts] =
@@ -156,7 +165,7 @@ function PromptsPageContent() {
     getPrompts().then((res) => {
       if (cancelled) return;
       if (res.error) {
-        toast(res.error ?? "Failed to load prompts.", "error");
+        toast(res.error ?? t("toast.promptsLoadFailed"), "error");
       } else if (res.data) {
         setPrompts(res.data);
         setStoredPrompts(res.data);
@@ -166,7 +175,7 @@ function PromptsPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [toast]);
+  }, [t, toast]);
 
   useEffect(() => {
     setFieldError(undefined);
@@ -188,7 +197,9 @@ function PromptsPageContent() {
   async function onSave(e: FormEvent) {
     e.preventDefault();
     if (!activeValue.trim()) {
-      setFieldError(`${activeField.label} is required.`);
+      setFieldError(
+        t("validation.promptRequired", { label: activeTabConfig.label }),
+      );
       return;
     }
     setFieldError(undefined);
@@ -197,13 +208,13 @@ function PromptsPageContent() {
     const res = await savePrompt(activeTab, activeValue.trim());
     setSavingKind(null);
     if (res.error || !res.data) {
-      toast(res.error ?? "Save failed.", "error");
+      toast(res.error ?? t("toast.promptSaveFailed"), "error");
       return;
     }
     setPrompts(res.data);
     setStoredPrompts(res.data);
     await refreshTokenUsed();
-    toast(`${activeField.label} saved.`, "success");
+    toast(t("toast.promptSaved", { label: activeTabConfig.label }), "success");
   }
 
   async function onConfirmReset() {
@@ -211,14 +222,17 @@ function PromptsPageContent() {
     const res = await savePrompt(activeTab, DEFAULT_PROMPT_BY_KIND[activeTab]);
     setResettingKind(null);
     if (res.error || !res.data) {
-      toast(res.error ?? "Reset failed.", "error");
+      toast(res.error ?? t("toast.promptResetFailed"), "error");
       return;
     }
     setPrompts(res.data);
     setStoredPrompts(res.data);
     setConfirmReset(false);
     await refreshTokenUsed();
-    toast(`${activeField.label} reset to default.`, "success");
+    toast(
+      t("toast.promptResetSuccess", { label: activeTabConfig.label }),
+      "success",
+    );
   }
 
   const converting =
@@ -234,21 +248,21 @@ function PromptsPageContent() {
   return (
     <section className="mx-auto w-full max-w-3xl space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Prompts</h1>
-        <p className="text-muted">
-          Configure system prompts used when checking Job Descriptions,
-          generating résumés, and evaluating résumés. Each tab saves
-          independently.
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("settings.prompts.title")}
+        </h1>
+        <p className="text-muted">{t("settings.prompts.description")}</p>
+        <p className="text-sm text-foreground">
+          {getSystemPromptQualityNotice(t)}
         </p>
-        <p className="text-sm text-foreground">{SYSTEM_PROMPT_QUALITY_NOTICE}</p>
       </div>
 
       <div
         className="flex gap-1 border-b border-border"
         role="tablist"
-        aria-label="Prompt types"
+        aria-label={t("settings.prompts.tablistAria")}
       >
-        {PROMPT_TABS.map((tab) => {
+        {promptTabs.map((tab) => {
           const selected = activeTab === tab.kind;
           return (
             <button
@@ -266,7 +280,7 @@ function PromptsPageContent() {
               ].join(" ")}
               onClick={() => setActiveTab(tab.kind)}
             >
-              {tab.label.replace(" Prompt", "")}
+              {tab.tabLabel}
             </button>
           );
         })}
@@ -285,17 +299,17 @@ function PromptsPageContent() {
         >
           <div className="flex items-center justify-between gap-2">
             <span>
-              {activeField.label}
+              {activeTabConfig.label}
               <RequiredMark />
             </span>
             <EditButton
-              label={activeField.editLabel}
+              label={activeTabConfig.editLabel}
               disabled={loading}
               onClick={() => setEditing(true)}
             />
           </div>
           {loading ? (
-            <p className="text-muted">Loading…</p>
+            <p className="text-muted">{t("settings.prompts.loading")}</p>
           ) : (
             <div
               className="min-h-16 rounded-md border border-border bg-background px-3 py-2"
@@ -304,13 +318,13 @@ function PromptsPageContent() {
               {activeValue.trim() ? (
                 <AiVerdictMarkdown markdown={activeValue} />
               ) : (
-                <p className="text-muted">{activeField.placeholder}</p>
+                <p className="text-muted">{activeTabConfig.placeholder}</p>
               )}
             </div>
           )}
-          <p className="text-xs text-muted">{AUTO_MARKDOWN_FORMAT_HINT}</p>
-          {activeField.resumeHint ? (
-            <p className="text-xs text-muted">{activeField.resumeHint}</p>
+          <p className="text-xs text-muted">{getAutoMarkdownFormatHint(t)}</p>
+          {activeTabConfig.resumeHint ? (
+            <p className="text-xs text-muted">{activeTabConfig.resumeHint}</p>
           ) : null}
           <FieldError message={fieldError} />
         </div>
@@ -322,28 +336,31 @@ function PromptsPageContent() {
             onClick={() => setConfirmReset(true)}
             className="rounded-md border border-border bg-surface-muted px-3 py-2 text-sm font-medium text-foreground hover:opacity-90 disabled:opacity-60"
           >
-            Reset to Default
+            {t("settings.prompts.resetToDefault")}
           </button>
           <button
             type="submit"
             disabled={actionBusy}
             className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
           >
-            {saveBusy ? "Saving…" : "Save"}
+            {saveBusy
+              ? t("settings.prompts.saving")
+              : t("settings.prompts.save")}
           </button>
         </div>
       </form>
 
       {confirmReset ? (
         <DetailDialog
-          title="Reset to default"
+          title={t("settings.prompts.resetDialog.title")}
           role="alertdialog"
           closeDisabled={resetBusy}
           onClose={() => setConfirmReset(false)}
         >
           <p className="text-muted">
-            Reset {activeField.label} to the default template? Your current
-            text will be replaced.
+            {t("settings.prompts.resetDialog.body", {
+              label: activeTabConfig.label,
+            })}
           </p>
           <div className="flex justify-end">
             <button
@@ -352,7 +369,9 @@ function PromptsPageContent() {
               onClick={() => void onConfirmReset()}
               className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
             >
-              {resetBusy ? "Resetting…" : "Reset to Default"}
+              {resetBusy
+                ? t("settings.prompts.resetting")
+                : t("settings.prompts.resetToDefault")}
             </button>
           </div>
         </DetailDialog>
@@ -360,10 +379,12 @@ function PromptsPageContent() {
 
       {editing ? (
         <PromptEditDialog
-          title={`Edit ${activeField.label}`}
+          title={t("settings.prompts.edit.dialogTitle", {
+            label: activeTabConfig.label,
+          })}
           value={activeValue}
           rows={activeField.rows}
-          placeholder={activeField.placeholder}
+          placeholder={activeTabConfig.placeholder}
           onClose={() => setEditing(false)}
           onApply={(nextValue) => {
             setActivePrompt(nextValue);
@@ -374,11 +395,15 @@ function PromptsPageContent() {
 
       {converting ? (
         <BusyOverlay
-          title={resetBusy ? "Resetting to default…" : "Converting to markdown…"}
+          title={
+            resetBusy
+              ? t("settings.prompts.busy.resettingTitle")
+              : t("settings.prompts.busy.convertingTitle")
+          }
           description={
             resetBusy
-              ? "Please wait while the default prompt is saved."
-              : "Please wait while your prompt is formatted."
+              ? t("settings.prompts.busy.resettingDescription")
+              : t("settings.prompts.busy.convertingDescription")
           }
         />
       ) : null}

@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
+import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
@@ -48,6 +49,7 @@ export function PcewSection<T extends { id: string }>({
   renderDetailDialog,
 }: PcewSectionProps<T>) {
   const { toast } = useToast();
+  const t = useT();
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,10 +79,10 @@ export function PcewSection<T extends { id: string }>({
       <div className="space-y-1">
         <h3 className="text-base font-semibold tracking-tight">{title}</h3>
         {selectionMode === "single" ? (
-          <p className="text-xs text-muted">Click a row to select one.</p>
+          <p className="text-xs text-muted">{t("generate.pcewSection.selectSingle")}</p>
         ) : (
           <p className="text-xs text-muted">
-            Click rows to select or deselect multiple.
+            {t("generate.pcewSection.selectMultiple")}
           </p>
         )}
       </div>
@@ -90,7 +92,7 @@ export function PcewSection<T extends { id: string }>({
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="w-10 px-3 py-2">
-                <span className="sr-only">Select</span>
+                <span className="sr-only">{t("generate.pcewSection.selectColumn")}</span>
               </th>
               {columns.map((column) => (
                 <th
@@ -107,7 +109,7 @@ export function PcewSection<T extends { id: string }>({
             {loading ? (
               <tr>
                 <td colSpan={colSpan} className="px-3 py-8 text-center text-muted">
-                  Loading…
+                  {t("generate.pcewSection.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
 import { PcewSection } from "@/components/generate/PcewSection";
@@ -11,7 +12,6 @@ import {
   type CompanyDetail,
   type ExperienceDetail,
 } from "@/lib/api";
-import { WORKFLOW_ROLE_CONTEXT_GUIDELINE } from "@/lib/workflow-field-guidance";
 
 type WorkflowCompanyDialogProps = {
   mode: "add" | "edit";
@@ -55,6 +55,7 @@ export function WorkflowCompanyDialog({
   onSave,
   onClose,
 }: WorkflowCompanyDialogProps) {
+  const t = useT();
   const [companyId, setCompanyId] = useState(initial.companyId);
   const [startDate, setStartDate] = useState(initial.startDate);
   const [endDate, setEndDate] = useState(initial.endDate);
@@ -92,19 +93,19 @@ export function WorkflowCompanyDialog({
   function applySave() {
     const nextErrors: typeof errors = {};
     if (mode === "add" && !companyId) {
-      nextErrors.companyId = "Select one company.";
+      nextErrors.companyId = t("validation.companyRequired");
     }
     if (!startDate.trim()) {
-      nextErrors.startDate = "Start is required.";
+      nextErrors.startDate = t("validation.startDateRequired");
     }
     if (!endDate.trim()) {
-      nextErrors.endDate = "End is required.";
+      nextErrors.endDate = t("validation.endDateRequired");
     }
     if (!roleContext.trim()) {
-      nextErrors.roleContext = "Role Context is required.";
+      nextErrors.roleContext = t("validation.roleContextRequired");
     }
     if (experienceIds.length < 1) {
-      nextErrors.experienceIds = "Select at least one experience.";
+      nextErrors.experienceIds = t("validation.experiencesMinOne");
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -123,7 +124,11 @@ export function WorkflowCompanyDialog({
   return (
     <DetailDialog
       mode="form"
-      title={mode === "add" ? "Add company" : "Edit company"}
+      title={
+        mode === "add"
+          ? t("crud.workflows.companiesEditor.addCompany")
+          : t("crud.workflows.companiesEditor.editCompany")
+      }
       onClose={onClose}
       panelClassName="flex max-h-[90vh] max-w-3xl flex-col overflow-hidden"
       contentClassName="flex min-h-0 flex-1 flex-col overflow-hidden text-sm"
@@ -132,7 +137,7 @@ export function WorkflowCompanyDialog({
         {mode === "edit" && companyName ? (
           <div className="space-y-1">
             <div className="text-xs font-medium tracking-wide text-muted uppercase">
-              Company
+              {t("crud.workflows.companiesEditor.company")}
             </div>
             <div className="rounded-md border border-border px-3 py-2 font-medium">
               {companyName}
@@ -140,8 +145,8 @@ export function WorkflowCompanyDialog({
           </div>
         ) : (
           <PcewSection<CompanyDetail>
-            title="Company"
-            emptyLabel="No companies found."
+            title={t("crud.workflows.companiesEditor.company")}
+            emptyLabel={t("crud.workflows.companiesEditor.emptyCompanies")}
             error={errors.companyId}
             selectionMode="single"
             isSelected={(id) => companyId === id}
@@ -152,21 +157,21 @@ export function WorkflowCompanyDialog({
               }
             }}
             fetchAll={fetchCompanies}
-            loadErrorLabel="Failed to load companies"
+            loadErrorLabel={t("toast.companiesLoadFailed")}
             viewing={viewingCompany}
             onView={setViewingCompany}
             minWidthClass="min-w-[560px]"
             columns={[
               {
-                header: "Alias",
+                header: t("crud.companies.columns.alias"),
                 cell: (row) => <span className="font-medium">{row.alias}</span>,
               },
               {
-                header: "Company Name",
+                header: t("crud.companies.columns.companyName"),
                 cell: (row) => row.name,
               },
               {
-                header: "What this company is",
+                header: t("crud.companies.columns.whatCompanyIs"),
                 className: "max-w-[280px] truncate text-muted",
                 cell: (row) => row.whatCompanyIs,
               },
@@ -183,7 +188,7 @@ export function WorkflowCompanyDialog({
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1 text-sm">
             <span>
-              Start
+              {t("crud.workflows.companiesEditor.start")}
               <RequiredMark />
             </span>
             <input
@@ -201,7 +206,7 @@ export function WorkflowCompanyDialog({
           </label>
           <label className="block space-y-1 text-sm">
             <span>
-              End
+              {t("crud.workflows.companiesEditor.end")}
               <RequiredMark />
             </span>
             <input
@@ -221,10 +226,12 @@ export function WorkflowCompanyDialog({
 
         <label className="block space-y-1 text-sm">
           <span>
-            Role Context
+            {t("crud.workflows.companiesEditor.roleContext")}
             <RequiredMark />
           </span>
-          <p className="text-xs text-muted">{WORKFLOW_ROLE_CONTEXT_GUIDELINE}</p>
+          <p className="text-xs text-muted">
+            {t("guidance.workflow.roleContextGuideline")}
+          </p>
           <input
             value={roleContext}
             onChange={(e) => {
@@ -240,8 +247,8 @@ export function WorkflowCompanyDialog({
         </label>
 
         <PcewSection<ExperienceDetail>
-          title="Experiences"
-          emptyLabel="No experiences found."
+          title={t("crud.workflows.companiesEditor.experiences")}
+          emptyLabel={t("crud.workflows.companiesEditor.emptyExperiences")}
           error={errors.experienceIds}
           selectionMode="multiple"
           isSelected={(id) => experienceIds.includes(id)}
@@ -255,18 +262,18 @@ export function WorkflowCompanyDialog({
             }
           }}
           fetchAll={fetchExperiences}
-          loadErrorLabel="Failed to load experiences"
+          loadErrorLabel={t("toast.experiencesLoadFailed")}
           viewing={viewingExperience}
           onView={setViewingExperience}
           columns={[
             {
-              header: "Category",
+              header: t("crud.experiences.columns.category"),
               cell: (row) => (
                 <span className="font-medium">{row.category}</span>
               ),
             },
             {
-              header: "Problem",
+              header: t("crud.experiences.columns.problem"),
               className: "max-w-[240px] truncate text-muted",
               cell: (row) => row.problem,
             },
@@ -286,7 +293,7 @@ export function WorkflowCompanyDialog({
           onClick={applySave}
           className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
         >
-          Save
+          {t("crud.common.save")}
         </button>
       </div>
     </DetailDialog>

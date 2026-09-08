@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/app/LocaleProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { WorkflowCompaniesEditor } from "@/components/WorkflowCompaniesEditor";
 import { WorkflowProfilePicker } from "@/components/WorkflowPcewPicker";
@@ -12,7 +13,6 @@ import {
   type WorkflowDetail,
   type WorkflowWritePayload,
 } from "@/lib/api";
-import { DESCRIPTION_AS_RESUME_PROMPT_HINT } from "@/lib/entity-description";
 import {
   WORKFLOW_LANGUAGES,
   validateWorkflowEditorContent,
@@ -64,6 +64,7 @@ function ChevronDownIcon({ className }: { className?: string }) {
 
 export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
   const router = useRouter();
+  const t = useT();
   const { toast } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -81,14 +82,14 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     e.preventDefault();
     const nextErrors: FieldErrors = {};
     if (!name.trim()) {
-      nextErrors.name = "Name is required.";
+      nextErrors.name = t("validation.nameRequired");
     }
     if (!description.trim()) {
-      nextErrors.description = "Description is required.";
+      nextErrors.description = t("validation.descriptionRequired");
     }
     Object.assign(
       nextErrors,
-      validateWorkflowEditorContent({ profileId, companies }),
+      validateWorkflowEditorContent({ profileId, companies }, t),
     );
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -109,11 +110,11 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
         : await createWorkflow(payload);
     setSaving(false);
     if (res.error || !res.data) {
-      toast(res.error ?? "Save failed", "error");
+      toast(res.error ?? t("toast.workflowSaveFailed"), "error");
       return;
     }
     toast(
-      mode === "edit" ? "Workflow updated." : "Workflow created.",
+      mode === "edit" ? t("toast.workflowUpdated") : t("toast.workflowCreated"),
       "success",
     );
     router.push("/workflows");
@@ -127,20 +128,24 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
     >
       <div className="space-y-1">
         <div className="flex items-center gap-3">
-          <BackButton href="/workflows" aria-label="Back to workflows" />
+          <BackButton
+            href="/workflows"
+            aria-label={t("crud.workflows.form.backAria")}
+          />
           <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "edit" ? "Edit workflow" : "Add workflow"}
+            {mode === "edit"
+              ? t("crud.workflows.form.editTitle")
+              : t("crud.workflows.form.addTitle")}
           </h1>
         </div>
         <p className="pl-12 text-sm text-muted">
-          Configure language, choose a profile, and add company entries with
-          period and linked experiences for this workflow preset.
+          {t("crud.workflows.form.description")}
         </p>
       </div>
 
       <label className="block space-y-1 text-sm">
         <span>
-          Name
+          {t("crud.workflows.form.name")}
           <RequiredMark />
         </span>
         <input
@@ -159,7 +164,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
 
       <label className="block space-y-1 text-sm">
         <span>
-          Description
+          {t("crud.common.description")}
           <RequiredMark />
         </span>
         <textarea
@@ -177,12 +182,14 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
           aria-invalid={Boolean(fieldErrors.description)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
-        <p className="text-xs text-muted">{DESCRIPTION_AS_RESUME_PROMPT_HINT}</p>
+        <p className="text-xs text-muted">
+          {t("guidance.descriptionAsResumePrompt")}
+        </p>
         <FieldError message={fieldErrors.description} />
       </label>
 
       <label className="block space-y-1 text-sm">
-        <span>Language</span>
+        <span>{t("crud.workflows.form.language")}</span>
         <div className="relative">
           <select
             value={language}
@@ -191,7 +198,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
           >
             {WORKFLOW_LANGUAGES.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(`crud.workflows.form.languages.${option.value}`)}
               </option>
             ))}
           </select>
@@ -227,13 +234,13 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
           onClick={() => router.push("/workflows")}
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
-          Cancel
+          {t("crud.common.cancel")}
         </button>
         <button
           type="submit"
           className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("crud.common.saving") : t("crud.common.save")}
         </button>
       </div>
     </form>

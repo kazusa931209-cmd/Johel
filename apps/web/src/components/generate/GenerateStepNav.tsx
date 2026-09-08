@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useT } from "@/components/app/LocaleProvider";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -137,6 +138,7 @@ function useGenerateStepNavContext() {
 
 export function GenerateStepNavPrevButton() {
   const { onPrevRef, meta } = useGenerateStepNavContext();
+  const t = useT();
 
   if (!meta.showPrev) {
     return <div className={navSlotClass} aria-hidden />;
@@ -146,7 +148,7 @@ export function GenerateStepNavPrevButton() {
     <button
       type="button"
       onClick={() => onPrevRef.current?.()}
-      aria-label="Previous"
+      aria-label={t("generate.nav.previous")}
       className={circleButtonClass}
     >
       <ChevronLeftIcon className="h-6 w-6" />
@@ -156,6 +158,7 @@ export function GenerateStepNavPrevButton() {
 
 export function GenerateStepNavNextButton() {
   const { onNextRef, onDownloadRef, meta } = useGenerateStepNavContext();
+  const t = useT();
   const showRight = meta.showNext || meta.showDownload;
 
   if (!showRight) {
@@ -173,7 +176,9 @@ export function GenerateStepNavNextButton() {
         onNextRef.current?.();
       }}
       disabled={meta.nextBusy || meta.downloadBusy}
-      aria-label={meta.showDownload ? "Download" : "Next"}
+      aria-label={
+        meta.showDownload ? t("generate.nav.download") : t("generate.nav.next")
+      }
       className={circleButtonClass}
     >
       {meta.nextBusy || meta.downloadBusy ? (
