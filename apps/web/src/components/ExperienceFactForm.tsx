@@ -166,7 +166,7 @@ export function ExperienceFactForm({
               setUserFacts(event.target.value);
               if (factsError) setFactsError(undefined);
             }}
-            rows={16}
+            rows={24}
             maxLength={FACTS_MAX}
             placeholder={t("crud.experiences.advisor.factsPlaceholder")}
             aria-invalid={Boolean(factsError)}

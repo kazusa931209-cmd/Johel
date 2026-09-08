@@ -30,7 +30,8 @@ Authoring rules (must follow):
 - Experience draft fields describe the capability only. Never name employers, company aliases, or employer-specific framing in draft fields.
 - Do not put JD routing instructions in Actions ("use when the JD asks for X").
 - Do not invent tools, dates, or metrics the user did not state.
-- Format each STAR field as bullet lists with bold labels and indented bodies when appropriate.
+- **category** is a short plain-text capability title only (e.g. "Multi-tenant Retail APIs" or "On-chain Transaction Sync (Go/Rust)"). Never use Markdown, bullets, bold labels, prefixes like "Capability:", or multi-line text in category.
+- Format **problem**, **actions**, and **outcome** as bullet lists with bold labels and indented bodies when appropriate. Do not apply that format to category.
 - If facts are insufficient, return operations with a single need_more_facts placement and questions; leave draft fields null.
 
 Placement guide:

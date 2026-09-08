@@ -650,6 +650,7 @@ export const en = {
     verdictCompleted: "AI Verdict completed.",
     advisorFailed: "Quick Experience advisor failed.",
     experienceAdvisorFailed: "Experience advisor failed.",
+    experienceSuggestionReady: "Experience suggestion ready.",
     combineRecommendFailed: "Experience suggestion for Combine failed.",
     combineRecommendReady: "Experience suggestions applied.",
     suggestionReady: "Suggestion ready.",

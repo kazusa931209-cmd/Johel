@@ -45,11 +45,36 @@ function normalizeNullable(value: string | null | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** Strip accidental Markdown wrappers from category titles. */
+export function sanitizeCategoryTitle(value: string): string {
+  let text = value.trim();
+  // Collapse multi-line category into a single line
+  text = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .join(" ");
+  // "- **Capability:** Foo" or "* **Label** Foo"
+  text = text.replace(/^[-*]\s+/, "");
+  text = text.replace(/^\*\*([^*]+)\*\*\s*:?\s*/u, (_, label: string) => {
+    const cleaned = label.replace(/:\s*$/u, "").trim();
+    // Drop generic labels like Capability / Category; keep distinctive text
+    if (/^(capability|category|title)$/i.test(cleaned)) {
+      return "";
+    }
+    return `${cleaned}: `;
+  });
+  // Remaining bold markers
+  text = text.replace(/\*\*/g, "");
+  return text.trim();
+}
+
 function normalizeDraft(
   draft: z.infer<typeof draftSchema>,
 ): ExperienceAdviseDraft {
+  const category = normalizeNullable(draft.category ?? null);
   return {
-    category: normalizeNullable(draft.category ?? null),
+    category: category ? sanitizeCategoryTitle(category) : null,
     problem: normalizeNullable(draft.problem ?? null),
     actions: normalizeNullable(draft.actions ?? null),
     outcome: normalizeNullable(draft.outcome ?? null),
