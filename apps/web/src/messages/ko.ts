@@ -271,7 +271,7 @@ export const ko: MessageTree = {
       },
       advisor: {
         description:
-          "직접 한 일을 자유롭게 적어주십시오. AI가 STAR 형식의 경험카드초안을 만들어 확인후 저장합니다.",
+          "직접 한 일을 자유롭게 적어주십시오. AI가 STAR형식의 경험카드초안을 만들어 확인후 저장합니다.",
         factsLabel: "무엇을 했습니까?",
         factsPlaceholder:
           "예: PostgreSQL send lease로 공유지갑 nonce충돌을 해결하고 실패전송을 줄였습니다…",
@@ -285,7 +285,7 @@ export const ko: MessageTree = {
         editingCard: '"{category}" 카드에 사실을 추가합니다.',
         busy: {
           title: "경험초안 작성중…",
-          description: "AI가 사실을 STAR 형식으로 구조화하는 중입니다.",
+          description: "AI가 사실을 STAR형식으로 구조화하는 중입니다.",
         },
         placements: {
           create: "새 경험카드",
@@ -421,7 +421,7 @@ export const ko: MessageTree = {
       title: "검토",
       description:
         "직업광고문에 AI검토를 실행합니다. 결과는 리력서 생성과 평가의 채점 기준으로 사용됩니다.",
-      pending: "다음을 눌러 AI검토를 실행하여주십시오.",
+      pending: "AI검토를 실행하는 중…",
       result: {
         title: "AI검토 결과",
         description:
@@ -464,16 +464,22 @@ export const ko: MessageTree = {
     generateStep: {
       noResume:
         "이 Session에 생성된 리력서가 없습니다. 조합 단계로 돌아가 리력서생성을 다시 실행하여주십시오.",
+      pending: "리력서를 생성하는 중…",
       title: "생성된 리력서",
-      evaluating: {
-        title: "리력서 평가중…",
-        description: "AI가 직업광고문과 리력서를 대비평가하는 중입니다.",
+      generating: {
+        title: "리력서 생성중…",
+        description: "AI가 직업광고문에 맞춰 리력서를 작성하는중입니다.",
       },
     },
     evaluateStep: {
       noEvaluation:
         "이 Session에 평가 결과가 없습니다. 생성 단계로 돌아가 평가를 다시 실행해주십시오.",
+      pending: "리력서를 평가하는 중…",
       title: "평가 결과",
+      evaluating: {
+        title: "리력서 평가중…",
+        description: "AI가 직업광고문과 리력서를 대비평가하는 중입니다.",
+      },
     },
     pcewSection: {
       selectSingle: "행을 눌러 하나를 선택합니다.",

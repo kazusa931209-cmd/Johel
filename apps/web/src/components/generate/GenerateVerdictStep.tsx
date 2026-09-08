@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -46,13 +46,10 @@ export function GenerateVerdictStep({
     [onRunningChange],
   );
 
-  const handleNext = useCallback(async () => {
-    if (running) return;
-
+  const runVerdict = useCallback(async () => {
     const filtered = noiseFilter(job.jobText.trim()).text;
     const inputKey = buildVerdictInputKey(job, { verdictPrompt });
     if (canReuseStoredVerdict({ job, verdictInputKey }, inputKey)) {
-      onNext();
       return;
     }
 
@@ -68,7 +65,6 @@ export function GenerateVerdictStep({
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
       toast(t("toast.verdictCompleted"), "success");
-      onNext();
     } catch {
       toast(t("toast.verdictFailed"), "error");
     } finally {
@@ -76,10 +72,8 @@ export function GenerateVerdictStep({
     }
   }, [
     job,
-    onNext,
     onVerdictResult,
     refreshTokenUsed,
-    running,
     setRunningState,
     setTokenUsed,
     t,
@@ -88,9 +82,27 @@ export function GenerateVerdictStep({
     verdictPrompt,
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      await runVerdict();
+      if (cancelled) return;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [runVerdict]);
+
   useRegisterGenerateStepNav({
     onPrev,
-    onNext: () => void handleNext(),
+    onNext:
+      running || job.acceptedMarkdown
+        ? () => {
+            if (!running && job.acceptedMarkdown) {
+              onNext();
+            }
+          }
+        : undefined,
     nextBusy: running,
   });
 

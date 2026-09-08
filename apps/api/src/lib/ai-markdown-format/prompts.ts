@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { MarkdownFormatKind } from "./types.js";
 
 const KIND_LABELS: Record<MarkdownFormatKind, string> = {
@@ -159,4 +160,123 @@ export function isMarkdownFormatUnchanged(
   stored: string | null | undefined,
 ): boolean {
   return submitted.trim() === (stored ?? "").trim();
+}
+
+export function areExperienceFieldsUnchanged(input: {
+  problem: string;
+  actions: string;
+  outcome: string;
+  stored?: {
+    problem?: string | null;
+    actions?: string | null;
+    outcome?: string | null;
+  };
+}): boolean {
+  return (
+    isMarkdownFormatUnchanged(input.problem, input.stored?.problem) &&
+    isMarkdownFormatUnchanged(input.actions, input.stored?.actions) &&
+    isMarkdownFormatUnchanged(input.outcome, input.stored?.outcome)
+  );
+}
+
+export function getExperienceFieldsFormatSystemMessage(): string {
+  return `${SYSTEM_MESSAGE}
+
+For this task, format three Experience STAR fields (problem, actions, outcome) as separate Markdown values.
+
+Output ONLY valid JSON with exactly these keys: "problem", "actions", "outcome".
+Each value must contain only the converted Markdown for that field (no code fences, no extra keys).
+
+Additional rules (apply to every field):
+${STRUCTURED_LIST_RULES}`;
+}
+
+export function buildExperienceFieldsFormatUserMessage(input: {
+  problem: string;
+  actions: string;
+  outcome: string;
+}): string {
+  return `Convert each field below to clean Markdown. Output JSON only.
+
+Problem:
+---
+${input.problem.trim()}
+---
+
+Actions:
+---
+${input.actions.trim()}
+---
+
+Outcome:
+---
+${input.outcome.trim()}
+---`;
+}
+
+const experienceFieldsResponseSchema = z.object({
+  problem: z.string(),
+  actions: z.string(),
+  outcome: z.string(),
+});
+
+export function parseExperienceFieldsFormatResponse(
+  raw: string,
+  maxLen: number,
+): { problem: string; actions: string; outcome: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    throw new Error("Markdown conversion returned empty text.");
+  }
+
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const jsonText = fenced ? fenced[1].trim() : trimmed;
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(jsonText);
+  } catch {
+    throw new Error("Experience field formatting response was not valid JSON.");
+  }
+
+  const parsed = experienceFieldsResponseSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    throw new Error(
+      "Experience field formatting response did not match the required schema.",
+    );
+  }
+
+  const problem = finalizeFormattedMarkdown(
+    "experienceProblem",
+    parsed.data.problem,
+  );
+  const actions = finalizeFormattedMarkdown(
+    "experienceActions",
+    parsed.data.actions,
+  );
+  const outcome = finalizeFormattedMarkdown(
+    "experienceOutcome",
+    parsed.data.outcome,
+  );
+
+  validateFormattedMarkdown(problem, maxLen);
+  validateFormattedMarkdown(actions, maxLen);
+  validateFormattedMarkdown(outcome, maxLen);
+
+  return { problem, actions, outcome };
+}
+
+export function finalizeExperienceFieldsOnSave(input: {
+  problem: string;
+  actions: string;
+  outcome: string;
+}): { problem: string; actions: string; outcome: string } {
+  return {
+    problem: finalizeFormattedMarkdown("experienceProblem", input.problem.trim()),
+    actions: finalizeFormattedMarkdown(
+      "experienceActions",
+      input.actions.trim(),
+    ),
+    outcome: finalizeFormattedMarkdown("experienceOutcome", input.outcome.trim()),
+  };
 }

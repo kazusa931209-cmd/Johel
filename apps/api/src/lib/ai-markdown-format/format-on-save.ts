@@ -2,11 +2,34 @@ import { isAiProviderId, type AiProviderId } from "../ai-provider.js";
 import { prisma } from "../prisma.js";
 import { recordAiUsage } from "../record-ai-usage.js";
 import {
+  areExperienceFieldsUnchanged,
+  finalizeExperienceFieldsOnSave,
   finalizeFormattedMarkdown,
   isMarkdownFormatUnchanged,
 } from "./prompts.js";
+import { runAiExperienceFieldsMarkdownFormat } from "./run-experience-fields-format.js";
 import { runAiMarkdownFormat } from "./run.js";
 import type { MarkdownFormatKind } from "./types.js";
+
+export type FormatExperienceFieldsOnSaveInput = {
+  userId: string;
+  problem: string;
+  actions: string;
+  outcome: string;
+  stored?: {
+    problem?: string | null;
+    actions?: string | null;
+    outcome?: string | null;
+  };
+  maxLen?: number;
+};
+
+export type FormatExperienceFieldsOnSaveResult = {
+  problem: string;
+  actions: string;
+  outcome: string;
+  skipped: boolean;
+};
 
 export type FormatMarkdownOnSaveInput = {
   userId: string;
@@ -83,4 +106,62 @@ export async function formatMarkdownOnSave(
   });
 
   return { formatted, skipped: false };
+}
+
+export async function formatExperienceFieldsOnSave(
+  input: FormatExperienceFieldsOnSaveInput,
+): Promise<FormatExperienceFieldsOnSaveResult> {
+  const maxLen = input.maxLen ?? 20_000;
+  const problem = input.problem.trim();
+  const actions = input.actions.trim();
+  const outcome = input.outcome.trim();
+
+  if (
+    areExperienceFieldsUnchanged({
+      problem,
+      actions,
+      outcome,
+      stored: input.stored,
+    })
+  ) {
+    return {
+      ...finalizeExperienceFieldsOnSave({ problem, actions, outcome }),
+      skipped: true,
+    };
+  }
+
+  const { provider, apiKey } = await loadUserAiSettings(input.userId);
+  const result = await runAiExperienceFieldsMarkdownFormat(provider, {
+    problem,
+    actions,
+    outcome,
+    apiKey,
+  });
+
+  if (!result.problem.trim() || !result.actions.trim() || !result.outcome.trim()) {
+    throw new Error("Markdown conversion returned empty text.");
+  }
+  if (
+    result.problem.length > maxLen ||
+    result.actions.length > maxLen ||
+    result.outcome.length > maxLen
+  ) {
+    throw new Error(
+      `Markdown conversion exceeded the maximum length of ${maxLen} characters.`,
+    );
+  }
+
+  await recordAiUsage({
+    userId: input.userId,
+    aiProvider: provider,
+    generateType: "markdownFormat",
+    usage: result.usage,
+  });
+
+  return {
+    problem: result.problem,
+    actions: result.actions,
+    outcome: result.outcome,
+    skipped: false,
+  };
 }

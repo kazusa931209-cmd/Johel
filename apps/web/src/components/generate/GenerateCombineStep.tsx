@@ -23,7 +23,6 @@ type GenerateCombineStepProps = {
   jobText: string;
   acceptedMarkdown: string | null;
   doVerdict: boolean;
-  generating: boolean;
   onCombineChange: (combine: CombineSnapshot) => void;
   onOneTimePromptChange: (value: string) => void;
   onPrev: () => void;
@@ -53,7 +52,6 @@ export function GenerateCombineStep({
   jobText,
   acceptedMarkdown,
   doVerdict,
-  generating,
   onCombineChange,
   onOneTimePromptChange,
   onPrev,
@@ -80,7 +78,6 @@ export function GenerateCombineStep({
   useRegisterGenerateStepNav({
     onPrev,
     onNext: handleNext,
-    nextBusy: generating,
   });
 
   function patchCombine(patch: Partial<CombineSnapshot>) {
@@ -275,7 +272,7 @@ export function GenerateCombineStep({
         </label>
       </div>
 
-      {generating || recommending ? (
+      {recommending ? (
         <div
           className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
           role="status"
@@ -284,10 +281,7 @@ export function GenerateCombineStep({
         >
           <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
             <p className="text-sm font-medium">
-              {t("generate.combine.generating.title")}
-            </p>
-            <p className="mt-1 text-xs text-muted">
-              {t("generate.combine.generating.description")}
+              {t("generate.combine.suggesting")}
             </p>
           </div>
         </div>

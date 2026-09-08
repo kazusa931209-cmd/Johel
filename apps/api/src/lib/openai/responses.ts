@@ -111,12 +111,14 @@ export async function runOpenAiSolResponse(
   apiKey: string,
   instructions: string,
   input: string,
+  options?: { jsonOutput?: boolean },
 ): Promise<OpenAiTextResponse> {
   return createTextResponse(apiKey, {
     model: OPENAI_FORMAT_MODEL,
     instructions,
     input,
     reasoningEffort: "low",
+    jsonOutput: options?.jsonOutput,
   });
 }
 

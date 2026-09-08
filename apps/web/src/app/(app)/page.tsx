@@ -236,11 +236,14 @@ export default function GeneratePage() {
     setActiveStep("Combine");
   }, [job, processSettings.doVerdict, setActiveStep, setJob]);
 
-  async function onCombineNext() {
-    if (generatingResume) return;
-
+  function onCombineNext() {
     const errors = validateCombineSnapshot(combine, t);
     if (Object.keys(errors).length > 0) return;
+    setActiveStep("Generate");
+  }
+
+  const runResumeGeneration = useCallback(async () => {
+    if (generatingResume) return;
 
     const fingerprintRes = await getCombineGenerationFingerprint(combine);
     if (!fingerprintRes.data?.fingerprint) {
@@ -275,7 +278,6 @@ export default function GeneratePage() {
         inputKey,
       )
     ) {
-      setActiveStep("Generate");
       return;
     }
 
@@ -304,15 +306,40 @@ export default function GeneratePage() {
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
       toast(t("toast.resumeGenerated"), "success");
-      setActiveStep("Generate");
     } catch {
       toast(t("toast.resumeGenerateFailed"), "error");
     } finally {
       setGeneratingResume(false);
     }
+  }, [
+    combine,
+    evaluationInputKey,
+    evaluationMarkdown,
+    generatingResume,
+    generationInputKey,
+    job,
+    normalizedActiveStep,
+    oneTimePrompt,
+    processSettings.doVerdict,
+    promptCacheContext,
+    refreshTokenUsed,
+    resume,
+    setResumeResult,
+    setTokenUsed,
+    t,
+    toast,
+    verdictInputKey,
+  ]);
+
+  function onGenerateNext() {
+    if (!resume) {
+      toast(t("toast.noResumeForEvaluate"), "error");
+      return;
+    }
+    setActiveStep("Evaluate");
   }
 
-  async function onGenerateNext() {
+  const runEvaluation = useCallback(async () => {
     if (evaluating) return;
 
     if (!resume || !generationInputKey) {
@@ -366,7 +393,6 @@ export default function GeneratePage() {
         nextEvaluationInputKey,
       )
     ) {
-      setActiveStep("Evaluate");
       return;
     }
 
@@ -383,13 +409,30 @@ export default function GeneratePage() {
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
       toast(t("toast.resumeEvaluated"), "success");
-      setActiveStep("Evaluate");
     } catch {
       toast(t("toast.evaluateFailed"), "error");
     } finally {
       setEvaluating(false);
     }
-  }
+  }, [
+    combine,
+    evaluating,
+    evaluationInputKey,
+    evaluationMarkdown,
+    generationInputKey,
+    job,
+    normalizedActiveStep,
+    oneTimePrompt,
+    processSettings.doVerdict,
+    promptCacheContext,
+    refreshTokenUsed,
+    resume,
+    setEvaluationResult,
+    setTokenUsed,
+    t,
+    toast,
+    verdictInputKey,
+  ]);
 
   const runLabel = combine.emphasis.trim() || combine.language;
 
@@ -461,7 +504,6 @@ export default function GeneratePage() {
               jobText={job.jobText}
               acceptedMarkdown={job.acceptedMarkdown}
               doVerdict={processSettings.doVerdict}
-              generating={generatingResume}
               onCombineChange={setCombine}
               onOneTimePromptChange={setOneTimePrompt}
               onPrev={() => goToAdjacentStep("prev")}
@@ -473,7 +515,8 @@ export default function GeneratePage() {
               resume={resume}
               runLabel={runLabel}
               doEvaluate={processSettings.doEvaluate}
-              evaluating={evaluating}
+              generating={generatingResume}
+              onAutoGenerate={runResumeGeneration}
               onPrev={() => goToAdjacentStep("prev")}
               onNext={onGenerateNext}
             />
@@ -483,6 +526,8 @@ export default function GeneratePage() {
               resume={resume}
               runLabel={runLabel}
               evaluationMarkdown={evaluationMarkdown}
+              evaluating={evaluating}
+              onAutoEvaluate={runEvaluation}
               onPrev={() => goToAdjacentStep("prev")}
             />
           ) : null}

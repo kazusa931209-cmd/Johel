@@ -1,4 +1,4 @@
-import { formatMarkdownOnSave } from "../ai-markdown-format/format-on-save.js";
+import { formatExperienceFieldsOnSave } from "../ai-markdown-format/format-on-save.js";
 import { prisma } from "../prisma.js";
 import { buildExperienceAdviseFingerprint } from "./fingerprint.js";
 import type {
@@ -6,21 +6,6 @@ import type {
   ExperienceAdviseApplyResult,
   ExperienceAdviseDraft,
 } from "./types.js";
-
-async function formatExperienceOutcomeOnSave(input: {
-  userId: string;
-  submitted: string;
-  stored: string | null | undefined;
-}): Promise<string> {
-  const { formatted } = await formatMarkdownOnSave({
-    userId: input.userId,
-    kind: "experienceOutcome",
-    submitted: input.submitted,
-    stored: input.stored,
-    maxLen: 20_000,
-  });
-  return formatted;
-}
 
 async function formatExperienceFields(input: {
   userId: string;
@@ -41,34 +26,19 @@ async function formatExperienceFields(input: {
   const actionsText = input.draft.actions ?? input.existing?.actions ?? "";
   const outcomeText = input.draft.outcome ?? input.existing?.outcome ?? "";
 
-  const [{ formatted: problem }, { formatted: actions }, outcome] =
-    await Promise.all([
-      formatMarkdownOnSave({
-        userId: input.userId,
-        kind: "experienceProblem",
-        submitted: problemText,
-        stored: input.existing?.problem ?? "",
-        maxLen: 20_000,
-      }),
-      formatMarkdownOnSave({
-        userId: input.userId,
-        kind: "experienceActions",
-        submitted: actionsText,
-        stored: input.existing?.actions ?? "",
-        maxLen: 20_000,
-      }),
-      formatExperienceOutcomeOnSave({
-        userId: input.userId,
-        submitted: outcomeText,
-        stored: input.existing?.outcome ?? "",
-      }),
-    ]);
+  const formatted = await formatExperienceFieldsOnSave({
+    userId: input.userId,
+    problem: problemText,
+    actions: actionsText,
+    outcome: outcomeText,
+    stored: input.existing,
+  });
 
   return {
     category: input.category,
-    problem,
-    actions,
-    outcome,
+    problem: formatted.problem,
+    actions: formatted.actions,
+    outcome: formatted.outcome,
   };
 }
 

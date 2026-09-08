@@ -164,7 +164,7 @@ User browser (:4041)
 - `GET /experiences?q=&page=` — page size 10
 - List order: `category` ascending (same order in the workflow experience picker, which uses the same list API)
 - `GET /experiences/:id` — full detail for the editor (owner only)
-- `POST /experiences` / `PUT /experiences/:id` — `{ category, problem, actions, outcome }` (all required); on write, `problem`, `actions`, and `outcome` are converted to markdown via AI when changed since last save (create always converts); unchanged fields skip conversion; requires Settings provider/apiKey when conversion runs
+- `POST /experiences` / `PUT /experiences/:id` — `{ category, problem, actions, outcome }` (all required); on write, changed STAR fields are converted to markdown via **one batched AI call** (`formatExperienceFieldsOnSave`) when any of the three differ from stored values (create always converts); all unchanged → skip conversion; requires Settings provider/apiKey when conversion runs
 - Search `q` across category, problem, actions, and outcome
 - Web routes: `/experiences` list (columns: Category, Problem, Actions, Outcome); `/experiences/new` add; `/experiences/[id]/edit` edit; editor shows bullet-format guidelines and examples on problem/actions/outcome and shared guidance on one card = one capability unit; `DESCRIPTION_AS_RESUME_PROMPT_HINT` on each prompt field; Save right-aligned
 - **Phase 45 migration note:** `experiences.description` dropped; existing rows backfill `problem` from former `description`, `actions` and `outcome` to empty string — users must fill actions on next edit
@@ -217,7 +217,7 @@ User browser (:4041)
 ## AI Markdown Format (Phase 38, 40)
 
 - Embedded in `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`, `POST/PUT /companies`, `POST/PUT /experiences` write handlers (no separate endpoint)
-- Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; kinds `verdict` | `generate` | `evaluate` | `companyWhatItIs` | `companyDomainAndStack` | `experienceProblem` | `experienceActions` | `experienceOutcome`
+- Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; `formatExperienceFieldsOnSave` batches `problem` / `actions` / `outcome` into one AI call (JSON response, then per-field finalize); kinds `verdict` | `generate` | `evaluate` | `companyWhatItIs` | `companyDomainAndStack` | `experienceProblem` | `experienceActions` | `experienceOutcome`
 - Skip rule: when `submitted.trim() === stored.trim()`, persist without AI (no API key required); prompt kinds still run deterministic `#`→`##` heading cap on save
 - When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); **prompt kinds** additionally require `##` as the largest heading (AI rule + `capPromptHeadings` post-process); **structured list kinds** (`experienceProblem`, `experienceActions`, `experienceOutcome`, `companyDomainAndStack`) format each item as a bullet with a bold label and indented body, strip accidental `#` headings and field-type metadata; strips accidental code fences; rejects empty or over-limit output
 - Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`); OpenAI via `runOpenAiMarkdownFormatResponse` (`gpt-5.6-sol`, reasoning `low`); usage stored as `generateType: "markdownFormat"`; AI Usage History label **Markdown Format**

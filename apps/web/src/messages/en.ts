@@ -421,7 +421,7 @@ export const en = {
       title: "Verdict",
       description:
         "Run AI Verdict on the job description. The result is used as the scoring rubric for resume generation and evaluation.",
-      pending: "Select Next to run AI Verdict.",
+      pending: "Running AI Verdict…",
       result: {
         title: "AI Verdict result",
         description:
@@ -465,16 +465,22 @@ export const en = {
     generateStep: {
       noResume:
         "No generated resume is available for this session. Go back to Combine and run resume generation again.",
+      pending: "Generating your resume…",
       title: "Generated Resume",
-      evaluating: {
-        title: "Evaluating Resume…",
-        description: "Please wait while the AI scores your resume against the job.",
+      generating: {
+        title: "Generating Resume…",
+        description: "Please wait while the AI tailors your resume to the job.",
       },
     },
     evaluateStep: {
       noEvaluation:
         "No evaluation is available for this session. Go back to Generate and run evaluation again.",
+      pending: "Evaluating your resume…",
       title: "Evaluation Result",
+      evaluating: {
+        title: "Evaluating Resume…",
+        description: "Please wait while the AI scores your resume against the job.",
+      },
     },
     pcewSection: {
       selectSingle: "Click a row to select one.",
