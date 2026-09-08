@@ -105,6 +105,14 @@ export const ko: MessageTree = {
         verdictPrompt: "검토 프롬프트",
         generatePrompt: "생성 프롬프트",
         evaluatePrompt: "평가 프롬프트",
+        verdictExtension: "검토 확장",
+        generateExtension: "생성 확장",
+        evaluateExtension: "평가 확장",
+      },
+      extensions: {
+        description:
+          "이 프롬프트 류형에 대한 본인 지침을 추가합니다. 체계프롬프트 뒤에 붙여 본인 계정에만 적용됩니다.",
+        placeholder: "이 프롬프트에 대한 선택 추가내용…",
       },
       edit: {
         verdict: "검토 프롬프트 편집",
@@ -261,6 +269,29 @@ export const ko: MessageTree = {
         convertingTitle: "형식변환중…",
         convertingDescription: "마당를 초기화하는 중입니다.",
       },
+      advisor: {
+        description:
+          "직접 한 일을 자유롭게 적어주세요. AI가 STAR 형식의 경험 카드 초안을 만들어 확인 후 저장합니다.",
+        factsLabel: "무엇을 했습니까?",
+        factsPlaceholder:
+          "예: PostgreSQL send lease로 공유 지갑 nonce 충돌을 해결하고 실패 전송을 줄였습니다…",
+        suggest: "제안",
+        running: "제안 중…",
+        applying: "적용 중…",
+        apply: "적용",
+        suggestionTitle: "경험 제안",
+        rationale: "이유",
+        questions: "질문",
+        editingCard: '"{category}" 카드에 사실을 추가합니다.',
+        busy: {
+          title: "경험 초안 작성 중…",
+          description: "AI가 사실을 STAR 형식으로 구조화하는 중입니다.",
+        },
+        placements: {
+          create: "새 경험 카드",
+          update: "기존 카드 보충",
+        },
+      },
     },
     workflows: {
       detailTitle: "작업흐름 상세",
@@ -337,13 +368,14 @@ export const ko: MessageTree = {
   },
   generate: {
     title: "생성",
-    description: "직업광고문을 준비하고 작업흐름을 선택합니다.",
+    description: "직업광고문을 준비한 뒤 이번 실행에 사용할 개인정보·회사·경험을 조합합니다.",
     new: "새로작성",
     loading: "적재중…",
     steps: {
       ariaLabel: "생성 단계",
       job: "직업광고문",
-      workflow: "작업흐름",
+      verdict: "검토",
+      combine: "조합",
       generate: "생성",
       evaluate: "평가",
     },
@@ -358,16 +390,14 @@ export const ko: MessageTree = {
       missing: "{label} 없음",
       open: "{label} 열기",
       labels: {
-        workflows: "작업흐름",
+        profiles: "개인정보",
+        companies: "회사",
+        experiences: "경험",
         verdictPrompt: "검토 프롬프트",
         generatePrompt: "생성 프롬프트",
         evaluatePrompt: "평가 프롬프트",
         prompts: "프롬프트",
       },
-    },
-    recommending: {
-      title: "작업흐름 추천중…",
-      description: "AI가 직업광고문에 맞는 작업흐름를 찾는중입니다.",
     },
     job: {
       title: "직업광고문",
@@ -384,44 +414,56 @@ export const ko: MessageTree = {
       placeholder: "직업광고문를 붙여넣거나 입력하여주십시오…",
       runningVerdict: {
         title: "AI검토 실행중…",
-        description: "잡음제거와 AI검토가 진행중입니다.",
+        description: "잠시만 기다려주십시오. 잡음제거와 AI 분석이 진행중입니다.",
       },
     },
-    workflow: {
-      title: "작업흐름",
+    verdict: {
+      title: "검토",
       description:
-        "작업흐름를 하나 선택합니다. 보관된 개인정보과 회사항목(련결된 경험포함)이 생성에 사용됩니다.",
-      descriptionWithVerdict:
-        " 리력서생성과 평가는 상기의 AI검토결과를 원문직업광고문 대신 사용합니다.",
-      descriptionWithoutVerdict:
-        " 리력서생성과 평가는 직업광고문단계의 잡음제거된 결과를 사용합니다.",
-      verdictResult: {
+        "직업광고문에 AI검토를 실행합니다. 결과는 리력서 생성과 평가의 채점 기준으로 사용됩니다.",
+      pending: "다음을 눌러 AI검토를 실행하여주십시오.",
+      result: {
         title: "AI검토 결과",
         description:
-          "이 결과는 리력서생성 및 평가시 원문 직업광고문을 대체합니다. 검토프롬프트에 정의된 구조와 추출마당이 맞춤화작업과 출력품질에 직접 영향을 줍니다.",
+          "이 Markdown은 리력서 생성 및 평가 시 원문 직업광고문을 대체합니다.",
       },
-      sectionTitle: "작업흐름",
-      emptyWorkflows: "작업흐름이 없습니다.",
-      loadError: "작업흐름를 적재하지 못했습니다",
-      columns: {
-        name: "이름",
-        description: "설명",
-      },
+    },
+    combine: {
+      title: "조합",
+      description:
+        "이번 실행에 사용할 개인정보, 리력서 출력 언어, 강조, 회사항목(기간·역할·경험)을 선택합니다.",
+      profile: "개인정보",
+      language: "리력서 언어",
+      emphasis: "강조",
+      emphasisHint: "이번 실행에만 적용되는 페르소나·강조(생성 프롬프트에 사용).",
+      emphasisPlaceholder: "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외.",
+      companies: "회사",
+      companiesHint:
+        "리력서 순서대로 회사항목을 추가합니다. 각 항목에 기간, 역할, 경험이 필요합니다.",
       oneTimePrompt: {
-        title: "1회용 프롬프트",
+        title: "일회성 프롬프트",
         description:
-          "이번 실행에만 적용되는 선택항목입니다. 입력하면 보관된 생성프롬프트에 추가되여 리력서생성에 사용됩니다.",
-        label: "1회용 프롬프트",
-        placeholder: "이 리력서에만 적용할 지침을 추가하여주십시오…",
+          "이번 실행에만 적용되는 선택 지침입니다. 입력 시 저장된 생성 프롬프트에 덧붙입니다.",
+        label: "일회성 프롬프트",
+        placeholder: "이번 리력서에만 적용할 지침…",
       },
       generating: {
         title: "리력서 생성중…",
-        description: "AI가 직업광고문에 맞게 리력서를 작성하는중입니다.",
+        description: "AI가 직업광고문에 맞춰 리력서를 작성하는중입니다.",
       },
+      suggestExperiences: "경험 제안",
+      suggesting: "제안중…",
+      suggestMode: "제안 모드",
+      modeGuided: "가이드",
+      modeAuto: "자동",
+      modeGuidedHint:
+        "현재 회사항목과 선택한 경험을 시드로 사용합니다. AI가 추가·제외를 제안합니다.",
+      modeAutoHint:
+        "직업광고문과 검토 결과만으로 경험 풀 인덱스에서 회사별 매핑을 제안합니다.",
     },
     generateStep: {
       noResume:
-        "이 Session에 생성된 리력서가 없습니다. 작업흐름으로 돌아가 리력서생성을 다시 실행하여주십시오.",
+        "이 Session에 생성된 리력서가 없습니다. 조합 단계로 돌아가 리력서생성을 다시 실행하여주십시오.",
       title: "생성된 리력서",
       evaluating: {
         title: "리력서 평가중…",
@@ -534,6 +576,8 @@ export const ko: MessageTree = {
       evaluate: "평가",
       workflowRecommend: "작업흐름 추천",
       authorAdvise: "빠른 경험추가",
+      experienceAdvise: "경험 조언",
+      combineRecommend: "조합 추천",
       promptHelper: "프롬프트 방조자",
       markdownFormat: "형식 초기화",
     },
@@ -591,18 +635,22 @@ export const ko: MessageTree = {
     workflowRecommended: "추천작업흐름: {workflowName} (점수 {score}).",
     workflowThresholdNotMet: "추천림계값을 만족하는 작업흐름가 없습니다{bestScoreSuffix}.",
     workflowBestScoreSuffix: " (최고점수 {score})",
-    workflowFingerprintFailed: "리력서생성용 작업흐름 내용을 적재하지 못했습니다.",
-    verdictMissing: "AI검토결과가 없습니다. 직업광고문 단계로 돌아가 분석을 실행해주십시오.",
+    combineFingerprintFailed: "리력서 생성용 조합 내용을 적재하지 못했습니다.",
+    combineContentChanged: "조합 내용이 변경되었습니다. 조합 단계로 돌아가 리력서를 다시 생성해주십시오.",
+    verdictMissing:
+      "AI검토결과가 없습니다. 검토 단계로 돌아가 분석을 실행해주십시오.",
     resumeGenerateFailed: "AI리력서 생성에 실패했습니다.",
     resumeGenerated: "리력서를 생성했습니다.",
-    noResumeForEvaluate: "생성된 리력서가 없습니다. 작업흐름로 돌아가 생성을 실행해주십시오.",
-    evaluationFingerprintFailed: "평가용 작업흐름 내용을 적재하지 못했습니다.",
-    workflowContentChanged: "작업흐름 내용이 변경되었습니다. 작업흐름으로 돌아가 리력서를 다시 생성해주십시오.",
+    noResumeForEvaluate: "생성된 리력서가 없습니다. 조합 단계로 돌아가 생성을 실행해주십시오.",
+    evaluationFingerprintFailed: "평가용 조합 내용을 적재하지 못했습니다.",
     evaluateFailed: "AI평가에 실패했습니다.",
     resumeEvaluated: "리력서를 평가했습니다.",
     verdictFailed: "AI검토에 실패했습니다.",
     verdictCompleted: "AI검토를 완료했습니다.",
     advisorFailed: "빠른 경험추가 조언에 실패했습니다.",
+    experienceAdvisorFailed: "경험 조언에 실패했습니다.",
+    combineRecommendFailed: "조합 경험 제안에 실패했습니다.",
+    combineRecommendReady: "경험 제안이 적용되었습니다.",
     suggestionReady: "제안이 준비되었습니다.",
     applyFailed: "제안을 적용하지 못했습니다.",
     workspaceUpdated: "작업공간를 갱신했습니다.",
@@ -631,6 +679,7 @@ export const ko: MessageTree = {
     nameRequired: "이름은 필수입니다.",
     descriptionRequired: "설명은 필수입니다.",
     profileRequired: "개인정보를 하나 선택해주십시오.",
+    combineCompaniesRequired: "회사항목을 하나 이상 추가해주십시오.",
     companyRequired: "회사를 하나 선택해주십시오.",
     startDateRequired: "시작일은 필수입니다.",
     endDateRequired: "마감일은 필수입니다.",

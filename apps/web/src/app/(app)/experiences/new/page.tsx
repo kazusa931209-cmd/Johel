@@ -1,7 +1,7 @@
 "use client";
 
-import { ExperienceForm } from "@/components/ExperienceForm";
+import { ExperienceFactForm } from "@/components/ExperienceFactForm";
 
 export default function NewExperiencePage() {
-  return <ExperienceForm mode="create" />;
+  return <ExperienceFactForm mode="create" />;
 }

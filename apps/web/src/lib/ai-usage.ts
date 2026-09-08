@@ -12,6 +12,7 @@ const GENERATE_TYPE_KEYS: Record<string, string> = {
   evaluate: "aiUsage.generateTypes.evaluate",
   workflowRecommend: "aiUsage.generateTypes.workflowRecommend",
   authorAdvise: "aiUsage.generateTypes.authorAdvise",
+  combineRecommend: "aiUsage.generateTypes.combineRecommend",
   promptHelper: "aiUsage.generateTypes.promptHelper",
   markdownFormat: "aiUsage.generateTypes.markdownFormat",
 };

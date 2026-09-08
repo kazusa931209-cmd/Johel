@@ -12,7 +12,7 @@ export async function requireUser(c: Context) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { id: true, email: true },
+    select: { id: true, email: true, role: true },
   });
   return user;
 }

@@ -309,6 +309,43 @@ User browser (:4041)
 - **Korean typography:** when `document.documentElement.lang` is `ko`, UI sans-serif uses bundled **KP CheonRiMa** (`apps/web/src/fonts/KP-CheonRiMa-Medium.ttf` via `next/font/local` in `lib/ko-font.ts`); English keeps Geist Sans
 - **Scope:** All JoHEL UI strings including login/register; not workflow résumé output language or server/API error text
 
+## Architecture refactor (Phases 54–60, 2026-09-09)
+
+**Supersedes** saved Workflow presets, Quick Experience (`ai-author-advise`), and AI Workflow Recommendation for current behavior. Historical phase notes below may still mention workflows.
+
+### Generate timeline
+
+`Job → Verdict? → Combine → Generate → Evaluate?` — controlled by `doVerdict` / `doEvaluate` on `generationProcess`.
+
+### API additions / changes
+
+- `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); full experience pool; `generateType: experienceAdvise`
+- `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, mode: "guided"|"auto", profileId, companies[] }`; returns per-company `experienceIds` + `warnings`; `generateType: combineRecommend`
+- `POST /ai-resume` — body `{ jobContext, combine, oneTimePrompt? }` (replaces `workflowId`)
+- `POST /resume/combine-fingerprint` — fingerprint for Combine snapshot (replaces workflow fingerprint)
+- `GET /auth/me` includes `role` (`admin` | `user`)
+- `GET /prompts` returns `*Extension` fields; `PUT /prompts/{kind}/extension` for all users; full prompt `PUT` for admins only
+- Removed: `GET/POST /workflows`, `POST /ai-workflow-recommend`, `POST /ai-author-advise`, `PUT /settings/process/last-workflow`
+
+### Schema
+
+- Dropped: `workflows`, `workflowCompanies`, `workflowCompanyExperiences`; `generationProcess.doWorkflowRecommendation`, `workflowRecommendationThreshold`, `lastSelectedWorkflowId`
+- Added: `users.role` (default `user`); `prompts.verdictExtension`, `generateExtension`, `evaluateExtension`
+- Migrations: `20260909100000_remove_workflows`, `20260909100001_user_role_prompt_extensions`
+
+### Web
+
+- `GenerateVerdictStep`, `GenerateCombineStep`, `combine-types.ts`, `CombineProfilePicker`, `CombineCompaniesEditor`, `CombineCompanyDialog`
+- Session: `combine: CombineSnapshot` instead of `workflow`
+- Experiences: `ExperienceFactForm`, `ExperienceSuggestionDialog`
+- `StudioBottomFabCluster`: history FAB only
+- Settings Prompts: admin full edit vs user extensions; `compileInstruction` appends extensions
+
+### Resume assembly
+
+- `assembleFromCombineSnapshot()` in `apps/api/src/lib/resume/assemble-input.ts`
+- `ResumeGenerationInput.run` — `{ language, emphasis? }` replaces workflow block
+
 ## Plans
 
 Built Cursor plans for completed work are archived under [`docs/plans/`](./plans/) with a `YYYY-MM-DD-` filename prefix.

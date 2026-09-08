@@ -9,7 +9,7 @@ import { useT } from "@/components/app/LocaleProvider";
 
 export function useResumeDocxDownload(
   resume: GeneratedResume | null,
-  workflowName?: string,
+  runLabel?: string,
 ) {
   const { toast } = useToast();
   const t = useT();
@@ -19,7 +19,7 @@ export function useResumeDocxDownload(
     if (!resume || downloading) return;
     setDownloading(true);
     try {
-      const res = await downloadResumeDocx(resume, workflowName);
+      const res = await downloadResumeDocx(resume, runLabel);
       if (!res.blob) {
         toast(res.error ?? t("generate.download.failed"), "error");
         return;
@@ -28,7 +28,7 @@ export function useResumeDocxDownload(
       const url = URL.createObjectURL(res.blob);
       const anchor = document.createElement("a");
       const fileName =
-        res.fileName ?? buildResumeDocxFileName(resume, workflowName);
+        res.fileName ?? buildResumeDocxFileName(resume, runLabel);
       anchor.href = url;
       anchor.download = fileName;
       anchor.click();
@@ -39,7 +39,7 @@ export function useResumeDocxDownload(
     } finally {
       setDownloading(false);
     }
-  }, [downloading, resume, t, toast, workflowName]);
+  }, [downloading, resume, runLabel, t, toast]);
 
   return { onDownload, downloading };
 }

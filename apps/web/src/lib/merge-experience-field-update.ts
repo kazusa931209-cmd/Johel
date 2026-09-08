@@ -5,7 +5,7 @@ function trimField(value: string | null | undefined): string {
 
 /**
  * Merge existing field text with an AI delta for Quick Experience update placements.
- * Mirrors apps/api/src/lib/ai-author-advise/merge-experience-field.ts.
+ * Mirrors apps/api/src/lib/ai-experience-advise/merge-experience-field.ts.
  */
 export function mergeExperienceFieldUpdate(
   existing: string | null | undefined,

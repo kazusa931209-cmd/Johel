@@ -1,24 +1,27 @@
 import type { ResumeGenerationInput } from "../ai-resume/types.js";
-import { assembleResumeGenerationInput } from "./assemble-input.js";
+import {
+  assembleFromCombineSnapshot,
+  type CombineSnapshot,
+} from "./assemble-input.js";
 
-export function workflowContentFingerprintFromInput(
-  input: Pick<ResumeGenerationInput, "profile" | "companies" | "workflow">,
+export function combineContentFingerprintFromInput(
+  input: Pick<ResumeGenerationInput, "profile" | "companies" | "run">,
 ): string {
   return JSON.stringify({
     profile: input.profile,
     companies: input.companies,
-    workflow: input.workflow,
+    run: input.run,
   });
 }
 
-export async function buildWorkflowGenerationFingerprint(
+export async function buildCombineGenerationFingerprint(
   userId: string,
-  workflowId: string,
+  combine: CombineSnapshot,
 ): Promise<string> {
-  const assembled = await assembleResumeGenerationInput({
+  const assembled = await assembleFromCombineSnapshot({
     userId,
-    workflowId,
+    combine,
     jobContext: "",
   });
-  return workflowContentFingerprintFromInput(assembled);
+  return combineContentFingerprintFromInput(assembled);
 }

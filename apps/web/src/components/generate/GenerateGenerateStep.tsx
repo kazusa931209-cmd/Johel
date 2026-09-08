@@ -10,7 +10,7 @@ import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownlo
 
 type GenerateGenerateStepProps = {
   resume: GeneratedResume | null;
-  workflowName?: string;
+  runLabel?: string;
   doEvaluate: boolean;
   evaluating: boolean;
   onPrev: () => void;
@@ -19,14 +19,14 @@ type GenerateGenerateStepProps = {
 
 export function GenerateGenerateStep({
   resume,
-  workflowName,
+  runLabel,
   doEvaluate,
   evaluating,
   onPrev,
   onNext,
 }: GenerateGenerateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDocxDownload(resume, workflowName);
+  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
   const markdown = useMemo(
     () => (resume ? resumeToMarkdown(resume) : ""),
     [resume],

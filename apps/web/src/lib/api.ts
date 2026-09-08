@@ -1,17 +1,7 @@
-import type {
-  WorkflowDetail,
-  WorkflowWritePayload,
-} from "./workflow";
 import type { ProfileDetail, ProfileWritePayload } from "./profile";
 import type { CompanyDetail, CompanyWritePayload } from "./company";
 import type { ExperienceDetail, ExperienceWritePayload } from "./experience";
 import { AI_API_TIMEOUT_MS, API_TIMEOUT_MS } from "./api-timeout";
-
-export type {
-  WorkflowDetail,
-  WorkflowLanguage,
-  WorkflowWritePayload,
-} from "./workflow";
 
 export type {
   ProfileDetail,
@@ -32,6 +22,7 @@ export type {
 export type User = {
   id: string;
   email: string;
+  role: string;
 };
 
 type ApiError = {
@@ -134,9 +125,6 @@ export function saveSettings(provider: AiProviderId, apiKey: string) {
 export type GenerationProcessSettings = {
   doVerdict: boolean;
   doEvaluate: boolean;
-  doWorkflowRecommendation: boolean;
-  workflowRecommendationThreshold: number;
-  lastSelectedWorkflowId: string | null;
 };
 
 export function getGenerationProcess() {
@@ -146,19 +134,10 @@ export function getGenerationProcess() {
 export function saveGenerationProcess(payload: {
   doVerdict: boolean;
   doEvaluate: boolean;
-  doWorkflowRecommendation: boolean;
-  workflowRecommendationThreshold: number;
 }) {
   return request<GenerationProcessSettings>("/settings/process", {
     method: "PUT",
     body: JSON.stringify(payload),
-  });
-}
-
-export function saveLastSelectedWorkflow(workflowId: string) {
-  return request<GenerationProcessSettings>("/settings/process/last-workflow", {
-    method: "PUT",
-    body: JSON.stringify({ workflowId }),
   });
 }
 
@@ -168,6 +147,9 @@ export type PromptSettings = {
   verdictPrompt: string;
   generatePrompt: string;
   evaluatePrompt: string;
+  verdictExtension: string;
+  generateExtension: string;
+  evaluateExtension: string;
 };
 
 export function getPrompts() {
@@ -187,20 +169,69 @@ export function savePrompt(kind: PromptKind, prompt: string) {
   });
 }
 
-export type Workflow = {
-  id: string;
-  name: string;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
+export function savePromptExtension(kind: PromptKind, extension: string) {
+  const body =
+    kind === "verdict"
+      ? { verdictExtension: extension }
+      : kind === "generate"
+        ? { generateExtension: extension }
+        : { evaluateExtension: extension };
+  return request<PromptSettings>(`/prompts/${kind}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export type CombineSnapshot = {
+  profileId: string;
+  language: string;
+  emphasis: string;
+  companies: Array<{
+    companyId: string;
+    startDate: string;
+    endDate: string;
+    roleContext: string;
+    experienceIds: string[];
+  }>;
 };
 
-export type WorkflowList = {
-  items: Workflow[];
-  total: number;
-  page: number;
-  pageSize: number;
+export function getCombineGenerationFingerprint(combine: CombineSnapshot) {
+  return request<{ fingerprint: string }>("/resume/combine-fingerprint", {
+    method: "POST",
+    body: JSON.stringify({ combine }),
+  });
+}
+
+export type CombineRecommendMode = "auto" | "guided";
+
+export type CombineRecommendRequest = {
+  jobDescription: string;
+  acceptedMarkdown?: string;
+  mode: CombineRecommendMode;
+  profileId: string;
+  companies: CombineSnapshot["companies"];
 };
+
+export type CombineRecommendCompanyResult = {
+  companyId: string;
+  experienceIds: string[];
+  rationale: string;
+};
+
+export type CombineRecommendResult = {
+  companies: CombineRecommendCompanyResult[];
+  warnings: string[];
+  usage: AiVerdictUsage;
+  tokenUsed: number;
+};
+
+export function runAiCombineRecommend(payload: CombineRecommendRequest) {
+  return request<CombineRecommendResult>("/ai-combine-recommend", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
 
 function appendListParams(
   params: URLSearchParams,
@@ -219,44 +250,6 @@ function appendListParams(
   } else if (limit != null) {
     params.set("limit", String(limit));
   }
-}
-
-export function listWorkflows(
-  q: string,
-  page: number | null = 1,
-  limit?: number | null,
-) {
-  const params = new URLSearchParams();
-  appendListParams(params, q, page, limit);
-  return request<WorkflowList>(`/workflows?${params.toString()}`);
-}
-
-export function getWorkflow(id: string) {
-  return request<WorkflowDetail>(`/workflows/${id}`);
-}
-
-export function getWorkflowGenerationFingerprint(workflowId: string) {
-  return request<{ fingerprint: string }>(
-    `/workflows/${workflowId}/generation-fingerprint`,
-  );
-}
-
-export function createWorkflow(payload: WorkflowWritePayload) {
-  return request<WorkflowDetail>("/workflows", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function updateWorkflow(id: string, payload: WorkflowWritePayload) {
-  return request<WorkflowDetail>(`/workflows/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function deleteWorkflow(id: string) {
-  return request<{ ok: boolean }>(`/workflows/${id}`, { method: "DELETE" });
 }
 
 export type ProfileList = {
@@ -425,7 +418,7 @@ export function runAiVerdict(jobDescription: string) {
 
 export type AiResumeRequest = {
   jobContext: string;
-  workflowId: string;
+  combine: CombineSnapshot;
   oneTimePrompt?: string;
 };
 
@@ -462,101 +455,71 @@ export function runAiEvaluate(payload: AiEvaluateRequest) {
   });
 }
 
-export type AiWorkflowRecommendRequest = {
-  jobDescription: string;
-  acceptedMarkdown?: string;
-};
-
-export type AiWorkflowRecommendResult = {
-  workflowId: string | null;
-  workflowName: string | null;
-  score: number | null;
-  threshold: number;
-  usage: AiVerdictUsage;
-  tokenUsed: number;
-};
-
-export function runAiWorkflowRecommend(payload: AiWorkflowRecommendRequest) {
-  return request<AiWorkflowRecommendResult>("/ai-workflow-recommend", {
-    method: "POST",
-    body: JSON.stringify(payload),
-    timeoutMs: AI_API_TIMEOUT_MS,
-  });
-}
-
-export type AuthorAdvisePlacement =
+export type ExperienceAdvisePlacement =
   | "create_experience"
   | "update_experience"
-  | "link_existing"
-  | "update_company"
-  | "update_role_context"
-  | "update_workflow_description"
   | "need_more_facts";
 
-export type AuthorAdviseDraft = {
+export type ExperienceAdviseDraft = {
   category: string | null;
   problem: string | null;
   actions: string | null;
   outcome: string | null;
-  whatCompanyIs: string | null;
-  domainAndStack: string | null;
-  roleContext: string | null;
-  workflowDescription: string | null;
 };
 
-export type AuthorAdviseProposal = {
-  placement: AuthorAdvisePlacement;
+export type ExperienceAdviseOperation = {
+  placement: ExperienceAdvisePlacement;
   rationale: string;
-  questions: string[];
-  target: {
-    workflowId: string | null;
-    experienceId: string | null;
-    companyId: string | null;
-  };
-  draft: AuthorAdviseDraft;
-  link: {
-    workflowId: string | null;
-    companyId: string | null;
-    experienceId: string | null;
-  };
+  targetExperienceId: string | null;
+  draft: ExperienceAdviseDraft;
   warnings: string[];
 };
 
-export type AuthorAdviseRequest = {
-  workflowId?: string;
+export type ExperienceAdviseResult = {
+  rationale: string;
+  questions: string[];
+  operations: ExperienceAdviseOperation[];
+};
+
+export type ExperienceAdviseRequest = {
+  targetExperienceId?: string;
   userFacts: string;
 };
 
-export type AuthorAdviseResult = {
-  proposal: AuthorAdviseProposal;
+export type ExperienceAdviseApiResult = {
+  result: ExperienceAdviseResult;
   workspaceFingerprint: string;
   usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
-export type AuthorAdviseApplyRequest = {
-  workflowId?: string;
-  workspaceFingerprint: string;
-  proposal: AuthorAdviseProposal;
-  draft?: Partial<AuthorAdviseDraft>;
+export type ExperienceAdviseApplyOperation = {
+  placement: "create_experience" | "update_experience";
+  targetExperienceId: string | null;
+  draft: ExperienceAdviseDraft;
 };
 
-export type AuthorAdviseApplyResult = {
+export type ExperienceAdviseApplyRequest = {
+  workspaceFingerprint: string;
+  operations: ExperienceAdviseApplyOperation[];
+};
+
+export type ExperienceAdviseApplyResult = {
   ok: boolean;
-  appliedWorkflowId: string | null;
+  experienceIds: string[];
   warnings: string[];
 };
 
-export function runAuthorAdvise(payload: AuthorAdviseRequest) {
-  return request<AuthorAdviseResult>("/ai-author-advise", {
+export function runExperienceAdvise(payload: ExperienceAdviseRequest) {
+  return request<ExperienceAdviseApiResult>("/ai-experience-advise", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,
   });
 }
 
-export function applyAuthorAdvise(payload: AuthorAdviseApplyRequest) {
-  return request<AuthorAdviseApplyResult>("/ai-author-advise/apply", {
+export function applyExperienceAdvise(payload: ExperienceAdviseApplyRequest) {
+  return request<ExperienceAdviseApplyResult>("/ai-experience-advise/apply", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,
@@ -579,7 +542,7 @@ export function getAiUsage(id: string) {
 
 export async function downloadResumeDocx(
   resume: import("@johel/resume").GeneratedResume,
-  workflowName?: string,
+  runLabel?: string,
 ): Promise<{ blob?: Blob; fileName?: string; error?: string; status: number }> {
   try {
     const res = await fetch("/backend/resume/docx", {
@@ -587,7 +550,7 @@ export async function downloadResumeDocx(
       credentials: "include",
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume, workflowName }),
+      body: JSON.stringify({ resume, runLabel }),
     });
 
     if (!res.ok) {

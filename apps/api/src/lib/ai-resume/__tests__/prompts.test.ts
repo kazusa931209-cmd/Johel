@@ -40,11 +40,9 @@ Go, PostgreSQL`,
       ],
     },
   ],
-  workflow: {
-    id: "workflow-secret",
-    name: "Senior Backend",
-    description: "Emphasize distributed systems",
+  run: {
     language: "en",
+    emphasis: "Emphasize distributed systems",
   },
 };
 
@@ -56,7 +54,7 @@ describe("buildAiResumeUserPrompt", () => {
     expect(prompt).toContain("### Headings in this job context");
     expect(prompt).toContain("- Role");
     expect(prompt).toContain("- Technical Requirements");
-    expect(prompt).toContain("## Workflow intent");
+    expect(prompt).toContain("## Run intent");
     expect(prompt).toContain("- Language: en");
     expect(prompt).toContain("## Profile");
     expect(prompt).toContain("- Name: Jane Doe");

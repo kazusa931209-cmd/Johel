@@ -47,7 +47,7 @@ const JSON_SCHEMA_DESCRIPTION = `{
 const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation system.
 - Generate a resume targeted to the supplied job context and input data.
 - Job context is AI Verdict Markdown when the client ran Verdict; otherwise it is the noise-filtered job description text.
-- The user message is labeled Markdown sections (Job context, Workflow intent, Profile, Companies). Use Job context as the scoring rubric. Do not require specific heading names. If Instructions mention headings that are absent, use the closest sections present (for example Role ≈ title, Technical Requirements ≈ skills). If Instructions name JSON-style fields (for example companies[].roleContext), they refer to the matching labeled subsections.
+- The user message is labeled Markdown sections (Job context, Run intent, Profile, Companies). Use Job context as the scoring rubric. Do not require specific heading names. If Instructions mention headings that are absent, use the closest sections present (for example Role ≈ title, Technical Requirements ≈ skills). If Instructions name JSON-style fields (for example companies[].roleContext), they refer to the matching labeled subsections.
 - Follow the tailoring rules and output expectations defined in Instructions above.
 - Do not invent employers, dates, skills, or experience not present in the supplied input data.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
@@ -129,20 +129,17 @@ function formatCompaniesSection(input: ResumeGenerationInput): string {
 }
 
 export function buildAiResumeUserPrompt(input: ResumeGenerationInput): string {
-  const workflowDescription = input.workflow.description.trim();
-  const workflowIntent = [
-    "## Workflow intent",
-    `- Name: ${input.workflow.name}`,
-    `- Language: ${input.workflow.language}`,
-    workflowDescription
-      ? `Description:\n${workflowDescription}`
-      : "Description: (none)",
+  const emphasis = input.run.emphasis.trim();
+  const runIntent = [
+    "## Run intent",
+    `- Language: ${input.run.language}`,
+    emphasis ? `Emphasis:\n${emphasis}` : "Emphasis: (none)",
   ].join("\n");
 
   return [
     "Generate a tailored résumé from the labeled sections below. Use Job context as the scoring rubric. Keep company order. Use each company name as the employer; do not use alias.",
     formatJobContextBlock(input.jobContext),
-    workflowIntent,
+    runIntent,
     formatProfileSection(input),
     formatCompaniesSection(input),
   ].join("\n\n");

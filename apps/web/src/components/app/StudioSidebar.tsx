@@ -25,8 +25,6 @@ export function StudioSidebar({ open }: { open: boolean }) {
     pathname === "/companies" || pathname.startsWith("/companies/");
   const experiencesActive =
     pathname === "/experiences" || pathname.startsWith("/experiences/");
-  const workflowsActive =
-    pathname === "/workflows" || pathname.startsWith("/workflows/");
   const environmentActive =
     pathname === "/settings" ||
     pathname === "/settings/environment" ||
@@ -60,9 +58,6 @@ export function StudioSidebar({ open }: { open: boolean }) {
         </Link>
         <Link href="/experiences" className={navLinkClass(experiencesActive)}>
           {t("nav.sidebar.experiences")}
-        </Link>
-        <Link href="/workflows" className={navLinkClass(workflowsActive)}>
-          {t("nav.sidebar.workflows")}
         </Link>
 
         <div className={`${sectionLabelClass()} mt-2`}>{t("nav.sidebar.run")}</div>

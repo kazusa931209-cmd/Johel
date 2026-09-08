@@ -79,7 +79,6 @@ function EyeOffIcon({ className }: { className?: string }) {
 type FormErrors = {
   provider?: string;
   apiKey?: string;
-  workflowRecommendationThreshold?: string;
 };
 
 export default function SettingsPage() {
@@ -96,20 +95,11 @@ export default function SettingsPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [doVerdict, setDoVerdict] = useState(true);
   const [doEvaluate, setDoEvaluate] = useState(true);
-  const [doWorkflowRecommendation, setDoWorkflowRecommendation] =
-    useState(false);
-  const [workflowRecommendationThreshold, setWorkflowRecommendationThreshold] =
-    useState("70");
   const [savedDoVerdict, setSavedDoVerdict] = useState(true);
   const [savedDoEvaluate, setSavedDoEvaluate] = useState(true);
-  const [savedDoWorkflowRecommendation, setSavedDoWorkflowRecommendation] =
-    useState(false);
-  const [savedWorkflowRecommendationThreshold, setSavedWorkflowRecommendationThreshold] =
-    useState("70");
   const [userId, setUserId] = useState<string | null>(null);
   const [processLoading, setProcessLoading] = useState(true);
   const [processSaving, setProcessSaving] = useState(false);
-  const [processErrors, setProcessErrors] = useState<FormErrors>({});
 
   const themeOptions: { value: Theme; label: string }[] = [
     { value: "dark", label: t("settings.environment.theme.dark") },
@@ -142,16 +132,8 @@ export default function SettingsPage() {
       if (res.data) {
         setDoVerdict(res.data.doVerdict);
         setDoEvaluate(res.data.doEvaluate);
-        setDoWorkflowRecommendation(res.data.doWorkflowRecommendation);
-        setWorkflowRecommendationThreshold(
-          String(res.data.workflowRecommendationThreshold),
-        );
         setSavedDoVerdict(res.data.doVerdict);
         setSavedDoEvaluate(res.data.doEvaluate);
-        setSavedDoWorkflowRecommendation(res.data.doWorkflowRecommendation);
-        setSavedWorkflowRecommendationThreshold(
-          String(res.data.workflowRecommendationThreshold),
-        );
       }
       setProcessLoading(false);
     });
@@ -196,27 +178,11 @@ export default function SettingsPage() {
 
   async function onSaveProcess(e: FormEvent) {
     e.preventDefault();
-    const nextErrors: FormErrors = {};
-    const threshold = Number.parseInt(workflowRecommendationThreshold, 10);
-    if (
-      Number.isNaN(threshold) ||
-      threshold < 0 ||
-      threshold > 100 ||
-      !Number.isInteger(threshold)
-    ) {
-      nextErrors.workflowRecommendationThreshold = t("validation.thresholdRange");
-    }
-    setProcessErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
 
     setProcessSaving(true);
     const res = await saveGenerationProcess({
       doVerdict,
       doEvaluate,
-      doWorkflowRecommendation,
-      workflowRecommendationThreshold: threshold,
     });
     setProcessSaving(false);
     if (res.error || !res.data) {
@@ -225,25 +191,14 @@ export default function SettingsPage() {
     }
     setDoVerdict(res.data.doVerdict);
     setDoEvaluate(res.data.doEvaluate);
-    setDoWorkflowRecommendation(res.data.doWorkflowRecommendation);
-    setWorkflowRecommendationThreshold(
-      String(res.data.workflowRecommendationThreshold),
-    );
     const processChanged =
       res.data.doVerdict !== savedDoVerdict ||
-      res.data.doEvaluate !== savedDoEvaluate ||
-      res.data.doWorkflowRecommendation !== savedDoWorkflowRecommendation ||
-      res.data.workflowRecommendationThreshold !==
-        Number.parseInt(savedWorkflowRecommendationThreshold, 10);
+      res.data.doEvaluate !== savedDoEvaluate;
     if (processChanged && userId) {
       clearGenerateSession(userId);
     }
     setSavedDoVerdict(res.data.doVerdict);
     setSavedDoEvaluate(res.data.doEvaluate);
-    setSavedDoWorkflowRecommendation(res.data.doWorkflowRecommendation);
-    setSavedWorkflowRecommendationThreshold(
-      String(res.data.workflowRecommendationThreshold),
-    );
     toast(t("toast.processSaved"), "success");
   }
 
@@ -418,51 +373,6 @@ export default function SettingsPage() {
               />
               <span>{t("settings.environment.process.doVerdict")}</span>
             </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={doWorkflowRecommendation}
-                onChange={(e) => setDoWorkflowRecommendation(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
-              />
-              <span>{t("settings.environment.process.doWorkflowRecommendation")}</span>
-            </label>
-            {doWorkflowRecommendation ? (
-              <label className="block space-y-1 space-x-2 text-sm">
-                <span>
-                  {t("settings.environment.process.recommendationThreshold")}
-                  <span className="ml-0.5 text-danger" aria-hidden>*</span>
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={workflowRecommendationThreshold}
-                  onChange={(e) => {
-                    setWorkflowRecommendationThreshold(e.target.value);
-                    if (processErrors.workflowRecommendationThreshold) {
-                      setProcessErrors((prev) => ({
-                        ...prev,
-                        workflowRecommendationThreshold: undefined,
-                      }));
-                    }
-                  }}
-                  aria-invalid={Boolean(
-                    processErrors.workflowRecommendationThreshold,
-                  )}
-                  className="w-full max-w-32 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
-                />
-                <p className="text-xs text-muted">
-                  {t("settings.environment.process.thresholdHint")}
-                </p>
-                {processErrors.workflowRecommendationThreshold ? (
-                  <p className="text-sm text-danger">
-                    {processErrors.workflowRecommendationThreshold}
-                  </p>
-                ) : null}
-              </label>
-            ) : null}
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"

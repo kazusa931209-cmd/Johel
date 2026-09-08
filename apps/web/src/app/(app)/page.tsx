@@ -5,6 +5,7 @@ import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { AddButton } from "@/components/shared/action-icon-buttons";
+import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
 import {
@@ -13,48 +14,40 @@ import {
 } from "@/components/generate/GeneratePrerequisites";
 import { GenerateTimeline } from "@/components/generate/GenerateTimeline";
 import { GenerateJobStep } from "@/components/generate/GenerateJobStep";
-import { GenerateWorkflowStep } from "@/components/generate/GenerateWorkflowStep";
+import { GenerateVerdictStep } from "@/components/generate/GenerateVerdictStep";
 import {
   GenerateStepNavNextButton,
   GenerateStepNavPrevButton,
   GenerateStepNavProvider,
 } from "@/components/generate/GenerateStepNav";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
-import { EMPTY_WORKFLOW_SELECTION } from "@/components/generate/pcew-types";
-import { validateWorkflowSelection } from "@/components/generate/pcew-types";
+import { validateCombineSnapshot } from "@/components/generate/combine-types";
 import {
   buildEvaluationInputKey,
   buildGenerationInputKey,
   buildResumeJobContext,
-  buildWorkflowListFingerprint,
-  buildWorkflowRecommendInputKey,
   canReuseStoredEvaluation,
   canReuseStoredResume,
-  canReuseStoredWorkflowRecommend,
 } from "@/lib/generate-session";
 import {
   getAdjacentGenerateStep,
   getGenerateSteps,
   normalizeGenerateActiveStep,
 } from "@/lib/generate-steps";
-import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
+  getCombineGenerationFingerprint,
   getGenerationProcess,
   getPrompts,
-  getWorkflowGenerationFingerprint,
-  listWorkflows,
+  listCompanies,
+  listExperiences,
+  listProfiles,
   runAiEvaluate,
   runAiResume,
-  runAiWorkflowRecommend,
-  type Workflow,
 } from "@/lib/api";
 
 const DEFAULT_PROCESS = {
   doVerdict: true,
   doEvaluate: true,
-  doWorkflowRecommendation: false,
-  workflowRecommendationThreshold: 70,
-  lastSelectedWorkflowId: null as string | null,
 };
 
 const DEFAULT_PROMPTS = {
@@ -71,25 +64,21 @@ export default function GeneratePage() {
   const [generatingResume, setGeneratingResume] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [verdictRunning, setVerdictRunning] = useState(false);
-  const [recommending, setRecommending] = useState(false);
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
   const [processSettings, setProcessSettings] = useState(DEFAULT_PROCESS);
   const [promptSettings, setPromptSettings] = useState(DEFAULT_PROMPTS);
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const {
     ready: sessionReady,
     activeStep,
     setActiveStep,
     job,
     setJob,
-    workflow,
-    setWorkflow,
+    combine,
+    setCombine,
     oneTimePrompt,
     setOneTimePrompt,
     verdictInputKey,
-    workflowRecommendInputKey,
     setVerdictResult,
-    setWorkflowRecommendResult,
     resume,
     generationInputKey,
     setResumeResult,
@@ -100,21 +89,25 @@ export default function GeneratePage() {
   } = useGenerateSession();
 
   const processBusy =
-    verdictRunning || recommending || generatingResume || evaluating;
+    verdictRunning || generatingResume || evaluating;
 
   const visibleSteps = useMemo(
-    () => getGenerateSteps(processSettings.doEvaluate),
-    [processSettings.doEvaluate],
+    () =>
+      getGenerateSteps(
+        processSettings.doEvaluate,
+        processSettings.doVerdict,
+      ),
+    [processSettings.doEvaluate, processSettings.doVerdict],
   );
 
   const normalizedActiveStep = useMemo(
-    () => normalizeGenerateActiveStep(activeStep, processSettings.doEvaluate),
-    [activeStep, processSettings.doEvaluate],
-  );
-
-  const workflowsFingerprint = useMemo(
-    () => buildWorkflowListFingerprint(workflows),
-    [workflows],
+    () =>
+      normalizeGenerateActiveStep(
+        activeStep,
+        processSettings.doEvaluate,
+        processSettings.doVerdict,
+      ),
+    [activeStep, processSettings.doEvaluate, processSettings.doVerdict],
   );
 
   useEffect(() => {
@@ -127,21 +120,27 @@ export default function GeneratePage() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      listWorkflows("", null),
+      listProfiles("", null),
+      listCompanies("", null),
+      listExperiences("", null),
       getPrompts(),
       getGenerationProcess(),
-    ]).then(([workflowsRes, prompts, process]) => {
+    ]).then(([profilesRes, companiesRes, experiencesRes, prompts, process]) => {
       if (cancelled) return;
-      const errors = [workflowsRes.error, prompts.error, process.error].filter(
-        Boolean,
-      );
+      const errors = [
+        profilesRes.error,
+        companiesRes.error,
+        experiencesRes.error,
+        prompts.error,
+        process.error,
+      ].filter(Boolean);
       if (errors.length > 0) {
         toast(errors[0] ?? t("toast.prerequisitesCheckFailed"), "error");
         setLoading(false);
         setMissing([
           {
-            label: t("generate.prerequisites.labels.workflows"),
-            href: "/workflows",
+            label: t("generate.prerequisites.labels.profiles"),
+            href: "/profiles",
           },
           {
             label: t("generate.prerequisites.labels.prompts"),
@@ -154,18 +153,8 @@ export default function GeneratePage() {
       const nextProcess = {
         doVerdict: process.data?.doVerdict ?? DEFAULT_PROCESS.doVerdict,
         doEvaluate: process.data?.doEvaluate ?? DEFAULT_PROCESS.doEvaluate,
-        doWorkflowRecommendation:
-          process.data?.doWorkflowRecommendation ??
-          DEFAULT_PROCESS.doWorkflowRecommendation,
-        workflowRecommendationThreshold:
-          process.data?.workflowRecommendationThreshold ??
-          DEFAULT_PROCESS.workflowRecommendationThreshold,
-        lastSelectedWorkflowId:
-          process.data?.lastSelectedWorkflowId ??
-          DEFAULT_PROCESS.lastSelectedWorkflowId,
       };
       setProcessSettings(nextProcess);
-      setWorkflows(workflowsRes.data?.items ?? []);
       setPromptSettings({
         verdictPrompt: prompts.data?.verdictPrompt ?? "",
         generatePrompt: prompts.data?.generatePrompt ?? "",
@@ -173,10 +162,22 @@ export default function GeneratePage() {
       });
 
       const nextMissing: MissingPrerequisite[] = [];
-      if ((workflowsRes.data?.total ?? 0) < 1) {
+      if ((profilesRes.data?.total ?? 0) < 1) {
         nextMissing.push({
-          label: t("generate.prerequisites.labels.workflows"),
-          href: "/workflows",
+          label: t("generate.prerequisites.labels.profiles"),
+          href: "/profiles",
+        });
+      }
+      if ((companiesRes.data?.total ?? 0) < 1) {
+        nextMissing.push({
+          label: t("generate.prerequisites.labels.companies"),
+          href: "/companies",
+        });
+      }
+      if ((experiencesRes.data?.total ?? 0) < 1) {
+        nextMissing.push({
+          label: t("generate.prerequisites.labels.experiences"),
+          href: "/experiences",
         });
       }
       if (nextProcess.doVerdict && !prompts.data?.verdictPrompt.trim()) {
@@ -206,10 +207,6 @@ export default function GeneratePage() {
     };
   }, [t, toast]);
 
-  function goToStep(step: typeof activeStep) {
-    setActiveStep(step);
-  }
-
   function goToAdjacentStep(direction: "prev" | "next") {
     const next = getAdjacentGenerateStep(
       visibleSteps,
@@ -230,118 +227,25 @@ export default function GeneratePage() {
     [promptSettings],
   );
 
-  const onAdvanceToWorkflow = useCallback(async () => {
-    if (recommending) return;
-
-    if (!processSettings.doWorkflowRecommendation) {
-      const lastId = processSettings.lastSelectedWorkflowId;
-      if (lastId) {
-        const match = workflows.find((item) => item.id === lastId);
-        if (match) {
-          setWorkflow({ workflowId: match.id, workflowName: match.name });
-        } else {
-          setWorkflow({ ...EMPTY_WORKFLOW_SELECTION });
-        }
-      } else {
-        setWorkflow({ ...EMPTY_WORKFLOW_SELECTION });
-      }
-      goToStep("Workflow");
+  const onAdvanceFromJob = useCallback(() => {
+    if (processSettings.doVerdict) {
+      setActiveStep("Verdict");
       return;
     }
+    setJob({ ...job, acceptedMarkdown: null });
+    setActiveStep("Combine");
+  }, [job, processSettings.doVerdict, setActiveStep, setJob]);
 
-    const recommendInputKey = buildWorkflowRecommendInputKey({
-      job,
-      threshold: processSettings.workflowRecommendationThreshold,
-      workflowsFingerprint,
-    });
-
-    if (canReuseStoredWorkflowRecommend({ workflowRecommendInputKey }, recommendInputKey)) {
-      goToStep("Workflow");
-      return;
-    }
-
-    const jobDescription = noiseFilter(job.jobText.trim()).text;
-    const acceptedMarkdown = job.acceptedMarkdown?.trim() || undefined;
-
-    setRecommending(true);
-    try {
-      const res = await runAiWorkflowRecommend({
-        jobDescription,
-        acceptedMarkdown,
-      });
-      if (!res.data) {
-        toast(res.error ?? t("toast.workflowRecommendFailed"), "error");
-        return;
-      }
-
-      setTokenUsed(res.data.tokenUsed);
-      await refreshTokenUsed();
-
-      if (res.data.workflowId && res.data.workflowName) {
-        setWorkflowRecommendResult(
-          {
-            workflowId: res.data.workflowId,
-            workflowName: res.data.workflowName,
-          },
-          recommendInputKey,
-        );
-        toast(
-          t("toast.workflowRecommended", {
-            workflowName: res.data.workflowName,
-            score: res.data.score ?? "",
-          }),
-          "success",
-        );
-      } else {
-        setWorkflowRecommendResult(
-          { ...EMPTY_WORKFLOW_SELECTION },
-          recommendInputKey,
-        );
-        const bestScoreSuffix =
-          res.data.score != null
-            ? t("toast.workflowBestScoreSuffix", { score: res.data.score })
-            : "";
-        toast(
-          t("toast.workflowThresholdNotMet", { bestScoreSuffix }),
-          "warning",
-        );
-      }
-
-      goToStep("Workflow");
-    } catch {
-      toast(t("toast.workflowRecommendFailed"), "error");
-    } finally {
-      setRecommending(false);
-    }
-  }, [
-    job,
-    recommending,
-    processSettings.doWorkflowRecommendation,
-    processSettings.lastSelectedWorkflowId,
-    processSettings.workflowRecommendationThreshold,
-    refreshTokenUsed,
-    setTokenUsed,
-    setWorkflow,
-    setWorkflowRecommendResult,
-    t,
-    toast,
-    workflowRecommendInputKey,
-    workflows,
-    workflowsFingerprint,
-  ]);
-
-  async function onWorkflowNext() {
+  async function onCombineNext() {
     if (generatingResume) return;
 
-    const errors = validateWorkflowSelection(workflow);
+    const errors = validateCombineSnapshot(combine, t);
     if (Object.keys(errors).length > 0) return;
 
-    const fingerprintRes = await getWorkflowGenerationFingerprint(
-      workflow.workflowId,
-    );
+    const fingerprintRes = await getCombineGenerationFingerprint(combine);
     if (!fingerprintRes.data?.fingerprint) {
       toast(
-        fingerprintRes.error ?? t("toast.workflowFingerprintFailed"),
+        fingerprintRes.error ?? t("toast.combineFingerprintFailed"),
         "error",
       );
       return;
@@ -350,7 +254,7 @@ export default function GeneratePage() {
     const inputKey = buildGenerationInputKey(
       job,
       processSettings.doVerdict,
-      workflow,
+      combine,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
       oneTimePrompt,
@@ -360,10 +264,9 @@ export default function GeneratePage() {
         {
           activeStep: normalizedActiveStep,
           job,
-          workflow,
+          combine,
           oneTimePrompt,
           verdictInputKey,
-          workflowRecommendInputKey,
           resume,
           generationInputKey,
           evaluationMarkdown,
@@ -387,7 +290,7 @@ export default function GeneratePage() {
       const trimmedOneTimePrompt = oneTimePrompt.trim();
       const res = await runAiResume({
         jobContext,
-        workflowId: workflow.workflowId,
+        combine,
         ...(trimmedOneTimePrompt
           ? { oneTimePrompt: trimmedOneTimePrompt }
           : {}),
@@ -417,9 +320,7 @@ export default function GeneratePage() {
       return;
     }
 
-    const fingerprintRes = await getWorkflowGenerationFingerprint(
-      workflow.workflowId,
-    );
+    const fingerprintRes = await getCombineGenerationFingerprint(combine);
     if (!fingerprintRes.data?.fingerprint) {
       toast(
         fingerprintRes.error ?? t("toast.evaluationFingerprintFailed"),
@@ -431,20 +332,20 @@ export default function GeneratePage() {
     const currentInputKey = buildGenerationInputKey(
       job,
       processSettings.doVerdict,
-      workflow,
+      combine,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
       oneTimePrompt,
     );
     if (currentInputKey !== generationInputKey) {
-      toast(t("toast.workflowContentChanged"), "error");
+      toast(t("toast.combineContentChanged"), "error");
       return;
     }
 
     const nextEvaluationInputKey = buildEvaluationInputKey(
       job,
       processSettings.doVerdict,
-      workflow,
+      combine,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
       oneTimePrompt,
@@ -454,10 +355,9 @@ export default function GeneratePage() {
         {
           activeStep: normalizedActiveStep,
           job,
-          workflow,
+          combine,
           oneTimePrompt,
           verdictInputKey,
-          workflowRecommendInputKey,
           resume,
           generationInputKey,
           evaluationMarkdown,
@@ -490,6 +390,8 @@ export default function GeneratePage() {
       setEvaluating(false);
     }
   }
+
+  const runLabel = combine.emphasis.trim() || combine.language;
 
   if (loading || !sessionReady) {
     return (
@@ -537,34 +439,39 @@ export default function GeneratePage() {
           {normalizedActiveStep === "Job" ? (
             <GenerateJobStep
               job={job}
+              onJobChange={setJob}
+              onAdvanceFromJob={onAdvanceFromJob}
+            />
+          ) : null}
+          {processSettings.doVerdict && normalizedActiveStep === "Verdict" ? (
+            <GenerateVerdictStep
+              job={job}
               verdictInputKey={verdictInputKey}
               verdictPrompt={promptSettings.verdictPrompt}
-              doVerdict={processSettings.doVerdict}
-              onJobChange={setJob}
               onVerdictResult={setVerdictResult}
-              onAdvanceToWorkflow={onAdvanceToWorkflow}
+              onPrev={() => goToAdjacentStep("prev")}
+              onNext={() => setActiveStep("Combine")}
               onRunningChange={setVerdictRunning}
             />
           ) : null}
-          {normalizedActiveStep === "Workflow" ? (
-            <GenerateWorkflowStep
-              doVerdict={processSettings.doVerdict}
-              acceptedMarkdown={
-                processSettings.doVerdict ? job.acceptedMarkdown : null
-              }
-              selection={workflow}
+          {normalizedActiveStep === "Combine" ? (
+            <GenerateCombineStep
+              combine={combine}
               oneTimePrompt={oneTimePrompt}
+              jobText={job.jobText}
+              acceptedMarkdown={job.acceptedMarkdown}
+              doVerdict={processSettings.doVerdict}
               generating={generatingResume}
-              onSelectionChange={setWorkflow}
+              onCombineChange={setCombine}
               onOneTimePromptChange={setOneTimePrompt}
               onPrev={() => goToAdjacentStep("prev")}
-              onNext={onWorkflowNext}
+              onNext={onCombineNext}
             />
           ) : null}
           {normalizedActiveStep === "Generate" ? (
             <GenerateGenerateStep
               resume={resume}
-              workflowName={workflow.workflowName}
+              runLabel={runLabel}
               doEvaluate={processSettings.doEvaluate}
               evaluating={evaluating}
               onPrev={() => goToAdjacentStep("prev")}
@@ -574,31 +481,13 @@ export default function GeneratePage() {
           {processSettings.doEvaluate && normalizedActiveStep === "Evaluate" ? (
             <GenerateEvaluateStep
               resume={resume}
-              workflowName={workflow.workflowName}
+              runLabel={runLabel}
               evaluationMarkdown={evaluationMarkdown}
               onPrev={() => goToAdjacentStep("prev")}
             />
           ) : null}
         </div>
       </section>
-
-      {recommending ? (
-        <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
-            <p className="text-sm font-medium">
-              {t("generate.recommending.title")}
-            </p>
-            <p className="mt-1 text-xs text-muted">
-              {t("generate.recommending.description")}
-            </p>
-          </div>
-        </div>
-      ) : null}
     </GenerateStepNavProvider>
   );
 }

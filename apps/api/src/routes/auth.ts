@@ -43,10 +43,6 @@ authRoutes.post("/register", async (c) => {
         create: {
           doVerdict: DEFAULT_GENERATION_PROCESS.doVerdict,
           doEvaluate: DEFAULT_GENERATION_PROCESS.doEvaluate,
-          doWorkflowRecommendation:
-            DEFAULT_GENERATION_PROCESS.doWorkflowRecommendation,
-          workflowRecommendationThreshold:
-            DEFAULT_GENERATION_PROCESS.workflowRecommendationThreshold,
         },
       },
       prompt: {
@@ -62,7 +58,7 @@ authRoutes.post("/register", async (c) => {
   const token = await signSessionToken(user.id, user.email);
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
 
-  return c.json({ id: user.id, email: user.email }, 201);
+  return c.json({ id: user.id, email: user.email, role: user.role }, 201);
 });
 
 authRoutes.post("/login", async (c) => {
@@ -81,7 +77,7 @@ authRoutes.post("/login", async (c) => {
   const token = await signSessionToken(user.id, user.email);
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
 
-  return c.json({ id: user.id, email: user.email });
+  return c.json({ id: user.id, email: user.email, role: user.role });
 });
 
 authRoutes.post("/logout", (c) => {

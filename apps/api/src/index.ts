@@ -4,18 +4,17 @@ import { cors } from "hono/cors";
 import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
 import { settingsRoutes } from "./routes/settings.js";
-import { workflowsRoutes } from "./routes/workflows.js";
 import { profilesRoutes } from "./routes/profiles.js";
 import { companiesRoutes } from "./routes/companies.js";
 import { experiencesRoutes } from "./routes/experiences.js";
 import { aiEvaluateRoutes } from "./routes/ai-evaluate.js";
 import { aiResumeRoutes } from "./routes/ai-resume.js";
 import { aiVerdictRoutes } from "./routes/ai-verdict.js";
-import { aiWorkflowRecommendRoutes } from "./routes/ai-workflow-recommend.js";
-import { aiAuthorAdviseRoutes } from "./routes/ai-author-advise.js";
+import { aiCombineRecommendRoutes } from "./routes/ai-combine-recommend.js";
 import { resumeRoutes } from "./routes/resume.js";
 import { aiUsageRoutes } from "./routes/ai-usage.js";
 import { promptsRoutes } from "./routes/prompts.js";
+import { aiExperienceAdviseRoutes } from "./routes/ai-experience-advise.js";
 
 const app = new Hono();
 
@@ -30,15 +29,14 @@ app.use(
 app.route("/health", healthRoutes);
 app.route("/auth", authRoutes);
 app.route("/settings", settingsRoutes);
-app.route("/workflows", workflowsRoutes);
 app.route("/profiles", profilesRoutes);
 app.route("/companies", companiesRoutes);
 app.route("/experiences", experiencesRoutes);
 app.route("/ai-resume", aiResumeRoutes);
 app.route("/ai-verdict", aiVerdictRoutes);
-app.route("/ai-workflow-recommend", aiWorkflowRecommendRoutes);
 app.route("/ai-evaluate", aiEvaluateRoutes);
-app.route("/ai-author-advise", aiAuthorAdviseRoutes);
+app.route("/ai-experience-advise", aiExperienceAdviseRoutes);
+app.route("/ai-combine-recommend", aiCombineRecommendRoutes);
 app.route("/resume", resumeRoutes);
 app.route("/ai-usage", aiUsageRoutes);
 app.route("/prompts", promptsRoutes);

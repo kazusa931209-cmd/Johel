@@ -68,7 +68,11 @@ aiVerdictRoutes.post("/", async (c) => {
   const provider: AiProviderId = setting.provider;
 
   try {
-    const compiledVerdictPrompt = compileInstruction("verdict", verdictPrompt);
+    const compiledVerdictPrompt = compileInstruction(
+      "verdict",
+      verdictPrompt,
+      prompts?.verdictExtension ?? "",
+    );
 
     const result = await runAiVerdict(provider, {
       jobDescription: parsed.data.jobDescription,

@@ -8,19 +8,19 @@ import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownlo
 
 type GenerateEvaluateStepProps = {
   resume: GeneratedResume | null;
-  workflowName?: string;
+  runLabel?: string;
   evaluationMarkdown: string | null;
   onPrev: () => void;
 };
 
 export function GenerateEvaluateStep({
   resume,
-  workflowName,
+  runLabel,
   evaluationMarkdown,
   onPrev,
 }: GenerateEvaluateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDocxDownload(resume, workflowName);
+  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
 
   useRegisterGenerateStepNav({
     onPrev,

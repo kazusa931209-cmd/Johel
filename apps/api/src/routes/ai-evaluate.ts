@@ -89,6 +89,7 @@ aiEvaluateRoutes.post("/", async (c) => {
     const compiledEvaluatePrompt = compileInstruction(
       "evaluate",
       evaluatePrompt,
+      prompts?.evaluateExtension ?? "",
     );
 
     const result = await runAiEvaluate(provider, {

@@ -1,7 +1,7 @@
 export const WORKSPACE_UPDATED_EVENT = "johel:workspace-updated";
 
 export type WorkspaceUpdatedDetail = {
-  workflowId: string | null;
+  profileId?: string | null;
   experienceId?: string | null;
   companyId?: string | null;
 };

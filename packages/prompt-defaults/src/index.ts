@@ -78,7 +78,7 @@ Extract when present: company name, description, website, industry, products/ser
 Use Not found for missing items.`;
 
 export const DEFAULT_GENERATE_PROMPT = `## Targeting
-The user message is labeled Markdown (Job context, Workflow intent, Profile, Companies). Field names below map to those labels.
+The user message is labeled Markdown (Job context, Run intent, Profile, Companies). Field names below map to those labels.
 Use \`jobContext\` as the only scoring rubric.
 When it is Verdict Markdown, read these sections first: Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
 Map Role.title to the target job title. Treat Technical Requirements as skills. Treat Critical JD Terminology as exact keywords to reuse when the materials support them.
@@ -87,8 +87,8 @@ Every summary sentence and experience bullet should map to at least one item fro
 Do not treat company or experience fields as the job target.
 
 ## Input Meanings
-- \`workflow.description\`: Persona and emphasis for this preset.
-- \`workflow.language\`: Output language of the résumé.
+- \`run.emphasis\`: Persona and emphasis for this run.
+- \`run.language\`: Output language of the résumé.
 - \`companies[]\` order: Résumé experience order. Keep it.
 - \`companies[].name\`: Employer name on the résumé. Do not use \`alias\` in output.
 - \`companies[].alias\`: Internal label only. Ignore for writing.
@@ -96,7 +96,7 @@ Do not treat company or experience fields as the job target.
 - \`companies[].domainAndStack\`: Domain, product scope, tech. Bullet list with bold labels; use for wording and grounding; do not paste as bullets.
 - \`companies[].roleContext\`: Nature of the role held there. Primary hint for \`title\`. Not achievements.
 - \`companies[].startDate\` / \`endDate\`: Employment dates. Copy as-is.
-- \`companies[].experiences[]\`: Materials already assigned to that company. Do not move them. Do not drop a linked experience unless it has zero overlap with the rubric and \`workflow.description\` says to omit.
+- \`companies[].experiences[]\`: Materials already assigned to that company. Do not move them. Do not drop a linked experience unless it has zero overlap with the rubric and \`run.emphasis\` says to omit.
 - \`experiences[].category\`: Work cluster; use when choosing \`title\` and grouping skills.
 - \`experiences[].problem\`: What was solved. Bullet list with bold labels; use as the situation in the bullet.
 - \`experiences[].actions\`: What was done (verb + object) and tech/methods. Bullet list with bold labels; use as the action in the bullet.
@@ -126,7 +126,7 @@ Do not copy the JD skill list. Do not fill Verdict missing-skill questions. Do n
 ## Grounding
 Copy employers, dates, education, and contact from input.
 You may rewrite phrasing. You may not invent employers, dates, tools, metrics, or jobs.
-Output language must follow \`workflow.language\`.`;
+Output language must follow \`run.language\`.`;
 
 export const DEFAULT_EVALUATE_PROMPT = `## Rubric
 Score the résumé against the same dimensions as Verdict.
