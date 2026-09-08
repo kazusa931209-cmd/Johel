@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -19,14 +19,34 @@ import {
   listCompanies,
   type CompanyDetail,
 } from "@/lib/api";
+import { useCrudListParams } from "@/lib/crud-list-params";
+
+function CompaniesPageFallback() {
+  const t = useT();
+  return (
+    <section className="space-y-4">
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {t("crud.companies.title")}
+      </h1>
+      <p className="text-sm text-muted">{t("crud.common.loading")}</p>
+    </section>
+  );
+}
 
 export default function CompaniesPage() {
+  return (
+    <Suspense fallback={<CompaniesPageFallback />}>
+      <CompaniesPageContent />
+    </Suspense>
+  );
+}
+
+function CompaniesPageContent() {
   const router = useRouter();
   const t = useT();
   const { toast } = useToast();
-  const [qInput, setQInput] = useState("");
-  const [q, setQ] = useState("");
-  const [page, setPage] = useState(1);
+  const { page, q, setPage, applySearch } = useCrudListParams();
+  const [qInput, setQInput] = useState(q);
   const [items, setItems] = useState<CompanyDetail[]>([]);
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -36,6 +56,10 @@ export default function CompaniesPage() {
   const [viewing, setViewing] = useState<CompanyDetail | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  useEffect(() => {
+    setQInput(q);
+  }, [q]);
 
   const load = useCallback(
     async (nextQ: string, nextPage: number) => {
@@ -49,9 +73,11 @@ export default function CompaniesPage() {
       setItems(res.data.items);
       setTotal(res.data.total);
       setPageSize(res.data.pageSize);
-      setPage(res.data.page);
+      if (res.data.page !== nextPage) {
+        setPage(res.data.page);
+      }
     },
-    [t, toast],
+    [setPage, t, toast],
   );
 
   useEffect(() => {
@@ -70,13 +96,16 @@ export default function CompaniesPage() {
     setDeleting(null);
     toast(t("toast.companyDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
-    void load(q, nextPage);
+    if (nextPage !== page) {
+      setPage(nextPage);
+    } else {
+      void load(q, page);
+    }
   }
 
   function onFilter(e: FormEvent) {
     e.preventDefault();
-    setPage(1);
-    setQ(qInput.trim());
+    applySearch(qInput.trim());
   }
 
   return (
@@ -150,15 +179,15 @@ export default function CompaniesPage() {
                     }
                   }}
                 >
-                  <td className="px-3 py-2 text-muted">
+                  <td className="w-16 px-3 py-2 text-muted">
                     {(page - 1) * pageSize + index + 1}
                   </td>
                   <td className="px-3 py-2 font-medium">{row.alias}</td>
                   <td className="px-3 py-2">{row.name}</td>
-                  <td className="max-w-[220px] truncate px-3 py-2 text-muted">
+                  <td className="max-w-40 truncate px-3 py-2 text-muted">
                     {row.whatCompanyIs}
                   </td>
-                  <td className="max-w-[280px] truncate px-3 py-2 text-muted">
+                  <td className="max-w-70 truncate px-3 py-2 text-muted">
                     {row.domainAndStack || t("crud.common.emDash")}
                   </td>
                   <td
@@ -188,7 +217,7 @@ export default function CompaniesPage() {
         <button
           type="button"
           disabled={page <= 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          onClick={() => setPage(page - 1)}
           className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
         >
           {t("crud.common.prev")}
@@ -196,7 +225,7 @@ export default function CompaniesPage() {
         <button
           type="button"
           disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
+          onClick={() => setPage(page + 1)}
           className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
         >
           {t("crud.common.next")}

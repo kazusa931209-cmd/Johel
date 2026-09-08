@@ -89,6 +89,8 @@ Fields: **category**, **problem**, **actions**, **outcome**. All are used as res
 
 One card = one capability. Target size: Problem 2–4 bullets, Actions 3–6, Outcome 1–3.
 
+Do **not** put employer or company names in **category**, **problem**, **actions**, or **outcome**. The card is shared across workflow company links; the employer name comes from the workflow company entry at generation time.
+
 Format each item as a bullet with a bold label and an indented body:
 
 ```text

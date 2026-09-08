@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { WorkflowCompaniesEditor } from "@/components/WorkflowCompaniesEditor";
@@ -13,6 +12,7 @@ import {
   type WorkflowDetail,
   type WorkflowWritePayload,
 } from "@/lib/api";
+import { useCrudFormNavigation } from "@/lib/crud-form-navigation";
 import {
   WORKFLOW_LANGUAGES,
   validateWorkflowEditorContent,
@@ -63,9 +63,9 @@ function ChevronDownIcon({ className }: { className?: string }) {
 }
 
 export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
-  const router = useRouter();
   const t = useT();
   const { toast } = useToast();
+  const { goBack } = useCrudFormNavigation("/workflows");
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [language, setLanguage] = useState<WorkflowLanguage>(
@@ -117,7 +117,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       mode === "edit" ? t("toast.workflowUpdated") : t("toast.workflowCreated"),
       "success",
     );
-    router.push("/workflows");
+    goBack();
   }
 
   return (
@@ -130,6 +130,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
         <div className="flex items-center gap-3">
           <BackButton
             href="/workflows"
+            preferHistoryBack
             aria-label={t("crud.workflows.form.backAria")}
           />
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -231,7 +232,7 @@ export function WorkflowForm({ mode, workflowId, initial }: WorkflowFormProps) {
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
           type="button"
-          onClick={() => router.push("/workflows")}
+          onClick={goBack}
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
           {t("crud.common.cancel")}

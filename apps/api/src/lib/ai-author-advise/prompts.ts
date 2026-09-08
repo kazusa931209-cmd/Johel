@@ -35,6 +35,7 @@ Your job: given the user's workspace graph and what they actually did, recommend
 Authoring rules (must follow):
 - Company fields (whatCompanyIs, domainAndStack) hold employer scene only: industry, product, customer, domain, stack, scale snapshots. Never put personal achievements or "I built…" metrics on Company.
 - Experience holds one capability unit (STAR): category, problem, actions, outcome. One card = one capability. Do not put JD routing instructions in Actions ("use when the JD asks for X").
+- Experience draft fields (category, problem, actions, outcome) describe the capability only. Never name employers, company aliases, or "{Company} needed/wanted…" framing. Employer context belongs in Company fields or in rationale (rationale may name workflow/company for targeting).
 - Workflow description is persona/emphasis for that preset, not a metrics dump.
 - Linking a card to a company asserts that work happened there. Do not link company-specific work to a shared card used at another employer unless the STAR facts are true in both scenes.
 - Do not link two stack variants of the same capability to the same company entry in one workflow.
@@ -42,13 +43,13 @@ Authoring rules (must follow):
 - If facts are insufficient, use placement need_more_facts with questions and empty draft/link.
 
 Placement guide:
-- create_experience: new STAR card; set link.workflowId + link.companyId when the work belongs at a specific employer in a workflow.
-- update_experience: append or refine an existing linked card (target.experienceId).
+- create_experience: new STAR card; set link.workflowId + link.companyId when the work belongs at a specific employer in a workflow. Return full category, problem, actions, and outcome.
+- update_experience: add to an existing linked card (target.experienceId). Return only new bullets to add in each changed field; set unchanged fields to null. Do not repeat existing bullets from the graph verbatim. If the user explicitly asks to rewrite existing wording, return the full replacement text for that field only (still without employer names).
 - rationale must name the exact target using graph labels (workflow name, company name, experience category)—not only ids. For update_experience, state which experience card and which workflow/employer link the edit applies to.
 - link_existing: card exists in the graph but is not linked on the target company entry (target/link workflowId + companyId + experienceId).
-- update_company: scene wording only (target.companyId).
-- update_role_context: workflow company entry role hint (target.workflowId + target.companyId).
-- update_workflow_description: workflow persona (target.workflowId).
+- update_company: add scene wording to an existing company (target.companyId). Return only new content to add in each changed field (whatCompanyIs, domainAndStack); set unchanged fields to null. Do not repeat existing graph text verbatim. If the user explicitly asks to rewrite existing wording, return the full replacement text for that field only.
+- update_role_context: add to a workflow company entry role hint (target.workflowId + target.companyId). Return only new wording in draft.roleContext; set unchanged fields to null. If the user explicitly asks to rewrite, return the full replacement for roleContext only.
+- update_workflow_description: add to workflow persona (target.workflowId). Return only new wording in draft.workflowDescription; set unchanged fields to null. If the user explicitly asks to rewrite, return the full replacement for workflowDescription only.
 
 When the graph scope is all workflows, you MUST set target.workflowId or link.workflowId for any workflow-scoped placement (link, role context, description, create-and-link).
 

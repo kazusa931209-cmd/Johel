@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/app/LocaleProvider";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { BackButton } from "@/components/shared/back-button";
@@ -13,6 +12,7 @@ import {
   type CompanyDetail,
   type CompanyWritePayload,
 } from "@/lib/api";
+import { useCrudFormNavigation } from "@/lib/crud-form-navigation";
 import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 
 type CompanyFormProps = {
@@ -95,10 +95,10 @@ function FieldExamples({
 }
 
 export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
-  const router = useRouter();
   const { t, tLines } = useLocale();
   const { toast } = useToast();
   const { refreshTokenUsed } = useAiUsage();
+  const { goBack } = useCrudFormNavigation("/companies");
   const [alias, setAlias] = useState(initial?.alias ?? "");
   const [name, setName] = useState(initial?.name ?? "");
   const [whatCompanyIs, setWhatCompanyIs] = useState(
@@ -153,7 +153,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
       mode === "edit" ? t("toast.companyUpdated") : t("toast.companyCreated"),
       "success",
     );
-    router.push("/companies");
+    goBack();
   }
 
   const convertingWhat = needsMarkdownFormatOnSave(
@@ -176,6 +176,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
         <div className="flex items-center gap-3">
           <BackButton
             href="/companies"
+            preferHistoryBack
             aria-label={t("crud.companies.form.backAria")}
           />
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -306,7 +307,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
           type="button"
-          onClick={() => router.push("/companies")}
+          onClick={goBack}
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
           {t("crud.common.cancel")}

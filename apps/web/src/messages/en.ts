@@ -406,7 +406,6 @@ export const en = {
       columns: {
         name: "Name",
         description: "Description",
-        updated: "Updated",
       },
       oneTimePrompt: {
         title: "One-time Prompt",
@@ -481,6 +480,8 @@ export const en = {
       loadingTarget: "Loading target…",
       rationale: "Rationale",
       questions: "Questions",
+      updateMergeHint:
+        "Fields show existing content merged with suggested additions. Review before Apply.",
       apply: "Apply",
       applying: "Applying…",
       placements: {
@@ -686,7 +687,7 @@ export const en = {
     },
     experience: {
       shared:
-        "One card = one capability unit, which works better in synthesis. If you put your whole career in one card, multiplying it by a company scene can produce bullets for work you never did at that company.",
+        "One card = one capability unit, which works better in synthesis. If you put your whole career in one card, multiplying it by a company scene can produce bullets for work you never did at that company. Do not include employer or company names in Problem, Actions, or Outcome—the card is shared; the employer name comes from the workflow company entry.",
       structuredFieldFormat:
         "Format each item as a bullet with a bold label and indented body, e.g. - **0→1 Product Development** followed by the description on the next line, indented.",
       problemGuideline: "(What you solved — bullet list with bold labels)",

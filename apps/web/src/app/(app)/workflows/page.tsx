@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -15,18 +15,38 @@ import {
 } from "@/components/shared/detail-dialog";
 import { WorkflowDetailDialog } from "@/components/WorkflowDetailDialog";
 import { deleteWorkflow, listWorkflows, type Workflow } from "@/lib/api";
+import { useCrudListParams } from "@/lib/crud-list-params";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString();
 }
 
+function WorkflowsPageFallback() {
+  const t = useT();
+  return (
+    <section className="space-y-4">
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {t("crud.workflows.title")}
+      </h1>
+      <p className="text-sm text-muted">{t("crud.common.loading")}</p>
+    </section>
+  );
+}
+
 export default function WorkflowsPage() {
+  return (
+    <Suspense fallback={<WorkflowsPageFallback />}>
+      <WorkflowsPageContent />
+    </Suspense>
+  );
+}
+
+function WorkflowsPageContent() {
   const router = useRouter();
   const t = useT();
   const { toast } = useToast();
-  const [qInput, setQInput] = useState("");
-  const [q, setQ] = useState("");
-  const [page, setPage] = useState(1);
+  const { page, q, setPage, applySearch } = useCrudListParams();
+  const [qInput, setQInput] = useState(q);
   const [items, setItems] = useState<Workflow[]>([]);
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -36,6 +56,10 @@ export default function WorkflowsPage() {
   const [viewingId, setViewingId] = useState<string | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  useEffect(() => {
+    setQInput(q);
+  }, [q]);
 
   const load = useCallback(
     async (nextQ: string, nextPage: number) => {
@@ -49,9 +73,11 @@ export default function WorkflowsPage() {
       setItems(res.data.items);
       setTotal(res.data.total);
       setPageSize(res.data.pageSize);
-      setPage(res.data.page);
+      if (res.data.page !== nextPage) {
+        setPage(res.data.page);
+      }
     },
-    [t, toast],
+    [setPage, t, toast],
   );
 
   useEffect(() => {
@@ -70,13 +96,16 @@ export default function WorkflowsPage() {
     setDeleting(null);
     toast(t("toast.workflowDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
-    void load(q, nextPage);
+    if (nextPage !== page) {
+      setPage(nextPage);
+    } else {
+      void load(q, page);
+    }
   }
 
   function onFilter(e: FormEvent) {
     e.preventDefault();
-    setPage(1);
-    setQ(qInput.trim());
+    applySearch(qInput.trim());
   }
 
   return (
@@ -104,10 +133,10 @@ export default function WorkflowsPage() {
         />
       </form>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full min-w-120 text-left text-sm">
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">{t("crud.common.no")}</th>
+              <th className="w-16 px-3 py-2 font-medium">{t("crud.common.no")}</th>
               <th className="px-3 py-2 font-medium">
                 {t("crud.workflows.columns.name")}
               </th>
@@ -184,7 +213,7 @@ export default function WorkflowsPage() {
         <button
           type="button"
           disabled={page <= 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          onClick={() => setPage(page - 1)}
           className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
         >
           {t("crud.common.prev")}
@@ -192,7 +221,7 @@ export default function WorkflowsPage() {
         <button
           type="button"
           disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
+          onClick={() => setPage(page + 1)}
           className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
         >
           {t("crud.common.next")}

@@ -406,7 +406,6 @@ export const ko: MessageTree = {
       columns: {
         name: "이름",
         description: "설명",
-        updated: "갱신날자",
       },
       oneTimePrompt: {
         title: "1회용 프롬프트",
@@ -447,7 +446,7 @@ export const ko: MessageTree = {
   },
   quickExperience: {
     fabAria: "빠른 경험추가",
-    drawerTitle: "빠른 경험 추가",
+    drawerTitle: "빠른 경험추가",
     scopeHint:
       "선택항목: 고려하여야 할 범위를 하나의 작업흐름으로 제한합니다. 선택하지 않으면 모든 작업흐름이 포함됩니다.",
     clear: "초기화",
@@ -461,7 +460,7 @@ export const ko: MessageTree = {
     next: "다음",
     running: "실행중…",
     busy: {
-      title: "빠른 경험 추가",
+      title: "빠른 경험추가",
       description: "작업공간에서 기록할 위치를 찾는중입니다…",
     },
     workflowSection: {
@@ -481,6 +480,8 @@ export const ko: MessageTree = {
       loadingTarget: "대상적재중…",
       rationale: "리유",
       questions: "질문",
+      updateMergeHint:
+        "마당에는 기존내용과 제안된 추가내용이 병합되여 표시됩니다. 적용전에 검토해주십시오.",
       apply: "적용",
       applying: "적용중…",
       placements: {
@@ -532,7 +533,7 @@ export const ko: MessageTree = {
       generate: "생성",
       evaluate: "평가",
       workflowRecommend: "작업흐름 추천",
-      authorAdvise: "빠른 경험 추가",
+      authorAdvise: "빠른 경험추가",
       promptHelper: "프롬프트 방조자",
       markdownFormat: "형식 초기화",
     },
@@ -685,7 +686,7 @@ export const ko: MessageTree = {
     },
     experience: {
       shared:
-        "카드 하나 = 하나의 력량단위로 설계하면 합성에 유리합니다. 한 카드에 전체경력을 넣으면 회사장면과 곱할때 그 회사에서 하지않은 일까지 합성될수 있습니다.",
+        "카드 하나 = 하나의 력량단위로 설계하면 합성에 유리합니다. 한 카드에 전체경력을 넣으면 회사장면과 곱할때 그 회사에서 하지않은 일까지 합성될수 있습니다. 문제·행동·결과에 고용주/회사명을 넣지 마십시오. 카드는 공유되며 고용주명은 작업흐름 회사항목에서 사용됩니다.",
       structuredFieldFormat:
         "각 항목을 굵은글자가 있는 bullet과 들여쓴 본문이 있는 bullet로 작성해주십시오. 례: - **0→1 Product Development** 다음 줄에 설명을 들여쓰기합니다.",
       problemGuideline: "(해결한 문제 — 굵은글자가 있는 bullet 목록)",
@@ -700,7 +701,7 @@ export const ko: MessageTree = {
         "  요구사항·구조로부터 구현, 배포, 운영까지 제품을 end-to-end로 담당했습니다.",
       ],
       outcomeGuideline:
-        "(측정 가능한 결과 — 숫자가 있을 때만 포함 — 굵은글자가 있는 bullet 목록)",
+        "(측정 가능한 결과 — 수자가 있을 때만 포함 — 굵은글자가 있는 bullet 목록)",
       outcomeGood: [
         "- **지연 시간 개선**",
         "  Caching과 Query최적화후 API p95 지연시간을 30% 줄였습니다.",

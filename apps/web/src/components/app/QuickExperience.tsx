@@ -21,6 +21,7 @@ import {
   type AuthorAdviseProposal,
   type Workflow,
 } from "@/lib/api";
+import { buildAuthorAdviseDisplayDraft } from "@/lib/build-author-advise-display-draft";
 import { dispatchWorkspaceUpdated } from "@/lib/workspace-updated";
 import { QuickExperienceSuggestionDrawer } from "./QuickExperienceSuggestionDrawer";
 import { STUDIO_FAB_CLASS } from "@/components/app/studio-fab";
@@ -105,8 +106,14 @@ function QuickExperienceDrawer({
       return;
     }
 
-    setProposal(res.data.proposal);
-    setDraft(res.data.proposal.draft);
+    const { proposal } = res.data;
+    const displayDraft = await buildAuthorAdviseDisplayDraft(
+      proposal,
+      selection.workflowId ?? undefined,
+    );
+
+    setProposal(proposal);
+    setDraft(displayDraft);
     setWorkspaceFingerprint(res.data.workspaceFingerprint);
     setTokenUsed(res.data.tokenUsed);
     void refreshTokenUsed();

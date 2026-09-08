@@ -169,6 +169,12 @@ User browser (:4041)
 - Web routes: `/experiences` list (columns: Category, Problem, Actions, Outcome); `/experiences/new` add; `/experiences/[id]/edit` edit; editor shows bullet-format guidelines and examples on problem/actions/outcome and shared guidance on one card = one capability unit; `DESCRIPTION_AS_RESUME_PROMPT_HINT` on each prompt field; Save right-aligned
 - **Phase 45 migration note:** `experiences.description` dropped; existing rows backfill `problem` from former `description`, `actions` and `outcome` to empty string — users must fill actions on next edit
 
+## CRUD list pagination and history back (Phase 53)
+
+- List pages (`/profiles`, `/companies`, `/experiences`, `/workflows`) sync pagination and search to URL query params: `?page=` (omitted when `1`) and `?q=` (omitted when empty); pagination updates use `router.replace` (no extra history entry per page click)
+- Hook: `useCrudListParams` in `apps/web/src/lib/crud-list-params.ts`; list content wrapped in `Suspense` (required for `useSearchParams`)
+- Add/edit forms use `useCrudFormNavigation(fallbackHref)` and `BackButton` with `preferHistoryBack` so Back, Cancel, and post-save navigation call `router.back()` when history exists, else `router.push(fallbackHref)`
+
 ## Generate UI (Phase 11–20, 22, 24, 25, 26, 27, 28)
 
 - Route `/` gates on at least one workflow and saved Generate Prompt; Verdict Prompt required only when `doVerdict`; Evaluate Prompt required only when `doEvaluate`; otherwise a centered alert with links (not a toast)
@@ -240,9 +246,10 @@ User browser (:4041)
 
 ## Quick Experience authoring advisor (Phase 49)
 
-- `POST /ai-author-advise` — body `{ workflowId?, userFacts }` (facts 1–10,000 chars); requires Settings provider/apiKey; loads workspace graph via `loadAuthorAdviseGraph`: when `workflowId` is set, only that workflow’s profile, company entries, and linked experiences (`assembleResumeGenerationInput`); when omitted, every owned workflow with the same shape (never-linked workspace cards excluded); fixed system prompt encodes [`workspace-authoring.md`](./workspace-authoring.md) routing; user message = scope + workflow blocks + user facts (no Job/Evaluate session); Cursor `Agent.prompt` / OpenAI Responses `json_object` (`gpt-5.6-luna`); returns `{ proposal, workspaceFingerprint, usage, tokenUsed }`; fingerprint is `buildWorkflowGenerationFingerprint` for one workflow or JSON array of per-workflow fingerprints when scope is all
+- `POST /ai-author-advise` — body `{ workflowId?, userFacts }` (facts 1–10,000 chars); requires Settings provider/apiKey; loads workspace graph via `loadAuthorAdviseGraph`: when `workflowId` is set, only that workflow’s profile, company entries, and linked experiences (`assembleResumeGenerationInput`); when omitted, every owned workflow with the same shape (never-linked workspace cards excluded); fixed system prompt encodes [`workspace-authoring.md`](./workspace-authoring.md) routing (including no employer names in Experience STAR drafts); for update placements, AI returns delta-only draft fields (new content only; unchanged fields `null`); user message = scope + workflow blocks + user facts (no Job/Evaluate session); Cursor `Agent.prompt` / OpenAI Responses `json_object` (`gpt-5.6-luna`); returns `{ proposal, workspaceFingerprint, usage, tokenUsed }`; fingerprint is `buildWorkflowGenerationFingerprint` for one workflow or JSON array of per-workflow fingerprints when scope is all
 - `POST /ai-author-advise/apply` — body `{ workflowId?, workspaceFingerprint, proposal, draft? }`; deterministic Prisma writes in `applyAuthorAdviseProposal` (experience/company create or update, workflow link, role context, workflow description); stale fingerprint → 409; uses existing `formatMarkdownOnSave` on changed markdown fields; returns `{ ok, appliedWorkflowId, warnings }`
-- Module: `apps/api/src/lib/ai-author-advise/` (`load-graph`, `fingerprint`, `prompts`, `parse-response`, `apply`, Cursor/OpenAI providers)
+- Module: `apps/api/src/lib/ai-author-advise/` (`load-graph`, `fingerprint`, `prompts`, `parse-response`, `merge-experience-field`, `apply`, Cursor/OpenAI providers)
+- Web merge (Phase 51–52): for all update placements (`update_experience`, `update_company`, `update_role_context`, `update_workflow_description`), `QuickExperience` loads existing stored text and merges each changed field with the AI delta via `mergeExperienceFieldUpdate` / `buildAuthorAdviseDisplayDraft` before showing the Suggestion drawer; Apply sends the merged textarea as `draft` (WYSIWYG replace, no server-side append)
 - Web: `StudioBottomFabCluster` (history + plus FABs); `QuickExperience` drawer + nested `QuickExperienceSuggestionDrawer`; `runAuthorAdvise` / `applyAuthorAdvise` in `apps/web/src/lib/api.ts`; Apply dispatches `johel:workspace-updated` (`workspace-updated.ts`); `useGenerateSession` clears stored resume/evaluation when the event affects the session workflow or is a shared company/experience update
 
 ## Resume package (`@johel/resume`, Phase 20)

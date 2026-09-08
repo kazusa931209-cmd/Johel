@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { ProfileLinksEditor } from "@/components/ProfileLinksEditor";
@@ -12,6 +11,7 @@ import {
   type ProfileDetail,
   type ProfileWritePayload,
 } from "@/lib/api";
+import { useCrudFormNavigation } from "@/lib/crud-form-navigation";
 import type { ProfileLinkItem } from "@/lib/profile";
 
 type ProfileFormProps = {
@@ -39,9 +39,9 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
-  const router = useRouter();
   const t = useT();
   const { toast } = useToast();
+  const { goBack } = useCrudFormNavigation("/profiles");
   const [firstName, setFirstName] = useState(initial?.firstName ?? "");
   const [lastName, setLastName] = useState(initial?.lastName ?? "");
   const [birthDate, setBirthDate] = useState(initial?.birthDate ?? "");
@@ -91,7 +91,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       mode === "edit" ? t("toast.profileUpdated") : t("toast.profileCreated"),
       "success",
     );
-    router.push("/profiles");
+    goBack();
   }
 
   return (
@@ -104,6 +104,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
         <div className="flex items-center gap-3">
           <BackButton
             href="/profiles"
+            preferHistoryBack
             aria-label={t("crud.profiles.form.backAria")}
           />
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -215,7 +216,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
           type="button"
-          onClick={() => router.push("/profiles")}
+          onClick={goBack}
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
           {t("crud.common.cancel")}

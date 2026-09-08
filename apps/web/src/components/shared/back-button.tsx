@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 
 type BackButtonProps = {
   href: string;
+  fallbackHref?: string;
+  preferHistoryBack?: boolean;
   "aria-label": string;
 };
 
@@ -24,13 +26,31 @@ function ChevronLeftIcon({ className }: { className?: string }) {
   );
 }
 
-export function BackButton({ href, "aria-label": ariaLabel }: BackButtonProps) {
+export function BackButton({
+  href,
+  fallbackHref,
+  preferHistoryBack = false,
+  "aria-label": ariaLabel,
+}: BackButtonProps) {
   const router = useRouter();
+  const fallback = fallbackHref ?? href;
+
+  function onClick() {
+    if (preferHistoryBack) {
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+      } else {
+        router.push(fallback);
+      }
+      return;
+    }
+    router.push(href);
+  }
 
   return (
     <button
       type="button"
-      onClick={() => router.push(href)}
+      onClick={onClick}
       aria-label={ariaLabel}
       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border hover:bg-surface-muted"
     >

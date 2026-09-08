@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useLocale, useT } from "@/components/app/LocaleProvider";
+import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { PcewSection } from "@/components/generate/PcewSection";
 import {
@@ -37,7 +37,6 @@ export function GenerateWorkflowStep({
   onNext,
 }: GenerateWorkflowStepProps) {
   const t = useT();
-  const { locale } = useLocale();
   const [fieldErrors, setFieldErrors] = useState<WorkflowFieldErrors>({});
   const [viewingWorkflow, setViewingWorkflow] = useState<Workflow | null>(null);
 
@@ -66,10 +65,6 @@ export function GenerateWorkflowStep({
     onNext: handleNext,
     nextBusy: generating,
   });
-
-  function formatWorkflowDate(iso: string) {
-    return new Date(iso).toLocaleString(locale);
-  }
 
   return (
     <div className="space-y-6">
@@ -120,11 +115,6 @@ export function GenerateWorkflowStep({
             header: t("generate.workflow.columns.description"),
             className: "max-w-[220px] truncate text-muted",
             cell: (row) => row.description ?? "",
-          },
-          {
-            header: t("generate.workflow.columns.updated"),
-            className: "whitespace-nowrap text-muted",
-            cell: (row) => formatWorkflowDate(row.updatedAt),
           },
         ]}
         renderDetailDialog={(row) => (

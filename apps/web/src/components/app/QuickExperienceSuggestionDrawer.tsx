@@ -6,6 +6,13 @@ import { Drawer } from "@/components/shared/drawer";
 import type { AuthorAdviseDraft, AuthorAdviseProposal } from "@/lib/api";
 import { loadSuggestionWhereLines } from "./quick-experience-suggestion-target";
 
+const UPDATE_PLACEMENTS_WITH_MERGE = new Set<AuthorAdviseProposal["placement"]>([
+  "update_experience",
+  "update_company",
+  "update_role_context",
+  "update_workflow_description",
+]);
+
 type DraftFieldProps = {
   label: string;
   value: string;
@@ -90,6 +97,7 @@ export function QuickExperienceSuggestionDrawer({
   }
 
   const canApply = proposal.placement !== "need_more_facts";
+  const showsUpdateMergeHint = UPDATE_PLACEMENTS_WITH_MERGE.has(proposal.placement);
 
   function patchDraft(patch: Partial<AuthorAdviseDraft>) {
     if (!draft) return;
@@ -182,6 +190,12 @@ export function QuickExperienceSuggestionDrawer({
                 ))}
               </ul>
             </div>
+          ) : null}
+
+          {showsUpdateMergeHint ? (
+            <p className="text-xs text-muted">
+              {t("quickExperience.suggestion.updateMergeHint")}
+            </p>
           ) : null}
 
           {proposal.placement === "create_experience" ||

@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/app/LocaleProvider";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { BackButton } from "@/components/shared/back-button";
@@ -13,6 +12,7 @@ import {
   type ExperienceDetail,
   type ExperienceWritePayload,
 } from "@/lib/api";
+import { useCrudFormNavigation } from "@/lib/crud-form-navigation";
 import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 
 type ExperienceFormProps = {
@@ -65,10 +65,10 @@ export function ExperienceForm({
   experienceId,
   initial,
 }: ExperienceFormProps) {
-  const router = useRouter();
   const { t, tLines } = useLocale();
   const { toast } = useToast();
   const { refreshTokenUsed } = useAiUsage();
+  const { goBack } = useCrudFormNavigation("/experiences");
   const [category, setCategory] = useState(initial?.category ?? "");
   const [problem, setProblem] = useState(initial?.problem ?? "");
   const [actions, setActions] = useState(initial?.actions ?? "");
@@ -122,7 +122,7 @@ export function ExperienceForm({
         : t("toast.experienceCreated"),
       "success",
     );
-    router.push("/experiences");
+    goBack();
   }
 
   const convertingProblem = needsMarkdownFormatOnSave(problem, storedProblem);
@@ -141,6 +141,7 @@ export function ExperienceForm({
         <div className="flex items-center gap-3">
           <BackButton
             href="/experiences"
+            preferHistoryBack
             aria-label={t("crud.experiences.form.backAria")}
           />
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -271,7 +272,7 @@ export function ExperienceForm({
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <button
           type="button"
-          onClick={() => router.push("/experiences")}
+          onClick={goBack}
           className="rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-muted"
         >
           {t("crud.common.cancel")}

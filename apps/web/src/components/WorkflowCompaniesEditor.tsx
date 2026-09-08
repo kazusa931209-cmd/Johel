@@ -9,6 +9,7 @@ import {
 } from "@/components/shared/action-icon-buttons";
 import {
   DetailDialog,
+  DetailField,
   TABLE_ROW_HOVER_CLASS,
 } from "@/components/shared/detail-dialog";
 import { WorkflowCompanyDialog } from "@/components/WorkflowCompanyDialog";
@@ -41,6 +42,7 @@ export function WorkflowCompaniesEditor({
   const [dialog, setDialog] = useState<"add" | "edit" | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+  const [viewingIndex, setViewingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +133,12 @@ export function WorkflowCompaniesEditor({
         t("crud.workflows.companiesEditor.thisCompany")
       : "";
 
+  const viewingEntry =
+    viewingIndex !== null ? companies[viewingIndex] : null;
+  const viewingCompanyName = viewingEntry
+    ? companyNameById.get(viewingEntry.companyId) ?? viewingEntry.companyId
+    : "";
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -175,6 +183,14 @@ export function WorkflowCompaniesEditor({
                 <tr
                   key={`${entry.companyId}-${index}`}
                   className={TABLE_ROW_HOVER_CLASS}
+                  tabIndex={0}
+                  onClick={() => setViewingIndex(index)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setViewingIndex(index);
+                    }
+                  }}
                 >
                   <td className="px-3 py-2 font-medium">
                     {companyNameById.get(entry.companyId) ?? entry.companyId}
@@ -201,6 +217,43 @@ export function WorkflowCompaniesEditor({
           </tbody>
         </table>
       </div>
+
+      {viewingEntry ? (
+        <DetailDialog
+          title={viewingCompanyName}
+          onClose={() => setViewingIndex(null)}
+        >
+          <DetailField
+            label={t("crud.workflows.companiesEditor.period")}
+            value={formatWorkflowPeriod(
+              viewingEntry.startDate,
+              viewingEntry.endDate,
+            )}
+          />
+          <DetailField
+            label={t("crud.workflows.companiesEditor.roleContext")}
+            value={viewingEntry.roleContext}
+          />
+          <div className="space-y-1">
+            <div className="text-xs font-medium tracking-wide text-muted uppercase">
+              {t("crud.workflows.companiesEditor.experiences")}
+            </div>
+            {viewingEntry.experienceIds.length === 0 ? (
+              <p className="text-sm text-muted">
+                {t("crud.workflows.noExperiencesLinked")}
+              </p>
+            ) : (
+              <ul className="list-inside list-disc space-y-1 text-sm text-foreground">
+                {viewingEntry.experienceIds.map((id) => (
+                  <li key={id}>
+                    {experienceLabelById.get(id) ?? id}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </DetailDialog>
+      ) : null}
 
       {dialog ? (
         <WorkflowCompanyDialog
