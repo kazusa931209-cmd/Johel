@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/app/ThemeProvider";
 import { LocaleProvider } from "@/components/app/LocaleProvider";
 import { ToastProvider } from "@/components/app/ToastProvider";
+import { kpCheonRiMa } from "@/lib/ko-font";
 import { LOCALE_BOOTSTRAP_SCRIPT } from "@/lib/locale";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import "./globals.css";
@@ -28,14 +29,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`dark ${geistSans.variable} ${geistMono.variable} ${kpCheonRiMa.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: LOCALE_BOOTSTRAP_SCRIPT }} />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background text-foreground antialiased`}
-      >
+      <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider>
           <LocaleProvider>
             <ToastProvider>{children}</ToastProvider>

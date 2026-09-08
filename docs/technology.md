@@ -299,6 +299,7 @@ User browser (:4041)
 - **Provider:** `LocaleProvider` (`components/app/LocaleProvider.tsx`) exposes `locale`, `setLocale`, `t`, `tLines`
 - **Catalogs:** `apps/web/src/messages/en.ts` (source of key shape), `ko.ts` (`MessageTree` via `DeepStringify<typeof en>`), `translate.ts` (`translate`, `translateLines`)
 - **Settings:** `/settings/environment` Language section after Theme; toggles apply immediately (no Save)
+- **Korean typography:** when `document.documentElement.lang` is `ko`, UI sans-serif uses bundled **KP CheonRiMa** (`apps/web/src/fonts/KP-CheonRiMa-Medium.ttf` via `next/font/local` in `lib/ko-font.ts`); English keeps Geist Sans
 - **Scope:** All JoHEL UI strings including login/register; not workflow résumé output language or server/API error text
 
 ## Plans

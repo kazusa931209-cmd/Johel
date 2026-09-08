@@ -79,6 +79,14 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+html[lang="ko"] {
+  --font-sans: var(--font-kp-cheonrima), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+html[lang="ko"] body {
+  font-family: var(--font-kp-cheonrima), var(--font-geist-sans), system-ui, sans-serif;
+}
+
 .prose {
   --tw-prose-body: var(--foreground);
   --tw-prose-headings: var(--foreground);
