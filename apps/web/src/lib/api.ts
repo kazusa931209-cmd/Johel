@@ -414,8 +414,11 @@ export type AiUsageList = {
 };
 
 export type AiUsageGroupItem = {
+  kind: "generation" | "standalone";
   generationId: string | null;
   generationPublicId: string | null;
+  standaloneDate: string | null;
+  generateType: string | null;
   callCount: number;
   inputToken: number;
   outputToken: number;
@@ -654,7 +657,12 @@ export function listAiUsageGroups(page = 1) {
 
 export function listAiUsage(
   page = 1,
-  options?: { generationId?: string | null; limit?: number | null },
+  options?: {
+    generationId?: string | null;
+    standaloneDate?: string | null;
+    generateType?: string | null;
+    limit?: number | null;
+  },
 ) {
   const params = new URLSearchParams();
   params.set("page", String(page));
@@ -662,6 +670,12 @@ export function listAiUsage(
     params.set("generationId", "none");
   } else if (options?.generationId) {
     params.set("generationId", options.generationId);
+  }
+  if (options?.standaloneDate) {
+    params.set("standaloneDate", options.standaloneDate);
+  }
+  if (options?.generateType) {
+    params.set("generateType", options.generateType);
   }
   if (options?.limit === null) {
     params.set("limit", "null");

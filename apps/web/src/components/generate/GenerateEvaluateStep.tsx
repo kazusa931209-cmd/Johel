@@ -4,7 +4,6 @@ import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
-import { useStepMountAutoRun } from "@/components/generate/useStepMountAutoRun";
 import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
 
 type GenerateEvaluateStepProps = {
@@ -12,8 +11,6 @@ type GenerateEvaluateStepProps = {
   runLabel?: string;
   evaluationMarkdown: string | null;
   evaluating: boolean;
-  onAutoEvaluate: () => void | Promise<void>;
-  onPrev: () => void;
 };
 
 export function GenerateEvaluateStep({
@@ -21,16 +18,11 @@ export function GenerateEvaluateStep({
   runLabel,
   evaluationMarkdown,
   evaluating,
-  onAutoEvaluate,
-  onPrev,
 }: GenerateEvaluateStepProps) {
   const t = useT();
   const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
 
-  useStepMountAutoRun(onAutoEvaluate);
-
   useRegisterGenerateStepNav({
-    onPrev,
     onDownload: resume ? () => void onDownload() : undefined,
     downloadBusy: downloading,
   });

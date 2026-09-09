@@ -6,6 +6,8 @@ import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { getMe } from "@/lib/api";
 import {
+  clearDownstreamFromGenerate,
+  clearDownstreamFromVerdict,
   EMPTY_GENERATE_SESSION,
   type GenerateJobState,
   type GenerateSession,
@@ -18,10 +20,6 @@ import {
   persistGenerationSnapshot,
   type GenerationSnapshot,
 } from "@/lib/generation-persistence";
-import {
-  WORKSPACE_UPDATED_EVENT,
-  type WorkspaceUpdatedDetail,
-} from "@/lib/workspace-updated";
 
 function withoutResume(session: GenerateSession): GenerateSession {
   return {
@@ -31,21 +29,6 @@ function withoutResume(session: GenerateSession): GenerateSession {
     evaluationMarkdown: null,
     evaluationInputKey: null,
   };
-}
-
-function applyJobUpdate(
-  current: GenerateSession,
-  job: GenerateJobState,
-): GenerateSession {
-  const jobTextChanged = job.jobText !== current.job.jobText;
-  const nextJob = jobTextChanged
-    ? { ...job, acceptedMarkdown: null }
-    : job;
-  return withoutResume({
-    ...current,
-    job: nextJob,
-    verdictInputKey: jobTextChanged ? null : current.verdictInputKey,
-  });
 }
 
 function toGenerationSnapshot(
@@ -122,42 +105,6 @@ export function useGenerateSession() {
     saveGenerateSession(userId, session);
   }, [ready, session, userId]);
 
-  useEffect(() => {
-    function onWorkspaceUpdated(event: Event) {
-      const detail = (event as CustomEvent<WorkspaceUpdatedDetail>).detail;
-      setSession((current) => {
-        if (!current.resume && !current.evaluationMarkdown) {
-          return current;
-        }
-        const { combine } = current;
-        const profileTouched =
-          detail.profileId != null && detail.profileId === combine.profileId;
-        const companyTouched = combine.companies.some(
-          (entry) => entry.companyId === detail.companyId,
-        );
-        const experienceTouched = combine.companies.some((entry) =>
-          entry.experienceIds.includes(detail.experienceId ?? ""),
-        );
-        if (
-          detail.profileId == null &&
-          detail.companyId == null &&
-          detail.experienceId == null
-        ) {
-          return withoutResume(current);
-        }
-        if (profileTouched || companyTouched || experienceTouched) {
-          return withoutResume(current);
-        }
-        return current;
-      });
-    }
-
-    window.addEventListener(WORKSPACE_UPDATED_EVENT, onWorkspaceUpdated);
-    return () => {
-      window.removeEventListener(WORKSPACE_UPDATED_EVENT, onWorkspaceUpdated);
-    };
-  }, []);
-
   const saveSnapshot = useCallback(
     async (status?: GenerationSnapshot["status"]) => {
       const snapshot = toGenerationSnapshot(session, status);
@@ -172,17 +119,26 @@ export function useGenerateSession() {
   }, []);
 
   const setJob = useCallback((job: GenerateJobState) => {
-    setSession((current) => applyJobUpdate(current, job));
+    setSession((current) => ({ ...current, job }));
   }, []);
 
   const patchJob = useCallback((patch: Partial<GenerateJobState>) => {
-    setSession((current) =>
-      applyJobUpdate(current, { ...current.job, ...patch }),
-    );
+    setSession((current) => ({
+      ...current,
+      job: { ...current.job, ...patch },
+    }));
   }, []);
 
   const setCombine = useCallback((combine: CombineSnapshot) => {
-    setSession((current) => withoutResume({ ...current, combine }));
+    setSession((current) => ({ ...current, combine }));
+  }, []);
+
+  const clearDownstreamFromVerdictSession = useCallback(() => {
+    setSession((current) => clearDownstreamFromVerdict(current));
+  }, []);
+
+  const clearDownstreamFromGenerateSession = useCallback(() => {
+    setSession((current) => clearDownstreamFromGenerate(current));
   }, []);
 
   const setVerdictResult = useCallback(
@@ -255,6 +211,8 @@ export function useGenerateSession() {
     evaluationMarkdown: session.evaluationMarkdown,
     evaluationInputKey: session.evaluationInputKey,
     setEvaluationResult,
+    clearDownstreamFromVerdictSession,
+    clearDownstreamFromGenerateSession,
     saveSnapshot,
     resetSession,
   };

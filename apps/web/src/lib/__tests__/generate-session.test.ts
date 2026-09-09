@@ -4,8 +4,11 @@ import {
   buildVerdictInputKey,
   canReuseStoredResume,
   canReuseStoredVerdict,
+  clearDownstreamFromGenerate,
+  clearDownstreamFromVerdict,
   EMPTY_GENERATE_SESSION,
   EMPTY_JOB_STATE,
+  hasStaleDownstreamForRun,
   parseGenerateSession,
 } from "../generate-session";
 import { EMPTY_COMBINE_SNAPSHOT } from "@/components/generate/combine-types";
@@ -146,5 +149,67 @@ describe("generate-session resume cache", () => {
         currentKey,
       ),
     ).toBe(false);
+  });
+});
+
+describe("generate-session run downstream helpers", () => {
+  it("detects stale downstream for Job and Combine when resume exists", () => {
+    const withResume = {
+      ...EMPTY_GENERATE_SESSION,
+      resume: {
+        header: {
+          name: "Jane Doe",
+          title: "Engineer",
+          contact: { email: "jane@example.com" },
+        },
+        summary: "Summary",
+        skills: [],
+        experiences: [],
+        education: [],
+        projects: [],
+        certifications: [],
+      },
+    };
+    expect(hasStaleDownstreamForRun(withResume, "Job")).toBe(true);
+    expect(hasStaleDownstreamForRun(withResume, "Combine")).toBe(true);
+    expect(hasStaleDownstreamForRun(withResume, "Verdict")).toBe(false);
+  });
+
+  it("detects stale downstream for Generate when evaluation exists", () => {
+    const withEvaluation = {
+      ...EMPTY_GENERATE_SESSION,
+      evaluationMarkdown: "# Evaluation",
+    };
+    expect(hasStaleDownstreamForRun(withEvaluation, "Generate")).toBe(true);
+    expect(hasStaleDownstreamForRun(withEvaluation, "Job")).toBe(true);
+    expect(hasStaleDownstreamForRun(withEvaluation, "Verdict")).toBe(false);
+  });
+
+  it("clears resume and evaluation but keeps verdict", () => {
+    const session = {
+      ...EMPTY_GENERATE_SESSION,
+      job: { ...EMPTY_JOB_STATE, acceptedMarkdown: "# Verdict" },
+      verdictInputKey: "key",
+      resume: {
+        header: {
+          name: "Jane Doe",
+          title: "Engineer",
+          contact: { email: "jane@example.com" },
+        },
+        summary: "Summary",
+        skills: [],
+        experiences: [],
+        education: [],
+        projects: [],
+        certifications: [],
+      },
+      evaluationMarkdown: "# Eval",
+    };
+    const cleared = clearDownstreamFromVerdict(session);
+    expect(cleared.job.acceptedMarkdown).toBe("# Verdict");
+    expect(cleared.verdictInputKey).toBe("key");
+    expect(cleared.resume).toBeNull();
+    expect(cleared.evaluationMarkdown).toBeNull();
+    expect(clearDownstreamFromGenerate(session).resume).toBeNull();
   });
 });

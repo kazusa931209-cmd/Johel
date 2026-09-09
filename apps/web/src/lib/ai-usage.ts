@@ -35,3 +35,30 @@ export function formatGenerateType(generateType: string, locale: Locale = "en"):
 export function formatAiUsageDate(iso: string, locale?: Locale): string {
   return new Date(iso).toLocaleString(locale);
 }
+
+export function buildAiUsageGroupKey(group: {
+  generationId: string | null;
+  standaloneDate?: string | null;
+  generateType?: string | null;
+  latestCreatedAt?: string | null;
+}): string {
+  if (group.generationId) {
+    return `generation:${group.generationId}`;
+  }
+  if (group.standaloneDate && group.generateType) {
+    return `standalone:${group.standaloneDate}-${group.generateType}`;
+  }
+  if (group.generateType && group.latestCreatedAt) {
+    return `standalone:${group.generateType}:${group.latestCreatedAt}`;
+  }
+  return `standalone:unknown:${group.latestCreatedAt ?? "missing"}`;
+}
+
+export function formatStandaloneGroupLabel(
+  standaloneDate: string,
+  generateType: string,
+  locale: Locale = "en",
+): string {
+  const typeLabel = formatGenerateType(generateType, locale);
+  return `${standaloneDate}-${typeLabel}`;
+}

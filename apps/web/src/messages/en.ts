@@ -335,7 +335,13 @@ export const en = {
     nav: {
       previous: "Previous",
       next: "Next",
+      run: "Run",
       download: "Download",
+    },
+    runConfirm: {
+      title: "Re-run and discard later results?",
+      body: "Running from this step will clear resume and evaluation results from later steps. Continue?",
+      confirm: "Run",
     },
     layout: {
       emptyPrevious: "No previous step content",

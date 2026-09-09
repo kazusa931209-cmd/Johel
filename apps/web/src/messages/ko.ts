@@ -337,7 +337,13 @@ export const ko: MessageTree = {
     nav: {
       previous: "이전",
       next: "다음",
+      run: "실행",
       download: "내리적재",
+    },
+    runConfirm: {
+      title: "다시 실행하고 이후 결과를 지울까요?",
+      body: "이 단계에서 실행하면 이후 단계의 이력서·평가 결과가 지워집니다. 계속할까요?",
+      confirm: "실행",
     },
     layout: {
       emptyPrevious: "이전 단계 내용 없음",

@@ -11,40 +11,31 @@ import {
   type ReactNode,
 } from "react";
 import { useT } from "@/components/app/LocaleProvider";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DownloadIcon,
-  PlusIcon,
-} from "@/components/shared/icons";
+import { DownloadIcon, PlayIcon, PlusIcon } from "@/components/shared/icons";
 
 export type GenerateStepNavState = {
-  onPrev?: () => void;
-  onNext?: () => void;
+  onRun?: () => void;
   onDownload?: () => void;
-  nextBusy?: boolean;
+  runBusy?: boolean;
   downloadBusy?: boolean;
 };
 
 type GenerateStepNavMeta = {
-  showPrev: boolean;
-  showNext: boolean;
+  showRun: boolean;
   showDownload: boolean;
-  nextBusy: boolean;
+  runBusy: boolean;
   downloadBusy: boolean;
 };
 
 const emptyMeta: GenerateStepNavMeta = {
-  showPrev: false,
-  showNext: false,
+  showRun: false,
   showDownload: false,
-  nextBusy: false,
+  runBusy: false,
   downloadBusy: false,
 };
 
 type GenerateStepNavContextValue = {
-  onPrevRef: React.RefObject<(() => void) | undefined>;
-  onNextRef: React.RefObject<(() => void) | undefined>;
+  onRunRef: React.RefObject<(() => void) | undefined>;
   onDownloadRef: React.RefObject<(() => void) | undefined>;
   meta: GenerateStepNavMeta;
   setMeta: (meta: GenerateStepNavMeta) => void;
@@ -69,18 +60,16 @@ function BusySpinner() {
 }
 
 export function GenerateStepNavProvider({ children }: { children: ReactNode }) {
-  const onPrevRef = useRef<(() => void) | undefined>(undefined);
-  const onNextRef = useRef<(() => void) | undefined>(undefined);
+  const onRunRef = useRef<(() => void) | undefined>(undefined);
   const onDownloadRef = useRef<(() => void) | undefined>(undefined);
   const [meta, setMetaState] = useState<GenerateStepNavMeta>(emptyMeta);
 
   const setMeta = useCallback((next: GenerateStepNavMeta) => {
     setMetaState((prev) => {
       if (
-        prev.showPrev === next.showPrev &&
-        prev.showNext === next.showNext &&
+        prev.showRun === next.showRun &&
         prev.showDownload === next.showDownload &&
-        prev.nextBusy === next.nextBusy &&
+        prev.runBusy === next.runBusy &&
         prev.downloadBusy === next.downloadBusy
       ) {
         return prev;
@@ -90,7 +79,7 @@ export function GenerateStepNavProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ onPrevRef, onNextRef, onDownloadRef, meta, setMeta }),
+    () => ({ onRunRef, onDownloadRef, meta, setMeta }),
     [meta, setMeta],
   );
 
@@ -105,21 +94,19 @@ export function useRegisterGenerateStepNav(nav: GenerateStepNavState) {
   const ctx = useContext(GenerateStepNavContext);
 
   if (ctx) {
-    ctx.onPrevRef.current = nav.onPrev;
-    ctx.onNextRef.current = nav.onNext;
+    ctx.onRunRef.current = nav.onRun;
     ctx.onDownloadRef.current = nav.onDownload;
   }
 
-  const showPrev = Boolean(nav.onPrev);
-  const showNext = Boolean(nav.onNext);
+  const showRun = Boolean(nav.onRun);
   const showDownload = Boolean(nav.onDownload);
-  const nextBusy = nav.nextBusy ?? false;
+  const runBusy = nav.runBusy ?? false;
   const downloadBusy = nav.downloadBusy ?? false;
 
   useEffect(() => {
     if (!ctx) return;
-    ctx.setMeta({ showPrev, showNext, showDownload, nextBusy, downloadBusy });
-  }, [ctx?.setMeta, showPrev, showNext, showDownload, nextBusy, downloadBusy]);
+    ctx.setMeta({ showRun, showDownload, runBusy, downloadBusy });
+  }, [ctx?.setMeta, showRun, showDownload, runBusy, downloadBusy]);
 
   useEffect(() => {
     if (!ctx) return;
@@ -159,30 +146,10 @@ export function GenerateNewButton({
   );
 }
 
-export function GenerateStepNavPrevButton() {
-  const { onPrevRef, meta } = useGenerateStepNavContext();
+export function GenerateStepNavRunButton() {
+  const { onRunRef, onDownloadRef, meta } = useGenerateStepNavContext();
   const t = useT();
-
-  if (!meta.showPrev) {
-    return <div className={navSlotClass} aria-hidden />;
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => onPrevRef.current?.()}
-      aria-label={t("generate.nav.previous")}
-      className={circleButtonClass}
-    >
-      <ChevronLeftIcon className="h-6 w-6" />
-    </button>
-  );
-}
-
-export function GenerateStepNavNextButton() {
-  const { onNextRef, onDownloadRef, meta } = useGenerateStepNavContext();
-  const t = useT();
-  const showRight = meta.showNext || meta.showDownload;
+  const showRight = meta.showRun || meta.showDownload;
 
   if (!showRight) {
     return <div className={navSlotClass} aria-hidden />;
@@ -196,21 +163,29 @@ export function GenerateStepNavNextButton() {
           onDownloadRef.current?.();
           return;
         }
-        onNextRef.current?.();
+        onRunRef.current?.();
       }}
-      disabled={meta.nextBusy || meta.downloadBusy}
+      disabled={meta.runBusy || meta.downloadBusy}
       aria-label={
-        meta.showDownload ? t("generate.nav.download") : t("generate.nav.next")
+        meta.showDownload ? t("generate.nav.download") : t("generate.nav.run")
       }
       className={circleButtonClass}
     >
-      {meta.nextBusy || meta.downloadBusy ? (
+      {meta.runBusy || meta.downloadBusy ? (
         <BusySpinner />
       ) : meta.showDownload ? (
         <DownloadIcon className="h-6 w-6" />
       ) : (
-        <ChevronRightIcon className="h-6 w-6" />
+        <PlayIcon className="h-6 w-6" />
       )}
     </button>
   );
+}
+
+/** @deprecated Use GenerateStepNavRunButton */
+export const GenerateStepNavNextButton = GenerateStepNavRunButton;
+
+/** @deprecated Prev removed — use timeline step selection */
+export function GenerateStepNavPrevButton() {
+  return <div className={navSlotClass} aria-hidden />;
 }

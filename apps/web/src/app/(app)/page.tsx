@@ -19,26 +19,31 @@ import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
 import { GenerateVerdictStep } from "@/components/generate/GenerateVerdictStep";
 import {
   GenerateNewButton,
-  GenerateStepNavNextButton,
-  GenerateStepNavPrevButton,
   GenerateStepNavProvider,
+  GenerateStepNavRunButton,
 } from "@/components/generate/GenerateStepNav";
+import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
 import {
   buildEvaluationInputKey,
   buildGenerationInputKey,
   buildResumeJobContext,
+  buildVerdictInputKey,
   canReuseStoredEvaluation,
   canReuseStoredResume,
+  canReuseStoredVerdict,
+  hasStaleDownstreamForRun,
+  type GenerateSession,
 } from "@/lib/generate-session";
 import {
-  getAdjacentGenerateStep,
   getGenerateSteps,
   needsNewGenerationConfirm,
   normalizeGenerateActiveStep,
 } from "@/lib/generate-steps";
+import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
   claimAutoRun,
+  isAutoRunInFlight,
   releaseAutoRun,
 } from "@/lib/generate-auto-run";
 import {
@@ -50,6 +55,7 @@ import {
   listProfiles,
   runAiEvaluate,
   runAiResume,
+  runAiVerdict,
   type ResumeLanguage,
 } from "@/lib/api";
 
@@ -79,7 +85,9 @@ export default function GeneratePage() {
   const [processSettings, setProcessSettings] = useState(DEFAULT_PROCESS);
   const [promptSettings, setPromptSettings] = useState(DEFAULT_PROMPTS);
   const [newConfirmOpen, setNewConfirmOpen] = useState(false);
+  const [runConfirmOpen, setRunConfirmOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const pendingRunRef = useRef<(() => void) | null>(null);
   const {
     ready: sessionReady,
     generationId,
@@ -98,6 +106,8 @@ export default function GeneratePage() {
     evaluationMarkdown,
     evaluationInputKey,
     setEvaluationResult,
+    clearDownstreamFromVerdictSession,
+    clearDownstreamFromGenerateSession,
     saveSnapshot,
     resetSession,
   } = useGenerateSession();
@@ -258,16 +268,46 @@ export default function GeneratePage() {
     visibleSteps,
   ]);
 
-  function goToAdjacentStep(direction: "prev" | "next") {
-    const next = getAdjacentGenerateStep(
-      visibleSteps,
+  const sessionSnapshot = useMemo<GenerateSession>(
+    () => ({
+      generationId,
+      generationPublicId,
+      activeStep: normalizedActiveStep,
+      job,
+      combine,
+      verdictInputKey,
+      resume,
+      generationInputKey,
+      evaluationMarkdown,
+      evaluationInputKey,
+    }),
+    [
+      combine,
+      evaluationInputKey,
+      evaluationMarkdown,
+      generationId,
+      generationPublicId,
+      generationInputKey,
+      job,
       normalizedActiveStep,
-      direction,
-    );
-    if (next) {
-      setActiveStep(next);
-    }
-  }
+      resume,
+      verdictInputKey,
+    ],
+  );
+
+  const requestRun = useCallback(
+    (fromStep: GenerateStep, action: () => void | Promise<void>) => {
+      if (hasStaleDownstreamForRun(sessionSnapshot, fromStep)) {
+        pendingRunRef.current = () => {
+          void action();
+        };
+        setRunConfirmOpen(true);
+        return;
+      }
+      void action();
+    },
+    [sessionSnapshot],
+  );
 
   const promptCacheContext = useMemo(
     () => ({
@@ -278,20 +318,77 @@ export default function GeneratePage() {
     [promptSettings],
   );
 
-  const onAdvanceFromJob = useCallback(() => {
-    if (processSettings.doVerdict) {
-      setActiveStep("Verdict");
+  const runVerdict = useCallback(async () => {
+    const filtered = noiseFilter(job.jobText.trim()).text;
+    const inputKey = buildVerdictInputKey(job, promptCacheContext);
+    if (canReuseStoredVerdict({ job, verdictInputKey }, inputKey)) {
       return;
     }
-    setJob({ ...job, acceptedMarkdown: null });
+
+    const autoRunKey = `verdict:${inputKey}`;
+    if (!claimAutoRun(autoRunKey)) {
+      if (isAutoRunInFlight(autoRunKey)) {
+        setVerdictRunning(true);
+      }
+      return;
+    }
+
+    setVerdictRunning(true);
+    try {
+      const res = await runAiVerdict(filtered, generationId);
+      if (!res.data) {
+        toast(res.error ?? t("toast.verdictFailed"), "error");
+        return;
+      }
+
+      setVerdictResult(res.data.markdown, inputKey);
+      setTokenUsed(res.data.tokenUsed);
+      await refreshTokenUsed();
+      toast(t("toast.verdictCompleted"), "success");
+    } catch {
+      toast(t("toast.verdictFailed"), "error");
+    } finally {
+      releaseAutoRun(autoRunKey);
+      setVerdictRunning(false);
+    }
+  }, [
+    generationId,
+    job,
+    promptCacheContext,
+    refreshTokenUsed,
+    setTokenUsed,
+    setVerdictResult,
+    t,
+    toast,
+    verdictInputKey,
+  ]);
+
+  const runFromJob = useCallback(() => {
+    requestRun("Job", async () => {
+      clearDownstreamFromVerdictSession();
+      if (processSettings.doVerdict) {
+        setActiveStep("Verdict");
+        await runVerdict();
+        return;
+      }
+      setJob({ ...job, acceptedMarkdown: null });
+      setActiveStep("Combine");
+    });
+  }, [
+    clearDownstreamFromVerdictSession,
+    job,
+    processSettings.doVerdict,
+    requestRun,
+    runVerdict,
+    setActiveStep,
+    setJob,
+  ]);
+
+  const runFromVerdict = useCallback(() => {
     setActiveStep("Combine");
-  }, [job, processSettings.doVerdict, setActiveStep, setJob]);
+  }, [setActiveStep]);
 
-  function onCombineNext() {
-    setActiveStep("Generate");
-  }
-
-  const runResumeGeneration = useCallback(async () => {
+  const runResumeGeneration = useCallback(async (options?: { force?: boolean }) => {
     if (generatingResumeRef.current) return;
     generatingResumeRef.current = true;
     setGeneratingResume(true);
@@ -314,6 +411,7 @@ export default function GeneratePage() {
         promptCacheContext,
       );
       if (
+        !options?.force &&
         canReuseStoredResume(
           {
             generationId,
@@ -388,13 +486,18 @@ export default function GeneratePage() {
     verdictInputKey,
   ]);
 
-  function onGenerateNext() {
-    if (!resume) {
-      toast(t("toast.noResumeForEvaluate"), "error");
-      return;
-    }
-    setActiveStep("Evaluate");
-  }
+  const runFromCombine = useCallback(() => {
+    requestRun("Combine", async () => {
+      clearDownstreamFromGenerateSession();
+      setActiveStep("Generate");
+      await runResumeGeneration({ force: true });
+    });
+  }, [
+    clearDownstreamFromGenerateSession,
+    requestRun,
+    runResumeGeneration,
+    setActiveStep,
+  ]);
 
   const runEvaluation = useCallback(async () => {
     if (evaluatingRef.current) return;
@@ -505,6 +608,17 @@ export default function GeneratePage() {
     verdictInputKey,
   ]);
 
+  const runFromGenerate = useCallback(() => {
+    requestRun("Generate", async () => {
+      if (!resume) {
+        toast(t("toast.noResumeForEvaluate"), "error");
+        return;
+      }
+      setActiveStep("Evaluate");
+      await runEvaluation();
+    });
+  }, [requestRun, resume, runEvaluation, setActiveStep, t, toast]);
+
   const runLabel = combine.emphasis.trim() || combine.language;
 
   const requestNewGeneration = useCallback(() => {
@@ -521,6 +635,13 @@ export default function GeneratePage() {
     await resetSession();
     setResetting(false);
     setNewConfirmOpen(false);
+  }
+
+  function confirmRunWithStaleDownstream() {
+    const action = pendingRunRef.current;
+    pendingRunRef.current = null;
+    setRunConfirmOpen(false);
+    action?.();
   }
 
   const { previousTitle, previousContent, previousHeaderRight, previousMatchCurrent } =
@@ -563,13 +684,13 @@ export default function GeneratePage() {
                 ) : null}
               </div>
             </div>
-            <div className="grid min-w-0 flex-1 grid-cols-[3.5rem_1fr_3.5rem] items-center gap-3">
-              <GenerateStepNavPrevButton />
+            <div className="grid min-w-0 flex-1 grid-cols-[1fr_3.5rem] items-center gap-3">
               <GenerateTimeline
                 active={normalizedActiveStep}
                 steps={visibleSteps}
+                onStepSelect={setActiveStep}
               />
-              <GenerateStepNavNextButton />
+              <GenerateStepNavRunButton />
             </div>
           </div>
         </div>
@@ -587,20 +708,14 @@ export default function GeneratePage() {
               <GenerateJobStep
                 job={job}
                 onJobChange={setJob}
-                onAdvanceFromJob={onAdvanceFromJob}
+                onRunFromJob={runFromJob}
               />
             ) : null}
             {processSettings.doVerdict && normalizedActiveStep === "Verdict" ? (
               <GenerateVerdictStep
                 job={job}
-                verdictInputKey={verdictInputKey}
-                verdictPrompt={promptSettings.verdictPrompt}
-                generationId={generationId}
-                onVerdictResult={setVerdictResult}
-                onPrev={() => goToAdjacentStep("prev")}
-                onNext={() => setActiveStep("Combine")}
                 running={verdictRunning}
-                onRunningChange={setVerdictRunning}
+                onRun={runFromVerdict}
               />
             ) : null}
             {normalizedActiveStep === "Combine" ? (
@@ -610,8 +725,7 @@ export default function GeneratePage() {
                 job={job}
                 doVerdict={processSettings.doVerdict}
                 generationId={generationId}
-                onPrev={() => goToAdjacentStep("prev")}
-                onNext={onCombineNext}
+                onRunFromCombine={runFromCombine}
               />
             ) : null}
             {normalizedActiveStep === "Generate" ? (
@@ -620,9 +734,7 @@ export default function GeneratePage() {
                 runLabel={runLabel}
                 doEvaluate={processSettings.doEvaluate}
                 generating={generatingResume}
-                onAutoGenerate={runResumeGeneration}
-                onPrev={() => goToAdjacentStep("prev")}
-                onNext={onGenerateNext}
+                onRun={runFromGenerate}
               />
             ) : null}
             {processSettings.doEvaluate &&
@@ -632,8 +744,6 @@ export default function GeneratePage() {
                 runLabel={runLabel}
                 evaluationMarkdown={evaluationMarkdown}
                 evaluating={evaluating}
-                onAutoEvaluate={runEvaluation}
-                onPrev={() => goToAdjacentStep("prev")}
               />
             ) : null}
           </GenerateStepLayout>
@@ -656,6 +766,30 @@ export default function GeneratePage() {
               className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
             >
               {resetting ? t("generate.newConfirm.confirming") : t("generate.new")}
+            </button>
+          </div>
+        </DetailDialog>
+      ) : null}
+
+      {runConfirmOpen ? (
+        <DetailDialog
+          title={t("generate.runConfirm.title")}
+          role="alertdialog"
+          closeDisabled={processBusy}
+          onClose={() => {
+            pendingRunRef.current = null;
+            setRunConfirmOpen(false);
+          }}
+        >
+          <p className="text-muted">{t("generate.runConfirm.body")}</p>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              disabled={processBusy}
+              onClick={confirmRunWithStaleDownstream}
+              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
+            >
+              {t("generate.runConfirm.confirm")}
             </button>
           </div>
         </DetailDialog>

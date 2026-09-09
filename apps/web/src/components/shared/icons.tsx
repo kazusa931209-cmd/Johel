@@ -148,6 +148,19 @@ export function ChevronRightIcon({ className }: IconProps) {
   );
 }
 
+export function PlayIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M8 5.14v13.72a1 1 0 0 0 1.55.84l10.26-6.86a1 1 0 0 0 0-1.68L9.55 4.3A1 1 0 0 0 8 5.14Z" />
+    </svg>
+  );
+}
+
 export function DownloadIcon({ className }: IconProps) {
   return (
     <svg

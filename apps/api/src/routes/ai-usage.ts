@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { Hono } from "hono";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
@@ -28,8 +29,11 @@ type AiUsageDetailRow = AiUsageListRow & {
 };
 
 type AiUsageGroupRow = {
+  kind: "generation" | "standalone";
   generationId: string | null;
   generationPublicId: string | null;
+  standaloneDate: string | null;
+  generateType: string | null;
   callCount: number | bigint;
   inputToken: number | bigint;
   outputToken: number | bigint;
@@ -57,6 +61,10 @@ function toIsoDate(value: unknown) {
     return new Date(value).toISOString();
   }
   return new Date(String(value)).toISOString();
+}
+
+function toStandaloneDateKey(createdAt: Date) {
+  return createdAt.toISOString().slice(0, 10).replace(/-/g, "");
 }
 
 function toListItem(row: AiUsageListRow) {
@@ -91,6 +99,19 @@ function parseGenerationIdFilter(value: string | undefined) {
   return undefined;
 }
 
+function parseStandaloneDate(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed || !/^\d{8}$/.test(trimmed)) {
+    return undefined;
+  }
+  return trimmed;
+}
+
+/** Prisma SQLite stores DateTime as Unix ms; strftime needs unixepoch. */
+const standaloneDateExpr = Prisma.raw(
+  "strftime('%Y%m%d', a.createdAt / 1000, 'unixepoch')",
+);
+
 const listSelect = {
   id: true,
   generationId: true,
@@ -102,6 +123,23 @@ const listSelect = {
   outputToken: true,
   createdAt: true,
 } as const;
+
+function toGroupItem(row: AiUsageGroupRow) {
+  const inputToken = toNumber(row.inputToken);
+  const outputToken = toNumber(row.outputToken);
+  return {
+    kind: row.kind,
+    generationId: row.generationId,
+    generationPublicId: row.generationPublicId,
+    standaloneDate: row.standaloneDate,
+    generateType: row.generateType,
+    callCount: toNumber(row.callCount),
+    inputToken,
+    outputToken,
+    tokenUsed: inputToken + outputToken,
+    latestCreatedAt: toIsoDate(row.latestCreatedAt),
+  };
+}
 
 aiUsageRoutes.get("/summary", async (c) => {
   const user = await requireUser(c);
@@ -132,24 +170,52 @@ aiUsageRoutes.get("/groups", async (c) => {
     prisma.$queryRaw<Array<{ count: number | bigint }>>`
       SELECT CAST(COUNT(*) AS INTEGER) AS count
       FROM (
-        SELECT generationId
-        FROM aiUsage
-        WHERE userId = ${user.id}
-        GROUP BY generationId
+        SELECT a.generationId AS groupKey
+        FROM aiUsage a
+        WHERE a.userId = ${user.id} AND a.generationId IS NOT NULL
+        GROUP BY a.generationId
+
+        UNION ALL
+
+        SELECT ${standaloneDateExpr} || '-' || a.generateType AS groupKey
+        FROM aiUsage a
+        WHERE a.userId = ${user.id} AND a.generationId IS NULL
+        GROUP BY ${standaloneDateExpr}, a.generateType
       )
     `,
     prisma.$queryRaw<AiUsageGroupRow[]>`
-      SELECT
-        a.generationId AS generationId,
-        g.publicId AS generationPublicId,
-        CAST(COUNT(*) AS INTEGER) AS callCount,
-        CAST(SUM(a.inputToken) AS INTEGER) AS inputToken,
-        CAST(SUM(a.outputToken) AS INTEGER) AS outputToken,
-        MAX(a.createdAt) AS latestCreatedAt
-      FROM aiUsage a
-      LEFT JOIN generations g ON g.id = a.generationId AND g.userId = a.userId
-      WHERE a.userId = ${user.id}
-      GROUP BY a.generationId
+      SELECT * FROM (
+        SELECT
+          'generation' AS kind,
+          a.generationId AS generationId,
+          g.publicId AS generationPublicId,
+          NULL AS standaloneDate,
+          NULL AS generateType,
+          CAST(COUNT(*) AS INTEGER) AS callCount,
+          CAST(SUM(a.inputToken) AS INTEGER) AS inputToken,
+          CAST(SUM(a.outputToken) AS INTEGER) AS outputToken,
+          MAX(a.createdAt) AS latestCreatedAt
+        FROM aiUsage a
+        LEFT JOIN generations g ON g.id = a.generationId AND g.userId = a.userId
+        WHERE a.userId = ${user.id} AND a.generationId IS NOT NULL
+        GROUP BY a.generationId
+
+        UNION ALL
+
+        SELECT
+          'standalone' AS kind,
+          NULL AS generationId,
+          NULL AS generationPublicId,
+          ${standaloneDateExpr} AS standaloneDate,
+          a.generateType AS generateType,
+          CAST(COUNT(*) AS INTEGER) AS callCount,
+          CAST(SUM(a.inputToken) AS INTEGER) AS inputToken,
+          CAST(SUM(a.outputToken) AS INTEGER) AS outputToken,
+          MAX(a.createdAt) AS latestCreatedAt
+        FROM aiUsage a
+        WHERE a.userId = ${user.id} AND a.generationId IS NULL
+        GROUP BY ${standaloneDateExpr}, a.generateType
+      )
       ORDER BY latestCreatedAt DESC
       LIMIT ${take} OFFSET ${skip}
     `,
@@ -159,19 +225,7 @@ aiUsageRoutes.get("/groups", async (c) => {
   const pageSize = listResponsePageSize(pagination, total);
 
   return c.json({
-    items: groupRows.map((row) => {
-      const inputToken = toNumber(row.inputToken);
-      const outputToken = toNumber(row.outputToken);
-      return {
-        generationId: row.generationId,
-        generationPublicId: row.generationPublicId,
-        callCount: toNumber(row.callCount),
-        inputToken,
-        outputToken,
-        tokenUsed: inputToken + outputToken,
-        latestCreatedAt: toIsoDate(row.latestCreatedAt),
-      };
-    }),
+    items: groupRows.map(toGroupItem),
     total,
     page: pagination.page,
     pageSize,
@@ -191,26 +245,62 @@ aiUsageRoutes.get("/", async (c) => {
   );
 
   const generationIdFilter = parseGenerationIdFilter(c.req.query("generationId"));
+  const standaloneDate = parseStandaloneDate(c.req.query("standaloneDate"));
+  const generateTypeFilter = c.req.query("generateType")?.trim();
 
   const where = {
     userId: user.id,
     ...(generationIdFilter === null
-      ? { generationId: null }
+      ? standaloneDate && generateTypeFilter
+        ? {
+            generationId: null,
+            generateType: generateTypeFilter,
+          }
+        : { generationId: null }
       : generationIdFilter
         ? { generationId: generationIdFilter }
         : {}),
   };
 
-  const [total, rows] = await Promise.all([
-    prisma.aiUsage.count({ where }),
-    prisma.aiUsage.findMany({
-      where,
+  let rows: AiUsageListRow[];
+  let total: number;
+
+  if (
+    generationIdFilter === null &&
+    standaloneDate &&
+    generateTypeFilter
+  ) {
+    const allMatching = await prisma.aiUsage.findMany({
+      where: {
+        userId: user.id,
+        generationId: null,
+        generateType: generateTypeFilter,
+      },
       orderBy: { createdAt: "desc" },
       select: listSelect,
-      ...(pagination.skip != null ? { skip: pagination.skip } : {}),
-      ...(pagination.take != null ? { take: pagination.take } : {}),
-    }),
-  ]);
+    });
+    const filtered = allMatching.filter(
+      (row) => toStandaloneDateKey(row.createdAt) === standaloneDate,
+    );
+    total = filtered.length;
+    const skip = pagination.skip ?? 0;
+    const take = pagination.take;
+    rows =
+      take != null
+        ? filtered.slice(skip, skip + take)
+        : filtered.slice(skip);
+  } else {
+    [total, rows] = await Promise.all([
+      prisma.aiUsage.count({ where }),
+      prisma.aiUsage.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        select: listSelect,
+        ...(pagination.skip != null ? { skip: pagination.skip } : {}),
+        ...(pagination.take != null ? { take: pagination.take } : {}),
+      }),
+    ]);
+  }
 
   const items = rows.map((row) => toListItem(row));
   const pageSize = listResponsePageSize(pagination, total);

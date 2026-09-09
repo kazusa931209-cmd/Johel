@@ -9,9 +9,11 @@ import { Drawer } from "@/components/shared/drawer";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { ChevronRightIcon, HistoryIcon } from "@/components/shared/icons";
 import {
+  buildAiUsageGroupKey,
   formatAiProvider,
   formatAiUsageDate,
   formatGenerateType,
+  formatStandaloneGroupLabel,
 } from "@/lib/ai-usage";
 import {
   getAiUsage,
@@ -23,6 +25,7 @@ import {
 } from "@/lib/api";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { formatThousandsSeparated } from "@/lib/helper";
+import type { Locale } from "@/lib/locale";
 import { STUDIO_FAB_CLASS } from "@/components/app/studio-fab";
 
 type AiUsageHistoryProps = {
@@ -33,15 +36,22 @@ type AiUsageHistoryProps = {
 
 type AiUsageDetailTab = "input" | "output";
 
-function groupKey(generationId: string | null) {
-  return generationId ?? "__none__";
-}
-
-function formatGenerationLabel(
-  group: Pick<AiUsageGroupItem, "generationPublicId">,
+function formatGroupLabel(
+  group: AiUsageGroupItem,
   unassignedLabel: string,
+  locale: Locale,
 ) {
-  return group.generationPublicId ?? unassignedLabel;
+  if (group.generationPublicId) {
+    return group.generationPublicId;
+  }
+  if (group.standaloneDate && group.generateType) {
+    return formatStandaloneGroupLabel(
+      group.standaloneDate,
+      group.generateType,
+      locale,
+    );
+  }
+  return unassignedLabel;
 }
 
 function AiUsageDetailPanel({
@@ -273,6 +283,7 @@ function AiUsageHistoryDrawer({
   closeOnEscape: boolean;
 }) {
   const t = useT();
+  const { locale } = useLocale();
   const unassignedLabel = t("aiUsage.groups.unassigned");
 
   return (
@@ -296,7 +307,7 @@ function AiUsageHistoryDrawer({
           ) : (
             <div className="divide-y divide-border">
               {groups.map((group) => {
-                const key = groupKey(group.generationId);
+                const key = buildAiUsageGroupKey(group);
                 const expanded = expandedGroups.has(key);
                 const items = groupItems[key] ?? [];
                 const itemsLoading = groupItemsLoading[key] ?? false;
@@ -315,7 +326,7 @@ function AiUsageHistoryDrawer({
                         }`}
                       />
                       <span className="min-w-0 truncate font-medium">
-                        {formatGenerationLabel(group, unassignedLabel)}
+                        {formatGroupLabel(group, unassignedLabel, locale)}
                       </span>
                       <span className="shrink-0 text-muted">
                         {t("aiUsage.groups.callCount", {
@@ -445,10 +456,12 @@ export function AiUsageHistory({
 
   const loadGroupItems = useCallback(
     async (group: AiUsageGroupItem) => {
-      const key = groupKey(group.generationId);
+      const key = buildAiUsageGroupKey(group);
       setGroupItemsLoading((current) => ({ ...current, [key]: true }));
       const res = await listAiUsage(1, {
         generationId: group.generationId,
+        standaloneDate: group.standaloneDate,
+        generateType: group.generateType,
         limit: null,
       });
       setGroupItemsLoading((current) => ({ ...current, [key]: false }));
@@ -485,7 +498,7 @@ export function AiUsageHistory({
   }
 
   async function onToggleGroup(group: AiUsageGroupItem) {
-    const key = groupKey(group.generationId);
+    const key = buildAiUsageGroupKey(group);
     if (expandedGroups.has(key)) {
       setExpandedGroups((current) => {
         const next = new Set(current);

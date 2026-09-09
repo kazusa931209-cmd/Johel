@@ -20,8 +20,7 @@ type GenerateCombineStepProps = {
   job: GenerateJobState;
   doVerdict: boolean;
   generationId?: string | null;
-  onPrev: () => void;
-  onNext: () => void | Promise<void>;
+  onRunFromCombine: () => void | Promise<void>;
 };
 
 export function GenerateCombineStep({
@@ -30,8 +29,7 @@ export function GenerateCombineStep({
   job,
   doVerdict,
   generationId,
-  onPrev,
-  onNext,
+  onRunFromCombine,
 }: GenerateCombineStepProps) {
   const t = useT();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
@@ -54,19 +52,18 @@ export function GenerateCombineStep({
     };
   }, [combine.profileId]);
 
-  const handleNext = useCallback(() => {
+  const handleRun = useCallback(() => {
     const errors = validateCombineSnapshot(combine, t, graduationYear);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
     setFieldErrors({});
-    void onNext();
-  }, [combine, graduationYear, onNext, t]);
+    void onRunFromCombine();
+  }, [combine, graduationYear, onRunFromCombine, t]);
 
   useRegisterGenerateStepNav({
-    onPrev,
-    onNext: handleNext,
+    onRun: handleRun,
   });
 
   function patchCombine(patch: Partial<CombineSnapshot>) {

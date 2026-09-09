@@ -248,6 +248,41 @@ export function canReuseStoredEvaluation(
   );
 }
 
+/** Clears resume and evaluation; keeps verdict when re-running from Job. */
+export function clearDownstreamFromVerdict(
+  session: GenerateSession,
+): GenerateSession {
+  return {
+    ...session,
+    resume: null,
+    generationInputKey: null,
+    evaluationMarkdown: null,
+    evaluationInputKey: null,
+  };
+}
+
+/** Clears resume and evaluation before re-running from Combine. */
+export function clearDownstreamFromGenerate(
+  session: GenerateSession,
+): GenerateSession {
+  return clearDownstreamFromVerdict(session);
+}
+
+export function hasStaleDownstreamForRun(
+  session: GenerateSession,
+  fromStep: GenerateStep,
+): boolean {
+  switch (fromStep) {
+    case "Job":
+    case "Combine":
+      return Boolean(session.resume || session.evaluationMarkdown);
+    case "Generate":
+      return Boolean(session.evaluationMarkdown);
+    default:
+      return false;
+  }
+}
+
 export function parseGenerateSession(value: unknown): GenerateSession | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;

@@ -10,7 +10,7 @@ import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNa
 type GenerateJobStepProps = {
   job: GenerateJobState;
   onJobChange: (job: GenerateJobState) => void;
-  onAdvanceFromJob: () => void;
+  onRunFromJob: () => void;
 };
 
 function ComingSoonAlert({ methodLabel }: { methodLabel: string }) {
@@ -37,7 +37,7 @@ function FieldError({ message }: { message?: string }) {
 export function GenerateJobStep({
   job,
   onJobChange,
-  onAdvanceFromJob,
+  onRunFromJob,
 }: GenerateJobStepProps) {
   const t = useT();
   const { method, jobText } = job;
@@ -51,18 +51,18 @@ export function GenerateJobStep({
     updateJob({ jobText: value.slice(0, JOB_TEXT_MAX) });
   }
 
-  const onNext = useCallback(() => {
+  const onRun = useCallback(() => {
     const text = jobText.trim();
     if (!text) {
       setJobError(t("validation.jobDescriptionRequired"));
       return;
     }
     setJobError(undefined);
-    onAdvanceFromJob();
-  }, [jobText, onAdvanceFromJob, t]);
+    onRunFromJob();
+  }, [jobText, onRunFromJob, t]);
 
   useRegisterGenerateStepNav({
-    onNext: method === "manual" ? onNext : undefined,
+    onRun: method === "manual" ? onRun : undefined,
   });
 
   const methodLabels = {

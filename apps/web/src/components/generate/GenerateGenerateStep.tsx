@@ -6,7 +6,6 @@ import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
-import { useStepMountAutoRun } from "@/components/generate/useStepMountAutoRun";
 import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
 
 type GenerateGenerateStepProps = {
@@ -14,9 +13,7 @@ type GenerateGenerateStepProps = {
   runLabel?: string;
   doEvaluate: boolean;
   generating: boolean;
-  onAutoGenerate: () => void | Promise<void>;
-  onPrev: () => void;
-  onNext: () => void;
+  onRun: () => void;
 };
 
 export function GenerateGenerateStep({
@@ -24,9 +21,7 @@ export function GenerateGenerateStep({
   runLabel,
   doEvaluate,
   generating,
-  onAutoGenerate,
-  onPrev,
-  onNext,
+  onRun,
 }: GenerateGenerateStepProps) {
   const t = useT();
   const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
@@ -35,20 +30,17 @@ export function GenerateGenerateStep({
     [resume],
   );
 
-  useStepMountAutoRun(onAutoGenerate);
-
   useRegisterGenerateStepNav({
-    onPrev,
-    onNext:
+    onRun:
       generating || resume
         ? () => {
             if (!generating && resume && doEvaluate) {
-              onNext();
+              onRun();
             }
           }
         : undefined,
     onDownload: resume && !doEvaluate ? () => void onDownload() : undefined,
-    nextBusy: generating,
+    runBusy: generating,
     downloadBusy: downloading,
   });
 
