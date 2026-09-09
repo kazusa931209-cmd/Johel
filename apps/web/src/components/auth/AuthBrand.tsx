@@ -1,21 +1,20 @@
 import Image from "next/image";
-import { useT } from "@/components/app/LocaleProvider";
+
+/** 4× the header logo (72px → 288px). Sourced from logo.png via logo-auth.png. */
+const AUTH_LOGO_SIZE = 288;
 
 export function AuthBrand() {
-  const t = useT();
-
   return (
-    <div className="flex flex-col items-center gap-3 text-center">
+    <div className="flex shrink-0 justify-center">
       <Image
-        src="/logo-header.png"
+        src="/logo-auth.png"
         alt=""
         aria-hidden
-        width={72}
-        height={72}
-        className="h-[72px] w-[72px] shrink-0"
+        width={AUTH_LOGO_SIZE}
+        height={AUTH_LOGO_SIZE}
+        className="h-72 w-72 max-w-[min(288px,80vw)] shrink-0 object-contain"
         priority
       />
-      <p className="text-lg font-semibold tracking-tight">{t("nav.brand")}</p>
     </div>
   );
 }

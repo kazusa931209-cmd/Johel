@@ -32,6 +32,7 @@ export const ko: MessageTree = {
     checkingSession: "세션 확인 중…",
     loginId: "로그인 ID",
     password: "비밀번호",
+    confirmPassword: "비밀번호 확인",
     login: {
       title: "로그인",
       subtitle: "로그인 ID로 로그인",
@@ -670,6 +671,11 @@ export const ko: MessageTree = {
   validation: {
     loginFailed: "로그인에 실패했습니다.",
     registrationFailed: "회원가입에 실패했습니다.",
+    loginIdRequired: "로그인 ID는 필수입니다.",
+    passwordRequired: "비밀번호는 필수입니다.",
+    passwordMinLength: "비밀번호는 8자 이상이어야 합니다.",
+    confirmPasswordRequired: "비밀번호 확인은 필수입니다.",
+    passwordMismatch: "비밀번호가 일치하지 않습니다.",
     providerRequired: "제공자는 필수입니다.",
     apiKeyMinLength: "API 키는 최소 8자 이상이어야 합니다.",
     promptRequired: "{label}은(는) 필수입니다.",

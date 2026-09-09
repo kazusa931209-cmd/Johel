@@ -30,6 +30,7 @@ export const en = {
     checkingSession: "Checking session…",
     loginId: "Login ID",
     password: "Password",
+    confirmPassword: "Confirm password",
     login: {
       title: "Log in",
       subtitle: "Sign in with your login ID",
@@ -667,6 +668,11 @@ export const en = {
   validation: {
     loginFailed: "Login failed",
     registrationFailed: "Registration failed",
+    loginIdRequired: "Login ID is required.",
+    passwordRequired: "Password is required.",
+    passwordMinLength: "Password must be at least 8 characters.",
+    confirmPasswordRequired: "Confirm password is required.",
+    passwordMismatch: "Passwords do not match.",
     providerRequired: "Provider is required.",
     apiKeyMinLength: "API key must be at least 8 characters.",
     promptRequired: "{label} is required.",

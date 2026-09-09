@@ -53,12 +53,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4 py-8">
+      <AuthBrand />
       <form
         onSubmit={onSubmit}
         className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-surface p-6 shadow-sm"
       >
-        <AuthBrand />
         <div>
           <h1 className="text-xl font-semibold">{t("auth.login.title")}</h1>
           <p className="mt-1 text-sm text-muted">{t("auth.login.subtitle")}</p>
