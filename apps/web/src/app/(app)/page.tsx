@@ -494,6 +494,7 @@ export default function GeneratePage() {
               onVerdictResult={setVerdictResult}
               onPrev={() => goToAdjacentStep("prev")}
               onNext={() => setActiveStep("Combine")}
+              running={verdictRunning}
               onRunningChange={setVerdictRunning}
             />
           ) : null}

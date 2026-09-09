@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -11,6 +11,11 @@ import {
   canReuseStoredVerdict,
   type GenerateJobState,
 } from "@/lib/generate-session";
+import {
+  claimAutoRun,
+  isAutoRunInFlight,
+  releaseAutoRun,
+} from "@/lib/generate-auto-run";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import { runAiVerdict } from "@/lib/api";
 
@@ -21,7 +26,8 @@ type GenerateVerdictStepProps = {
   onVerdictResult: (markdown: string, verdictInputKey: string) => void;
   onPrev: () => void;
   onNext: () => void;
-  onRunningChange?: (running: boolean) => void;
+  running: boolean;
+  onRunningChange: (running: boolean) => void;
 };
 
 export function GenerateVerdictStep({
@@ -31,17 +37,16 @@ export function GenerateVerdictStep({
   onVerdictResult,
   onPrev,
   onNext,
+  running,
   onRunningChange,
 }: GenerateVerdictStepProps) {
   const { toast } = useToast();
   const t = useT();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
-  const [running, setRunning] = useState(false);
 
   const setRunningState = useCallback(
     (next: boolean) => {
-      setRunning(next);
-      onRunningChange?.(next);
+      onRunningChange(next);
     },
     [onRunningChange],
   );
@@ -50,6 +55,14 @@ export function GenerateVerdictStep({
     const filtered = noiseFilter(job.jobText.trim()).text;
     const inputKey = buildVerdictInputKey(job, { verdictPrompt });
     if (canReuseStoredVerdict({ job, verdictInputKey }, inputKey)) {
+      return;
+    }
+
+    const autoRunKey = `verdict:${inputKey}`;
+    if (!claimAutoRun(autoRunKey)) {
+      if (isAutoRunInFlight(autoRunKey)) {
+        setRunningState(true);
+      }
       return;
     }
 
@@ -68,6 +81,7 @@ export function GenerateVerdictStep({
     } catch {
       toast(t("toast.verdictFailed"), "error");
     } finally {
+      releaseAutoRun(autoRunKey);
       setRunningState(false);
     }
   }, [

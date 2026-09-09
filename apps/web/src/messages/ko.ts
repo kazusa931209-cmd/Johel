@@ -420,12 +420,12 @@ export const ko: MessageTree = {
     verdict: {
       title: "검토",
       description:
-        "직업광고문에 AI검토를 실행합니다. 결과는 리력서 생성과 평가의 채점 기준으로 사용됩니다.",
-      pending: "AI검토를 실행하는 중…",
+        "직업광고문에 AI검토를 실행합니다. 결과는 리력서생성과 평가의 채점기준으로 사용됩니다.",
+      pending: "AI검토를 실행하는중…",
       result: {
         title: "AI검토 결과",
         description:
-          "이 Markdown은 리력서 생성 및 평가 시 원문 직업광고문을 대체합니다.",
+          "이 결과는 리력서생성 및 평가시 원문직업광고문을 대체합니다.",
       },
     },
     combine: {
@@ -435,11 +435,11 @@ export const ko: MessageTree = {
       profile: "개인정보",
       language: "리력서 언어",
       emphasis: "강조",
-      emphasisHint: "이번 실행에만 적용되는 페르소나·강조(생성 프롬프트에 사용).",
+      emphasisHint: "이번 실행에만 적용되는 강조형 프롬프트(생성 프롬프트에 사용).",
       emphasisPlaceholder: "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외.",
       companies: "회사",
       companiesHint:
-        "리력서 순서대로 회사항목을 추가합니다. 각 항목에 기간, 역할, 경험이 필요합니다.",
+        "리력서순서대로 회사항목을 추가합니다. 각 항목에 기간, 역할, 경험이 필요합니다.",
       oneTimePrompt: {
         title: "일회성 프롬프트",
         description:
