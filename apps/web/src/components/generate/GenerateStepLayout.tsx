@@ -11,7 +11,6 @@ type GenerateStepLayoutProps = {
   currentHeaderRight?: ReactNode;
   swapColumns?: boolean;
   currentFill?: boolean;
-  previousMatchCurrent?: boolean;
   children: ReactNode;
 };
 
@@ -19,26 +18,17 @@ function StepPanel({
   title,
   headerRight,
   children,
-  variant,
   fill,
-  matchCurrent,
 }: {
   title?: string;
   headerRight?: ReactNode;
   children: ReactNode;
-  variant: "previous" | "current";
   fill?: boolean;
-  matchCurrent?: boolean;
 }) {
   const showHeader = Boolean(title || headerRight);
-  const useCurrentChrome = variant === "current" || matchCurrent;
 
   return (
-    <div
-      className={`flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border bg-surface ${
-        useCurrentChrome ? "" : "bg-background"
-      }`}
-    >
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border bg-surface">
       {showHeader ? (
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
           {title ? (
@@ -80,19 +70,13 @@ export function GenerateStepLayout({
   currentHeaderRight,
   swapColumns = false,
   currentFill = false,
-  previousMatchCurrent = false,
   children,
 }: GenerateStepLayoutProps) {
   const t = useT();
 
   const previousColumn = (
     <Column>
-      <StepPanel
-        title={previousTitle}
-        headerRight={previousHeaderRight}
-        variant="previous"
-        matchCurrent={previousMatchCurrent}
-      >
+      <StepPanel title={previousTitle} headerRight={previousHeaderRight}>
         {previous ?? (
           <span className="sr-only">{t("generate.layout.emptyPrevious")}</span>
         )}
@@ -105,7 +89,6 @@ export function GenerateStepLayout({
       <StepPanel
         title={currentTitle}
         headerRight={currentHeaderRight}
-        variant="current"
         fill={currentFill}
       >
         {children}

@@ -50,10 +50,7 @@ export function GenerateGenerateStep({
 
   if (!resume) {
     return (
-      <div className="space-y-2">
-        <h2 className="text-center text-lg font-semibold tracking-tight">
-          {t("generate.generateStep.title")}
-        </h2>
+      <>
         <div className="rounded-md border border-border bg-background px-4 py-6 text-sm text-muted">
           {generating
             ? t("generate.generateStep.pending")
@@ -77,18 +74,11 @@ export function GenerateGenerateStep({
             </div>
           </div>
         ) : null}
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <h2 className="text-center text-lg font-semibold tracking-tight">
-        {t("generate.generateStep.title")}
-      </h2>
-      <div className="rounded-md border border-border bg-background px-4 py-4">
-        <ResumeMarkdown markdown={markdown} />
-      </div>
-    </div>
+    <ResumeMarkdown markdown={markdown} />
   );
 }

@@ -129,7 +129,7 @@ Aligned with the product flow above:
   * Left: hamburger control (opens / collapses the left sidebar) beside project title **JoHEL**
   * Right: **Token Used** (compact K / M / G / T, e.g. `0.3K`, `12.5K`, `0.6M`) beside the user email dropdown containing **Profile** and **Sign out**
 * **Left sidebar** menus:
-  * The sidebar starts **open**; the hamburger toggles it open or collapsed. The last choice is remembered for the browser. Icon-only hamburger uses `aria-label` **Collapse sidebar** or **Open sidebar**.
+  * The sidebar starts **open**; the hamburger toggles it open or collapsed with a slide animation (same velocity easing as drawers). The last choice is remembered for the browser. Icon-only hamburger uses `aria-label` **Collapse sidebar** or **Open sidebar**.
   * **Workspace** (always-open submenus)
     * Profiles
     * Companies
@@ -188,7 +188,7 @@ Aligned with the product flow above:
   * Before the flow starts, the page checks that the user has at least one Profile, Company, and Experience and a saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to the matching workspace area or Prompts tab
   * When ready, a timeline shows steps: Job → **Verdict** (when **Do Verdict** is on) → **Combine** → Generate, and **Evaluate** when **Do Evaluate** is enabled; sticky header with **Previous** / **Next** (or **Download** on the last step)
   * Generate uses the **full width** of the main content area (no centered max-width cap)
-  * Below the sticky header, each step body uses a **two-column layout** (equal columns on large screens; stacked on narrow viewports). The step body fills the **remaining viewport height** below the sticky header; both panel cards stretch to that height
+  * Below the sticky header, each step body uses a **two-column layout** (equal columns on large screens; stacked on narrow viewports). The step body fills the **remaining viewport height** below the sticky header; both panel cards stretch to that height. Both columns use the same panel header chrome (title bar with `text-sm` heading, optional right-side actions, bottom border — the same style as **Noise-Filtered Job Description**).
   * **Left column:** read-only content from the **previous** timeline step — no edit forms, method tabs, or Save/Apply controls; **its own vertical scroll** when content exceeds the panel height
   * **Right column:** the **current** step (forms, auto-run AI, Markdown results, loading overlays); **its own vertical scroll** independent of the left column; scrolling one column does not scroll the other or the sticky header
   * **Job** step **swaps** those columns: left is the Job input (method tabs + manual textarea that fills the panel height); right is a **live filtered Job Description preview** (noise filter applied to the current input) with a **character count** of the filtered text in the panel header. On narrow viewports Job is above the filtered preview; on later steps previous remains above current

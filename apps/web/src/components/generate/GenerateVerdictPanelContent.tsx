@@ -15,12 +15,7 @@ export function GenerateVerdictPanelContent({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">
-          {t("generate.verdict.title")}
-        </h2>
-        <p className="text-sm text-muted">{t("generate.verdict.description")}</p>
-      </div>
+      <p className="text-sm text-muted">{t("generate.verdict.description")}</p>
 
       {job.acceptedMarkdown ? (
         <div className="space-y-2">

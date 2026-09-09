@@ -47,58 +47,30 @@ export function GenerateHistoryStepView({
       );
     }
     case "Verdict":
-      return (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-tight">
-            {t("generate.steps.verdict")}
-          </h2>
-          {job.acceptedMarkdown ? (
-            <div className="rounded-md border border-border bg-background px-3 py-3">
-              <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
-            </div>
-          ) : (
-            <p className="text-sm text-muted">{t("generate.previous.verdictEmpty")}</p>
-          )}
+      return job.acceptedMarkdown ? (
+        <div className="rounded-md border border-border bg-background px-3 py-3">
+          <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
         </div>
+      ) : (
+        <p className="text-sm text-muted">{t("generate.previous.verdictEmpty")}</p>
       );
     case "Combine":
-      return (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-tight">
-            {t("generate.steps.combine")}
-          </h2>
-          <GenerateCombineSummary combine={combine} />
-        </div>
-      );
+      return <GenerateCombineSummary combine={combine} />;
     case "Generate":
-      return (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-tight">
-            {t("generate.steps.generate")}
-          </h2>
-          {resume ? (
-            <ResumeMarkdown markdown={resumeMarkdown} />
-          ) : (
-            <p className="text-sm text-muted">{t("generate.previous.resumeEmpty")}</p>
-          )}
-        </div>
+      return resume ? (
+        <ResumeMarkdown markdown={resumeMarkdown} />
+      ) : (
+        <p className="text-sm text-muted">{t("generate.previous.resumeEmpty")}</p>
       );
     case "Evaluate":
-      return (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-tight">
-            {t("generate.steps.evaluate")}
-          </h2>
-          {evaluationMarkdown ? (
-            <div className="rounded-md border border-border bg-background px-3 py-3">
-              <AiVerdictMarkdown markdown={evaluationMarkdown} />
-            </div>
-          ) : (
-            <p className="text-sm text-muted">
-              {t("generate.evaluateStep.pending")}
-            </p>
-          )}
+      return evaluationMarkdown ? (
+        <div className="rounded-md border border-border bg-background px-3 py-3">
+          <AiVerdictMarkdown markdown={evaluationMarkdown} />
         </div>
+      ) : (
+        <p className="text-sm text-muted">
+          {t("generate.evaluateStep.pending")}
+        </p>
       );
     default:
       return null;

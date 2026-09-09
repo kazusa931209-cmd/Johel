@@ -71,12 +71,7 @@ export function GenerateCombineStep({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">
-          {t("generate.combine.title")}
-        </h2>
-        <p className="text-sm text-muted">{t("generate.combine.description")}</p>
-      </div>
+      <p className="text-sm text-muted">{t("generate.combine.description")}</p>
 
       <CombineProfilePicker
         profileId={combine.profileId}

@@ -37,6 +37,7 @@ import {
   type GenerateSession,
 } from "@/lib/generate-session";
 import {
+  getGenerateCurrentPanelTitle,
   getGenerateSteps,
   needsNewGenerationConfirm,
   normalizeGenerateActiveStep,
@@ -625,7 +626,7 @@ export default function GeneratePage() {
     action?.();
   }
 
-  const { previousTitle, previousContent, previousHeaderRight, previousMatchCurrent } =
+  const { previousTitle, previousContent, previousHeaderRight } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
@@ -676,7 +677,7 @@ export default function GeneratePage() {
             previousTitle={previousTitle}
             previous={previousContent}
             previousHeaderRight={previousHeaderRight}
-            previousMatchCurrent={previousMatchCurrent}
+            currentTitle={getGenerateCurrentPanelTitle(normalizedActiveStep, t)}
             swapColumns={normalizedActiveStep === "Job"}
             currentFill={normalizedActiveStep === "Job"}
           >

@@ -33,10 +33,7 @@ export function GenerateEvaluateStep({
 
   if (!evaluationMarkdown) {
     return (
-      <div className="space-y-2">
-        <h2 className="text-center text-lg font-semibold tracking-tight">
-          {t("generate.evaluateStep.title")}
-        </h2>
+      <>
         <div className="rounded-md border border-border bg-background px-4 py-6 text-sm text-muted">
           {evaluating
             ? t("generate.evaluateStep.pending")
@@ -60,18 +57,11 @@ export function GenerateEvaluateStep({
             </div>
           </div>
         ) : null}
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <h2 className="text-center text-lg font-semibold tracking-tight">
-        {t("generate.evaluateStep.title")}
-      </h2>
-      <div className="rounded-md border border-border bg-background px-4 py-4">
-        <AiVerdictMarkdown markdown={evaluationMarkdown} />
-      </div>
-    </div>
+    <AiVerdictMarkdown markdown={evaluationMarkdown} />
   );
 }

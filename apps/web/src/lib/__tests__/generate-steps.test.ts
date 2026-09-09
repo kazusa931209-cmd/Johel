@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getAdjacentGenerateStep,
+  getGenerateCurrentPanelTitle,
   getGenerateSteps,
   normalizeGenerateActiveStep,
 } from "../generate-steps";
@@ -46,5 +47,13 @@ describe("generate-steps", () => {
     expect(getAdjacentGenerateStep(steps, "Generate", "prev")).toBe("Combine");
     expect(getAdjacentGenerateStep(steps, "Combine", "next")).toBe("Generate");
     expect(getAdjacentGenerateStep(steps, "Generate", "next")).toBeNull();
+  });
+
+  it("returns current panel titles from message keys", () => {
+    const t = (key: string) => key;
+    expect(getGenerateCurrentPanelTitle("Job", t)).toBe("generate.job.title");
+    expect(getGenerateCurrentPanelTitle("Generate", t)).toBe(
+      "generate.generateStep.title",
+    );
   });
 });

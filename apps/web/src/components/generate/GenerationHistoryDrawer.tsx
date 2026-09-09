@@ -30,6 +30,7 @@ import { loadGenerateSession, type GenerateJobState } from "@/lib/generate-sessi
 import { loadGenerationProcess, loadMe } from "@/lib/cached-settings";
 import { resumeGenerationFromHistory } from "@/lib/generation-persistence";
 import {
+  getGenerateCurrentPanelTitle,
   getGenerateSteps,
   normalizeGenerateActiveStep,
 } from "@/lib/generate-steps";
@@ -273,7 +274,7 @@ export function GenerationHistoryDrawer({
   const filteredCharCount = formatThousandsSeparated(filteredJobText.length);
   const isJobStep = normalizedActiveStep === "Job";
 
-  const { previousTitle, previousContent, previousHeaderRight, previousMatchCurrent } =
+  const { previousTitle, previousContent, previousHeaderRight } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
@@ -350,13 +351,15 @@ export function GenerationHistoryDrawer({
                       previousHeaderRight
                     )
                   }
-                  currentTitle={isJobStep ? t("generate.steps.job") : undefined}
+                  currentTitle={getGenerateCurrentPanelTitle(
+                    normalizedActiveStep,
+                    t,
+                  )}
                   currentHeaderRight={
                     isJobStep ? (
                       <GeneratePanelCopyActions text={rawJobText} />
                     ) : undefined
                   }
-                  previousMatchCurrent={previousMatchCurrent}
                   swapColumns={isJobStep}
                   currentFill={isJobStep}
                 >

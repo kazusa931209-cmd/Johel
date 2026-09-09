@@ -21,9 +21,12 @@ function AppShell({
 }) {
   const { tokenUsed } = useAiUsage();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarMotion, setSidebarMotion] = useState(false);
 
   useEffect(() => {
     setSidebarOpen(getStoredSidebar() === "open");
+    const frame = window.requestAnimationFrame(() => setSidebarMotion(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   function onToggleSidebar() {
@@ -43,7 +46,7 @@ function AppShell({
         onToggleSidebar={onToggleSidebar}
       />
       <div className="flex min-h-0 flex-1">
-        <StudioSidebar open={sidebarOpen} />
+        <StudioSidebar open={sidebarOpen} motion={sidebarMotion} />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
       </div>
       <StudioBottomFabCluster />

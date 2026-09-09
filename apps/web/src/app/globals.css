@@ -210,6 +210,7 @@ html[lang="ko"] body {
 :root {
   --drawer-duration: 420ms;
   --drawer-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --sidebar-width: 13rem;
 }
 
 .drawer-backdrop {
@@ -242,10 +243,37 @@ html[lang="ko"] body {
   transform: translate3d(0, 0, 0);
 }
 
+.studio-sidebar {
+  width: 0;
+  pointer-events: none;
+  transition: width var(--drawer-duration) var(--drawer-ease);
+}
+
+.studio-sidebar.studio-sidebar-open {
+  width: var(--sidebar-width);
+  pointer-events: auto;
+}
+
+.studio-sidebar-inner {
+  width: var(--sidebar-width);
+  transform: translate3d(-100%, 0, 0);
+  will-change: transform;
+}
+
+.studio-sidebar.studio-sidebar-motion .studio-sidebar-inner {
+  transition: transform var(--drawer-duration) var(--drawer-ease);
+}
+
+.studio-sidebar.studio-sidebar-open .studio-sidebar-inner {
+  transform: translate3d(0, 0, 0);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .drawer-backdrop,
   .drawer-panel-right,
-  .drawer-panel-left {
+  .drawer-panel-left,
+  .studio-sidebar,
+  .studio-sidebar.studio-sidebar-motion .studio-sidebar-inner {
     transition: none;
   }
 }
