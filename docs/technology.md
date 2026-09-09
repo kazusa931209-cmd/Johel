@@ -91,7 +91,7 @@ User browser (:4041)
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
   - `/settings/environment` — Settings / Environment (theme, UI language, AI Agent); `/settings` redirects here
-  - `/settings/generation` — Settings / Generation (Process, Résumé Language)
+  - `/settings/generation` — Settings / Generation (Process, Resume Language)
   - `/settings/prompts` — Settings / Prompts
   - `/prompts` — legacy redirect to `/settings/prompts`
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
@@ -114,7 +114,7 @@ User browser (:4041)
 
 - `GET /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage }` (defaults: Verdict/Evaluate true, `resumeLanguage` `en`)
 - `PUT /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage }` where `resumeLanguage` is one of `en`, `ja`, `zh-TW`, `zh-CN`, `ko`; upsert by `userId`; returns saved values
-- Web Settings **Generation** page (`/settings/generation`): **Process** section (**Do Verdict**, **Do Evaluate** checkboxes) and **Résumé Language** select; one **Save** persists both; toast on API result; saving changed Process flags or résumé language clears in-progress Generate session
+- Web Settings **Generation** page (`/settings/generation`): **Process** section (**Do Verdict**, **Do Evaluate** checkboxes) and **Resume Language** select; one **Save** persists both; toast on API result; saving changed Process flags or resume language clears in-progress Generate session
 - Generate reads process settings on load; syncs `combine.language` from saved `resumeLanguage`; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
 - When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel; resume generation uses noise-filtered job description as `jobContext`
 - When `doVerdict` is true: Workflow shows AI Verdict result; resume generation and evaluation send that Markdown as `jobContext` instead of the raw job description (Verdict Prompt structure and extracted fields affect tailoring quality)
@@ -237,7 +237,7 @@ User browser (:4041)
 
 ## AI Resume (Phase 20, 22, 23, 28)
 
-- `POST /ai-resume` — body `{ jobContext, workflowId, oneTimePrompt? }` where `jobContext` is AI Verdict Markdown when the client ran Verdict, otherwise noise-filtered job description text (1–10,000 chars); requires saved Settings provider/apiKey and non-empty `prompts.generatePrompt`; server loads the owned workflow (profile, ordered company entries with period and linked experiences) and assembles generation input; system prompt = compiled user Generate Prompt + optional `## One-time prompt` section when `oneTimePrompt` is non-empty + shared resume rules (use Job context as rubric; map missing Instruction headings to the closest sections present; JSON-style field names in Instructions map to labeled subsections); user prompt is labeled Markdown (`## Job context` with a heading list, `## Workflow intent`, `## Profile`, `## Companies (résumé order)`) — not a JSON dump of the assembled input; ids and company alias are omitted; empty optional profile/outcome fields are skipped; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
+- `POST /ai-resume` — body `{ jobContext, workflowId, oneTimePrompt? }` where `jobContext` is AI Verdict Markdown when the client ran Verdict, otherwise noise-filtered job description text (1–10,000 chars); requires saved Settings provider/apiKey and non-empty `prompts.generatePrompt`; server loads the owned workflow (profile, ordered company entries with period and linked experiences) and assembles generation input; system prompt = compiled user Generate Prompt + optional `## One-time prompt` section when `oneTimePrompt` is non-empty + shared resume rules (use Job context as rubric; map missing Instruction headings to the closest sections present; JSON-style field names in Instructions map to labeled subsections); user prompt is labeled Markdown (`## Job context` with a heading list, `## Workflow intent`, `## Profile`, `## Companies (resume order)`) — not a JSON dump of the assembled input; ids and company alias are omitted; empty optional profile/outcome fields are skipped; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
 - `GET /workflows/:id/generation-fingerprint` — returns `{ fingerprint }` where `fingerprint` is a stable JSON string of the assembled profile, nested companies (with period and linked experiences), and workflow fields (same source as `assembleResumeGenerationInput`, excluding job text); used by Generate to detect PCE edits without re-running AI on unchanged content
 - Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`
 - Web: `runAiResume` in `apps/web/src/lib/api.ts`; Workflow **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown; Evaluate step downloads DOCX without re-calling AI when inputs are unchanged
@@ -311,7 +311,7 @@ User browser (:4041)
 - **Catalogs:** `apps/web/src/messages/en.ts` (source of key shape), `ko.ts` (`MessageTree` via `DeepStringify<typeof en>`), `translate.ts` (`translate`, `translateLines`)
 - **Settings:** `/settings/environment` Language section after Theme; toggles apply immediately (no Save)
 - **Korean typography:** when `document.documentElement.lang` is `ko`, UI sans-serif uses bundled **KP CheonRiMa** (`apps/web/src/fonts/KP-CheonRiMa-Medium.ttf` via `next/font/local` in `lib/ko-font.ts`); English keeps Geist Sans
-- **Scope:** All JoHEL UI strings including login/register; not résumé output language (Settings Generation) or server/API error text
+- **Scope:** All JoHEL UI strings including login/register; not resume output language (Settings Generation) or server/API error text
 
 ## Architecture refactor (Phases 54–60, 2026-09-09)
 
@@ -334,7 +334,7 @@ User browser (:4041)
 ### Schema
 
 - Dropped: `workflows`, `workflowCompanies`, `workflowCompanyExperiences`; `generationProcess.doWorkflowRecommendation`, `workflowRecommendationThreshold`, `lastSelectedWorkflowId`
-- Added: `generationProcess.resumeLanguage` (per-user default résumé output language; migration `20260909100003_generation_resume_language`)
+- Added: `generationProcess.resumeLanguage` (per-user default resume output language; migration `20260909100003_generation_resume_language`)
 - Added: `users.role` (default `user`); `prompts.verdictExtension`, `generateExtension`, `evaluateExtension`
 - Migrations: `20260909100000_remove_workflows`, `20260909100001_user_role_prompt_extensions`
 

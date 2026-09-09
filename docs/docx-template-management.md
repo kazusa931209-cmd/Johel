@@ -6,7 +6,7 @@ Product requirements and feature scope live in [`specification.md`](./specificat
 
 ## Purpose
 
-JoHEL generates résumés as structured JSON (`GeneratedResume`) during the Generate flow. Users review the result as Markdown in the browser and download a Word document from the same JSON — **without calling the AI again**.
+JoHEL generates resumes as structured JSON (`GeneratedResume`) during the Generate flow. Users review the result as Markdown in the browser and download a Word document from the same JSON — **without calling the AI again**.
 
 DOCX output is produced **server-side** on the API using the [`docx`](https://www.npmjs.com/package/docx) library inside the workspace package `@johel/resume`.
 

@@ -417,7 +417,7 @@ export const ko: MessageTree = {
         "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외; Skills는 3개의 모임으로.",
       companies: "회사",
       companiesHint:
-        "먼저 개인정보를 선택한 다음 포함할 회사를 고릅니다. 근무기간은 개인정보 졸업년도 1월부터 현재까지 선택할 수 있습니다.",
+        "개인정보 선택 후 회사를 포함합니다. 선택 회사는 선택 순으로 상단, 미선택은 표시 순서입니다. 근무기간은 졸업년 1월~현재입니다.",
       resetCompanies: "재설정",
       resetCompaniesAria: "선택한 회사 모두 해제",
       selectProfileFirst: "회사를 선택하기 전에 개인정보를 선택하여주십시오.",

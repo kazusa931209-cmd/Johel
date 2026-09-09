@@ -26,7 +26,7 @@ On each **Combine** company entry (not the company record): **start**, **end**, 
 
 ### What this company is
 
-One sentence: industry, product, customer. Not a résumé bullet.
+One sentence: industry, product, customer. Not a resume bullet.
 
 Good:
 
@@ -78,7 +78,7 @@ Those sentences will repeat on every company that later links the same shared ex
 
 ### Role context (Combine company entry)
 
-Nature of the role in that employment. Primary hint for the résumé `title`. Not achievements.
+Nature of the role in that employment. Primary hint for the resume `title`. Not achievements.
 
 Good: `Engineer with end-to-end product ownership on a global Agile team`  
 Bad: `Cut infra cost from $3K to $1.2K and shipped 0→1 products`
@@ -104,7 +104,7 @@ Format each item as a bullet with a bold label and an indented body:
 
 ### Category
 
-A work cluster used when choosing the résumé title and skill groups. Prefer the **capability**, and add the stack only when you keep intentional variants (see below).
+A work cluster used when choosing the resume title and skill groups. Prefer the **capability**, and add the stack only when you keep intentional variants (see below).
 
 Good: `On-chain Transaction Sync (Go/Rust)`  
 Good: `Multi-tenant Retail APIs`  
@@ -196,7 +196,7 @@ The same capability may exist as two cards that differ only by stack (for exampl
 
 - Keep **Problem** and **Outcome** aligned across the pair.
 - Change **Category** and **Actions** so the stack is explicit.
-- **Do not link both variants to the same company in the same workflow.** JoHEL will not de-duplicate them. Each linked card becomes 1–3 résumé bullets, so both variants double the same story. Choosing one variant per workflow company entry is the author’s responsibility.
+- **Do not link both variants to the same company in the same workflow.** JoHEL will not de-duplicate them. Each linked card becomes 1–3 resume bullets, so both variants double the same story. Choosing one variant per workflow company entry is the author’s responsibility.
 
 Good workflow: AllWeb3 → `On-chain Transaction Sync (Go/Rust)` only.  
 Bad workflow: AllWeb3 → both the NestJS and the Go on-chain cards.
@@ -238,8 +238,8 @@ Those facts belong on Company (scale) or Experience (outcomes). Putting them in 
 
 ```text
 Verdict Prompt  → reads the JD → job rubric (Role, Technical Requirements, …)
-Generate Prompt → reads rubric + workspace fields → résumé JSON
-Evaluate Prompt → reads rubric + résumé → score
+Generate Prompt → reads rubric + workspace fields → resume JSON
+Evaluate Prompt → reads rubric + resume → score
 ```
 
 Default Generate Prompt (`@johel/prompt-defaults`) maps fields like this:

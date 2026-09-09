@@ -58,7 +58,7 @@ describe("finalizeFormattedMarkdown", () => {
     const raw = [
       "# Startup Experience",
       "",
-      "**Field type:** Experience actions (used when generating résumés from workflow data)",
+      "**Field type:** Experience actions (used when generating resumes from workflow data)",
       "",
       "- **Startup experience**",
       "  Use this when the job description lists startup experience as a must-have.",

@@ -24,7 +24,7 @@ Replace the current **selected-companies table + Add dialog** flow on Generate *
 - Each included company: period (both ends) + non-empty Role context
 - **No** experience requirement
 
-**Résumé company order:** workspace list order from `listCompanies` (stable API order), filtered to included entries.
+**Resume company order:** workspace list order from `listCompanies` (stable API order), filtered to included entries.
 
 ## Outcome (2026-09-09)
 

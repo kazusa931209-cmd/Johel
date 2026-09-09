@@ -88,9 +88,9 @@ Do not treat company or experience fields as the job target.
 
 ## Input Meanings
 - \`run.emphasis\`: Persona and emphasis for this run.
-- \`run.language\`: Output language of the résumé.
-- \`companies[]\` order: Résumé experience order. Keep it.
-- \`companies[].name\`: Employer name on the résumé. Do not use \`alias\` in output.
+- \`run.language\`: Output language of the resume.
+- \`companies[]\` order: Resume experience order. Keep it.
+- \`companies[].name\`: Employer name on the resume. Do not use \`alias\` in output.
 - \`companies[].alias\`: Internal label only. Ignore for writing.
 - \`companies[].whatCompanyIs\`: One-sentence scene (industry, product, customer). Do not paste as bullets.
 - \`companies[].domainAndStack\`: Domain, product scope, tech. Bullet list with bold labels; use for wording and grounding; do not paste as bullets.
@@ -129,19 +129,19 @@ You may rewrite phrasing. You may not invent employers, dates, tools, metrics, o
 Output language must follow \`run.language\`.`;
 
 export const DEFAULT_EVALUATE_PROMPT = `## Rubric
-Score the résumé against the same dimensions as Verdict.
+Score the resume against the same dimensions as Verdict.
 If Job context is Verdict Markdown, read these sections first: Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
 If Job context is a filtered job description without those headings, derive the same dimensions from the text. Do not require the headings to be present.
 
-Weight Required over Preferred. Do not treat Mentioned-only items as must-haves. Do not penalize the résumé for missing Mentioned-only items.
+Weight Required over Preferred. Do not treat Mentioned-only items as must-haves. Do not penalize the resume for missing Mentioned-only items.
 
 ## Scoring rules
 - Overall score is 0–100.
 - Reward evidence in Experience and Summary, not Skills lists alone.
-- Count a Technical Requirement or Critical JD Terminology term as covered only when the résumé shows it in Experience (or a clearly evidenced Skills item that also appears in Experience).
-- Do not invent résumé facts. If it is not in the résumé, it is a gap.
-- Do not suggest adding employers, dates, tools, or metrics that are not in the résumé.
-- Write in the same language as the résumé.
+- Count a Technical Requirement or Critical JD Terminology term as covered only when the resume shows it in Experience (or a clearly evidenced Skills item that also appears in Experience).
+- Do not invent resume facts. If it is not in the resume, it is a gap.
+- Do not suggest adding employers, dates, tools, or metrics that are not in the resume.
+- Write in the same language as the resume.
 
 ## Output structure
 ### Overall fit
@@ -156,16 +156,16 @@ Required vs Preferred vs what Experience actually shows.
 ### Domain / Industry
 ### Experience & Qualifications
 ### Terminology (ATS)
-Which Critical JD Terminology appear in the résumé, and which Required terms are missing.
+Which Critical JD Terminology appear in the resume, and which Required terms are missing.
 
 ### Strengths
-(bullet list, grounded in the résumé)
+(bullet list, grounded in the resume)
 
 ### Gaps & risks
 (bullet list; Required gaps first)
 
 ### Suggested improvements
-(bullet list, actionable, résumé-side only)`;
+(bullet list, actionable, resume-side only)`;
 
 export const DEFAULT_PROMPTS = {
   verdictPrompt: DEFAULT_VERDICT_PROMPT,

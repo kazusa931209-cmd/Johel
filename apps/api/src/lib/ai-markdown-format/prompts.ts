@@ -3,18 +3,18 @@ import type { MarkdownFormatKind } from "./types.js";
 
 const KIND_LABELS: Record<MarkdownFormatKind, string> = {
   verdict: "Verdict Prompt (used when checking Job Descriptions)",
-  generate: "Generate Prompt (used when generating résumés)",
-  evaluate: "Evaluate Prompt (used when evaluating résumés)",
+  generate: "Generate Prompt (used when generating resumes)",
+  evaluate: "Evaluate Prompt (used when evaluating resumes)",
   companyWhatItIs:
-    "What this company is (used when generating résumés from workflow data)",
+    "What this company is (used when generating resumes from workflow data)",
   companyDomainAndStack:
-    "Domain & stack (used when generating résumés from workflow data)",
+    "Domain & stack (used when generating resumes from workflow data)",
   experienceProblem:
-    "Experience problem (used when generating résumés from workflow data)",
+    "Experience problem (used when generating resumes from workflow data)",
   experienceActions:
-    "Experience actions (used when generating résumés from workflow data)",
+    "Experience actions (used when generating resumes from workflow data)",
   experienceOutcome:
-    "Experience outcome (used when generating résumés from workflow data)",
+    "Experience outcome (used when generating resumes from workflow data)",
 };
 
 const PROMPT_INSTRUCTION_KINDS = new Set<MarkdownFormatKind>([

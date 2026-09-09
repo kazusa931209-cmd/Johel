@@ -4,12 +4,12 @@
 
 ## Summary
 
-Add **Settings → Generation** (`/settings/generation`) between Environment and Prompts. Move **Process** (Do Verdict / Do Evaluate) from Environment to Generation. Move **Résumé Language** from the Generate Combine step to Generation settings, persisted per user on `generationProcess.resumeLanguage`.
+Add **Settings → Generation** (`/settings/generation`) between Environment and Prompts. Move **Process** (Do Verdict / Do Evaluate) from Environment to Generation. Move **Resume Language** from the Generate Combine step to Generation settings, persisted per user on `generationProcess.resumeLanguage`.
 
 ## Outcome
 
 - Sidebar order: Environment → **Generation** → Prompts
-- Generation page: Process checkboxes + Résumé Language select; single Save via `PUT /settings/process`
+- Generation page: Process checkboxes + Resume Language select; single Save via `PUT /settings/process`
 - Environment page: Theme, UI Language, AI Agent only
 - Combine step: profile, companies, Run guidance (no language picker)
 - Generate page syncs `combine.language` from saved `resumeLanguage`

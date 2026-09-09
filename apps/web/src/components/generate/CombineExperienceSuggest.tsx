@@ -10,7 +10,6 @@ import {
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
-import { DetailDialog } from "@/components/shared/detail-dialog";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
@@ -190,23 +189,13 @@ export function CombineExperienceSuggest({
               : t("generate.combine.suggestExperiences")}
           </button>
         </div>
-      </form>
 
-      {suggesting ? (
-        <BusyOverlay
-          title={t("generate.combine.suggestingOverlay.title")}
-          description={t("generate.combine.suggestingOverlay.description")}
-        />
-      ) : null}
+        {pendingResult ? (
+          <div className="space-y-4 border-t border-border pt-4 text-sm">
+            <h4 className="text-sm font-medium">
+              {t("generate.combine.suggestionDialogTitle")}
+            </h4>
 
-      {pendingResult ? (
-        <DetailDialog
-          title={t("generate.combine.suggestionDialogTitle")}
-          onClose={onCancelSuggestions}
-          mode="view"
-          panelClassName="max-w-2xl"
-        >
-          <div className="space-y-4 text-sm">
             {pendingResult.warnings.length > 0 ? (
               <ul className="list-disc space-y-1 pl-5 text-toast-warning-fg">
                 {pendingResult.warnings.map((warning) => (
@@ -276,7 +265,14 @@ export function CombineExperienceSuggest({
               </button>
             </div>
           </div>
-        </DetailDialog>
+        ) : null}
+      </form>
+
+      {suggesting ? (
+        <BusyOverlay
+          title={t("generate.combine.suggestingOverlay.title")}
+          description={t("generate.combine.suggestingOverlay.description")}
+        />
       ) : null}
     </>
   );

@@ -78,7 +78,7 @@ export const en = {
     },
     generation: {
       title: "Generation",
-      description: "Process steps and résumé output language for Generate.",
+      description: "Process steps and resume output language for Generate.",
       save: "Save",
       saving: "Saving…",
       process: {
@@ -89,17 +89,17 @@ export const en = {
         doEvaluate: "Do Evaluate",
       },
       resumeLanguage: {
-        title: "Résumé Language",
+        title: "Resume Language",
         description:
-          "Default output language for generated résumés. Change in Settings before starting a run.",
-        label: "Résumé language",
+          "Default output language for generated resumes. Change in Settings before starting a run.",
+        label: "Resume language",
       },
     },
     prompts: {
       title: "Prompts",
       loading: "Loading…",
       description:
-        "Configure system prompts used when checking Job Descriptions, generating résumés, and evaluating résumés. Each tab saves independently.",
+        "Configure system prompts used when checking Job Descriptions, generating resumes, and evaluating resumes. Each tab saves independently.",
       tablistAria: "Prompt types",
       tabs: {
         verdict: "Verdict",
@@ -344,11 +344,11 @@ export const en = {
       jobTitle: "Job Description",
       verdictTitle: "Verdict",
       combineTitle: "Combine",
-      resumeTitle: "Generated résumé",
+      resumeTitle: "Generated resume",
       evaluationTitle: "Evaluation",
       jobEmpty: "No job description yet.",
       verdictEmpty: "No AI Verdict result yet.",
-      resumeEmpty: "No generated résumé yet.",
+      resumeEmpty: "No generated resume yet.",
       combineEmpty: "No company entries yet.",
       combineProfileMissing: "Profile not selected",
       combineCompanyMissing: "Unknown company",
@@ -408,7 +408,7 @@ export const en = {
       description:
         "Choose a profile, link experiences, run guidance, and included companies for this run.",
       profile: "Profile",
-      language: "Résumé language",
+      language: "Resume language",
       emphasis: "Run guidance",
       emphasisHint:
         "Optional persona, emphasis, and tailoring instructions for this run only (included in the generation request).",
@@ -416,7 +416,7 @@ export const en = {
         "e.g. Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups.",
       companies: "Companies",
       companiesHint:
-        "Select a profile first, then toggle companies to include them on the résumé. Work periods are limited from the profile graduation year (January) through the present.",
+        "Select a profile, then toggle companies. Selected move to the top in selection order; unselected follow display order. Periods: Jan of graduation year through present.",
       resetCompanies: "Reset",
       resetCompaniesAria: "Deselect all companies",
       selectProfileFirst: "Select a profile before choosing companies.",
@@ -660,7 +660,7 @@ export const en = {
     autoMarkdownFormat:
       "Contents will be automatically converted to markdown format when you save.",
     descriptionAsResumePrompt:
-      "Used as a prompt during resume generation. Describe this item so the AI can tailor the résumé.",
+      "Used as a prompt during resume generation. Describe this item so the AI can tailor the resume.",
     systemPromptQualityNotice:
       "Changes to these system prompts directly affect resume generation quality. Review edits carefully before saving.",
     verdictPromptPlaceholder:

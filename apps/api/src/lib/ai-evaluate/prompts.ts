@@ -4,7 +4,7 @@ import {
   PROMPT_SECTION_SEPARATOR,
 } from "../prompt-optimize/index.js";
 
-const EXECUTION_RULES = `- You are an AI assistant that evaluates résumés against job descriptions.
+const EXECUTION_RULES = `- You are an AI assistant that evaluates resumes against job descriptions.
 - Output Markdown only. Do not output JSON. Do not wrap the answer in a code fence.
 - Follow the evaluation criteria and output structure defined in Instructions above.
 - The user message is labeled Markdown sections (Job context, then Resume).
@@ -33,7 +33,7 @@ export function buildAiEvaluateUserPrompt(
   resumeMarkdown: string,
 ): string {
   return [
-    "Evaluate the résumé against the Job context section. Use Verdict headings when present; otherwise derive the same dimensions from the job text.",
+    "Evaluate the resume against the Job context section. Use Verdict headings when present; otherwise derive the same dimensions from the job text.",
     formatJobContextBlock(jobContext),
     `## Resume\n\n${resumeMarkdown.trim()}`,
   ].join("\n\n");

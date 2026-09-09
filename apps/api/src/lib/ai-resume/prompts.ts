@@ -131,7 +131,7 @@ function formatCompaniesSection(input: ResumeGenerationInput): string {
     ].join("\n\n");
   });
 
-  return `## Companies (résumé order)\n\n${blocks.join("\n\n")}`;
+  return `## Companies (resume order)\n\n${blocks.join("\n\n")}`;
 }
 
 export function buildAiResumeUserPrompt(input: ResumeGenerationInput): string {
@@ -143,7 +143,7 @@ export function buildAiResumeUserPrompt(input: ResumeGenerationInput): string {
   ].join("\n");
 
   return [
-    "Generate a tailored résumé from the labeled sections below. Use Job context as the scoring rubric. Keep company order. Use each company name as the employer; do not use alias.",
+    "Generate a tailored resume from the labeled sections below. Use Job context as the scoring rubric. Keep company order. Use each company name as the employer; do not use alias.",
     formatJobContextBlock(input.jobContext),
     runIntent,
     formatProfileSection(input),

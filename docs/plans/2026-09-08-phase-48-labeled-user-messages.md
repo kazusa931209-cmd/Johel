@@ -9,7 +9,7 @@ Send Generate and Evaluate materials as labeled Markdown sections instead of one
 
 ## Outcomes
 
-- Generate user prompt: Job context (with heading list) → Workflow intent → Profile → Companies in résumé order (role context, company scene, linked experiences). No JSON dump; ids and company alias omitted; empty optional profile/outcome fields skipped
+- Generate user prompt: Job context (with heading list) → Workflow intent → Profile → Companies in resume order (role context, company scene, linked experiences). No JSON dump; ids and company alias omitted; empty optional profile/outcome fields skipped
 - Evaluate user prompt: Job context (with heading list) → Resume Markdown
 - Evaluate API and web client send `jobContext` via `buildResumeJobContext` (Verdict Markdown when Do Verdict is on)
 - Prompts tab hints describe the labeled layout

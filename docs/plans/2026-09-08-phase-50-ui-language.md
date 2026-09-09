@@ -20,4 +20,4 @@ Add English/Korean UI language selection in Settings / Environment (localStorage
 
 - User-generated content, AI outputs, prompt default templates
 - API error strings from server (shown as-is)
-- Workflow résumé **output language** (per-workflow `en` / `ja` / `zh-TW` / `zh-CN` / `ko` — separate from UI locale)
+- Workflow resume **output language** (per-workflow `en` / `ja` / `zh-TW` / `zh-CN` / `ko` — separate from UI locale)

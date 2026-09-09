@@ -19,4 +19,4 @@ Collapse the Generate timeline to **Job → PCEW → Generate**. Remove the Verd
 ## Out of scope
 
 - Workspace Companies CRUD and PCEW company multi-select (unchanged)
-- Implementing the Generate résumé step
+- Implementing the Generate resume step

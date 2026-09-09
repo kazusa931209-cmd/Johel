@@ -62,7 +62,7 @@ describe("buildAiResumeUserPrompt", () => {
     expect(prompt).toContain("Emphasize distributed systems");
     expect(prompt).toContain("## Profile");
     expect(prompt).toContain("- Name: Jane Doe");
-    expect(prompt).toContain("## Companies (résumé order)");
+    expect(prompt).toContain("## Companies (resume order)");
     expect(prompt).toContain("### 1. Acme Corp (2020 – Present)");
     expect(prompt).toContain("Role context: Backend engineer");
     expect(prompt).toContain("What this company is:");

@@ -5,7 +5,7 @@
 
 ## Goal
 
-- Render generated résumés as Summary → Experience → Skills → Education (Skills stay visible).
+- Render generated resumes as Summary → Experience → Skills → Education (Skills stay visible).
 - Seed new accounts with Verdict/Generate templates that share the same heading contract.
 
 ## Outcomes
