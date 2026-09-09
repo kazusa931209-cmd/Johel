@@ -1,13 +1,6 @@
+import { summarizeExperienceProblem } from "../experience-problem-summary.js";
 import { prisma } from "../prisma.js";
 import type { ExperienceIndexItem } from "./types.js";
-
-function summarizeProblem(problem: string): string {
-  const line = problem
-    .split("\n")
-    .map((item) => item.trim())
-    .find((item) => item.length > 0);
-  return line ?? problem.trim().slice(0, 200);
-}
 
 export async function loadExperienceIndex(
   userId: string,
@@ -21,6 +14,6 @@ export async function loadExperienceIndex(
   return rows.map((row) => ({
     id: row.id,
     category: row.category,
-    problemSummary: summarizeProblem(row.problem),
+    problemSummary: summarizeExperienceProblem(row.problem),
   }));
 }

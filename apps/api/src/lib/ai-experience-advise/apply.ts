@@ -1,4 +1,7 @@
-import { formatExperienceFieldsOnSave } from "../ai-markdown-format/format-on-save.js";
+import {
+  finalizeExperienceFieldsOnSave,
+  validateFormattedMarkdown,
+} from "../ai-markdown-format/prompts.js";
 import { prisma } from "../prisma.js";
 import { buildExperienceAdviseFingerprint } from "./fingerprint.js";
 import type {
@@ -7,8 +10,27 @@ import type {
   ExperienceAdviseDraft,
 } from "./types.js";
 
-async function formatExperienceFields(input: {
-  userId: string;
+export const EXPERIENCE_ADVISE_FIELD_MAX_LEN = 20_000;
+
+export function finalizeExperienceFieldsForAdvisorApply(input: {
+  problem: string;
+  actions: string;
+  outcome: string;
+}): { problem: string; actions: string; outcome: string } {
+  const finalized = finalizeExperienceFieldsOnSave({
+    problem: input.problem,
+    actions: input.actions,
+    outcome: input.outcome,
+  });
+
+  validateFormattedMarkdown(finalized.problem, EXPERIENCE_ADVISE_FIELD_MAX_LEN);
+  validateFormattedMarkdown(finalized.actions, EXPERIENCE_ADVISE_FIELD_MAX_LEN);
+  validateFormattedMarkdown(finalized.outcome, EXPERIENCE_ADVISE_FIELD_MAX_LEN);
+
+  return finalized;
+}
+
+function persistExperienceFieldsFromAdvisorApply(input: {
   category: string;
   draft: ExperienceAdviseDraft;
   existing?: {
@@ -16,29 +38,25 @@ async function formatExperienceFields(input: {
     actions: string;
     outcome: string;
   };
-}): Promise<{
+}): {
   category: string;
   problem: string;
   actions: string;
   outcome: string;
-}> {
+} {
   const problemText = input.draft.problem ?? input.existing?.problem ?? "";
   const actionsText = input.draft.actions ?? input.existing?.actions ?? "";
   const outcomeText = input.draft.outcome ?? input.existing?.outcome ?? "";
 
-  const formatted = await formatExperienceFieldsOnSave({
-    userId: input.userId,
+  const formatted = finalizeExperienceFieldsForAdvisorApply({
     problem: problemText,
     actions: actionsText,
     outcome: outcomeText,
-    stored: input.existing,
   });
 
   return {
     category: input.category,
-    problem: formatted.problem,
-    actions: formatted.actions,
-    outcome: formatted.outcome,
+    ...formatted,
   };
 }
 
@@ -70,8 +88,7 @@ export async function applyExperienceAdviseOperations(
         );
       }
 
-      const formatted = await formatExperienceFields({
-        userId: input.userId,
+      const formatted = persistExperienceFieldsFromAdvisorApply({
         category: operation.draft.category,
         draft: operation.draft,
       });
@@ -102,8 +119,7 @@ export async function applyExperienceAdviseOperations(
         throw new Error("Experience was not found.");
       }
 
-      const formatted = await formatExperienceFields({
-        userId: input.userId,
+      const formatted = persistExperienceFieldsFromAdvisorApply({
         category: operation.draft.category ?? existing.category,
         draft: operation.draft,
         existing: {

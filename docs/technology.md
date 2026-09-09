@@ -167,6 +167,7 @@ User browser (:4041)
 - List order: `category` ascending (same order in the workflow experience picker, which uses the same list API)
 - `GET /experiences/:id` — full detail for the editor (owner only)
 - `POST /experiences` / `PUT /experiences/:id` — `{ category, problem, actions, outcome }` (all required); on write, changed STAR fields are converted to markdown via **one batched AI call** (`formatExperienceFieldsOnSave`) when any of the three differ from stored values (create always converts); all unchanged → skip conversion; requires Settings provider/apiKey when conversion runs
+- `POST /ai-experience-advise/apply` — persists advisor create/update operations; STAR fields use **deterministic finalize only** (`finalizeExperienceFieldsForAdvisorApply` in `apps/api/src/lib/ai-experience-advise/apply.ts`: `finalizeExperienceFieldsOnSave` + length/empty validation); **no** `markdownFormat` AI call on Apply (Phase 65)
 - Search `q` across category, problem, actions, and outcome
 - Web routes: `/experiences` list (columns: Category, Problem, Actions, Outcome); `/experiences/new` add; `/experiences/[id]/edit` edit; editor shows bullet-format guidelines and examples on problem/actions/outcome and shared guidance on one card = one capability unit; `DESCRIPTION_AS_RESUME_PROMPT_HINT` on each prompt field; Save right-aligned
 - **Phase 45 migration note:** `experiences.description` dropped; existing rows backfill `problem` from former `description`, `actions` and `outcome` to empty string — users must fill actions on next edit
@@ -221,7 +222,7 @@ User browser (:4041)
 
 ## AI Markdown Format (Phase 38, 40)
 
-- Embedded in `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`, `POST/PUT /companies`, `POST/PUT /experiences` write handlers (no separate endpoint)
+- Embedded in `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`, `POST/PUT /companies`, `POST/PUT /experiences` write handlers (no separate endpoint); **not** used on `POST /ai-experience-advise/apply` (advisor Apply uses deterministic finalize only — Phase 65)
 - Module: `apps/api/src/lib/ai-markdown-format/` — `formatMarkdownOnSave` helper; `formatExperienceFieldsOnSave` batches `problem` / `actions` / `outcome` into one AI call (JSON response, then per-field finalize); kinds `verdict` | `generate` | `evaluate` | `companyWhatItIs` | `companyDomainAndStack` | `experienceProblem` | `experienceActions` | `experienceOutcome`
 - Skip rule: when `submitted.trim() === stored.trim()`, persist without AI (no API key required); prompt kinds still run deterministic `#`→`##` heading cap on save
 - When changed: requires Settings provider/apiKey; AI converts text to structured markdown (preserve meaning, fold `## New` helper blocks, no invented content); **prompt kinds** additionally require `##` as the largest heading (AI rule + `capPromptHeadings` post-process); **structured list kinds** (`experienceProblem`, `experienceActions`, `experienceOutcome`, `companyDomainAndStack`) format each item as a bullet with a bold label and indented body, strip accidental `#` headings and field-type metadata; strips accidental code fences; rejects empty or over-limit output
@@ -324,7 +325,8 @@ User browser (:4041)
 
 ### API additions / changes
 
-- `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); full experience pool; `generateType: experienceAdvise`
+- `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); **create** mode (no `targetExperienceId`) sends full STAR for every pool card; **edit** mode sends full STAR for the target card only and an index (`id`, category, problem summary via `summarizeExperienceProblem`) for the rest (Phase 66); `generateType: experienceAdvise`
+- `POST /ai-experience-advise/apply` — body `{ workspaceFingerprint, operations[] }`; fingerprint stale → 409; persists create/update with deterministic STAR finalize (no `markdownFormat` AI)
 - `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, profileId, companies[] }` where each company may include optional `keywordContext` (comma-separated steering text, max 500 chars); empty `keywordContext` → Auto for that company (job/Verdict + role context); filled → keyword-guided mapping for that company; when keywords match but JD overlap is thin, AI selects fewer cards and returns warnings; returns per-company `experienceIds`, `rationale`, and `warnings`; `generateType: combineRecommend`
 - `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run
 - `POST /resume/combine-fingerprint` — fingerprint for Combine snapshot (replaces workflow fingerprint)
@@ -393,6 +395,14 @@ User browser (:4041)
 - `GET /ai-usage/groups` — paginated summaries (50 groups/page): rows with `generationId` group by generation (`generationPublicId`, token sums, `latestCreatedAt`); rows without `generationId` group by UTC `{YYYYMMDD}-{generateType}` (`kind: "standalone"`, `standaloneDate`, `generateType`)
 - `GET /ai-usage?generationId=` — filter call rows (`none` for unlinked rows); optional `standaloneDate` + `generateType` narrow a standalone group; list items include `generationId` and `generationPublicId`
 - Drawer UI expands a group to load and show nested call rows
+
+## AI prompt optimization (Phase 65+)
+
+Tiered strategy to reduce redundant AI calls and prompt size (see Embedding + RAG review, 2026-09-09):
+
+- **Tier 1 (Phase 65):** Experience advisor **Apply** skips `markdownFormat` — Suggest→Apply is one LLM call (`experienceAdvise`) plus deterministic STAR finalize on persist; direct `POST/PUT /experiences` still uses AI markdown format when fields change
+- **Tier 2 (Phase 66):** Edit-mode tiered pool on Suggest — target card full STAR + compact index for other cards; create / Quick Add still use full pool (`formatExperiencePoolForAdvise` in `apps/api/src/lib/ai-experience-advise/prompts.ts`; shared `summarizeExperienceProblem` in `apps/api/src/lib/experience-problem-summary.ts`)
+- **Tier 3 (future):** Optional embedding hybrid retrieval when pool size and Suggest frequency warrant it
 
 ## Plans
 
