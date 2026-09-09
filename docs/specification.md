@@ -347,6 +347,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-09):** `CombineCompanyEntry.keywordContext`, per-company hybrid `POST /ai-combine-recommend`, simplified `CombineExperienceSuggest`. Plan archived at [`docs/plans/2026-09-09-combine-per-company-keyword-context.md`](./plans/2026-09-09-combine-per-company-keyword-context.md).
 * [x] **Phase 62 — Generation history** — Per-run **Generation ID** on Generate; persist runs to History on **+ New** and when the last step is reached; **History** list and read-only detail pages under **Run**.
   * **Outcome (2026-09-09):** `generations` table, `/generations` API, `/history` list and `/history/[publicId]` detail. Plan archived at [`docs/plans/2026-09-09-generation-history.md`](./plans/2026-09-09-generation-history.md).
+* [x] **Phase 63 — Quick Add Experience** — Global plus FAB above AI Usage History opens **Quick Add Experience** in a drawer: same create flow as Add experience (facts → Experience advisor → suggestion preview → Apply), with a nested suggestion drawer. The full-page `/experiences/new` entry point remains.
+  * **Outcome (2026-09-09):** `QuickAddExperience`, shared `useExperienceAdviseFlow` / `ExperienceFactFormFields` / `ExperienceSuggestionDrawer`. Plan archived at [`docs/plans/2026-09-09-quick-add-experience.md`](./plans/2026-09-09-quick-add-experience.md).
 
 ## Cursor Rules (Documentation Governance)
 

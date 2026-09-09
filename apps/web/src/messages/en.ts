@@ -583,6 +583,10 @@ export const en = {
       completed: "Completed",
     },
   },
+  quickAddExperience: {
+    fabAria: "Quick Add Experience",
+    drawerTitle: "Quick Add Experience",
+  },
   quickExperience: {
     fabAria: "Quick Experience",
     drawerTitle: "Quick Experience",

@@ -582,6 +582,10 @@ export const ko: MessageTree = {
       completed: "완료",
     },
   },
+  quickAddExperience: {
+    fabAria: "빠른 경험 추가",
+    drawerTitle: "빠른 경험 추가",
+  },
   quickExperience: {
     fabAria: "빠른 경험추가",
     drawerTitle: "빠른 경험추가",

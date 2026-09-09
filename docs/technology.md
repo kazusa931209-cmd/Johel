@@ -97,7 +97,7 @@ User browser (:4041)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
-- **AI Usage History (Phase 32, 41):** fixed bottom-right FAB cluster (`StudioBottomFabCluster`) with history (clock) and **Quick Experience** (plus) buttons; history opens `Drawer` panel; row click opens nested detail `Drawer` with **Input** / **Output** tabs (Input default), `AiVerdictMarkdown` preview, and **Copy** for the active tab’s raw text (`CopyButton` + `copyTextToClipboard`); `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`; labels in `apps/web/src/lib/ai-usage.ts`
+- **Global FAB cluster (Phase 32, 41, 63):** fixed bottom-right vertical stack (`StudioBottomFabCluster`): **Quick Add Experience** plus FAB (above) opens `QuickAddExperience` drawer; history (clock) FAB opens AI Usage History `Drawer`; suggestion preview uses nested `ExperienceSuggestionDrawer` (z-index 60). AI Usage History row click opens nested detail `Drawer` with **Input** / **Output** tabs; `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`
 - Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows — always open), **Run** (Generate — always open), **Settings** (Environment, Generation, Prompts — always open); section labels use normal title case (not all caps)
 
 ## AI Agent settings (Phase 5, 21)
@@ -346,8 +346,8 @@ User browser (:4041)
 - Migration `20260909100002_profile_education_split`: legacy `education` text copied to `university`; column dropped
 - `POST /ai-resume` and `POST /resume/combine-fingerprint` accept `experienceIds: []` per company; `assembleFromCombineSnapshot` allows empty experiences per company
 - Session: `combine: CombineSnapshot` instead of `workflow`
-- Experiences: `ExperienceFactForm`, `ExperienceSuggestionDialog`
-- `StudioBottomFabCluster`: history FAB only
+- Experiences: `ExperienceFactForm` (full page), `ExperienceSuggestionDialog`; **Quick Add Experience:** `QuickAddExperience` drawer reuses `useExperienceAdviseFlow`, `ExperienceFactFormFields`, `ExperienceSuggestionDrawer` (create-only; same `POST /ai-experience-advise` + apply as `/experiences/new`)
+- `StudioBottomFabCluster`: Quick Add Experience plus FAB + AI Usage History FAB (column layout)
 - Settings Prompts: admin full edit vs user extensions; `compileInstruction` appends extensions
 
 ### Resume assembly

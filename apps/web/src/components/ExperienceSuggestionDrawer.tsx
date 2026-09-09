@@ -2,11 +2,11 @@
 
 import { useT } from "@/components/app/LocaleProvider";
 import { ExperienceSuggestionContent } from "@/components/ExperienceSuggestionContent";
-import { DetailDialog } from "@/components/shared/detail-dialog";
+import { Drawer } from "@/components/shared/drawer";
 import type { ExperienceAdviseResult } from "@/lib/api";
 import type { ExperienceAdviseDisplayOperation } from "@/lib/build-experience-advise-display-operations";
 
-type ExperienceSuggestionDialogProps = {
+type ExperienceSuggestionDrawerProps = {
   open: boolean;
   onClose: () => void;
   result: ExperienceAdviseResult | null;
@@ -15,31 +15,35 @@ type ExperienceSuggestionDialogProps = {
   applying: boolean;
 };
 
-export function ExperienceSuggestionDialog({
+export function ExperienceSuggestionDrawer({
   open,
   onClose,
   result,
   displayOperations,
   onApply,
   applying,
-}: ExperienceSuggestionDialogProps) {
+}: ExperienceSuggestionDrawerProps) {
   const t = useT();
 
-  if (!open || !result) return null;
-
   return (
-    <DetailDialog
+    <Drawer
       title={t("crud.experiences.advisor.suggestionTitle")}
+      open={open && result != null}
       onClose={onClose}
-      mode="view"
-      panelClassName="max-w-3xl"
+      widthClass="w-[min(56rem,85vw)]"
+      zIndex={60}
+      closeOnEscape
     >
-      <ExperienceSuggestionContent
-        result={result}
-        displayOperations={displayOperations}
-        onApply={onApply}
-        applying={applying}
-      />
-    </DetailDialog>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+        {result ? (
+          <ExperienceSuggestionContent
+            result={result}
+            displayOperations={displayOperations}
+            onApply={onApply}
+            applying={applying}
+          />
+        ) : null}
+      </div>
+    </Drawer>
   );
 }
