@@ -1,6 +1,6 @@
 # Workspace authoring
 
-How to write **Companies**, **Experiences**, and **Workflows** so resume generation can multiply them cleanly. Product fields live in [`specification.md`](./specification.md). How those fields are assembled into the Generate user message lives in [`technology.md`](./technology.md).
+How to write **Companies** and **Experiences** so resume generation can multiply them cleanly. **Combine** (per-run, session-only) chooses profile, company order, linked cards, language, and emphasis. Product fields live in [`specification.md`](./specification.md). Assembly and API details live in [`technology.md`](./technology.md).
 
 JoHEL does not invent employers, tools, or metrics. Quality depends on what you store here and on the user-defined prompts.
 
@@ -14,7 +14,7 @@ Generation is:
 | --- | --- | --- |
 | **Company** | The scene: industry, product, customer, domain, stack, scale | Personal achievements, before→after metrics, “I built…” |
 | **Experience** | One capability unit (STAR: problem, actions, outcome) | A whole employer, a whole career, or a stack dump |
-| **Workflow** | Which profile, which companies in résumé order, which cards attach to which company, plus emphasis | A second copy of the JD or a list of metrics |
+| **Combine** | Per-run: profile, company order, which cards attach to which company, language, emphasis | A second copy of the JD or a list of metrics |
 | **Prompts** | How to read the JD (Verdict), how to write (Generate), how to score (Evaluate) | A place to store facts that belong on Company or Experience |
 
 If a fact is “this place was an early-stage Web3 startup at 50K events/day”, it belongs on **Company**. If a fact is “I cut failure rate from 2.1% to 0.1% by fixing nonce conflicts”, it belongs on **that Experience’s Outcome**.
@@ -22,7 +22,7 @@ If a fact is “this place was an early-stage Web3 startup at 50K events/day”,
 ## Company
 
 Fields: **alias**, **name**, **what this company is**, **domain & stack**.  
-On the workflow entry (not the company record): **start**, **end**, **role context**.
+On each **Combine** company entry (not the company record): **start**, **end**, **role context**.
 
 ### What this company is
 
@@ -76,7 +76,7 @@ Bad:
 
 Those sentences will repeat on every company that later links the same shared experience, or leak AllWeb3 numbers onto ScalyX if you copy the block.
 
-### Role context (workflow company entry)
+### Role context (Combine company entry)
 
 Nature of the role in that employment. Primary hint for the résumé `title`. Not achievements.
 
@@ -89,7 +89,11 @@ Fields: **category**, **problem**, **actions**, **outcome**. All are used as res
 
 One card = one capability. Target size: Problem 2–4 bullets, Actions 3–6, Outcome 1–3.
 
-Do **not** put employer or company names in **category**, **problem**, **actions**, or **outcome**. The card is shared across workflow company links; the employer name comes from the workflow company entry at generation time.
+Do **not** put employer or company names in **category**, **problem**, **actions**, or **outcome**. The card is shared across Combine company links; the employer name comes from the company entry at generation time.
+
+### Authoring path (default)
+
+On **Add** / **Edit**, describe what you did in plain language. The **Experience advisor** drafts STAR cards from your facts against the **full experience pool** (including cards not linked to any prior run). Review the Suggestion preview before **Apply**. One fact input may produce multiple create/update operations.
 
 Format each item as a bullet with a bold label and an indented body:
 
@@ -210,12 +214,11 @@ A workflow is a preset: one profile, ordered company entries, language, and a de
 Good: ScalyX → Multi-tenant Retail APIs + AI-assisted Retail Workflows.  
 Bad: ScalyX → those two **plus** the AllWeb3 AWS card (PM2, Base chain, S3 Object Lock).
 
-### Description vs One-time Prompt
+### Run guidance (Combine emphasis)
 
-- **Workflow description** — stable persona and emphasis for this preset (“Go/blockchain engineer, lead with on-chain reliability”).
-- **One-time Prompt** (Generate step) — this run only (“Emphasize startup scene; keep Skills to backend”).
+- **Run guidance** (Combine step, `emphasis` field) — this run only (“Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups”).
 
-Neither is a place to dump metrics or to say “use the Startup Experience card”.
+Not a place to dump metrics or to say “use the Startup Experience card”.
 
 Good description:
 
@@ -259,8 +262,7 @@ Changing Prompts changes *how* materials are read. It does not add missing facts
 | Need | Where |
 | --- | --- |
 | Always-on writing rules | Generate Prompt |
-| This-preset emphasis | Workflow description |
-| This-run emphasis | One-time Prompt |
+| This-run emphasis / tailoring | Combine Run guidance (`emphasis`) |
 | Employer scene | Company |
 | What you did and what changed | Experience |
 

@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { isAiProviderId } from "../lib/ai-provider.js";
 import { runAiResume, type AiProviderId } from "../lib/ai-resume/index.js";
-import { assembleResumeGenerationInput } from "../lib/resume/assemble-input.js";
-import { compileInstruction, appendOneTimeGeneratePrompt } from "../lib/prompt-optimize/index.js";
+import { assembleFromCombineSnapshot } from "../lib/resume/assemble-input.js";
+import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
@@ -11,10 +11,24 @@ import { requireUser } from "../lib/session.js";
 
 const JOB_TEXT_MAX = 10_000;
 
+const combineCompanySchema = z.object({
+  companyId: z.string().trim().min(1),
+  startDate: z.string().trim().min(1),
+  endDate: z.string().trim().min(1),
+  roleContext: z.string().trim().min(1),
+  experienceIds: z.array(z.string().trim().min(1)).default([]),
+});
+
+const combineSchema = z.object({
+  profileId: z.string().trim().min(1),
+  language: z.enum(["en", "ja", "zh-TW", "zh-CN", "ko"]),
+  emphasis: z.string().max(2000),
+  companies: z.array(combineCompanySchema).min(1),
+});
+
 const postSchema = z.object({
   jobContext: z.string().trim().min(1).max(JOB_TEXT_MAX),
-  workflowId: z.string().trim().min(1),
-  oneTimePrompt: z.string().trim().max(JOB_TEXT_MAX).optional(),
+  combine: combineSchema,
 });
 
 export const aiResumeRoutes = new Hono();
@@ -31,7 +45,7 @@ aiResumeRoutes.post("/", async (c) => {
     return c.json(
       {
         error:
-          "Resume generation input is invalid. Check job context and workflow selection.",
+          "Resume generation input is invalid. Check job context and combine selection.",
       },
       400,
     );
@@ -75,9 +89,10 @@ aiResumeRoutes.post("/", async (c) => {
 
   let generationInput;
   try {
-    generationInput = await assembleResumeGenerationInput({
+    generationInput = await assembleFromCombineSnapshot({
       userId: user.id,
-      ...parsed.data,
+      jobContext: parsed.data.jobContext,
+      combine: parsed.data.combine,
     });
   } catch (err) {
     const message =
@@ -88,9 +103,9 @@ aiResumeRoutes.post("/", async (c) => {
   }
 
   try {
-    const compiledGeneratePrompt = appendOneTimeGeneratePrompt(
-      compileInstruction("generate", generatePrompt),
-      parsed.data.oneTimePrompt,
+    const compiledGeneratePrompt = compileInstruction(
+      "generate",
+      generatePrompt,
     );
 
     const result = await runAiResume(provider, {

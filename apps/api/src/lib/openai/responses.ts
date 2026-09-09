@@ -13,6 +13,14 @@ type OpenAiTextResponse = {
   outputToken?: number;
 };
 
+/** OpenAI json_object format requires the word "json" in the input message. */
+function ensureJsonInInput(input: string): string {
+  if (/json/i.test(input)) {
+    return input;
+  }
+  return `${input}\n\nRespond with a JSON object only. Do not wrap in a code fence.`;
+}
+
 async function createTextResponse(
   apiKey: string,
   options: {
@@ -24,11 +32,14 @@ async function createTextResponse(
   },
 ): Promise<OpenAiTextResponse> {
   const client = createOpenAiClient(apiKey);
+  const input = options.jsonOutput
+    ? ensureJsonInInput(options.input)
+    : options.input;
 
   const request: OpenAI.Responses.ResponseCreateParamsNonStreaming = {
     model: options.model,
     instructions: options.instructions,
-    input: options.input,
+    input,
     reasoning: { effort: options.reasoningEffort },
   };
 
@@ -111,12 +122,14 @@ export async function runOpenAiSolResponse(
   apiKey: string,
   instructions: string,
   input: string,
+  options?: { jsonOutput?: boolean },
 ): Promise<OpenAiTextResponse> {
   return createTextResponse(apiKey, {
     model: OPENAI_FORMAT_MODEL,
     instructions,
     input,
     reasoningEffort: "low",
+    jsonOutput: options?.jsonOutput,
   });
 }
 

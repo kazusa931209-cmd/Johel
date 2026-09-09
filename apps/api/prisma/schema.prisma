@@ -11,10 +11,10 @@ model User {
   id           String     @id @default(cuid())
   email        String     @unique
   passwordHash String
+  role         String     @default("user")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   setting      Setting?
-  workflows    Workflow[]
   profiles     Profile[]
   companies    Company[]
   experiences  Experience[]
@@ -38,61 +38,6 @@ model Setting {
   @@map("settings")
 }
 
-model Workflow {
-  id              String               @id @default(cuid())
-  userId          String
-  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  profileId       String?
-  profile         Profile?             @relation(fields: [profileId], references: [id], onDelete: SetNull)
-  name            String
-  description     String               @default("")
-  language        String               @default("en")
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  companies              WorkflowCompany[]
-  lastSelectedByProcess  GenerationProcess[] @relation("LastSelectedWorkflow")
-
-  @@index([userId])
-  @@index([profileId])
-  @@map("workflows")
-}
-
-model WorkflowCompany {
-  id           String                      @id @default(cuid())
-  workflowId   String
-  workflow     Workflow                    @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  companyId    String
-  company      Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  startDate    String
-  endDate      String
-  roleContext  String
-  sortOrder    Int                         @default(0)
-  createdAt    DateTime                    @default(now())
-  updatedAt    DateTime                    @updatedAt
-  experiences  WorkflowCompanyExperience[]
-
-  @@unique([workflowId, companyId])
-  @@index([workflowId])
-  @@index([companyId])
-  @@map("workflowCompanies")
-}
-
-model WorkflowCompanyExperience {
-  id                String          @id @default(cuid())
-  workflowCompanyId String
-  workflowCompany   WorkflowCompany @relation(fields: [workflowCompanyId], references: [id], onDelete: Cascade)
-  experienceId      String
-  experience        Experience      @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-  sortOrder         Int             @default(0)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-
-  @@unique([workflowCompanyId, experienceId])
-  @@index([workflowCompanyId])
-  @@index([experienceId])
-  @@map("workflowCompanyExperiences")
-}
-
 model Profile {
   id         String        @id @default(cuid())
   userId     String
@@ -102,12 +47,13 @@ model Profile {
   birthDate  String?
   email      String?
   pn         String?
-  residence  String?
-  education  String?
-  createdAt  DateTime      @default(now())
+  residence       String?
+  university      String?
+  graduationYear  Int?
+  degree          String?
+  createdAt       DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   links      ProfileLink[]
-  workflows  Workflow[]
 
   @@index([userId])
   @@map("profiles")
@@ -129,32 +75,30 @@ model ProfileLink {
 }
 
 model Company {
-  id             String            @id @default(cuid())
+  id             String   @id @default(cuid())
   userId         String
-  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   alias          String
   name           String
   whatCompanyIs  String
   domainAndStack String
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  workflows      WorkflowCompany[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([userId])
   @@map("companies")
 }
 
 model Experience {
-  id          String               @id @default(cuid())
+  id          String   @id @default(cuid())
   userId      String
-  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    String
   problem     String
   actions     String
   outcome     String
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  workflowCompanyExperiences WorkflowCompanyExperience[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([userId])
   @@map("experiences")
@@ -182,28 +126,27 @@ model Prompt {
   id             String   @id @default(cuid())
   userId         String   @unique
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  verdictPrompt  String
-  generatePrompt String   @default("")
-  evaluatePrompt String   @default("")
-  createdAt      DateTime @default(now())
+  verdictPrompt       String
+  generatePrompt      String   @default("")
+  evaluatePrompt      String   @default("")
+  verdictExtension    String   @default("")
+  generateExtension   String   @default("")
+  evaluateExtension   String   @default("")
+  createdAt           DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@map("prompts")
 }
 
 model GenerationProcess {
-  id                              String    @id @default(cuid())
-  userId                          String    @unique
-  user                            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  doVerdict                       Boolean   @default(true)
-  doEvaluate                      Boolean   @default(true)
-  doWorkflowRecommendation        Boolean   @default(false)
-  workflowRecommendationThreshold Int       @default(70)
-  lastSelectedWorkflowId          String?
-  lastSelectedWorkflow            Workflow? @relation("LastSelectedWorkflow", fields: [lastSelectedWorkflowId], references: [id], onDelete: SetNull)
-  createdAt                       DateTime  @default(now())
-  updatedAt                       DateTime  @updatedAt
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doVerdict      Boolean  @default(true)
+  doEvaluate     Boolean  @default(true)
+  resumeLanguage String   @default("en")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  @@index([lastSelectedWorkflowId])
   @@map("generationProcess")
 }

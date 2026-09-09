@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
-import { ExperienceForm } from "@/components/ExperienceForm";
+import { ExperienceFactForm } from "@/components/ExperienceFactForm";
 import { useToast } from "@/components/app/ToastProvider";
 import { getExperience, type ExperienceDetail } from "@/lib/api";
 
@@ -41,10 +41,10 @@ export default function EditExperiencePage() {
   }
 
   return (
-    <ExperienceForm
+    <ExperienceFactForm
       mode="edit"
       experienceId={experience.id}
-      initial={experience}
+      initialCategory={experience.category}
     />
   );
 }

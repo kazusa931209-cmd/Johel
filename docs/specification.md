@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**JoHEL** is a customized Resume / CV and résumé writing application. It helps a user combine personal profile data, companies, shared hands-on experience, and a saved workflow preset to process a Job Description and generate a tailored résumé.
+**JoHEL** is a customized Resume / CV and résumé writing application. It helps a user combine personal profile data, companies, and shared hands-on experience to process a Job Description and generate a tailored résumé for each run.
 
 ## Philosophy
 
@@ -16,36 +16,33 @@ Result quality depends entirely on the user's prompt authoring and the capabilit
 
 * **Profiles** — One user can manage **multiple profiles** (personal identity variants used when generating).
 * **Companies** — One user can manage **multiple companies** (alias, name, what this company is, and domain & stack — all required; used as resume-generation prompts).
-* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone). Each experience has a required category, required problem, required actions, and required outcome used as resume-generation prompts. One card is one capability unit. Stack-only variants of the same capability (for example NestJS vs Go) are allowed; the author must not link more than one variant of that capability to the same company in the same workflow.
-* **Workflows** — One user can manage **multiple workflows**. Each workflow is a named preset that bundles one profile, one or more ordered company entries (each with a required employment period and linked shared experiences), a resume output language, and a required description used as a resume-generation prompt.
-* **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés. New accounts receive default prompt templates on sign-up; users may replace them freely. Output structure and instructions are user-defined; JoHEL does not guarantee AI output quality (see **Philosophy**).
+* **Shared Experiences** — One user can add and update their working / hands-on experiences as a **shared** pool used across generations (not tied to a single profile alone). Each experience has a required category, required problem, required actions, and required outcome used as resume-generation prompts. One card is one capability unit. Stack-only variants of the same capability (for example NestJS vs Go) are allowed; the author must not link more than one variant of that capability to the same company in the same generation run. **Add/Edit** uses fact input → AI advisor → preview → Apply (not manual STAR forms as the default path).
+* **Prompts** — Per-user **Verdict Prompt**, **Generate Prompt**, and **Evaluate Prompt**, used when checking Job Descriptions, generating résumés, and evaluating résumés. New accounts receive default prompt templates on sign-up; non-admin users may add **extensions** appended to the compiled system prompt; admins may edit full prompts. Output structure and instructions are user-defined within those rules; JoHEL does not guarantee AI output quality (see **Philosophy**).
 
 ### End-to-end flow
 
 A generation run combines:
 
-**one Workflow** (profile + ordered company entries with linked experiences) → **Job Description** → **Filtering** → **Workflow** → **Generate** → **Evaluate**
+**Job Description** → **Filtering** → **Verdict** (optional) → **Combine** (per-run profile, companies, experiences, emphasis) → **Generate** → **Evaluate** (optional)
 
 ```text
-Workflow (one of many; includes Profile + ordered Companies with Experiences)
-        |
-        v
-Job Description → Filtering → Workflow → Generate → Evaluate
+Job Description → Filtering → Verdict? → Combine → Generate → Evaluate?
 ```
 
 1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
-2. **Workflow** — Choose one workflow; its saved profile and company entries (each with period and linked experiences) are used for generation.
-3. **Generate** — Generate the résumé from the filtered JD and the selected workflow.
-4. **Evaluate** — Score the generated résumé against the same Verdict dimensions (Role, Technical Requirements, Final Verdict, and related sections), then download the résumé.
+2. **Verdict** (when **Do Verdict** is on) — Run AI Verdict on the filtered JD; the Markdown result is the scoring rubric for generation and evaluation.
+3. **Combine** — For this run only: choose one profile, optional **Run guidance** (emphasis), included companies via a card grid (include toggle, dual-thumb period slider over a 10-year window, inline role context, optional **Keyword context** per company), and link shared **Experiences** to each company via **Suggest experiences** (when Keyword context is filled, AI maps experiences for that company using keywords plus job/Verdict and role context; when empty, that company uses Auto from job/Verdict and role context only). Review AI suggestions (rationale and warnings) before **Apply**.
+4. **Generate** — Generate the résumé from the job context and the Combine snapshot.
+5. **Evaluate** (when **Do Evaluate** is on) — Score the generated résumé against the same Verdict dimensions, then download the résumé.
 
 ### Workspace authoring
 
-Company, Experience, and Workflow fields are resume-generation prompts. Generation multiplies **company scene × linked capability cards × job rubric**.
+Company and Experience fields are resume-generation prompts. Generation multiplies **company scene × linked capability cards × job rubric**.
 
 * **Company** holds scene only (industry, product, customer, domain, stack, snapshot scale). Personal achievements and before→after metrics do not belong here.
-* **Experience** holds one capability (STAR). Category names the capability (stack suffix only when keeping intentional variants). Outcome numbers stay on the card that produced them. Do not store routing instructions (“use when the JD asks for X”) in Actions. Shared STAR fields must not name employers; employer context lives on Company and the workflow company link.
-* **Workflow** chooses profile, résumé company order, and which cards attach to which company. Description is persona/emphasis, not a metrics dump. Linking a card to a company asserts that work happened there.
-* **Prompts** (Verdict / Generate / Evaluate) say how to read the JD and write/score the résumé. They do not add facts. Run-specific emphasis uses the Generate **One-time Prompt**.
+* **Experience** holds one capability (STAR). Category names the capability (stack suffix only when keeping intentional variants). Outcome numbers stay on the card that produced them. Do not store routing instructions (“use when the JD asks for X”) in Actions. Shared STAR fields must not name employers; employer context lives on the Combine company entry.
+* **Combine** (session-only, not saved as a workspace preset) chooses profile, résumé company order, which cards attach to which company, and optional run emphasis. Each included company may have optional **Keyword context** (comma-separated steering text for experience selection); empty Keyword context means that company uses Auto (job/Verdict and role context only). **Run guidance** (`emphasis`) is separate from Keyword context and applies at Generate only. Linking uses **Suggest experiences**. Résumé output language is configured in Settings **Generation**, not on the Combine step. Linking a card to a company asserts that work happened there.
+* **Prompts** (Verdict / Generate / Evaluate) say how to read the JD and write/score the résumé. They do not add facts. Run-specific tailoring uses Combine **Run guidance** (`emphasis` on the Combine snapshot).
 
 Authoring criteria, good/bad examples, stack-variant rules, and the mapping to user-defined prompts: [`docs/workspace-authoring.md`](./workspace-authoring.md).
 
@@ -62,7 +59,7 @@ Authoring criteria, good/bad examples, stack-variant rules, and the mapping to u
 
 ## Main Features
 
-* Users manage **multiple profiles**, **companies**, **shared experiences**, and **multiple workflows**.
+* Users manage **multiple profiles**, **companies**, and **shared experiences**.
 * Users can provide a **Job Description** through:
 
   * URL input
@@ -81,12 +78,12 @@ Aligned with the product flow above:
 
 1. Process and filter the Job Description.
 2. Run **AI Verdict** using the user’s saved Verdict Prompt; the user defines sections (e.g. fit questions, job extraction, company extraction), answer format, and Markdown output structure.
-3. Allow the user to review the AI Verdict result on the Workflow step.
+3. Allow the user to review the AI Verdict result on the **Verdict** step (when **Do Verdict** is on).
 4. Generate a Resume based on:
 
-   * The profile and company entries (each with period and linked experiences) saved in the selected workflow
+   * The **Combine** snapshot for this run (profile, ordered company entries with period, role context, and linked experiences, plus optional emphasis)
    * **Job context for tailoring:** when **Do Verdict** is enabled, the accepted **AI Verdict** Markdown (replacing the raw job description); when **Do Verdict** is disabled, the noise-filtered job description from the Job step. Verdict Prompt sections and extracted fields directly affect what the generator sees and thus resume quality.
-   * The workflow’s resume output language
+   * The user’s saved **Résumé Language** from Settings **Generation**
 5. Allow the user to review and edit the generated Resume.
 6. Allow the user to download the final Resume as:
 
@@ -104,7 +101,6 @@ Aligned with the product flow above:
 * Each user can manage **multiple profiles**.
 * Each user can manage **multiple companies**.
 * Each user can manage **shared working / hands-on experiences**.
-* Each user can manage **multiple workflows**.
 * Users can manage their own **API keys**.
 * Users can log in using their **email address**.
 * Currently, the application uses a **Cursor API Key**.
@@ -138,7 +134,6 @@ Aligned with the product flow above:
     * Profiles
     * Companies
     * Experiences
-    * Workflows
   * **Run** (always-open submenus)
     * Generate (`/` is Generate)
   * **Settings** (always-open submenus)
@@ -146,13 +141,13 @@ Aligned with the product flow above:
     * Prompts
 * **Profiles**
   * One signed-in user can manage **multiple** profiles
-  * Per-user list: No, Full Name (first + last), birth date, email, PN, links, residence, education
-  * Keyword filter on name parts, email, PN, residence, education; 10 rows per page
+  * Per-user list: No, Full Name (first + last), birth date, email, PN, links, residence, education summary (university, graduation year, degree)
+  * Keyword filter on name parts, email, PN, residence, university, degree; 10 rows per page
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole profile
   * Links add/edit/delete is local on the page until Save persists the profile (same pattern as workflow Metadata)
-  * Editor fields: first name (required), last name (required), birth date, email, PN, residence, education (optional); links table (Key required; Value/link optional)
+  * Editor fields: first name (required), last name (required), birth date, email, PN, residence, university (optional), graduation year (required), degree (optional); links table (Key required; Value/link optional)
   * Distinct from header menu **Profile** (account email page)
 * **Companies**
   * One signed-in user can manage **multiple** companies
@@ -167,63 +162,51 @@ Aligned with the product flow above:
   * What this company is and domain & stack show a notice that they are used as prompts during resume generation and that contents will be automatically converted to markdown format on **Save**; when a field changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged fields skip conversion; domain & stack conversion formats each item as a bullet with a bold label and indented body (no document titles); fullscreen loading while conversion runs; the detail dialog renders both fields as Markdown
   * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
 * **Shared Experiences**
-  * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any selected profile and workflow
+  * One signed-in user maintains a **shared** set of working / hands-on experiences used across generations with any profile and company combination in Combine
   * Per-user list: No, Category, Problem, Actions, Outcome
   * Keyword filter on category, problem, actions, and outcome; 10 rows per page
   * List is ordered by Category name
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
-  * Editor pages show a back control beside the title; Cancel and Save apply to the whole experience; Save is right-aligned
-  * Editor fields: category (required; free-text), problem (required; used as a resume-generation prompt), actions (required; used as a resume-generation prompt), outcome (required; used as a resume-generation prompt)
-  * Problem, actions, and outcome show guidelines for bullet lists with bold labels and indented bodies; shared note that one card should represent one capability unit for better synthesis
-  * Problem, actions, and outcome show a notice that they are used as prompts during resume generation and that contents will be automatically converted to markdown format on **Save**; when a field changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged fields skip conversion; conversion formats each item as a bullet with a bold label and indented body (no document titles or category headings); fullscreen loading while conversion runs; the detail dialog renders all three fields as Markdown
-  * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
-* **Workflows**
-  * One signed-in user can manage **multiple** workflows
-  * Each workflow saves one profile, one or more ordered company entries (each with required employment period and linked experiences), and a resume output language
-  * Per-user list: name, optional one-line description, updated
-  * Keyword filter on name and description; 10 rows per page
-  * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
-  * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
-  * Editor pages show a back control beside the title; Cancel and Save apply to the whole workflow
-  * Editor fields: name (required), description (required; used as a resume-generation prompt), language (English default; Japanese; Chinese Taiwan; Chinese Mainland; Korean)
-  * Below the scalar fields, **Profile** (single row selection table: all items loaded at once; row click selects; View opens read-only detail dialog)
-  * **Companies** section: ordered list of entries built one at a time; **Add** (plus icon) opens a dialog to pick one company, set required **Start** and **End** period (free-text), required **Role Context** (nature of the role held in this employment; not personal achievements), and multi-select one or more shared experiences; **Save** in the dialog validates inline and adds or updates the entry; row **Edit** (pencil) and **Delete** (red trash); company order is résumé order (first added = highest priority); the same shared experience may appear under multiple companies when the work is true in both scenes; stack-only variants of one capability must not both be linked under the same company entry (author responsibility; JoHEL does not de-duplicate)
-  * Company-entry edits stay local until page **Save** (same pattern as profile Links)
-  * Page Save validates inline: one profile; at least one company entry; each entry has startDate, endDate, roleContext, and at least one experience (not via disabling Save)
-  * Detail dialog shows the selected profile and companies grouped with period and linked experiences (preserve company order)
-  * Required editor fields show a red asterisk; Save stays available; empty required fields show an error under the input
+  * **Add/Edit default path:** required **What did you do?** fact textarea → **Suggest** runs the Experience advisor → **Suggestion** dialog shows draft card(s) with rationale or follow-up questions → **Apply** persists (with confirmation); STAR fields are not edited directly in the main form
+  * Detail view and list remain read-only STAR Markdown
+  * Required labels show a red asterisk; Suggest/Apply stay enabled; empty required fields show inline errors on submit (not a toast); API results toast
 * **Prompts** (`/settings/prompts`)
   * Page content is centered in a readable column
   * One signed-in user maintains a **Verdict Prompt**, a **Generate Prompt**, and an **Evaluate Prompt**; **sign-up** seeds all three from shared default templates (`@johel/prompt-defaults`)
   * Page copy explicitly states that changes to these system prompts directly affect resume generation quality
   * **Tabs** — **Verdict**, **Generate**, and **Evaluate**; each tab shows one prompt only (`?tab=verdict|generate|evaluate`; default Verdict)
   * Editor fields: each tab’s prompt (required) is shown as a read-only Markdown preview (`AiVerdictMarkdown`); empty prompts show a muted placeholder
-  * Each tab has its own **Edit** (pencil) control beside the label; **Edit** opens a dialog with a textarea and **Apply** (local until that tab’s **Save**)
+  * **Non-admin users** see extension textareas only (appended to the compiled system prompt); **admin** users (`users.role = admin`) may edit full prompts via **Edit** and **Save**
   * Each tab shows a notice that contents will be automatically converted to markdown format on **Save**; prompt kinds (Verdict / Generate / Evaluate) are capped at `##` as the largest heading during conversion, with deterministic `#`→`##` post-processing; when a prompt changed since last save, **Save** runs AI markdown conversion (requires a configured AI Agent) before persisting; unchanged prompts skip conversion but still receive heading-cap post-processing; fullscreen loading while conversion runs; saved preview refreshes with the converted markdown
   * Each tab’s footer has **Reset to Default** (secondary, beside **Save**) and **Save**; **Reset to Default** opens a confirm dialog and, on confirm, persists the shared default template for that tab; both actions stay enabled; required labels show a red asterisk; empty prompts show inline errors on Save (not a toast)
   * Load all prompts via `GET /prompts`; save per tab via `PUT /prompts/verdict`, `PUT /prompts/generate`, or `PUT /prompts/evaluate`; toast on API success or failure
   * The Verdict Prompt is used when checking Job Descriptions; when **Do Verdict** is enabled its Markdown output replaces the raw job description as job context for resume generation and résumé evaluation (Verdict structure and extracted fields affect resume quality); the Generate Prompt is used when generating résumés; the Evaluate Prompt scores the résumé against the same Verdict dimensions (Role, Technical Requirements, Final Verdict, and related sections)—the Evaluate step sends the same job context as Generate (none run on this page)
 * **Generate** (`/`)
-  * Before the flow starts, the page checks that the user has at least one Workflow and saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to the matching Prompts tab
-  * When ready, a timeline shows steps: Job → Workflow → Generate, and **Evaluate** when **Do Evaluate** is enabled; the page **title**, **timeline**, and round **Previous** / **Next** (or **Download** on the last step) controls share one sticky header row—the timeline sits between the side buttons—and the header stays fixed at the top of the scroll area while step content scrolls beneath
-  * **Next** on Job (Manual): validates the Job Description (inline error if empty); when **Do Verdict** is enabled, runs **Noise Filter** silently in the background (textarea unchanged), calls **AI Verdict** with the user’s saved Verdict Prompt (compiled under `# Instructions` with minimal execution rules), fullscreen loading while the request runs, on success persists token usage, saves accepted Markdown, toasts success, then advances toward **Workflow**; when **Do Verdict** is disabled, advances toward **Workflow** without calling AI Verdict; on failure stays on Job and toasts the error
-  * Before **Workflow**, when **Do Workflow Recommendation** is enabled in Settings, runs **AI Workflow Recommendation** using the noise-filtered Job Description and accepted Verdict Markdown when present; fullscreen loading while the request runs; auto-selects the best-matching workflow only when its score meets the user’s **Recommendation threshold** (otherwise clears selection and toasts); when recommendation is disabled, restores the user’s last manually selected workflow if it still exists; recommendation results are cached in the Generate session when Job and Verdict inputs are unchanged
-  * **Workflow** step: read-only **AI Verdict result** Markdown panel at the top when **Do Verdict** is enabled (from the accepted Job-step result); then a **Workflow** section with a single-select table (all workflows loaded at once; no search or pagination). Row click selects and persists the last manual choice for reuse when recommendation is off; View opens read-only workflow detail. Below the workflow table, an optional **One-time Prompt** textarea (8 rows) accepts run-specific instructions; when non-empty, it is appended to the saved Generate Prompt for that run’s resume generation only (stored in the Generate session, not on the Prompts page). **Previous** and **Next** in the sticky step row return to Job and advance respectively; **Next** stays enabled and validates inline (one workflow selected) before advancing
-  * **Workflow** **Next** runs **AI Resume generation** with job context (AI Verdict Markdown when **Do Verdict** is enabled, otherwise the noise-filtered job description), selected workflow, saved Generate Prompt, and optional One-time Prompt when provided; fullscreen loading while generation runs; on success stores the generated resume JSON in the session, persists token usage, toasts success, and advances to **Generate**; on failure stays on Workflow and toasts the error; if the same inputs already produced a resume in this session, **Next** reuses the stored result without calling the AI again
-  * An in-progress Generate run (step, Job inputs, accepted AI Verdict result, workflow selection, optional One-time Prompt, generated resume JSON, and evaluation result) is remembered for the signed-in user across refresh and navigation until the run is finished or reset to an empty Job step
-  * **Generate** step: shows the generated resume as Markdown derived from the stored resume JSON (section order: Summary, Experience, Skills, Education, then optional Certifications and Projects); **Previous** in the sticky step row returns to Workflow; when **Do Evaluate** is enabled, **Next** runs **AI Evaluate** with the same job context as generation (AI Verdict Markdown when **Do Verdict** is enabled, otherwise the noise-filtered job description), stored resume, and saved Evaluate Prompt, fullscreen loading while evaluation runs, persists token usage, stores the evaluation Markdown, toasts success, and advances to **Evaluate**; when **Do Evaluate** is disabled, **Download** exports the stored resume JSON to a `.docx` file using Arial; on evaluation failure stays on Generate and toasts the error; if the same resume already has a stored evaluation in this session, **Next** reuses it without calling the AI again
-  * **Evaluate** step (only when **Do Evaluate** is enabled): shows the AI evaluation as Markdown; **Previous** returns to Generate; **Download** exports the stored resume JSON to a `.docx` file using Arial without regenerating the resume or re-running evaluation
+  * Before the flow starts, the page checks that the user has at least one Profile, Company, and Experience and a saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to the matching workspace area or Prompts tab
+  * When ready, a timeline shows steps: Job → **Verdict** (when **Do Verdict** is on) → **Combine** → Generate, and **Evaluate** when **Do Evaluate** is enabled; sticky header with **Previous** / **Next** (or **Download** on the last step)
+  * Generate uses the **full width** of the main content area (no centered max-width cap)
+  * Below the sticky header, each step body uses a **two-column layout** (equal columns on large screens; stacked on narrow viewports with the previous step above the current step). The step body fills the **remaining viewport height** below the sticky header
+  * **Left column:** read-only content from the **previous** timeline step — no edit forms, method tabs, or Save/Apply controls; **its own vertical scroll** when content exceeds the panel height
+  * **Right column:** the **current** step (forms, auto-run AI, Markdown results, loading overlays); **its own vertical scroll** independent of the left column; scrolling one column does not scroll the other or the sticky header
+  * **Job** step: left column is **empty** (no placeholder required); right column is the Job input (method tabs + manual textarea)
+  * Previous-step content by current step (respecting **Do Verdict** / **Do Evaluate** flags): **Verdict** ← noise-filtered Job Description; **Combine** ← AI Verdict Markdown when Do Verdict is on, otherwise noise-filtered Job Description; **Generate** ← read-only Combine summary (profile name, language, emphasis, included company entries with dates and role context — not the Combine editors); **Evaluate** ← generated résumé Markdown preview
+  * **Job** **Next**: validates the Job Description (inline error if empty); runs **Noise Filter** silently; advances to Verdict or Combine (does not run AI on this step)
+  * **Verdict** (when enabled): auto-runs **AI Verdict** on entry with the noise-filtered JD and saved Verdict Prompt; shows result Markdown; **Next** advances to Combine when complete
+  * **Combine**: choose profile, optional **Run guidance**, included companies (card grid with include toggle, period slider, inline role context, optional **Keyword context** per company, and linked experiences after **Apply**), and **Suggest experiences** to link capability cards per company (Keyword context filled → keyword-guided mapping for that company; empty → Auto from job/Verdict and role context); **Suggest** shows a fullscreen wait overlay; the suggestion dialog shows rationale, warnings, and **Cancel** / **Retry** / **Apply**; company selection is enabled only after a profile is selected; work period slider range is from **January of the profile graduation year** through the present; **Next** validates inline (profile with graduation year, ≥1 included company with period + role context; no experience requirement) then advances to Generate (resume generation runs on the Generate step)
+  * Session remembers step, Job, Verdict, Combine (including Run guidance), resume JSON, and evaluation until **New** or Generation settings change
+  * **Generate** and **Evaluate** steps: auto-run resume generation and evaluation respectively when needed; Markdown preview; DOCX download on Evaluate (or Generate when Do Evaluate is off)
 * **Settings**
   * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here
   * Theme (Dark / Light)
   * **Language** (English / Korean; English default; applies immediately and is remembered per browser)
-  * **Process**: **Do Verdict**, **Do Evaluate**, and **Do Workflow Recommendation** checkboxes (Verdict and Evaluate default on; Workflow Recommendation default off); when **Do Workflow Recommendation** is enabled, **Recommendation threshold** (integer 0–100, default 70) is shown and validated inline on Save (Save stays enabled); Save persists per user; controls which optional AI steps run during Generate; changing any Process flag or threshold resets an in-progress Generate session
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
+  * **Generation** (`/settings/generation`) — centered in a readable column; sidebar between Environment and Prompts
+  * **Process**: **Do Verdict** and **Do Evaluate** checkboxes (both default on)
+  * **Résumé Language**: default résumé output language for Generate (`en`, `ja`, `zh-TW`, `zh-CN`, `ko`; default `en`); one **Save** persists Process and Résumé Language per user; changing either clears an in-progress Generate session
   * **Prompts** — see **Prompts** above (`/settings/prompts`)
 * **AI Usage History** — A fixed bottom-right round button (history / clock icon) on every authenticated page opens a right-side drawer with the user’s AI usage history table. Columns: No, AI, Model, Generate Type, Input Token, Output Token, Created At. Newest first; 100 rows per page with pagination stuck to the bottom of the drawer. Clicking a row opens a nested overlapping drawer on the right with **Input** and **Output** tabs (**Input** is the default); the active tab’s text is previewed as Markdown (`AiVerdictMarkdown`); a **Copy** icon copies the raw stored text for the active tab (not the rendered preview) and toasts success or failure. Clicking outside a drawer (or its Close control) collapses the topmost drawer; closing the history drawer also closes the detail drawer.
-* **Quick Experience** — A fixed bottom-right **plus** round button sits immediately to the right of AI Usage History (same size and style). Opening one closes the other. Plus opens a right-side drawer titled **Quick Experience**. Workflow selection is optional (single-select table; **Clear** or re-click to deselect). **What do you need?** (`textarea`, 6 rows, required) is always visible. With a workflow selected, the advisor graph is that workflow’s profile, company entries, and linked experiences only; with no selection, all workflows are included (still only linked PCE on each workflow, not the unused workspace pool). **Next** runs the advisor (fullscreen loading); empty facts show an inline error under the field. The result opens a nested **Suggestion** drawer with rationale, warnings, editable draft fields, and **Apply** (hidden for `need_more_facts`). Apply persists via the API, toasts success, closes Suggestion, keeps workflow selection, and resets the facts field. JoHEL does not invent facts; advisor rules are product-fixed (not on the Prompts page).
 * **Dialogs** — View-only dialogs (detail/read-only, delete confirms) close when the user clicks the outer backdrop. Add/Edit form dialogs do not close on backdrop click; the user must use Close (X) or the main action (Apply/Save).
 * **Feedback** — Every user action that results in an API call must notify the user of the result. Always use a **toast** for that notice.
 * **Action icons** — **Add** is a plus icon; **Edit** is a pencil icon; **Delete** is a red trash icon; **View** is an eye icon; **Close** is an X (cross) icon (accessible labels required when icon-only).
@@ -339,6 +322,22 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-08):** `buildAuthorAdviseDisplayDraft`, generalized Suggestion merge hint, advisor delta rules for company/workflow updates. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-52-quick-experience-merge-all-updates.md`](./plans/2026-09-08-phase-52-quick-experience-merge-all-updates.md).
 * [x] **Phase 53 — CRUD list pagination and history back** — Profiles, Companies, Experiences, and Workflows list pages preserve page and search in the URL; add/edit Back, Cancel, and Save return via browser history when possible so the list restores the last visited page.
   * **Outcome (2026-09-08):** `useCrudListParams`, `useCrudFormNavigation`, URL `?page` / `?q` on list routes, `BackButton` history-back option. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-08-phase-53-crud-list-pagination-history.md`](./plans/2026-09-08-phase-53-crud-list-pagination-history.md).
+* [x] **Phase 54 — Experience fact-input authoring** — Experiences add/edit use fact input → Experience advisor → Suggestion preview → Apply; advisor matches against the full experience pool (not workflow-linked only); multi-operation create/update responses.
+  * **Outcome (2026-09-09):** `POST /ai-experience-advise`, `ExperienceFactForm`, `ExperienceSuggestionDialog`. Plan archived at [`docs/plans/2026-09-09-architecture-refactor-phases-54-60.md`](./plans/2026-09-09-architecture-refactor-phases-54-60.md).
+* [x] **Phase 55 — Remove Quick Experience** — Global Quick Experience FAB and `ai-author-advise` removed; Experience authoring uses the Experiences pages only.
+  * **Outcome (2026-09-09):** History-only `StudioBottomFabCluster`. Plan archived at [`docs/plans/2026-09-09-architecture-refactor-phases-54-60.md`](./plans/2026-09-09-architecture-refactor-phases-54-60.md).
+* [x] **Phase 56 — Verdict as Generate step** — Job **Next** validates only; dedicated **Verdict** timeline step runs AI Verdict when **Do Verdict** is on.
+  * **Outcome (2026-09-09):** `GenerateVerdictStep`, updated `generate-steps.ts`. Plan archived at [`docs/plans/2026-09-09-architecture-refactor-phases-54-60.md`](./plans/2026-09-09-architecture-refactor-phases-54-60.md).
+* [x] **Phase 57 — Combine step (manual)** — Workflow preset step replaced by per-run **Combine** snapshot; `POST /ai-resume` accepts `combine`; `assembleFromCombineSnapshot`.
+  * **Outcome (2026-09-09):** `GenerateCombineStep`, session `combine`, `POST /resume/combine-fingerprint`. Plan archived at [`docs/plans/2026-09-09-architecture-refactor-phases-54-60.md`](./plans/2026-09-09-architecture-refactor-phases-54-60.md).
+* [x] **Phase 58 — Remove Workflows** — Workflow CRUD, DB tables, sidebar entry, and workflow recommendation removed.
+  * **Outcome (2026-09-09):** Migration `20260909100000_remove_workflows`. Plan archived at [`docs/plans/2026-09-09-architecture-refactor-phases-54-60.md`](./plans/2026-09-09-architecture-refactor-phases-54-60.md).
+* [x] **Phase 59 — Combine AI assist** — `POST /ai-combine-recommend` suggests per-company experience mapping from JD + Verdict (guided or auto).
+  * **Outcome (2026-09-09):** Suggest experiences on Combine step. Plan archived at [`docs/plans/2026-09-09-architecture-refactor-phases-54-60.md`](./plans/2026-09-09-architecture-refactor-phases-54-60.md).
+* [x] **Phase 60 — Prompt governance** — `users.role` (`admin` | `user`); non-admins edit prompt **extensions** only; admins edit full prompts; extensions appended at compile time.
+  * **Outcome (2026-09-09):** Migration `20260909100001_user_role_prompt_extensions`, extension PUT routes, Settings Prompts UI. Plan archived at [`docs/plans/2026-09-09-architecture-refactor-phases-54-60.md`](./plans/2026-09-09-architecture-refactor-phases-54-60.md).
+* [x] **Phase 61 — Combine per-company Keyword context** — Replace global Keyword guided / Auto mode on **Suggest experiences** with an optional **Keyword context** on each included company card. When Keyword context is filled, AI maps experiences for that company using keywords plus job/Verdict and role context; when empty, that company uses Auto (job/Verdict and role context only). Keyword context is not required. When keywords match but job overlap is thin, AI selects fewer cards and surfaces a warning. No global steering UX (e.g. copy-to-all). Keyword context is separate from Run guidance (`emphasis`).
+  * **Outcome (2026-09-09):** `CombineCompanyEntry.keywordContext`, per-company hybrid `POST /ai-combine-recommend`, simplified `CombineExperienceSuggest`. Plan archived at [`docs/plans/2026-09-09-combine-per-company-keyword-context.md`](./plans/2026-09-09-combine-per-company-keyword-context.md).
 
 ## Cursor Rules (Documentation Governance)
 

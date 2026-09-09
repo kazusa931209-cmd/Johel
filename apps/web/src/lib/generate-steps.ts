@@ -1,17 +1,18 @@
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 
-export const ALL_GENERATE_STEPS = [
-  "Job",
-  "Workflow",
-  "Generate",
-  "Evaluate",
-] as const;
-
-export function getGenerateSteps(doEvaluate: boolean): GenerateStep[] {
-  if (doEvaluate) {
-    return ["Job", "Workflow", "Generate", "Evaluate"];
+export function getGenerateSteps(
+  doEvaluate: boolean,
+  doVerdict: boolean,
+): GenerateStep[] {
+  const steps: GenerateStep[] = ["Job"];
+  if (doVerdict) {
+    steps.push("Verdict");
   }
-  return ["Job", "Workflow", "Generate"];
+  steps.push("Combine", "Generate");
+  if (doEvaluate) {
+    steps.push("Evaluate");
+  }
+  return steps;
 }
 
 export function getAdjacentGenerateStep(
@@ -28,10 +29,14 @@ export function getAdjacentGenerateStep(
 export function normalizeGenerateActiveStep(
   activeStep: GenerateStep,
   doEvaluate: boolean,
+  doVerdict: boolean,
 ): GenerateStep {
+  const steps = getGenerateSteps(doEvaluate, doVerdict);
   if (!doEvaluate && activeStep === "Evaluate") {
     return "Generate";
   }
-  const steps = getGenerateSteps(doEvaluate);
+  if (!doVerdict && activeStep === "Verdict") {
+    return "Combine";
+  }
   return steps.includes(activeStep) ? activeStep : "Job";
 }

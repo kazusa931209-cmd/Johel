@@ -25,12 +25,13 @@ export function StudioSidebar({ open }: { open: boolean }) {
     pathname === "/companies" || pathname.startsWith("/companies/");
   const experiencesActive =
     pathname === "/experiences" || pathname.startsWith("/experiences/");
-  const workflowsActive =
-    pathname === "/workflows" || pathname.startsWith("/workflows/");
   const environmentActive =
     pathname === "/settings" ||
     pathname === "/settings/environment" ||
     pathname.startsWith("/settings/environment/");
+  const generationActive =
+    pathname === "/settings/generation" ||
+    pathname.startsWith("/settings/generation/");
   const promptsActive =
     pathname === "/settings/prompts" ||
     pathname.startsWith("/settings/prompts/") ||
@@ -61,9 +62,6 @@ export function StudioSidebar({ open }: { open: boolean }) {
         <Link href="/experiences" className={navLinkClass(experiencesActive)}>
           {t("nav.sidebar.experiences")}
         </Link>
-        <Link href="/workflows" className={navLinkClass(workflowsActive)}>
-          {t("nav.sidebar.workflows")}
-        </Link>
 
         <div className={`${sectionLabelClass()} mt-2`}>{t("nav.sidebar.run")}</div>
         <Link href="/" className={navLinkClass(generateActive)}>
@@ -78,6 +76,12 @@ export function StudioSidebar({ open }: { open: boolean }) {
           className={navLinkClass(environmentActive)}
         >
           {t("nav.sidebar.environment")}
+        </Link>
+        <Link
+          href="/settings/generation"
+          className={navLinkClass(generationActive)}
+        >
+          {t("nav.sidebar.generation")}
         </Link>
         <Link href="/settings/prompts" className={navLinkClass(promptsActive)}>
           {t("nav.sidebar.prompts")}

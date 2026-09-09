@@ -107,3 +107,34 @@ html[lang="ko"] body {
   --tw-prose-th-borders: var(--border);
   --tw-prose-td-borders: var(--border);
 }
+
+.combine-period-range {
+  pointer-events: none;
+}
+
+.combine-period-range::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1rem;
+  width: 1rem;
+  border-radius: 9999px;
+  border: 2px solid var(--border);
+  background: var(--background);
+  cursor: pointer;
+}
+
+.combine-period-range::-moz-range-thumb {
+  pointer-events: auto;
+  height: 1rem;
+  width: 1rem;
+  border-radius: 9999px;
+  border: 2px solid var(--border);
+  background: var(--background);
+  cursor: pointer;
+}
+
+.combine-period-range::-webkit-slider-runnable-track,
+.combine-period-range::-moz-range-track {
+  background: transparent;
+}

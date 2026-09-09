@@ -19,6 +19,7 @@ export const en = {
       workflows: "Workflows",
       generate: "Generate",
       environment: "Environment",
+      generation: "Generation",
       prompts: "Prompts",
     },
   },
@@ -48,7 +49,7 @@ export const en = {
   settings: {
     environment: {
       title: "Environment",
-      description: "Theme, language, AI agent, and generation process options.",
+      description: "Theme, language, and AI agent options.",
       theme: {
         title: "Theme",
         dark: "Dark",
@@ -74,6 +75,12 @@ export const en = {
         providerCursor: "Cursor AI Agent",
         providerOpenai: "OpenAI",
       },
+    },
+    generation: {
+      title: "Generation",
+      description: "Process steps and résumé output language for Generate.",
+      save: "Save",
+      saving: "Saving…",
       process: {
         title: "Process",
         description: "Choose which AI steps run during Generate.",
@@ -84,8 +91,12 @@ export const en = {
         recommendationThreshold: "Recommendation threshold",
         thresholdHint:
           "Integer from 0 to 100. The best-matching workflow is selected only when its score meets or exceeds this value.",
-        save: "Save",
-        saving: "Saving…",
+      },
+      resumeLanguage: {
+        title: "Résumé Language",
+        description:
+          "Default output language for generated résumés. Change in Settings before starting a run.",
+        label: "Résumé language",
       },
     },
     prompts: {
@@ -103,6 +114,14 @@ export const en = {
         verdictPrompt: "Verdict Prompt",
         generatePrompt: "Generate Prompt",
         evaluatePrompt: "Evaluate Prompt",
+        verdictExtension: "Verdict extension",
+        generateExtension: "Generate extension",
+        evaluateExtension: "Evaluate extension",
+      },
+      extensions: {
+        description:
+          "Add your own instructions for this prompt type. They are appended to the system prompt for your account only.",
+        placeholder: "Optional additions for this prompt…",
       },
       edit: {
         verdict: "Edit Verdict Prompt",
@@ -156,7 +175,7 @@ export const en = {
       noLinks: "No links.",
       notFound: "No profiles found.",
       title: "Profiles",
-      searchPlaceholder: "Search name, email, PN, residence, education",
+      searchPlaceholder: "Search name, email, PN, residence, university, degree",
       empty: "No profiles yet.",
       columns: {
         fullName: "Full Name",
@@ -180,7 +199,9 @@ export const en = {
         email: "Email",
         pn: "PN",
         residence: "Residence",
-        education: "Education",
+        university: "University",
+        graduationYear: "Graduation year",
+        degree: "Degree",
       },
       links: {
         title: "Links",
@@ -260,6 +281,29 @@ export const en = {
         convertingTitle: "Converting to markdown…",
         convertingDescription: "Please wait while the fields are formatted.",
       },
+      advisor: {
+        description:
+          "Describe what you did in your own words. The AI will draft a STAR capability card for you to review before saving.",
+        factsLabel: "What did you do?",
+        factsPlaceholder:
+          "Example: At my last role I fixed shared-wallet nonce conflicts using PostgreSQL send leases and reduced failed sends…",
+        suggest: "Suggest",
+        running: "Suggesting…",
+        applying: "Applying…",
+        apply: "Apply",
+        suggestionTitle: "Experience suggestion",
+        rationale: "Rationale",
+        questions: "Questions",
+        editingCard: 'Adding facts to "{category}".',
+        busy: {
+          title: "Drafting experience…",
+          description: "Please wait while the AI structures your facts.",
+        },
+        placements: {
+          create: "New experience card",
+          update: "Update existing card",
+        },
+      },
     },
     workflows: {
       detailTitle: "Workflow detail",
@@ -336,13 +380,14 @@ export const en = {
   },
   generate: {
     title: "Generate",
-    description: "Prepare the Job Description, then choose a workflow preset.",
+    description: "Prepare the Job Description, then compose profile, companies, and experiences for this run.",
     new: "New",
     loading: "Loading…",
     steps: {
       ariaLabel: "Generate steps",
       job: "Job",
-      workflow: "Workflow",
+      verdict: "Verdict",
+      combine: "Combine",
       generate: "Generate",
       evaluate: "Evaluate",
     },
@@ -351,6 +396,23 @@ export const en = {
       next: "Next",
       download: "Download",
     },
+    layout: {
+      emptyPrevious: "No previous step content",
+    },
+    previous: {
+      jobTitle: "Job Description",
+      verdictTitle: "AI Verdict",
+      combineTitle: "Combine",
+      resumeTitle: "Generated résumé",
+      evaluationTitle: "Evaluation",
+      jobEmpty: "No job description yet.",
+      verdictEmpty: "No AI Verdict result yet.",
+      resumeEmpty: "No generated résumé yet.",
+      combineEmpty: "No company entries yet.",
+      combineProfileMissing: "Profile not selected",
+      combineCompanyMissing: "Unknown company",
+      combineExperienceMissing: "Unknown experience",
+    },
     prerequisites: {
       title: "Generate is not ready",
       description:
@@ -358,16 +420,14 @@ export const en = {
       missing: "Missing {label}",
       open: "Open {label}",
       labels: {
-        workflows: "Workflows",
+        profiles: "Profiles",
+        companies: "Companies",
+        experiences: "Experiences",
         verdictPrompt: "Verdict Prompt",
         generatePrompt: "Generate Prompt",
         evaluatePrompt: "Evaluate Prompt",
         prompts: "Prompts",
       },
-    },
-    recommending: {
-      title: "Recommending workflow…",
-      description: "Please wait while the AI matches your job to a workflow.",
     },
     job: {
       title: "Job",
@@ -387,51 +447,93 @@ export const en = {
         description: "Please wait. Noise filter and AI analysis are in progress.",
       },
     },
-    workflow: {
-      title: "Workflow",
+    verdict: {
+      title: "Verdict",
       description:
-        "Choose one workflow. Its saved profile and company entries (with linked experiences) are used for generation.",
-      descriptionWithVerdict:
-        " Resume generation and evaluation use the AI Verdict result above instead of the raw job description.",
-      descriptionWithoutVerdict:
-        " Resume generation and evaluation use the noise-filtered job description from the Job step.",
-      verdictResult: {
+        "Run AI Verdict on the job description. The result is used as the scoring rubric for resume generation and evaluation.",
+      pending: "Running AI Verdict…",
+      result: {
         title: "AI Verdict result",
         description:
-          "This Markdown replaces the raw job description when generating and evaluating your resume. Its structure and extracted fields (defined by your Verdict Prompt) directly affect tailoring quality.",
+          "This Markdown replaces the raw job description when generating and evaluating your resume.",
       },
-      sectionTitle: "Workflow",
-      emptyWorkflows: "No workflows found.",
-      loadError: "Failed to load workflows",
-      columns: {
-        name: "Name",
-        description: "Description",
+    },
+    combine: {
+      title: "Combine",
+      description:
+        "Choose a profile, link experiences, run guidance, and included companies for this run.",
+      profile: "Profile",
+      language: "Résumé language",
+      emphasis: "Run guidance",
+      emphasisHint:
+        "Optional persona, emphasis, and tailoring instructions for this run only (included in the generation request).",
+      emphasisPlaceholder:
+        "e.g. Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups.",
+      companies: "Companies",
+      companiesHint:
+        "Select a profile first, then toggle companies to include them on the résumé. Work periods are limited from the profile graduation year (January) through the present.",
+      selectProfileFirst: "Select a profile before choosing companies.",
+      profileGraduationYearMissing:
+        "This profile has no graduation year. Edit the profile and add a graduation year before choosing companies.",
+      periodGraduationHint:
+        "Work period can be selected from January {year} through the present.",
+      includeCompany: "Include",
+      noCompanies: "Add companies in the workspace before combining.",
+      period: "Period",
+      periodStartAria: "Start month for {label}",
+      periodEndAria: "End month for {label}",
+      roleContext: "Role context",
+      roleContextPlaceholder:
+        "e.g. Senior backend engineer; owned payments API and on-call rotation.",
+      generating: {
+        title: "Generating Resume…",
+        description: "Please wait while the AI tailors your resume to the job.",
       },
-      oneTimePrompt: {
-        title: "One-time Prompt",
+      suggestExperiences: "Suggest experiences",
+      suggesting: "Suggesting…",
+      suggestingOverlay: {
+        title: "Suggesting experiences…",
         description:
-          "Optional instructions for this run only. When filled in, they are appended to your saved Generate Prompt for resume generation.",
-        label: "One-time Prompt",
-        placeholder: "Add run-specific guidance for this resume…",
+          "Please wait while the AI maps capability cards to your companies.",
       },
+      experiencesSection: "Experiences",
+      experiencesSectionHint:
+        "Link shared capability cards to each included company. Optional Keyword context on a company card steers which cards AI picks for that company; leave it empty for Auto (job/Verdict and role context only).",
+      keywordContext: "Keyword context",
+      keywordContextHint:
+        "Optional. Comma-separated words or phrases that steer which capability cards to link for this company (e.g. AWS, blockchain). Not your job title — use Role context for that.",
+      keywordContextPlaceholder: "e.g. AWS, Blockchain, Senior, payments API",
+      suggestVerdictRequired:
+        "Complete the Verdict step before suggesting experiences when Do Verdict is enabled.",
+      suggestionDialogTitle: "Experience suggestions",
+      suggestionExperiences: "Suggested cards",
+      suggestionExperienceMissing: "Unknown experience",
+      suggestionNoExperiences: "No experiences suggested for this company.",
+      suggestionRationale: "Rationale",
+      suggestionCancel: "Cancel",
+      suggestionRetry: "Retry",
+      suggestionApply: "Apply",
+      linkedExperiences: "Linked experiences",
+    },
+    generateStep: {
+      noResume:
+        "No generated resume is available for this session. Go back to Combine and run resume generation again.",
+      pending: "Generating your resume…",
+      title: "Generated Resume",
       generating: {
         title: "Generating Resume…",
         description: "Please wait while the AI tailors your resume to the job.",
       },
     },
-    generateStep: {
-      noResume:
-        "No generated resume is available for this session. Go back to Workflow and run resume generation again.",
-      title: "Generated Resume",
+    evaluateStep: {
+      noEvaluation:
+        "No evaluation is available for this session. Go back to Generate and run evaluation again.",
+      pending: "Evaluating your resume…",
+      title: "Evaluation Result",
       evaluating: {
         title: "Evaluating Resume…",
         description: "Please wait while the AI scores your resume against the job.",
       },
-    },
-    evaluateStep: {
-      noEvaluation:
-        "No evaluation is available for this session. Go back to Generate and run evaluation again.",
-      title: "Evaluation Result",
     },
     pcewSection: {
       selectSingle: "Click a row to select one.",
@@ -534,6 +636,8 @@ export const en = {
       evaluate: "Evaluate",
       workflowRecommend: "Workflow Recommend",
       authorAdvise: "Quick Experience",
+      experienceAdvise: "Experience advisor",
+      combineRecommend: "Combine recommend",
       promptHelper: "Prompt Helper",
       markdownFormat: "Markdown Format",
     },
@@ -557,6 +661,8 @@ export const en = {
     aiAgentSaved: "AI Agent settings saved.",
     processSaveFailed: "Save failed.",
     processSaved: "Process settings saved.",
+    generationSaveFailed: "Save failed.",
+    generationSaved: "Generation settings saved.",
     promptsLoadFailed: "Failed to load prompts.",
     promptSaveFailed: "Save failed.",
     promptSaved: "{label} saved.",
@@ -591,18 +697,23 @@ export const en = {
     workflowRecommended: "Recommended workflow: {workflowName} (score {score}).",
     workflowThresholdNotMet: "No workflow met the recommendation threshold{bestScoreSuffix}.",
     workflowBestScoreSuffix: " (best score {score})",
-    workflowFingerprintFailed: "Failed to load workflow content for resume generation.",
-    verdictMissing: "AI Verdict result is missing. Go back to Job and run analysis first.",
+    combineFingerprintFailed: "Failed to load combine content for resume generation.",
+    combineContentChanged: "Combine content changed. Go back to Combine to regenerate your resume.",
+    verdictMissing:
+      "AI Verdict result is missing. Go back to Verdict and run analysis first.",
     resumeGenerateFailed: "AI Resume generation failed.",
     resumeGenerated: "Resume generated.",
     noResumeForEvaluate: "No generated resume is available. Go back to Workflow and run generation first.",
     evaluationFingerprintFailed: "Failed to load workflow content for evaluation.",
-    workflowContentChanged: "Workflow content changed. Go back to Workflow to regenerate your resume.",
     evaluateFailed: "AI Evaluate failed.",
     resumeEvaluated: "Resume evaluated.",
     verdictFailed: "AI Verdict failed.",
     verdictCompleted: "AI Verdict completed.",
     advisorFailed: "Quick Experience advisor failed.",
+    experienceAdvisorFailed: "Experience advisor failed.",
+    experienceSuggestionReady: "Experience suggestion ready.",
+    combineRecommendFailed: "Experience suggestion for Combine failed.",
+    combineRecommendReady: "Experience suggestions applied.",
     suggestionReady: "Suggestion ready.",
     applyFailed: "Could not apply suggestion.",
     workspaceUpdated: "Workspace updated.",
@@ -631,6 +742,10 @@ export const en = {
     nameRequired: "Name is required.",
     descriptionRequired: "Description is required.",
     profileRequired: "Select one profile.",
+    graduationYearRequired: "Graduation year is required.",
+    profileGraduationYearRequired:
+      "The selected profile must have a graduation year before choosing companies.",
+    combineCompaniesRequired: "Add at least one company entry.",
     companyRequired: "Select one company.",
     startDateRequired: "Start is required.",
     endDateRequired: "End is required.",
@@ -638,7 +753,7 @@ export const en = {
     experiencesMinOne: "Select at least one experience.",
     companiesMinOne: "Add at least one company entry.",
     companyEntryIncomplete:
-      "Each company entry needs a company, start and end dates, role context, and at least one experience.",
+      "Each included company needs a period and role context.",
     jobDescriptionRequired: "Job Description is required.",
     workflowRequired: "Select one workflow.",
     factsRequired: "Describe what you need.",

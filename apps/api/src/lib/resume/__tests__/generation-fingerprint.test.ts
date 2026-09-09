@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { workflowContentFingerprintFromInput } from "../generation-fingerprint.js";
+import { combineContentFingerprintFromInput } from "../generation-fingerprint.js";
 
 const baseInput = {
   profile: {
@@ -10,7 +10,9 @@ const baseInput = {
     email: "jane@example.com",
     pn: null,
     residence: null,
-    education: null,
+    university: null,
+    graduationYear: 2018,
+    degree: null,
     links: [{ key: "LinkedIn", link: "https://linkedin.com/in/jane" }],
   },
   companies: [
@@ -34,18 +36,16 @@ const baseInput = {
       ],
     },
   ],
-  workflow: {
-    id: "workflow-1",
-    name: "Senior Backend",
-    description: "",
+  run: {
     language: "en",
+    emphasis: "",
   },
 };
 
-describe("workflowContentFingerprintFromInput", () => {
+describe("combineContentFingerprintFromInput", () => {
   it("returns the same fingerprint for identical PCE content", () => {
-    const first = workflowContentFingerprintFromInput(baseInput);
-    const second = workflowContentFingerprintFromInput({
+    const first = combineContentFingerprintFromInput(baseInput);
+    const second = combineContentFingerprintFromInput({
       ...baseInput,
       profile: { ...baseInput.profile },
     });
@@ -53,8 +53,8 @@ describe("workflowContentFingerprintFromInput", () => {
   });
 
   it("returns a different fingerprint when experience content changes", () => {
-    const before = workflowContentFingerprintFromInput(baseInput);
-    const after = workflowContentFingerprintFromInput({
+    const before = combineContentFingerprintFromInput(baseInput);
+    const after = combineContentFingerprintFromInput({
       ...baseInput,
       companies: [
         {
@@ -72,8 +72,8 @@ describe("workflowContentFingerprintFromInput", () => {
   });
 
   it("returns a different fingerprint when company period changes", () => {
-    const before = workflowContentFingerprintFromInput(baseInput);
-    const after = workflowContentFingerprintFromInput({
+    const before = combineContentFingerprintFromInput(baseInput);
+    const after = combineContentFingerprintFromInput({
       ...baseInput,
       companies: [
         {

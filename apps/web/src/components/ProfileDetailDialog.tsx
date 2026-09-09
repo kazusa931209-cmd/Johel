@@ -43,8 +43,18 @@ export function ProfileDetailDialog({
         value={profile.residence}
       />
       <DetailField
-        label={t("crud.profiles.form.education")}
-        value={profile.education}
+        label={t("crud.profiles.form.university")}
+        value={profile.university}
+      />
+      <DetailField
+        label={t("crud.profiles.form.graduationYear")}
+        value={
+          profile.graduationYear != null ? String(profile.graduationYear) : null
+        }
+      />
+      <DetailField
+        label={t("crud.profiles.form.degree")}
+        value={profile.degree}
       />
       <div className="space-y-2">
         <div className="text-xs font-medium tracking-wide text-muted uppercase">

@@ -3,43 +3,36 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 
+const RESUME_LANGUAGES = ["en", "ja", "zh-TW", "zh-CN", "ko"] as const;
+
 const putSchema = z.object({
   doVerdict: z.boolean(),
   doEvaluate: z.boolean(),
-  doWorkflowRecommendation: z.boolean(),
-  workflowRecommendationThreshold: z.number().int().min(0).max(100),
-});
-
-const lastWorkflowSchema = z.object({
-  workflowId: z.string().trim().min(1),
+  resumeLanguage: z.enum(RESUME_LANGUAGES),
 });
 
 export const DEFAULT_GENERATION_PROCESS = {
   doVerdict: true,
   doEvaluate: true,
-  doWorkflowRecommendation: false,
-  workflowRecommendationThreshold: 70,
+  resumeLanguage: "en",
 } as const;
 
 function toProcessResponse(
   process: {
     doVerdict: boolean;
     doEvaluate: boolean;
-    doWorkflowRecommendation: boolean;
-    workflowRecommendationThreshold: number;
-    lastSelectedWorkflowId: string | null;
+    resumeLanguage: string;
   } | null,
 ) {
+  const resumeLanguage = process?.resumeLanguage ?? DEFAULT_GENERATION_PROCESS.resumeLanguage;
   return {
     doVerdict: process?.doVerdict ?? DEFAULT_GENERATION_PROCESS.doVerdict,
     doEvaluate: process?.doEvaluate ?? DEFAULT_GENERATION_PROCESS.doEvaluate,
-    doWorkflowRecommendation:
-      process?.doWorkflowRecommendation ??
-      DEFAULT_GENERATION_PROCESS.doWorkflowRecommendation,
-    workflowRecommendationThreshold:
-      process?.workflowRecommendationThreshold ??
-      DEFAULT_GENERATION_PROCESS.workflowRecommendationThreshold,
-    lastSelectedWorkflowId: process?.lastSelectedWorkflowId ?? null,
+    resumeLanguage: RESUME_LANGUAGES.includes(
+      resumeLanguage as (typeof RESUME_LANGUAGES)[number],
+    )
+      ? resumeLanguage
+      : DEFAULT_GENERATION_PROCESS.resumeLanguage,
   };
 }
 
@@ -76,56 +69,12 @@ settingsProcessRoutes.put("/", async (c) => {
       userId: user.id,
       doVerdict: parsed.data.doVerdict,
       doEvaluate: parsed.data.doEvaluate,
-      doWorkflowRecommendation: parsed.data.doWorkflowRecommendation,
-      workflowRecommendationThreshold:
-        parsed.data.workflowRecommendationThreshold,
+      resumeLanguage: parsed.data.resumeLanguage,
     },
     update: {
       doVerdict: parsed.data.doVerdict,
       doEvaluate: parsed.data.doEvaluate,
-      doWorkflowRecommendation: parsed.data.doWorkflowRecommendation,
-      workflowRecommendationThreshold:
-        parsed.data.workflowRecommendationThreshold,
-    },
-  });
-
-  return c.json(toProcessResponse(process));
-});
-
-settingsProcessRoutes.put("/last-workflow", async (c) => {
-  const user = await requireUser(c);
-  if (!user) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const body = await c.req.json().catch(() => null);
-  const parsed = lastWorkflowSchema.safeParse(body);
-  if (!parsed.success) {
-    return c.json({ error: "Invalid workflow selection." }, 400);
-  }
-
-  const workflow = await prisma.workflow.findFirst({
-    where: { id: parsed.data.workflowId, userId: user.id },
-    select: { id: true },
-  });
-  if (!workflow) {
-    return c.json({ error: "Selected workflow was not found." }, 404);
-  }
-
-  const process = await prisma.generationProcess.upsert({
-    where: { userId: user.id },
-    create: {
-      userId: user.id,
-      doVerdict: DEFAULT_GENERATION_PROCESS.doVerdict,
-      doEvaluate: DEFAULT_GENERATION_PROCESS.doEvaluate,
-      doWorkflowRecommendation:
-        DEFAULT_GENERATION_PROCESS.doWorkflowRecommendation,
-      workflowRecommendationThreshold:
-        DEFAULT_GENERATION_PROCESS.workflowRecommendationThreshold,
-      lastSelectedWorkflowId: workflow.id,
-    },
-    update: {
-      lastSelectedWorkflowId: workflow.id,
+      resumeLanguage: parsed.data.resumeLanguage,
     },
   });
 

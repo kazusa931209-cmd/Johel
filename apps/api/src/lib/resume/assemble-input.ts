@@ -1,42 +1,47 @@
 import { prisma } from "../prisma.js";
 import type { ResumeGenerationInput } from "../ai-resume/types.js";
 
-type AssembleGenerationInputParams = {
-  userId: string;
-  jobContext: string;
-  workflowId: string;
+export type CombineCompanySnapshot = {
+  companyId: string;
+  startDate: string;
+  endDate: string;
+  roleContext: string;
+  experienceIds: string[];
 };
 
-export async function assembleResumeGenerationInput(
-  params: AssembleGenerationInputParams,
+export type CombineSnapshot = {
+  profileId: string;
+  language: string;
+  emphasis: string;
+  companies: CombineCompanySnapshot[];
+};
+
+const VALID_LANGUAGES = new Set(["en", "ja", "zh-TW", "zh-CN", "ko"]);
+
+type AssembleFromCombineParams = {
+  userId: string;
+  jobContext: string;
+  combine: CombineSnapshot;
+};
+
+export async function assembleFromCombineSnapshot(
+  params: AssembleFromCombineParams,
 ): Promise<ResumeGenerationInput> {
-  const workflow = await prisma.workflow.findFirst({
-    where: { id: params.workflowId, userId: params.userId },
-    include: {
-      companies: {
-        orderBy: { sortOrder: "asc" },
-        include: {
-          experiences: { orderBy: { sortOrder: "asc" } },
-        },
-      },
-    },
-  });
-  if (!workflow) {
-    throw new Error("Selected workflow was not found.");
+  const { combine, userId, jobContext } = params;
+
+  if (!VALID_LANGUAGES.has(combine.language)) {
+    throw new Error("Invalid resume output language.");
   }
-  if (!workflow.profileId) {
-    throw new Error(
-      "Selected workflow is incomplete. Edit the workflow and choose a profile.",
-    );
+
+  if (!combine.profileId) {
+    throw new Error("Choose a profile for this run.");
   }
-  if (workflow.companies.length < 1) {
-    throw new Error(
-      "Selected workflow is incomplete. Edit the workflow and add at least one company entry.",
-    );
+  if (combine.companies.length < 1) {
+    throw new Error("Add at least one company entry for this run.");
   }
 
   const profile = await prisma.profile.findFirst({
-    where: { id: workflow.profileId, userId: params.userId },
+    where: { id: combine.profileId, userId },
     include: {
       links: { orderBy: { sortOrder: "asc" } },
     },
@@ -45,18 +50,16 @@ export async function assembleResumeGenerationInput(
     throw new Error("Selected profile was not found.");
   }
 
-  const companyIds = workflow.companies.map((item) => item.companyId);
+  const companyIds = combine.companies.map((item) => item.companyId);
   const experienceIds = [
     ...new Set(
-      workflow.companies.flatMap((item) =>
-        item.experiences.map((experience) => experience.experienceId),
-      ),
+      combine.companies.flatMap((item) => item.experienceIds),
     ),
   ];
 
   const companies = await prisma.company.findMany({
     where: {
-      userId: params.userId,
+      userId,
       id: { in: companyIds },
     },
   });
@@ -64,12 +67,15 @@ export async function assembleResumeGenerationInput(
     throw new Error("One or more selected companies were not found.");
   }
 
-  const experiences = await prisma.experience.findMany({
-    where: {
-      userId: params.userId,
-      id: { in: experienceIds },
-    },
-  });
+  const experiences =
+    experienceIds.length > 0
+      ? await prisma.experience.findMany({
+          where: {
+            userId,
+            id: { in: experienceIds },
+          },
+        })
+      : [];
   if (experiences.length !== experienceIds.length) {
     throw new Error("One or more selected experiences were not found.");
   }
@@ -79,17 +85,11 @@ export async function assembleResumeGenerationInput(
     experiences.map((experience) => [experience.id, experience]),
   );
 
-  const assembledCompanies = workflow.companies.map((entry) => {
+  const assembledCompanies = combine.companies.map((entry) => {
     const company = companyById.get(entry.companyId);
     if (!company) {
       throw new Error("One or more selected companies were not found.");
     }
-    if (entry.experiences.length < 1) {
-      throw new Error(
-        "Selected workflow is incomplete. Each company entry must include at least one experience.",
-      );
-    }
-
     return {
       id: company.id,
       alias: company.alias,
@@ -99,8 +99,8 @@ export async function assembleResumeGenerationInput(
       startDate: entry.startDate,
       endDate: entry.endDate,
       roleContext: entry.roleContext,
-      experiences: entry.experiences.map((link) => {
-        const experience = experienceById.get(link.experienceId);
+      experiences: entry.experienceIds.map((experienceId) => {
+        const experience = experienceById.get(experienceId);
         if (!experience) {
           throw new Error("One or more selected experiences were not found.");
         }
@@ -116,7 +116,7 @@ export async function assembleResumeGenerationInput(
   });
 
   return {
-    jobContext: params.jobContext,
+    jobContext,
     profile: {
       id: profile.id,
       firstName: profile.firstName,
@@ -125,18 +125,18 @@ export async function assembleResumeGenerationInput(
       email: profile.email,
       pn: profile.pn,
       residence: profile.residence,
-      education: profile.education,
+      university: profile.university,
+      graduationYear: profile.graduationYear,
+      degree: profile.degree,
       links: profile.links.map((link) => ({
         key: link.key,
         link: link.link,
       })),
     },
     companies: assembledCompanies,
-    workflow: {
-      id: workflow.id,
-      name: workflow.name,
-      description: workflow.description ?? "",
-      language: workflow.language,
+    run: {
+      language: combine.language,
+      emphasis: combine.emphasis ?? "",
     },
   };
 }

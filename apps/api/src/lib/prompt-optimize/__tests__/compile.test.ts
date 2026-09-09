@@ -35,6 +35,16 @@ describe("compileInstruction", () => {
     expect(generate).not.toContain("Do not invent employers");
     expect(evaluate).not.toContain("Do not invent employers");
   });
+
+  it("appends user extension after the base prompt", () => {
+    const result = compileInstruction(
+      "verdict",
+      "Check fit.",
+      "Prefer remote roles.",
+    );
+    expect(result).toContain("Check fit.");
+    expect(result).toContain("Prefer remote roles.");
+  });
 });
 
 describe("appendOneTimeGeneratePrompt", () => {

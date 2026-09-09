@@ -16,7 +16,9 @@ Go, PostgreSQL`,
     email: "jane@example.com",
     pn: null,
     residence: null,
-    education: "BSc Computer Science",
+    university: "State University",
+    graduationYear: 2018,
+    degree: "BSc Computer Science",
     links: [{ key: "LinkedIn", link: "https://linkedin.com/in/jane" }],
   },
   companies: [
@@ -40,11 +42,9 @@ Go, PostgreSQL`,
       ],
     },
   ],
-  workflow: {
-    id: "workflow-secret",
-    name: "Senior Backend",
-    description: "Emphasize distributed systems",
+  run: {
     language: "en",
+    emphasis: "Emphasize distributed systems",
   },
 };
 
@@ -56,8 +56,10 @@ describe("buildAiResumeUserPrompt", () => {
     expect(prompt).toContain("### Headings in this job context");
     expect(prompt).toContain("- Role");
     expect(prompt).toContain("- Technical Requirements");
-    expect(prompt).toContain("## Workflow intent");
+    expect(prompt).toContain("## Run intent");
     expect(prompt).toContain("- Language: en");
+    expect(prompt).toContain("Run guidance:");
+    expect(prompt).toContain("Emphasize distributed systems");
     expect(prompt).toContain("## Profile");
     expect(prompt).toContain("- Name: Jane Doe");
     expect(prompt).toContain("## Companies (résumé order)");
@@ -82,7 +84,9 @@ describe("buildAiResumeUserPrompt", () => {
       profile: {
         ...input.profile,
         email: null,
-        education: null,
+        university: null,
+        graduationYear: null,
+        degree: null,
         links: [],
       },
     });

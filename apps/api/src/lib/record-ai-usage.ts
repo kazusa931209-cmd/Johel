@@ -13,6 +13,8 @@ export const AI_GENERATE_TYPES = [
   "workflowRecommend",
   "markdownFormat",
   "authorAdvise",
+  "experienceAdvise",
+  "combineRecommend",
 ] as const;
 
 export type AiGenerateType = (typeof AI_GENERATE_TYPES)[number];

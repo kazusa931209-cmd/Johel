@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { formatMarkdownOnSave } from "../lib/ai-markdown-format/format-on-save.js";
+import { formatExperienceFieldsOnSave } from "../lib/ai-markdown-format/format-on-save.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 import {
@@ -40,21 +40,6 @@ function toDetail(row: ExperienceRow) {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
-}
-
-async function formatExperienceOutcomeOnSave(input: {
-  userId: string;
-  submitted: string;
-  stored: string | null | undefined;
-}): Promise<string> {
-  const { formatted } = await formatMarkdownOnSave({
-    userId: input.userId,
-    kind: "experienceOutcome",
-    submitted: input.submitted,
-    stored: input.stored,
-    maxLen: 20_000,
-  });
-  return formatted;
 }
 
 experiencesRoutes.get("/", async (c) => {
@@ -131,36 +116,25 @@ experiencesRoutes.post("/", async (c) => {
   }
 
   try {
-    const [{ formatted: problem }, { formatted: actions }, outcome] =
-      await Promise.all([
-        formatMarkdownOnSave({
-          userId: user.id,
-          kind: "experienceProblem",
-          submitted: parsed.data.problem,
-          stored: "",
-          maxLen: 20_000,
-        }),
-        formatMarkdownOnSave({
-          userId: user.id,
-          kind: "experienceActions",
-          submitted: parsed.data.actions,
-          stored: "",
-          maxLen: 20_000,
-        }),
-        formatExperienceOutcomeOnSave({
-          userId: user.id,
-          submitted: parsed.data.outcome,
-          stored: "",
-        }),
-      ]);
+    const formatted = await formatExperienceFieldsOnSave({
+      userId: user.id,
+      problem: parsed.data.problem,
+      actions: parsed.data.actions,
+      outcome: parsed.data.outcome,
+      stored: {
+        problem: "",
+        actions: "",
+        outcome: "",
+      },
+    });
 
     const row = await prisma.experience.create({
       data: {
         userId: user.id,
         category: parsed.data.category,
-        problem,
-        actions,
-        outcome,
+        problem: formatted.problem,
+        actions: formatted.actions,
+        outcome: formatted.outcome,
       },
     });
 
@@ -195,36 +169,25 @@ experiencesRoutes.put("/:id", async (c) => {
   }
 
   try {
-    const [{ formatted: problem }, { formatted: actions }, outcome] =
-      await Promise.all([
-        formatMarkdownOnSave({
-          userId: user.id,
-          kind: "experienceProblem",
-          submitted: parsed.data.problem,
-          stored: existing.problem,
-          maxLen: 20_000,
-        }),
-        formatMarkdownOnSave({
-          userId: user.id,
-          kind: "experienceActions",
-          submitted: parsed.data.actions,
-          stored: existing.actions,
-          maxLen: 20_000,
-        }),
-        formatExperienceOutcomeOnSave({
-          userId: user.id,
-          submitted: parsed.data.outcome,
-          stored: existing.outcome,
-        }),
-      ]);
+    const formatted = await formatExperienceFieldsOnSave({
+      userId: user.id,
+      problem: parsed.data.problem,
+      actions: parsed.data.actions,
+      outcome: parsed.data.outcome,
+      stored: {
+        problem: existing.problem,
+        actions: existing.actions,
+        outcome: existing.outcome,
+      },
+    });
 
     const row = await prisma.experience.update({
       where: { id },
       data: {
         category: parsed.data.category,
-        problem,
-        actions,
-        outcome,
+        problem: formatted.problem,
+        actions: formatted.actions,
+        outcome: formatted.outcome,
       },
     });
 

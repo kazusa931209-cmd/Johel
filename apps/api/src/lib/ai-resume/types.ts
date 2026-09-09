@@ -19,7 +19,9 @@ export type ResumeGenerationProfile = {
   email: string | null;
   pn: string | null;
   residence: string | null;
-  education: string | null;
+  university: string | null;
+  graduationYear: number | null;
+  degree: string | null;
   links: { key: string; link: string | null }[];
 };
 
@@ -43,18 +45,16 @@ export type ResumeGenerationCompany = {
   experiences: ResumeGenerationExperience[];
 };
 
-export type ResumeGenerationWorkflow = {
-  id: string;
-  name: string;
-  description: string;
+export type ResumeGenerationRun = {
   language: string;
+  emphasis: string;
 };
 
 export type ResumeGenerationInput = {
   jobContext: string;
   profile: ResumeGenerationProfile;
   companies: ResumeGenerationCompany[];
-  workflow: ResumeGenerationWorkflow;
+  run: ResumeGenerationRun;
 };
 
 export type AiResumeRequest = {

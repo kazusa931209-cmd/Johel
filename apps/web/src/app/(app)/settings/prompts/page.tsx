@@ -10,7 +10,7 @@ import { EditButton } from "@/components/shared/action-icon-buttons";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { DetailDialog } from "@/components/shared/detail-dialog";
-import { getPrompts, savePrompt, type PromptKind } from "@/lib/api";
+import { getPrompts, getMe, savePrompt, savePromptExtension, type PromptKind } from "@/lib/api";
 import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 import {
   DEFAULT_EVALUATE_PROMPT,
@@ -74,10 +74,17 @@ function promptValueKey(kind: PromptTab): keyof PromptValues {
   return `${kind}Prompt`;
 }
 
+function extensionValueKey(kind: PromptTab): keyof PromptValues {
+  return `${kind}Extension`;
+}
+
 type PromptValues = {
   verdictPrompt: string;
   generatePrompt: string;
   evaluatePrompt: string;
+  verdictExtension: string;
+  generateExtension: string;
+  evaluateExtension: string;
 };
 
 type StoredPromptValues = PromptValues;
@@ -86,6 +93,9 @@ const EMPTY_PROMPTS: PromptValues = {
   verdictPrompt: "",
   generatePrompt: "",
   evaluatePrompt: "",
+  verdictExtension: "",
+  generateExtension: "",
+  evaluateExtension: "",
 };
 
 function PromptsPageFallback() {
@@ -148,6 +158,7 @@ function PromptsPageContent() {
   const [prompts, setPrompts] = useState<PromptValues>(EMPTY_PROMPTS);
   const [storedPrompts, setStoredPrompts] =
     useState<StoredPromptValues>(EMPTY_PROMPTS);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingKind, setSavingKind] = useState<PromptTab | null>(null);
   const [resettingKind, setResettingKind] = useState<PromptTab | null>(null);
@@ -155,21 +166,22 @@ function PromptsPageContent() {
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [editing, setEditing] = useState(false);
 
-  const valueKey = promptValueKey(activeTab);
-  const storedKey = promptValueKey(activeTab);
+  const valueKey = isAdmin ? promptValueKey(activeTab) : extensionValueKey(activeTab);
+  const storedKey = valueKey;
   const activeValue = prompts[valueKey];
   const activeStored = storedPrompts[storedKey];
 
   useEffect(() => {
     let cancelled = false;
-    getPrompts().then((res) => {
+    Promise.all([getPrompts(), getMe()]).then(([promptsRes, meRes]) => {
       if (cancelled) return;
-      if (res.error) {
-        toast(res.error ?? t("toast.promptsLoadFailed"), "error");
-      } else if (res.data) {
-        setPrompts(res.data);
-        setStoredPrompts(res.data);
+      if (promptsRes.error) {
+        toast(promptsRes.error ?? t("toast.promptsLoadFailed"), "error");
+      } else if (promptsRes.data) {
+        setPrompts(promptsRes.data);
+        setStoredPrompts(promptsRes.data);
       }
+      setIsAdmin(meRes.data?.role === "admin");
       setLoading(false);
     });
     return () => {
@@ -196,16 +208,33 @@ function PromptsPageContent() {
 
   async function onSave(e: FormEvent) {
     e.preventDefault();
-    if (!activeValue.trim()) {
-      setFieldError(
-        t("validation.promptRequired", { label: activeTabConfig.label }),
-      );
+    if (isAdmin) {
+      if (!activeValue.trim()) {
+        setFieldError(
+          t("validation.promptRequired", { label: activeTabConfig.label }),
+        );
+        return;
+      }
+      setFieldError(undefined);
+
+      setSavingKind(activeTab);
+      const res = await savePrompt(activeTab, activeValue.trim());
+      setSavingKind(null);
+      if (res.error || !res.data) {
+        toast(res.error ?? t("toast.promptSaveFailed"), "error");
+        return;
+      }
+      setPrompts(res.data);
+      setStoredPrompts(res.data);
+      await refreshTokenUsed();
+      toast(t("toast.promptSaved", { label: activeTabConfig.label }), "success");
       return;
     }
-    setFieldError(undefined);
 
+    setFieldError(undefined);
     setSavingKind(activeTab);
-    const res = await savePrompt(activeTab, activeValue.trim());
+    const extensionLabel = t(`settings.prompts.fields.${activeTab}Extension`);
+    const res = await savePromptExtension(activeTab, activeValue.trim());
     setSavingKind(null);
     if (res.error || !res.data) {
       toast(res.error ?? t("toast.promptSaveFailed"), "error");
@@ -213,8 +242,7 @@ function PromptsPageContent() {
     }
     setPrompts(res.data);
     setStoredPrompts(res.data);
-    await refreshTokenUsed();
-    toast(t("toast.promptSaved", { label: activeTabConfig.label }), "success");
+    toast(t("toast.promptSaved", { label: extensionLabel }), "success");
   }
 
   async function onConfirmReset() {
@@ -252,9 +280,15 @@ function PromptsPageContent() {
           {t("settings.prompts.title")}
         </h1>
         <p className="text-muted">{t("settings.prompts.description")}</p>
-        <p className="text-sm text-foreground">
-          {getSystemPromptQualityNotice(t)}
-        </p>
+        {isAdmin ? (
+          <p className="text-sm text-foreground">
+            {getSystemPromptQualityNotice(t)}
+          </p>
+        ) : (
+          <p className="text-sm text-foreground">
+            {t("settings.prompts.extensions.description")}
+          </p>
+        )}
       </div>
 
       <div
@@ -299,18 +333,22 @@ function PromptsPageContent() {
         >
           <div className="flex items-center justify-between gap-2">
             <span>
-              {activeTabConfig.label}
-              <RequiredMark />
+              {isAdmin
+                ? activeTabConfig.label
+                : t(`settings.prompts.fields.${activeTab}Extension`)}
+              {isAdmin ? <RequiredMark /> : null}
             </span>
-            <EditButton
-              label={activeTabConfig.editLabel}
-              disabled={loading}
-              onClick={() => setEditing(true)}
-            />
+            {isAdmin ? (
+              <EditButton
+                label={activeTabConfig.editLabel}
+                disabled={loading}
+                onClick={() => setEditing(true)}
+              />
+            ) : null}
           </div>
           {loading ? (
             <p className="text-muted">{t("settings.prompts.loading")}</p>
-          ) : (
+          ) : isAdmin ? (
             <div
               className="min-h-16 rounded-md border border-border bg-background px-3 py-2"
               aria-invalid={Boolean(fieldError)}
@@ -321,23 +359,41 @@ function PromptsPageContent() {
                 <p className="text-muted">{activeTabConfig.placeholder}</p>
               )}
             </div>
+          ) : (
+            <textarea
+              value={activeValue}
+              onChange={(e) => {
+                setActivePrompt(e.target.value);
+                if (fieldError) setFieldError(undefined);
+              }}
+              rows={activeField.rows}
+              placeholder={t("settings.prompts.extensions.placeholder")}
+              aria-invalid={Boolean(fieldError)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
+            />
           )}
-          <p className="text-xs text-muted">{getAutoMarkdownFormatHint(t)}</p>
-          {activeTabConfig.resumeHint ? (
-            <p className="text-xs text-muted">{activeTabConfig.resumeHint}</p>
+          {isAdmin ? (
+            <>
+              <p className="text-xs text-muted">{getAutoMarkdownFormatHint(t)}</p>
+              {activeTabConfig.resumeHint ? (
+                <p className="text-xs text-muted">{activeTabConfig.resumeHint}</p>
+              ) : null}
+            </>
           ) : null}
           <FieldError message={fieldError} />
         </div>
 
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            disabled={loading || actionBusy}
-            onClick={() => setConfirmReset(true)}
-            className="rounded-md border border-border bg-surface-muted px-3 py-2 text-sm font-medium text-foreground hover:opacity-90 disabled:opacity-60"
-          >
-            {t("settings.prompts.resetToDefault")}
-          </button>
+          {isAdmin ? (
+            <button
+              type="button"
+              disabled={loading || actionBusy}
+              onClick={() => setConfirmReset(true)}
+              className="rounded-md border border-border bg-surface-muted px-3 py-2 text-sm font-medium text-foreground hover:opacity-90 disabled:opacity-60"
+            >
+              {t("settings.prompts.resetToDefault")}
+            </button>
+          ) : null}
           <button
             type="submit"
             disabled={actionBusy}
@@ -350,7 +406,7 @@ function PromptsPageContent() {
         </div>
       </form>
 
-      {confirmReset ? (
+      {isAdmin && confirmReset ? (
         <DetailDialog
           title={t("settings.prompts.resetDialog.title")}
           role="alertdialog"
@@ -377,7 +433,7 @@ function PromptsPageContent() {
         </DetailDialog>
       ) : null}
 
-      {editing ? (
+      {isAdmin && editing ? (
         <PromptEditDialog
           title={t("settings.prompts.edit.dialogTitle", {
             label: activeTabConfig.label,
@@ -393,7 +449,7 @@ function PromptsPageContent() {
         />
       ) : null}
 
-      {converting ? (
+      {isAdmin && converting ? (
         <BusyOverlay
           title={
             resetBusy

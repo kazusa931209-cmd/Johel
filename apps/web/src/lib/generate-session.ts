@@ -2,9 +2,9 @@ import type { GeneratedResume } from "@johel/resume";
 import { parseGeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import {
-  EMPTY_WORKFLOW_SELECTION,
-  type WorkflowSelection,
-} from "@/components/generate/pcew-types";
+  EMPTY_COMBINE_SNAPSHOT,
+  type CombineSnapshot,
+} from "@/components/generate/combine-types";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import { hashPromptForCache } from "@/lib/prompt-hash";
 
@@ -19,10 +19,8 @@ export type GenerateJobState = {
 export type GenerateSession = {
   activeStep: GenerateStep;
   job: GenerateJobState;
-  workflow: WorkflowSelection;
-  oneTimePrompt: string;
+  combine: CombineSnapshot;
   verdictInputKey: string | null;
-  workflowRecommendInputKey: string | null;
   resume: GeneratedResume | null;
   generationInputKey: string | null;
   evaluationMarkdown: string | null;
@@ -43,10 +41,8 @@ export const EMPTY_JOB_STATE: GenerateJobState = {
 export const EMPTY_GENERATE_SESSION: GenerateSession = {
   activeStep: "Job",
   job: EMPTY_JOB_STATE,
-  workflow: EMPTY_WORKFLOW_SELECTION,
-  oneTimePrompt: "",
+  combine: EMPTY_COMBINE_SNAPSHOT,
   verdictInputKey: null,
-  workflowRecommendInputKey: null,
   resume: null,
   generationInputKey: null,
   evaluationMarkdown: null,
@@ -60,14 +56,15 @@ function storageKey(userId: string) {
 function normalizeActiveStep(value: unknown): GenerateStep {
   if (
     value === "Job" ||
-    value === "Workflow" ||
+    value === "Verdict" ||
+    value === "Combine" ||
     value === "Generate" ||
     value === "Evaluate"
   ) {
     return value;
   }
-  if (value === "PCEW" || value === "Verdict" || value === "Company") {
-    return "Workflow";
+  if (value === "Workflow" || value === "PCEW" || value === "Company") {
+    return "Combine";
   }
   return "Job";
 }
@@ -76,34 +73,43 @@ function isJobInputMethod(value: unknown): value is GenerateJobInputMethod {
   return value === "url" || value === "file" || value === "manual";
 }
 
-function parseWorkflowSelection(value: unknown): WorkflowSelection {
+function parseCombineSnapshot(value: unknown): CombineSnapshot {
   if (!value || typeof value !== "object") {
-    return { ...EMPTY_WORKFLOW_SELECTION };
+    return { ...EMPTY_COMBINE_SNAPSHOT };
   }
   const raw = value as Record<string, unknown>;
-  if (typeof raw.workflowId === "string") {
-    return {
-      workflowId: raw.workflowId,
-      workflowName:
-        typeof raw.workflowName === "string" ? raw.workflowName : undefined,
-    };
-  }
-  return { ...EMPTY_WORKFLOW_SELECTION };
-}
+  const companies = Array.isArray(raw.companies)
+    ? raw.companies
+        .map((entry) => {
+          if (!entry || typeof entry !== "object") return null;
+          const row = entry as Record<string, unknown>;
+          if (typeof row.companyId !== "string") return null;
+          return {
+            companyId: row.companyId,
+            startDate: typeof row.startDate === "string" ? row.startDate : "",
+            endDate: typeof row.endDate === "string" ? row.endDate : "",
+            roleContext:
+              typeof row.roleContext === "string" ? row.roleContext : "",
+            keywordContext:
+              typeof row.keywordContext === "string" ? row.keywordContext : "",
+            experienceIds: Array.isArray(row.experienceIds)
+              ? row.experienceIds.filter(
+                  (id): id is string => typeof id === "string",
+                )
+              : [],
+          };
+        })
+        .filter((entry): entry is CombineSnapshot["companies"][number] =>
+          Boolean(entry),
+        )
+    : [];
 
-function parseLegacyWorkflowSelection(value: unknown): WorkflowSelection {
-  if (!value || typeof value !== "object") {
-    return { ...EMPTY_WORKFLOW_SELECTION };
-  }
-  const raw = value as Record<string, unknown>;
-  if (typeof raw.workflowId === "string") {
-    return {
-      workflowId: raw.workflowId,
-      workflowName:
-        typeof raw.workflowName === "string" ? raw.workflowName : undefined,
-    };
-  }
-  return { ...EMPTY_WORKFLOW_SELECTION };
+  return {
+    profileId: typeof raw.profileId === "string" ? raw.profileId : "",
+    language: typeof raw.language === "string" ? raw.language : "en",
+    emphasis: typeof raw.emphasis === "string" ? raw.emphasis : "",
+    companies,
+  };
 }
 
 function parseJobState(value: unknown): GenerateJobState {
@@ -152,29 +158,6 @@ export function canReuseStoredVerdict(
   );
 }
 
-export function buildWorkflowRecommendInputKey(input: {
-  job: GenerateJobState;
-  threshold: number;
-  workflowsFingerprint: string;
-}): string {
-  return JSON.stringify({
-    jobText: noiseFilter(input.job.jobText.trim()).text,
-    acceptedMarkdown: input.job.acceptedMarkdown ?? "",
-    threshold: input.threshold,
-    workflowsFingerprint: input.workflowsFingerprint,
-  });
-}
-
-export function canReuseStoredWorkflowRecommend(
-  session: Pick<GenerateSession, "workflowRecommendInputKey">,
-  inputKey: string,
-): boolean {
-  return Boolean(
-    session.workflowRecommendInputKey &&
-      session.workflowRecommendInputKey === inputKey,
-  );
-}
-
 export function buildResumeJobContext(
   job: GenerateJobState,
   doVerdict: boolean,
@@ -188,38 +171,34 @@ export function buildResumeJobContext(
 function buildGenerationInputKeyParts(
   job: GenerateJobState,
   doVerdict: boolean,
-  workflow: WorkflowSelection,
-  workflowContentFingerprint: string,
+  combine: CombineSnapshot,
+  combineContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt">,
-  oneTimePrompt: string,
 ) {
   return {
     labeledUserMessageVersion: LABELED_USER_MESSAGE_VERSION,
     jobContext: buildResumeJobContext(job, doVerdict),
     jobContextSource: doVerdict ? "verdict" : "jobDescription",
-    workflowId: workflow.workflowId,
-    workflowContentFingerprint,
+    combine,
+    combineContentFingerprint,
     generatePromptHash: hashPromptForCache(prompts.generatePrompt ?? ""),
-    oneTimePrompt: oneTimePrompt.trim(),
   };
 }
 
 export function buildGenerationInputKey(
   job: GenerateJobState,
   doVerdict: boolean,
-  workflow: WorkflowSelection,
-  workflowContentFingerprint: string,
+  combine: CombineSnapshot,
+  combineContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt">,
-  oneTimePrompt = "",
 ): string {
   return JSON.stringify(
     buildGenerationInputKeyParts(
       job,
       doVerdict,
-      workflow,
-      workflowContentFingerprint,
+      combine,
+      combineContentFingerprint,
       prompts,
-      oneTimePrompt,
     ),
   );
 }
@@ -227,19 +206,17 @@ export function buildGenerationInputKey(
 export function buildEvaluationInputKey(
   job: GenerateJobState,
   doVerdict: boolean,
-  workflow: WorkflowSelection,
-  workflowContentFingerprint: string,
+  combine: CombineSnapshot,
+  combineContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt" | "evaluatePrompt">,
-  oneTimePrompt = "",
 ): string {
   return JSON.stringify({
     ...buildGenerationInputKeyParts(
       job,
       doVerdict,
-      workflow,
-      workflowContentFingerprint,
+      combine,
+      combineContentFingerprint,
       prompts,
-      oneTimePrompt,
     ),
     evaluatePromptHash: hashPromptForCache(prompts.evaluatePrompt ?? ""),
   });
@@ -270,10 +247,15 @@ export function canReuseStoredEvaluation(
 export function parseGenerateSession(value: unknown): GenerateSession | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
-  const workflow =
-    raw.workflow != null
-      ? parseWorkflowSelection(raw.workflow)
-      : parseLegacyWorkflowSelection(raw.pcew);
+  let combine =
+    raw.combine != null
+      ? parseCombineSnapshot(raw.combine)
+      : parseCombineSnapshot(raw.workflow ?? raw.pcew);
+  const legacyOneTimePrompt =
+    typeof raw.oneTimePrompt === "string" ? raw.oneTimePrompt.trim() : "";
+  if (legacyOneTimePrompt && !combine.emphasis.trim()) {
+    combine = { ...combine, emphasis: legacyOneTimePrompt };
+  }
   const job = parseJobState(raw.job);
   let verdictInputKey =
     typeof raw.verdictInputKey === "string" ? raw.verdictInputKey : null;
@@ -285,14 +267,8 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
   return {
     activeStep: normalizeActiveStep(raw.activeStep),
     job,
-    workflow,
-    oneTimePrompt:
-      typeof raw.oneTimePrompt === "string" ? raw.oneTimePrompt : "",
+    combine,
     verdictInputKey,
-    workflowRecommendInputKey:
-      typeof raw.workflowRecommendInputKey === "string"
-        ? raw.workflowRecommendInputKey
-        : null,
     resume: parseStoredResume(raw.resume),
     generationInputKey:
       typeof raw.generationInputKey === "string"
@@ -315,7 +291,9 @@ export function isGenerateInProgress(session: GenerateSession): boolean {
   if (session.resume) return true;
   if (session.job.acceptedMarkdown) return true;
   if (session.job.jobText.trim()) return true;
-  if (session.workflow.workflowId) return true;
+  if (session.combine.profileId) return true;
+  if (session.combine.companies.length > 0) return true;
+  if (session.combine.emphasis.trim()) return true;
   return false;
 }
 
@@ -350,17 +328,4 @@ export function clearGenerateSession(userId: string) {
   } catch {
     // Ignore storage errors.
   }
-}
-
-export function buildWorkflowListFingerprint(
-  items: { id: string; name: string; description: string | null; updatedAt: string }[],
-): string {
-  return JSON.stringify(
-    items.map((item) => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      updatedAt: item.updatedAt,
-    })),
-  );
 }

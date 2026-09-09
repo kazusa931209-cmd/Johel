@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
-import type { WorkflowSelection } from "@/components/generate/pcew-types";
+import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { getMe } from "@/lib/api";
 import {
   EMPTY_GENERATE_SESSION,
@@ -40,9 +40,6 @@ function applyJobUpdate(
     ...current,
     job: nextJob,
     verdictInputKey: jobTextChanged ? null : current.verdictInputKey,
-    workflowRecommendInputKey: jobTextChanged
-      ? null
-      : current.workflowRecommendInputKey,
   });
 }
 
@@ -80,14 +77,23 @@ export function useGenerateSession() {
         if (!current.resume && !current.evaluationMarkdown) {
           return current;
         }
-        const sessionWorkflowId = current.workflow.workflowId;
-        if (!sessionWorkflowId) {
+        const { combine } = current;
+        const profileTouched =
+          detail.profileId != null && detail.profileId === combine.profileId;
+        const companyTouched = combine.companies.some(
+          (entry) => entry.companyId === detail.companyId,
+        );
+        const experienceTouched = combine.companies.some((entry) =>
+          entry.experienceIds.includes(detail.experienceId ?? ""),
+        );
+        if (
+          detail.profileId == null &&
+          detail.companyId == null &&
+          detail.experienceId == null
+        ) {
           return withoutResume(current);
         }
-        if (
-          detail.workflowId === sessionWorkflowId ||
-          detail.workflowId == null
-        ) {
+        if (profileTouched || companyTouched || experienceTouched) {
           return withoutResume(current);
         }
         return current;
@@ -114,17 +120,8 @@ export function useGenerateSession() {
     );
   }, []);
 
-  const setWorkflow = useCallback((workflow: WorkflowSelection) => {
-    setSession((current) => withoutResume({ ...current, workflow }));
-  }, []);
-
-  const setOneTimePrompt = useCallback((oneTimePrompt: string) => {
-    setSession((current) => {
-      if (oneTimePrompt === current.oneTimePrompt) {
-        return current;
-      }
-      return withoutResume({ ...current, oneTimePrompt });
-    });
+  const setCombine = useCallback((combine: CombineSnapshot) => {
+    setSession((current) => withoutResume({ ...current, combine }));
   }, []);
 
   const setVerdictResult = useCallback(
@@ -134,20 +131,6 @@ export function useGenerateSession() {
           ...current,
           job: { ...current.job, acceptedMarkdown },
           verdictInputKey,
-          workflowRecommendInputKey: null,
-        }),
-      );
-    },
-    [],
-  );
-
-  const setWorkflowRecommendResult = useCallback(
-    (workflow: WorkflowSelection, workflowRecommendInputKey: string) => {
-      setSession((current) =>
-        withoutResume({
-          ...current,
-          workflow,
-          workflowRecommendInputKey,
         }),
       );
     },
@@ -191,14 +174,10 @@ export function useGenerateSession() {
     job: session.job,
     setJob,
     patchJob,
-    workflow: session.workflow,
-    setWorkflow,
-    oneTimePrompt: session.oneTimePrompt,
-    setOneTimePrompt,
+    combine: session.combine,
+    setCombine,
     verdictInputKey: session.verdictInputKey,
-    workflowRecommendInputKey: session.workflowRecommendInputKey,
     setVerdictResult,
-    setWorkflowRecommendResult,
     resume: session.resume,
     generationInputKey: session.generationInputKey,
     setResumeResult,

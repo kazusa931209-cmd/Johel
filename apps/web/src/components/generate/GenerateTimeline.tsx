@@ -4,7 +4,8 @@ import { useT } from "@/components/app/LocaleProvider";
 
 export const GENERATE_STEPS = [
   "Job",
-  "Workflow",
+  "Verdict",
+  "Combine",
   "Generate",
   "Evaluate",
 ] as const;
@@ -13,7 +14,8 @@ export type GenerateStep = (typeof GENERATE_STEPS)[number];
 
 const STEP_LABEL_KEYS: Record<GenerateStep, string> = {
   Job: "generate.steps.job",
-  Workflow: "generate.steps.workflow",
+  Verdict: "generate.steps.verdict",
+  Combine: "generate.steps.combine",
   Generate: "generate.steps.generate",
   Evaluate: "generate.steps.evaluate",
 };
