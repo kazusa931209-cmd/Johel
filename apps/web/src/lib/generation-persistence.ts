@@ -10,6 +10,7 @@ import {
   type GenerateJobState,
   type GenerateSession,
 } from "@/lib/generate-session";
+import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
   getCombineGenerationFingerprint,
   getCurrentGeneration,
@@ -32,9 +33,13 @@ export type GenerationSnapshot = {
 };
 
 export function buildGenerationUpdatePayload(snapshot: GenerationSnapshot) {
+  const filteredJobText = noiseFilter(snapshot.job.jobText.trim()).text;
   return {
     activeStep: snapshot.activeStep,
-    job: snapshot.job,
+    job: {
+      ...snapshot.job,
+      filteredJobText,
+    },
     combine: snapshot.combine,
     verdictMarkdown: snapshot.job.acceptedMarkdown,
     resume: snapshot.resume,

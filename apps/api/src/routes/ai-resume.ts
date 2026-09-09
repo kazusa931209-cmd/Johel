@@ -7,6 +7,7 @@ import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { resolveOwnedGenerationId } from "../lib/resolve-generation-id.js";
+import { withTokenUsed } from "../lib/ai-token-used-response.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
@@ -131,11 +132,7 @@ aiResumeRoutes.post("/", async (c) => {
 
     const tokenUsed = await sumTokenUsed(user.id);
 
-    return c.json({
-      resume: result.resume,
-      usage: result.usage,
-      tokenUsed,
-    });
+    return c.json(withTokenUsed({ resume: result.resume }, tokenUsed));
   } catch (err) {
     const message =
       err instanceof Error && err.message

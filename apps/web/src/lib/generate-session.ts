@@ -15,6 +15,8 @@ export type GenerateJobState = {
   method: GenerateJobInputMethod;
   jobText: string;
   acceptedMarkdown: string | null;
+  /** Persisted on generation save for server-side AI calls. */
+  filteredJobText?: string;
 };
 
 export type GenerateSession = {

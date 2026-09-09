@@ -489,6 +489,8 @@ export const en = {
       keywordContextPlaceholder: "e.g. AWS, Blockchain, Senior, payments API",
       suggestVerdictRequired:
         "Complete the Verdict step before suggesting experiences when Do Verdict is enabled.",
+      suggestGenerationRequired:
+        "Wait for the generation session to start, then try again.",
       suggestionDialogTitle: "Experience suggestions",
       suggestionExperiences: "Suggested cards",
       suggestionExperienceMissing: "Unknown experience",

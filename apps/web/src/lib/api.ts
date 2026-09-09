@@ -223,10 +223,7 @@ export function getCombineGenerationFingerprint(combine: CombineSnapshot) {
 }
 
 export type CombineRecommendRequest = {
-  jobDescription: string;
-  acceptedMarkdown?: string;
-  profileId: string;
-  companies: CombineSnapshot["companies"];
+  generationId: string;
 };
 
 export type CombineRecommendCompanyResult = {
@@ -238,7 +235,6 @@ export type CombineRecommendCompanyResult = {
 export type CombineRecommendResult = {
   companies: CombineRecommendCompanyResult[];
   warnings: string[];
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -246,9 +242,7 @@ export type GenerationScopedRequest = {
   generationId?: string | null;
 };
 
-export function runAiCombineRecommend(
-  payload: CombineRecommendRequest & GenerationScopedRequest,
-) {
+export function runAiCombineRecommend(payload: CombineRecommendRequest) {
   return request<CombineRecommendResult>("/ai-combine-recommend", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -402,16 +396,8 @@ export function deleteExperience(id: string) {
   return request<{ ok: boolean }>(`/experiences/${id}`, { method: "DELETE" });
 }
 
-export type AiVerdictUsage = {
-  inputToken: number;
-  outputToken: number;
-  input: string;
-  output: string;
-};
-
 export type AiVerdictResult = {
   markdown: string;
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -481,7 +467,6 @@ export type AiResumeRequest = {
 
 export type AiResumeResult = {
   resume: import("@johel/resume").GeneratedResume;
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -502,7 +487,6 @@ export type AiEvaluateRequest = {
 
 export type AiEvaluateResult = {
   markdown: string;
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -657,7 +641,6 @@ export type ExperienceAdviseApiResult = {
   result: ExperienceAdviseResult;
   workspaceFingerprint: string;
   experiencesById: Record<string, ExperienceAdviseExperienceSnapshot>;
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 

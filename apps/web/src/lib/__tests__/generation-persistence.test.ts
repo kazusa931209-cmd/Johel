@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_COMBINE_SNAPSHOT } from "@/components/generate/combine-types";
 import { EMPTY_JOB_STATE } from "@/lib/generate-session";
-import { generationDetailToSession } from "@/lib/generation-persistence";
+import {
+  buildGenerationUpdatePayload,
+  generationDetailToSession,
+} from "@/lib/generation-persistence";
 import type { GenerationDetail } from "@/lib/api";
 
 function makeDetail(
@@ -38,6 +41,24 @@ function makeDetail(
     ...overrides,
   };
 }
+
+describe("buildGenerationUpdatePayload", () => {
+  it("stores filteredJobText on job for server-side AI calls", () => {
+    const payload = buildGenerationUpdatePayload({
+      generationId: "gen-internal-1",
+      activeStep: "Combine",
+      job: {
+        ...EMPTY_JOB_STATE,
+        jobText: "  Engineer role  ",
+      },
+      combine: EMPTY_COMBINE_SNAPSHOT,
+      resume: null,
+      evaluationMarkdown: null,
+    });
+
+    expect(payload.job.filteredJobText).toBe("Engineer role");
+  });
+});
 
 describe("generationDetailToSession", () => {
   it("maps generation detail into a generate session", () => {

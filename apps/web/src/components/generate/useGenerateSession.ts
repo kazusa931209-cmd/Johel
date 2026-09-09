@@ -128,8 +128,10 @@ export function useGenerateSession() {
   const saveSnapshot = useCallback(
     async (finalized?: boolean) => {
       const snapshot = toGenerationSnapshot(session, finalized);
-      if (!snapshot) return;
-      await persistGenerationSnapshot(snapshot);
+      if (!snapshot) {
+        return { error: "Generation session is not ready." };
+      }
+      return persistGenerationSnapshot(snapshot);
     },
     [session],
   );

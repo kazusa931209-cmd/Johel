@@ -322,6 +322,14 @@ export default function GeneratePage() {
     [promptSettings],
   );
 
+  const onSaveBeforeSuggest = useCallback(async () => {
+    const res = await saveSnapshot();
+    if (res?.error) {
+      return { error: res.error ?? t("toast.generationSaveFailed") };
+    }
+    return {};
+  }, [saveSnapshot, t]);
+
   const runVerdict = useCallback(async () => {
     const filtered = noiseFilter(job.jobText.trim()).text;
     const inputKey = buildVerdictInputKey(job, promptCacheContext);
@@ -702,6 +710,7 @@ export default function GeneratePage() {
                 job={job}
                 doVerdict={processSettings.doVerdict}
                 generationId={generationId}
+                onSaveBeforeSuggest={onSaveBeforeSuggest}
                 onRunFromCombine={runFromCombine}
               />
             ) : null}

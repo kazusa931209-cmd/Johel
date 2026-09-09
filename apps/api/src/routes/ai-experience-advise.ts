@@ -15,6 +15,7 @@ import { createOpenAiEmbedding } from "../lib/openai/embeddings.js";
 import { isAiProviderId, type AiProviderId } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
+import { withTokenUsed } from "../lib/ai-token-used-response.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
@@ -164,13 +165,16 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
 
     const tokenUsed = await sumTokenUsed(user.id);
 
-    return c.json({
-      result: result.result,
-      workspaceFingerprint,
-      experiencesById: buildExperiencesById(graph.experiences),
-      usage: result.usage,
-      tokenUsed,
-    });
+    return c.json(
+      withTokenUsed(
+        {
+          result: result.result,
+          workspaceFingerprint,
+          experiencesById: buildExperiencesById(graph.experiences),
+        },
+        tokenUsed,
+      ),
+    );
   } catch (err) {
     const message =
       err instanceof Error && err.message

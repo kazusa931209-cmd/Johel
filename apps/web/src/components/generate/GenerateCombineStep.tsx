@@ -20,6 +20,7 @@ type GenerateCombineStepProps = {
   job: GenerateJobState;
   doVerdict: boolean;
   generationId?: string | null;
+  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
   onRunFromCombine: () => void | Promise<void>;
 };
 
@@ -29,6 +30,7 @@ export function GenerateCombineStep({
   job,
   doVerdict,
   generationId,
+  onSaveBeforeSuggest,
   onRunFromCombine,
 }: GenerateCombineStepProps) {
   const t = useT();
@@ -100,6 +102,7 @@ export function GenerateCombineStep({
         doVerdict={doVerdict}
         graduationYear={graduationYear}
         generationId={generationId}
+        onSaveBeforeSuggest={onSaveBeforeSuggest}
       />
 
       <label className="block space-y-1 text-sm">

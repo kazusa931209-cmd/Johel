@@ -25,6 +25,7 @@ type CombineExperienceSuggestProps = {
   doVerdict: boolean;
   graduationYear: number | null;
   generationId?: string | null;
+  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
 };
 
 function mergeExperienceSuggestions(
@@ -47,6 +48,7 @@ export function CombineExperienceSuggest({
   doVerdict,
   graduationYear,
   generationId,
+  onSaveBeforeSuggest,
 }: CombineExperienceSuggestProps) {
   const t = useT();
   const { toast } = useToast();
@@ -87,17 +89,20 @@ export function CombineExperienceSuggest({
       setSuggestError(t("generate.combine.suggestVerdictRequired"));
       return false;
     }
+    if (!generationId) {
+      setSuggestError(t("generate.combine.suggestGenerationRequired"));
+      return false;
+    }
 
     setSuggesting(true);
-    const res = await runAiCombineRecommend({
-      jobDescription: filteredJob,
-      acceptedMarkdown: doVerdict
-        ? job.acceptedMarkdown?.trim() || undefined
-        : undefined,
-      profileId: combine.profileId,
-      companies: combine.companies,
-      generationId,
-    });
+    const saveRes = await onSaveBeforeSuggest();
+    if (saveRes.error) {
+      setSuggesting(false);
+      toast(saveRes.error, "error");
+      return false;
+    }
+
+    const res = await runAiCombineRecommend({ generationId });
     setSuggesting(false);
 
     if (res.error || !res.data) {

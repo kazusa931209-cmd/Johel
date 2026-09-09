@@ -378,6 +378,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-10):** `/account` page, `/profile` redirect, `PUT /auth/password`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-76-account-reset-password.md`](./plans/2026-09-10-phase-76-account-reset-password.md).
 * [x] **Phase 77 — Combine suggest ref tokens** — **Suggest experiences** must not require the AI to copy database identifiers. Each request assigns stable reference tokens to companies and experiences; the AI selects by ref; the server maps refs back to records before Apply.
   * **Outcome (2026-09-10):** E01/C01 ref prompts and response parsing in `ai-combine-recommend`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-77-combine-recommend-ref-tokens.md`](./plans/2026-09-10-phase-77-combine-recommend-ref-tokens.md).
+* [x] **Phase 78 — Network traffic optimization** — Reduce Generate AI call payload and response size: **Suggest experiences** saves the generation snapshot then sends only `generationId`; the server loads job, Verdict, and Combine from `generations`. AI POST responses return business data and `tokenUsed` only; full prompt I/O remains in AI Usage History via the database.
+  * **Outcome (2026-09-10):** Slim `ai-combine-recommend` request, `filteredJobText` on generation save, slim AI POST responses. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-78-network-traffic-optimization.md`](./plans/2026-09-10-phase-78-network-traffic-optimization.md).
 
 ## Cursor Rules (Documentation Governance)
 

@@ -490,6 +490,8 @@ export const ko: MessageTree = {
       keywordContextPlaceholder: "예: AWS, Blockchain, Senior, payments API",
       suggestVerdictRequired:
         "판정을 실행하는 경우, 경험 제안 전에 판정 단계를 완료해 주세요.",
+      suggestGenerationRequired:
+        "생성 세션이 시작될 때까지 기다린 후 다시 시도하세요.",
       suggestionDialogTitle: "경험 제안",
       suggestionExperiences: "제안된 카드",
       suggestionExperienceMissing: "알 수 없는 경험",
