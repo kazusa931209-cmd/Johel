@@ -50,7 +50,7 @@ User browser (:4041)
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
 - Prisma `WorkflowCompany` → table `workflowCompanies`: `id`, `workflowId`, `companyId`, `startDate`, `endDate`, `roleContext`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, companyId)`; cascade delete with workflow
 - Prisma `WorkflowCompanyExperience` → table `workflowCompanyExperiences`: `id`, `workflowCompanyId`, `experienceId`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowCompanyId, experienceId)`; cascade delete with workflow company row
-- Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `university?`, `graduationYear` (required on write), `degree?`, `createdAt`, `updatedAt`
+- Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `university?`, `graduationYear` (required on write), `graduationMonth` (required on write, 1–12), `degree?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
 - Prisma `Company` → table `companies` (per user): `id`, `userId`, `displayPriority`, `alias`, `name`, `whatCompanyIs`, `domainAndStack`, `createdAt`, `updatedAt`
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `problem`, `actions`, `outcome`, `createdAt`, `updatedAt`
@@ -147,7 +147,7 @@ User browser (:4041)
 
 - `GET /profiles?q=&page=` — page size 10; list includes `links` for the Links column
 - `GET /profiles/:id` — full detail for the editor (owner only)
-- `POST /profiles` / `PUT /profiles/:id` — `{ firstName, lastName, birthDate?, email?, pn?, residence?, university?, graduationYear, degree?, links }`; on write, delete existing `profileLinks` and insert the submitted list
+- `POST /profiles` / `PUT /profiles/:id` — `{ firstName, lastName, birthDate?, email?, pn?, residence?, university?, graduationYear, graduationMonth, degree?, links }`; on write, delete existing `profileLinks` and insert the submitted list
 - Search `q` across firstName, lastName, email, pn, residence, education
 - Links: `{ key, link | null }`; keys unique per profile
 - Web routes: `/profiles` list; `/profiles/new` add; `/profiles/[id]/edit` edit; Links UX mirrors workflow Metadata
@@ -352,8 +352,8 @@ User browser (:4041)
 - **PCE bundle (Phase 71, renamed Phase 72):** `GET /pce` returns `{ profiles, companies, experiences }` (unpaginated, same detail shapes as CRUD list items). Web `loadPce` / `usePce` cache one in-flight request and reuse data across Generate prerequisites, `CombineProfilePicker`, `CombineCompanyCards`, `GenerateCombineSummary`, and `CombineExperienceSuggest`. **PCE** = Profile, Company, Experience (legacy **PCEW** / “workspace” naming removed).
 - **Settings read cache (Phase 73):** `apps/web/src/lib/cached-settings.ts` dedupes `GET /settings`, `GET /settings/process`, `GET /prompts`, and `GET /auth/me` across Settings pages, app layout, `GenerateStatusProvider`, and Generate bootstrap; caches update on save and clear on sign-out.
 - **Workspace CRUD list cache (Phase 74):** `apps/web/src/lib/cached-crud-list.ts` dedupes paginated `GET /profiles`, `GET /companies`, and `GET /experiences` by search + page; list effects depend on `[q, page]` only; `invalidateWorkspaceCrudCaches` clears list + PCE cache on CRUD mutations.
-- Combine step: all workspace companies as a single-column card list; when no companies are included, cards sort by **displayPriority** (1-based); when at least one is included, included cards follow **selection order** (`combine.companies` array order) and unselected cards follow **displayPriority** via `orderCompaniesForCombineDisplay`; company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context and optional **Keyword context**; linked experience categories shown on each included card after **Apply**; **Suggest experiences** (`CombineExperienceSuggest`) calls `POST /ai-combine-recommend` per-company hybrid (keyword context or Auto); fullscreen `BusyOverlay` while suggesting; suggestion dialog shows per-company rationale and warnings with **Cancel** / **Retry** / **Apply**; `experienceIds` on each company entry after apply
-- Combine validation (`validateCombineSnapshot`): profile required with graduation year, ≥1 included company, each with period + role context; no experience requirement
+- Combine step: all workspace companies as a single-column card list; when no companies are included, cards sort by **displayPriority** (1-based); when at least one is included, included cards follow **selection order** (`combine.companies` array order) and unselected cards follow **displayPriority** via `orderCompaniesForCombineDisplay`; company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (profile `graduationYear` + `graduationMonth` through current month; end at max = `Present`), inline role context and optional **Keyword context**; linked experience categories shown on each included card after **Apply**; **Suggest experiences** (`CombineExperienceSuggest`) calls `POST /ai-combine-recommend` per-company hybrid (keyword context or Auto); fullscreen `BusyOverlay` while suggesting; suggestion dialog shows per-company rationale and warnings with **Cancel** / **Retry** / **Apply**; `experienceIds` on each company entry after apply
+- Combine validation (`validateCombineSnapshot`): profile required with graduation year and month, ≥1 included company, each with period + role context; no experience requirement
 - Migration `20260909100002_profile_education_split`: legacy `education` text copied to `university`; column dropped
 - `POST /ai-resume` and `POST /resume/combine-fingerprint` accept `experienceIds: []` per company; `assembleFromCombineSnapshot` allows empty experiences per company
 - Session: `combine: CombineSnapshot` instead of `workflow`
@@ -381,7 +381,8 @@ User browser (:4041)
 ### API
 
 - `POST /generations/start` — allocate `publicId`, snapshot current prompts + process flags, create row (`finalized: false`)
-- `PUT /generations/:id` — upsert session snapshot (internal cuid); optional `finalized: true` (sticky once set)
+- `PUT /generations/:id` — upsert session snapshot (internal cuid); optional `finalized: true` (sticky once set); syncs `generationJobEmbeddings` when job text changes (Phase 79)
+- `POST /generations/:id/job-duplicate-check` — embed current filtered JD, cosine-compare to other generations; threshold `0.90` (Phase 79)
 - `POST /generations/:publicId/resume` — optional `archive` snapshot for the current run; sets target generation `finalized` to `false`; returns full detail for client session hydrate
 - `GET /generations/current` — latest non-finalized run for the user (newest `updatedAt`); used to restore Generate session after logout/login
 - `GET /generations` — paginated list (`page`, `q`, pageSize 10); search `jobJson` + snapshotted prompt fields; newest first
@@ -418,6 +419,15 @@ Tiered strategy to reduce redundant AI calls and prompt size (see Embedding + RA
 - **Tier 2 (Phase 66):** Edit-mode tiered pool on Suggest — target card full STAR + compact index for other cards
 - **Tier 2.5 (Phase 67):** Generalized tiered pool — index for **all** cards + full STAR for expanded set; `loadExperienceAdviseContext` (single query + SHA-256 fingerprint); Suggest returns `experiencesById`; company save one batched markdown call; direct experience CRUD uses deterministic finalize; modules under `apps/api/src/lib/experience-pool-rank/` (keyword rank superseded by Phase 68 on Suggest)
 - **Tier 3 (Phase 68):** Embedding retrieval — `text-embedding-3-small` in `experienceEmbeddings`; in-memory cosine top-K from `generationProcess.experienceAdvisePoolDepth` (`compact` 5 / `normal` 10 / `thorough` 25 / `full` all); edit target + recent N=3 always expanded; embedding upsert on experience save/apply; `generateType: embedding` in AI usage; **OpenAI-only** provider (Cursor removed)
+- **Tier 4 (Phase 79):** JD duplicate check before Verdict — `text-embedding-3-small` in `generationJobEmbeddings` (one row per generation with non-empty filtered JD); input prefers `filteredJobText` from `jobJson` (fallback `jobText`, max 10,000 chars); `sourceHash` (FNV-1a of trimmed text) skips re-embed when unchanged; in-memory cosine vs peer generations; threshold `0.90` (`JOB_DUPLICATE_SIMILARITY_THRESHOLD`); lazy backfill on check; sync on `PUT /generations/:id`; delete row when job text cleared; `generateType: embedding` with `generationId` for token roll-up
+
+### JD duplicate check (Phase 79)
+
+- **When:** Generate Job **Run** with **Do Verdict** on — after snapshot save, before Verdict navigation / `POST /ai-verdict`
+- **API:** `POST /generations/:id/job-duplicate-check` (internal cuid) — returns `{ match: null }` or `{ match: { generationId, publicId, filteredJobText, finalized, score } }`; requires OpenAI API key; on failure client toasts and proceeds (advisory)
+- **Module:** `apps/api/src/lib/job-embedding/` (`build-input`, `upsert`, `sync-after-save`, `ensure-embeddings`, `duplicate-check`, `source-hash`, `constants`)
+- **Web:** `useJobDuplicateFlow`, `GenerateJobDuplicateDialog`; session `jobDuplicateDismissedHash` (filtered JD hash) suppresses repeat dialog until Job text changes; **Cancel** / **Switch** call `clearJobAndPersist` (empty job + embedding delete via PUT sync)
+- **Migration:** `20260910100008_generation_job_embeddings`
 
 ## Plans
 

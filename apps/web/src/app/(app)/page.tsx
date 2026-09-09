@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
+import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
@@ -13,7 +14,9 @@ import {
   type MissingPrerequisite,
 } from "@/components/generate/GeneratePrerequisites";
 import { GenerateTimeline } from "@/components/generate/GenerateTimeline";
+import { GenerateJobDuplicateDialog } from "@/components/generate/GenerateJobDuplicateDialog";
 import { GenerateJobStep } from "@/components/generate/GenerateJobStep";
+import { useJobDuplicateFlow } from "@/components/generate/useJobDuplicateFlow";
 import { useGeneratePreviousStepPanel } from "@/components/generate/GeneratePreviousStepPanel";
 import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
 import { GenerateVerdictStep } from "@/components/generate/GenerateVerdictStep";
@@ -89,6 +92,7 @@ export default function GeneratePage() {
   const pendingRunRef = useRef<(() => void) | null>(null);
   const {
     ready: sessionReady,
+    userId,
     generationId,
     generationPublicId,
     activeStep,
@@ -111,10 +115,11 @@ export default function GeneratePage() {
     resetSession,
     markFinalized,
     finalized,
+    jobDuplicateDismissedHash,
+    dismissJobDuplicateCheck,
+    restoreSession,
+    clearJobAndPersist,
   } = useGenerateSession();
-
-  const processBusy =
-    verdictRunning || generatingResume || evaluating;
 
   const visibleSteps = useMemo(
     () =>
@@ -283,6 +288,7 @@ export default function GeneratePage() {
       evaluationMarkdown,
       evaluationInputKey,
       finalized,
+      jobDuplicateDismissedHash,
     }),
     [
       combine,
@@ -293,6 +299,7 @@ export default function GeneratePage() {
       generationPublicId,
       generationInputKey,
       job,
+      jobDuplicateDismissedHash,
       normalizedActiveStep,
       resume,
       verdictInputKey,
@@ -375,23 +382,64 @@ export default function GeneratePage() {
     verdictInputKey,
   ]);
 
+  const proceedToVerdict = useCallback(async () => {
+    setActiveStep("Verdict");
+    await runVerdict();
+  }, [runVerdict, setActiveStep]);
+
+  const {
+    checking: jobDuplicateChecking,
+    dialogBusy: jobDuplicateDialogBusy,
+    dialogOpen: jobDuplicateDialogOpen,
+    match: jobDuplicateMatch,
+    newFilteredJobText: jobDuplicateNewFilteredJobText,
+    checkBeforeVerdict,
+    closeDialog: closeJobDuplicateDialog,
+    handleCancel: handleJobDuplicateCancel,
+    handleContinue: handleJobDuplicateContinue,
+    handleSwitch: handleJobDuplicateSwitch,
+  } = useJobDuplicateFlow({
+    generationId,
+    userId,
+    job,
+    jobDuplicateDismissedHash,
+    dismissJobDuplicateCheck,
+    restoreSession,
+    setActiveStep,
+    saveSnapshot,
+    clearJobAndPersist,
+    proceedToVerdict,
+    toast,
+    t,
+  });
+
+  const processBusy =
+    verdictRunning ||
+    generatingResume ||
+    evaluating ||
+    jobDuplicateChecking ||
+    jobDuplicateDialogBusy;
+
   const runFromJob = useCallback(() => {
     requestRun("Job", async () => {
       clearDownstreamFromVerdictSession();
       if (processSettings.doVerdict) {
-        setActiveStep("Verdict");
-        await runVerdict();
+        const shouldProceed = await checkBeforeVerdict();
+        if (shouldProceed) {
+          await proceedToVerdict();
+        }
         return;
       }
       setJob({ ...job, acceptedMarkdown: null });
       setActiveStep("Combine");
     });
   }, [
+    checkBeforeVerdict,
     clearDownstreamFromVerdictSession,
     job,
+    proceedToVerdict,
     processSettings.doVerdict,
     requestRun,
-    runVerdict,
     setActiveStep,
     setJob,
   ]);
@@ -781,6 +829,30 @@ export default function GeneratePage() {
             </button>
           </div>
         </DetailDialog>
+      ) : null}
+
+      {jobDuplicateChecking ? (
+        <BusyOverlay
+          title={t("generate.jobDuplicate.checking.title")}
+          description={t("generate.jobDuplicate.checking.description")}
+        />
+      ) : null}
+
+      {jobDuplicateDialogOpen && jobDuplicateMatch ? (
+        <GenerateJobDuplicateDialog
+          open
+          newFilteredJobText={jobDuplicateNewFilteredJobText}
+          match={jobDuplicateMatch}
+          busy={jobDuplicateDialogBusy}
+          onClose={closeJobDuplicateDialog}
+          onCancel={() => void handleJobDuplicateCancel()}
+          onContinue={() => void handleJobDuplicateContinue()}
+          onSwitch={
+            jobDuplicateMatch.finalized
+              ? undefined
+              : () => void handleJobDuplicateSwitch()
+          }
+        />
       ) : null}
     </GenerateStepNavProvider>
   );

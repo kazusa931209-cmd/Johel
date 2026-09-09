@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useT } from "@/components/app/LocaleProvider";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { PceSection } from "@/components/generate/PceSection";
 import type { CombineFieldErrors } from "@/components/generate/combine-types";
@@ -24,6 +24,7 @@ export function CombineProfilePicker({
   onClearError,
 }: CombineProfilePickerProps) {
   const t = useT();
+  const { locale } = useLocale();
   const { toast } = useToast();
   const { profiles, loading, error } = usePce();
   const [viewingProfile, setViewingProfile] = useState<ProfileDetail | null>(
@@ -71,10 +72,19 @@ export function CombineProfilePicker({
           cell: (row) => row.university ?? "",
         },
         {
-          header: t("crud.profiles.form.graduationYear"),
+          header: t("crud.profiles.form.graduation"),
           className: "whitespace-nowrap text-muted",
-          cell: (row) =>
-            row.graduationYear != null ? String(row.graduationYear) : "",
+          cell: (row) => {
+            if (row.graduationYear == null || row.graduationMonth == null) {
+              return row.graduationYear != null ? String(row.graduationYear) : "";
+            }
+            return new Intl.DateTimeFormat(locale, {
+              month: "short",
+              year: "numeric",
+            }).format(
+              new Date(row.graduationYear, row.graduationMonth - 1, 1),
+            );
+          },
         },
       ]}
       renderDetailDialog={(row) => (

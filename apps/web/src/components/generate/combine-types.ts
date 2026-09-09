@@ -44,14 +44,14 @@ export function formatCompanyPeriod(startDate: string, endDate: string): string 
 export function validateCombineSnapshot(
   snapshot: CombineSnapshot,
   t: (key: string) => string,
-  graduationYear?: number | null,
+  graduation?: { year: number; month: number } | null,
 ): CombineFieldErrors {
   const errors: CombineFieldErrors = {};
   if (!snapshot.profileId) {
     errors.profileId = t("validation.profileRequired");
   }
-  if (snapshot.profileId && graduationYear == null) {
-    errors.companies = t("validation.profileGraduationYearRequired");
+  if (snapshot.profileId && graduation == null) {
+    errors.companies = t("validation.profileGraduationRequired");
     return errors;
   }
   if (snapshot.companies.length < 1) {

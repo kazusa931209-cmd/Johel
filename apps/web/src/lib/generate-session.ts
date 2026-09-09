@@ -31,6 +31,8 @@ export type GenerateSession = {
   evaluationMarkdown: string | null;
   evaluationInputKey: string | null;
   finalized: boolean;
+  /** Filtered JD hash; duplicate dialog skipped until Job text changes. */
+  jobDuplicateDismissedHash: string | null;
 };
 
 const STORAGE_KEY_PREFIX = "johel:generate-session:";
@@ -56,7 +58,13 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   evaluationMarkdown: null,
   evaluationInputKey: null,
   finalized: false,
+  jobDuplicateDismissedHash: null,
 };
+
+export function buildJobDuplicateCheckHash(jobText: string): string {
+  const filtered = noiseFilter(jobText.trim()).text;
+  return hashPromptForCache(filtered);
+}
 
 function storageKey(userId: string) {
   return `${STORAGE_KEY_PREFIX}${userId}`;
@@ -333,6 +341,10 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
         ? raw.evaluationInputKey
         : null,
     finalized: raw.finalized === true,
+    jobDuplicateDismissedHash:
+      typeof raw.jobDuplicateDismissedHash === "string"
+        ? raw.jobDuplicateDismissedHash
+        : null,
   };
 }
 

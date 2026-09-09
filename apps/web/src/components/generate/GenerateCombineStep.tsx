@@ -13,6 +13,7 @@ import {
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { usePce } from "@/lib/pce";
+import { resolveProfileGraduation } from "@/lib/profile";
 
 type GenerateCombineStepProps = {
   combine: CombineSnapshot;
@@ -37,23 +38,21 @@ export function GenerateCombineStep({
   const { profiles } = usePce();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
 
-  const graduationYear = useMemo(() => {
+  const profileGraduation = useMemo(() => {
     if (!combine.profileId) return null;
-    return (
-      profiles.find((profile) => profile.id === combine.profileId)
-        ?.graduationYear ?? null
-    );
+    const profile = profiles.find((item) => item.id === combine.profileId);
+    return resolveProfileGraduation(profile);
   }, [combine.profileId, profiles]);
 
   const handleRun = useCallback(() => {
-    const errors = validateCombineSnapshot(combine, t, graduationYear);
+    const errors = validateCombineSnapshot(combine, t, profileGraduation);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
     setFieldErrors({});
     void onRunFromCombine();
-  }, [combine, graduationYear, onRunFromCombine, t]);
+  }, [combine, profileGraduation, onRunFromCombine, t]);
 
   useRegisterGenerateStepNav({
     onRun: handleRun,
@@ -88,7 +87,7 @@ export function GenerateCombineStep({
         companies={combine.companies}
         onChange={(companies) => patchCombine({ companies })}
         disabled={!combine.profileId}
-        graduationYear={graduationYear}
+        profileGraduation={profileGraduation}
         error={fieldErrors.companies}
         onClearError={() =>
           setFieldErrors((errors) => ({ ...errors, companies: undefined }))
@@ -100,7 +99,7 @@ export function GenerateCombineStep({
         onCombineChange={onCombineChange}
         job={job}
         doVerdict={doVerdict}
-        graduationYear={graduationYear}
+        profileGraduation={profileGraduation}
         generationId={generationId}
         onSaveBeforeSuggest={onSaveBeforeSuggest}
       />

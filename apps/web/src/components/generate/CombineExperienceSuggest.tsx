@@ -17,13 +17,14 @@ import {
   type CombineRecommendResult,
 } from "@/lib/api";
 import { usePce } from "@/lib/pce";
+import type { ProfileGraduation } from "@/lib/profile";
 
 type CombineExperienceSuggestProps = {
   combine: CombineSnapshot;
   onCombineChange: (combine: CombineSnapshot) => void;
   job: GenerateJobState;
   doVerdict: boolean;
-  graduationYear: number | null;
+  profileGraduation: ProfileGraduation | null;
   generationId?: string | null;
   onSaveBeforeSuggest: () => Promise<{ error?: string }>;
 };
@@ -46,7 +47,7 @@ export function CombineExperienceSuggest({
   onCombineChange,
   job,
   doVerdict,
-  graduationYear,
+  profileGraduation,
   generationId,
   onSaveBeforeSuggest,
 }: CombineExperienceSuggestProps) {
@@ -74,7 +75,7 @@ export function CombineExperienceSuggest({
     if (suggesting) return false;
 
     setSuggestError(null);
-    const errors = validateCombineSnapshot(combine, t, graduationYear);
+    const errors = validateCombineSnapshot(combine, t, profileGraduation);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       return false;

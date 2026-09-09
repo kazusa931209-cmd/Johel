@@ -85,9 +85,11 @@ function formatProfileSection(input: ResumeGenerationInput): string {
 
   const educationLines = [
     optionalLine("University", profile.university),
-    profile.graduationYear != null
-      ? `- Graduation year: ${profile.graduationYear}`
-      : null,
+    profile.graduationYear != null && profile.graduationMonth != null
+      ? `- Graduation: ${profile.graduationYear}-${String(profile.graduationMonth).padStart(2, "0")}`
+      : profile.graduationYear != null
+        ? `- Graduation year: ${profile.graduationYear}`
+        : null,
     optionalLine("Degree", profile.degree),
   ].filter((line): line is string => Boolean(line));
   const linkLines = profile.links

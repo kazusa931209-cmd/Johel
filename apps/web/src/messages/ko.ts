@@ -223,6 +223,9 @@ export const ko: MessageTree = {
         residence: "거주지",
         university: "대학교",
         graduationYear: "졸업 연도",
+        graduationMonth: "졸업 월",
+        graduationMonthPlaceholder: "월 선택",
+        graduation: "졸업",
         degree: "학위",
       },
       links: {
@@ -431,6 +434,30 @@ export const ko: MessageTree = {
         description: "잠시만 기다려 주세요. 노이즈 필터와 AI 분석이 진행 중입니다.",
       },
     },
+    jobDuplicate: {
+      checking: {
+        title: "유사한 채용 공고 확인 중…",
+        description:
+          "이 채용 공고를 이전 실행 기록과 비교하는 중입니다. 잠시만 기다려 주세요.",
+      },
+      newJd: "새 채용 공고",
+      newJdMeta: "새 채용 공고",
+      matchedJd: "검출된 채용 공고",
+      matchedMetaFinalized: "실행 ID {publicId} · 확정됨",
+      matchedMetaUnfinished: "실행 ID {publicId} · 진행 중",
+      cancel: "취소",
+      continue: "계속",
+      continueWithNew: "새 JD로 계속",
+      switchToExisting: "기존 실행으로 전환",
+      finalized: {
+        title: "이미 완료한 채용 공고와 유사합니다",
+        body: "이 채용 공고는 이미 확정한 실행과 매우 유사합니다. 새 실행으로 계속하거나, 취소하여 Job 입력을 비울 수 있습니다.",
+      },
+      unfinished: {
+        title: "이미 시도한 채용 공고와 유사합니다",
+        body: "이 채용 공고는 시작했지만 아직 확정하지 않은 실행과 매우 유사합니다. 해당 실행으로 전환하거나, 새 JD로 계속하거나, 취소하여 Job 입력을 비울 수 있습니다.",
+      },
+    },
     verdict: {
       title: "판정",
       description:
@@ -455,14 +482,14 @@ export const ko: MessageTree = {
         "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외; Skills는 3개 그룹으로.",
       companies: "회사",
       companiesHint:
-        "프로필 선택 후 회사를 포함합니다. 선택한 회사는 선택 순으로 상단, 미선택은 표시 순서입니다. 근무 기간은 졸업 연도 1월~현재입니다.",
+        "프로필 선택 후 회사를 포함합니다. 선택한 회사는 선택 순으로 상단, 미선택은 표시 순서입니다. 근무 기간은 프로필 졸업 월~현재입니다.",
       resetCompanies: "초기화",
       resetCompaniesAria: "선택한 회사 모두 해제",
       selectProfileFirst: "회사를 선택하기 전에 프로필을 선택해 주세요.",
-      profileGraduationYearMissing:
-        "이 프로필에 졸업 연도가 없습니다. 프로필을 편집하여 졸업 연도를 추가한 후 회사를 선택해 주세요.",
+      profileGraduationMissing:
+        "이 프로필에 졸업 연도와 월이 없습니다. 프로필을 편집하여 졸업 정보를 추가한 후 회사를 선택해 주세요.",
       periodGraduationHint:
-        "근무 기간은 {year}년 1월부터 현재까지 선택할 수 있습니다.",
+        "근무 기간은 {year}년 {month}월부터 현재까지 선택할 수 있습니다.",
       includeCompany: "포함",
       noCompanies: "조합하기 전에 작업 공간에 회사를 추가해 주세요.",
       period: "기간",
@@ -691,6 +718,7 @@ export const ko: MessageTree = {
     historyDetailLoadFailed: "생성 상세를 불러오지 못했습니다.",
     generationResumeFailed: "생성을 재개하지 못했습니다.",
     generationResumed: "생성을 재개했습니다.",
+    jobDuplicateCheckFailed: "채용 공고 중복 확인에 실패했습니다.",
     copied: "클립보드에 복사했습니다.",
     copyFailed: "클립보드에 복사하지 못했습니다.",
     passwordResetSuccess: "비밀번호를 변경했습니다.",
@@ -719,8 +747,9 @@ export const ko: MessageTree = {
     domainAndStackRequired: "분야 및 기술은 필수입니다.",
     profileRequired: "프로필을 하나 선택해 주세요.",
     graduationYearRequired: "졸업 연도는 필수입니다.",
-    profileGraduationYearRequired:
-      "회사를 선택하기 전에 선택한 프로필에 졸업 연도가 있어야 합니다.",
+    graduationMonthRequired: "졸업 월은 필수입니다.",
+    profileGraduationRequired:
+      "회사를 선택하기 전에 선택한 프로필에 졸업 연도와 월이 있어야 합니다.",
     companiesMinOne: "회사 항목을 하나 이상 추가해 주세요.",
     companyEntryIncomplete:
       "포함된 각 회사에 기간과 역할 설명이 필요합니다.",

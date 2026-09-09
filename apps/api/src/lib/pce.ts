@@ -43,6 +43,7 @@ export async function loadPce(userId: string) {
       residence: row.residence,
       university: row.university,
       graduationYear: row.graduationYear,
+      graduationMonth: row.graduationMonth,
       degree: row.degree,
       links: mapProfileLinks(row.links),
       createdAt: row.createdAt.toISOString(),

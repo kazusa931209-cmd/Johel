@@ -182,7 +182,7 @@ function buildResumeArchivePayload(
 export async function resumeGenerationFromHistory(
   targetPublicId: string,
   userId: string,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; session?: GenerateSession }> {
   const current = loadGenerateSession(userId);
   const archive =
     current?.generationId &&
@@ -200,5 +200,5 @@ export async function resumeGenerationFromHistory(
   session = { ...session, finalized: false };
   session = await hydrateSessionCacheKeys(session, res.data);
   saveGenerateSession(userId, session);
-  return {};
+  return { session };
 }

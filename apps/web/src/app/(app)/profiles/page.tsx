@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useT } from "@/components/app/LocaleProvider";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import {
   AddButton,
@@ -46,6 +46,7 @@ export default function ProfilesPage() {
 function ProfilesPageContent() {
   const router = useRouter();
   const t = useT();
+  const { locale } = useLocale();
   const { toast } = useToast();
   const { page, q, setPage, applySearch } = useCrudListParams();
   const [qInput, setQInput] = useState(q);
@@ -202,7 +203,7 @@ function ProfilesPageContent() {
                     {row.residence ?? ""}
                   </td>
                   <td className="max-w-20 truncate px-3 py-2 text-muted">
-                    {formatEducationCell(row)}
+                    {formatEducationCell(row, locale)}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"

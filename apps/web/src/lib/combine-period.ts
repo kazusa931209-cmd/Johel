@@ -4,6 +4,8 @@ const EN_MONTH_YEAR = "en-US";
 
 export type PeriodWindow = {
   graduationYear: number;
+  /** 1–12 */
+  graduationMonth: number;
   monthCount: number;
   maxIndex: number;
 };
@@ -22,21 +24,35 @@ function monthsBetweenInclusive(
   return (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
 }
 
-export function buildPeriodWindow(graduationYear: number): PeriodWindow {
+export function buildPeriodWindow(
+  graduationYear: number,
+  graduationMonth: number,
+): PeriodWindow {
+  const startMonth = graduationMonth - 1;
   const current = currentMonthAnchor();
   const monthCount = Math.max(
     1,
-    monthsBetweenInclusive(graduationYear, 0, current.year, current.month),
+    monthsBetweenInclusive(
+      graduationYear,
+      startMonth,
+      current.year,
+      current.month,
+    ),
   );
   return {
     graduationYear,
+    graduationMonth,
     monthCount,
     maxIndex: monthCount - 1,
   };
 }
 
 function monthIndexToDate(window: PeriodWindow, index: number): Date {
-  return new Date(window.graduationYear, index, 1);
+  const startMonth = window.graduationMonth - 1;
+  const absoluteMonth = startMonth + index;
+  const year = window.graduationYear + Math.floor(absoluteMonth / 12);
+  const month = absoluteMonth % 12;
+  return new Date(year, month, 1);
 }
 
 function intlLocale(locale: string): string {

@@ -221,6 +221,9 @@ export const en = {
         residence: "Residence",
         university: "University",
         graduationYear: "Graduation year",
+        graduationMonth: "Graduation month",
+        graduationMonthPlaceholder: "Select month",
+        graduation: "Graduation",
         degree: "Degree",
       },
       links: {
@@ -429,6 +432,30 @@ export const en = {
         description: "Please wait. Noise filter and AI analysis are in progress.",
       },
     },
+    jobDuplicate: {
+      checking: {
+        title: "Checking for similar job descriptions…",
+        description:
+          "Please wait while JoHEL compares this job description to your prior runs.",
+      },
+      newJd: "New job description",
+      newJdMeta: "New Job Description",
+      matchedJd: "Matched job description",
+      matchedMetaFinalized: "Generation {publicId} · Finalized",
+      matchedMetaUnfinished: "Generation {publicId} · In progress",
+      cancel: "Cancel",
+      continue: "Continue",
+      continueWithNew: "Continue with new JD",
+      switchToExisting: "Switch to existing",
+      finalized: {
+        title: "Similar job description already completed",
+        body: "This job description closely matches a generation you already finalized. You can continue with a new run or cancel and clear the Job input.",
+      },
+      unfinished: {
+        title: "Similar job description already in progress",
+        body: "This job description closely matches a generation that was started but not finalized. Switch to that run to continue, start a new run, or cancel and clear the Job input.",
+      },
+    },
     verdict: {
       title: "Verdict",
       description:
@@ -453,14 +480,14 @@ export const en = {
         "e.g. Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups.",
       companies: "Companies",
       companiesHint:
-        "Select a profile, then toggle companies. Selected move to the top in selection order; unselected follow display order. Periods: Jan of graduation year through present.",
+        "Select a profile, then toggle companies. Selected move to the top in selection order; unselected follow display order. Periods: profile graduation month through present.",
       resetCompanies: "Reset",
       resetCompaniesAria: "Deselect all companies",
       selectProfileFirst: "Select a profile before choosing companies.",
-      profileGraduationYearMissing:
-        "This profile has no graduation year. Edit the profile and add a graduation year before choosing companies.",
+      profileGraduationMissing:
+        "This profile has no graduation year and month. Edit the profile and add graduation details before choosing companies.",
       periodGraduationHint:
-        "Work period can be selected from January {year} through the present.",
+        "Work period can be selected from {month} {year} through the present.",
       includeCompany: "Include",
       noCompanies: "Add companies in the workspace before combining.",
       period: "Period",
@@ -689,6 +716,7 @@ export const en = {
     historyDetailLoadFailed: "Failed to load generation detail",
     generationResumeFailed: "Failed to resume generation.",
     generationResumed: "Generation resumed.",
+    jobDuplicateCheckFailed: "Job duplicate check failed.",
     copied: "Copied to clipboard.",
     copyFailed: "Could not copy to clipboard.",
     passwordResetSuccess: "Password updated.",
@@ -717,8 +745,9 @@ export const en = {
     domainAndStackRequired: "Domain & Stack is required.",
     profileRequired: "Select one profile.",
     graduationYearRequired: "Graduation year is required.",
-    profileGraduationYearRequired:
-      "The selected profile must have a graduation year before choosing companies.",
+    graduationMonthRequired: "Graduation month is required.",
+    profileGraduationRequired:
+      "The selected profile must have a graduation year and month before choosing companies.",
     companiesMinOne: "Add at least one company entry.",
     companyEntryIncomplete:
       "Each included company needs a period and role context.",

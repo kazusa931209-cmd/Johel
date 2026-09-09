@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { deriveProcessedStep } from "../lib/generation-processed-step.js";
 import { allocateGenerationPublicId } from "../lib/generation-public-id.js";
+import { findJobDuplicateMatch } from "../lib/job-embedding/duplicate-check.js";
+import { syncGenerationJobEmbeddingAfterSave } from "../lib/job-embedding/sync-after-save.js";
 import {
   listResponsePageSize,
   parseListPagination,
@@ -213,11 +215,13 @@ generationsRoutes.put("/:id", async (c) => {
   const nextFinalized =
     existing.finalized || parsed.data.finalized === true;
 
+  const jobJson = JSON.stringify(parsed.data.job);
+
   const generation = await prisma.generation.update({
     where: { id: existing.id },
     data: {
       activeStep: parsed.data.activeStep,
-      jobJson: JSON.stringify(parsed.data.job),
+      jobJson,
       combineJson: JSON.stringify(parsed.data.combine),
       verdictMarkdown:
         parsed.data.verdictMarkdown !== undefined
@@ -237,7 +241,61 @@ generationsRoutes.put("/:id", async (c) => {
     },
   });
 
+  await syncGenerationJobEmbeddingAfterSave({
+    userId: user.id,
+    generationId: generation.id,
+    jobJson,
+  });
+
   return c.json(toDetailResponse(generation));
+});
+
+generationsRoutes.post("/:id/job-duplicate-check", async (c) => {
+  const user = await requireUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const id = c.req.param("id");
+  const existing = await prisma.generation.findFirst({
+    where: { id, userId: user.id },
+  });
+  if (!existing) {
+    return c.json({ error: "Generation not found." }, 404);
+  }
+
+  const setting = await prisma.setting.findUnique({
+    where: { userId: user.id },
+  });
+  if (!setting?.apiKey) {
+    return c.json({ error: "Configure an OpenAI API key in Settings." }, 400);
+  }
+
+  try {
+    const match = await findJobDuplicateMatch({
+      userId: user.id,
+      apiKey: setting.apiKey,
+      generationId: existing.id,
+    });
+
+    if (!match) {
+      return c.json({ match: null });
+    }
+
+    return c.json({
+      match: {
+        generationId: match.generationId,
+        publicId: match.publicId,
+        filteredJobText: match.filteredJobText,
+        finalized: match.finalized,
+        score: match.score,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Job duplicate check failed.";
+    return c.json({ error: message }, 500);
+  }
 });
 
 generationsRoutes.post("/:publicId/resume", async (c) => {

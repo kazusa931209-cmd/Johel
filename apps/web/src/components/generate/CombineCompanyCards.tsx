@@ -17,12 +17,13 @@ import { ViewButton } from "@/components/shared/action-icon-buttons";
 import type { CompanyDetail } from "@/lib/api";
 import { orderCompaniesForCombineDisplay } from "@/lib/company";
 import { usePce } from "@/lib/pce";
+import type { ProfileGraduation } from "@/lib/profile";
 
 type CombineCompanyCardsProps = {
   companies: CombineCompanyEntry[];
   onChange: (companies: CombineCompanyEntry[]) => void;
   disabled?: boolean;
-  graduationYear?: number | null;
+  profileGraduation?: ProfileGraduation | null;
   error?: string;
   onClearError?: () => void;
 };
@@ -38,7 +39,7 @@ export function CombineCompanyCards({
   companies,
   onChange,
   disabled = false,
-  graduationYear = null,
+  profileGraduation = null,
   error,
   onClearError,
 }: CombineCompanyCardsProps) {
@@ -53,9 +54,11 @@ export function CombineCompanyCards({
     [experiences],
   );
 
-  const cardsDisabled = disabled || graduationYear == null;
+  const cardsDisabled = disabled || profileGraduation == null;
   const periodWindow =
-    graduationYear != null ? buildPeriodWindow(graduationYear) : null;
+    profileGraduation != null
+      ? buildPeriodWindow(profileGraduation.year, profileGraduation.month)
+      : null;
 
   const workspaceIdSet = useMemo(
     () => new Set(workspaceCompanies.map((company) => company.id)),
@@ -159,8 +162,8 @@ export function CombineCompanyCards({
 
   const disabledMessage = disabled
     ? t("generate.combine.selectProfileFirst")
-    : graduationYear == null
-      ? t("generate.combine.profileGraduationYearMissing")
+    : profileGraduation == null
+      ? t("generate.combine.profileGraduationMissing")
       : null;
 
   return (
@@ -235,7 +238,7 @@ export function CombineCompanyCards({
                 </div>
               </div>
 
-              {included && entry && graduationYear != null ? (
+              {included && entry && profileGraduation != null ? (
                 <div className="space-y-4 border-t border-border p-4">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
@@ -250,7 +253,8 @@ export function CombineCompanyCards({
                       </span>
                     </div>
                     <CombinePeriodSlider
-                      graduationYear={graduationYear}
+                      graduationYear={profileGraduation.year}
+                      graduationMonth={profileGraduation.month}
                       startDate={entry.startDate}
                       endDate={entry.endDate}
                       priorStartIndex={priorStartIndex}

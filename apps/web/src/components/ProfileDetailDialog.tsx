@@ -53,6 +53,14 @@ export function ProfileDetailDialog({
         }
       />
       <DetailField
+        label={t("crud.profiles.form.graduationMonth")}
+        value={
+          profile.graduationMonth != null
+            ? String(profile.graduationMonth)
+            : null
+        }
+      />
+      <DetailField
         label={t("crud.profiles.form.degree")}
         value={profile.degree}
       />

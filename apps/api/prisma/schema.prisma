@@ -51,6 +51,7 @@ model Profile {
   residence       String?
   university      String?
   graduationYear  Int?
+  graduationMonth Int?
   degree          String?
   createdAt       DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
@@ -139,13 +140,13 @@ model AiUsage {
 }
 
 model Generation {
-  id                 String    @id @default(cuid())
+  id                 String                  @id @default(cuid())
   publicId           String
   userId             String
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  finalized          Boolean   @default(false)
-  inputToken         Int       @default(0)
-  outputToken        Int       @default(0)
+  user               User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  finalized          Boolean                 @default(false)
+  inputToken         Int                     @default(0)
+  outputToken        Int                     @default(0)
   activeStep         String
   jobJson            String
   combineJson        String
@@ -158,13 +159,25 @@ model Generation {
   verdictPrompt      String
   generatePrompt     String
   evaluatePrompt     String
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
   aiUsages           AiUsage[]
+  jobEmbedding       GenerationJobEmbedding?
 
   @@unique([userId, publicId])
   @@index([userId, createdAt])
   @@map("generations")
+}
+
+model GenerationJobEmbedding {
+  generationId String     @id
+  generation   Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  model        String
+  vector       Bytes
+  sourceHash   String
+  updatedAt    DateTime   @updatedAt
+
+  @@map("generationJobEmbeddings")
 }
 
 model Prompt {

@@ -571,6 +571,27 @@ export function updateGeneration(id: string, payload: GenerationUpdatePayload) {
   });
 }
 
+export type JobDuplicateMatch = {
+  generationId: string;
+  publicId: string;
+  filteredJobText: string;
+  finalized: boolean;
+  score: number;
+};
+
+export type JobDuplicateCheckResult = {
+  match: JobDuplicateMatch | null;
+};
+
+export function checkJobDuplicate(generationId: string) {
+  return request<JobDuplicateCheckResult>(
+    `/generations/${generationId}/job-duplicate-check`,
+    {
+      method: "POST",
+    },
+  );
+}
+
 export function listGenerations(q: string, page: number | null = 1) {
   const params = new URLSearchParams();
   appendListParams(params, q, page);

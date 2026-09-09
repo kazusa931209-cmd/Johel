@@ -9,6 +9,7 @@ import {
   clearDownstreamFromGenerate,
   clearDownstreamFromVerdict,
   EMPTY_GENERATE_SESSION,
+  EMPTY_JOB_STATE,
   type GenerateJobState,
   type GenerateSession,
   clearGenerateSession,
@@ -141,14 +142,29 @@ export function useGenerateSession() {
   }, []);
 
   const setJob = useCallback((job: GenerateJobState) => {
-    setSession((current) => ({ ...current, job }));
+    setSession((current) => ({
+      ...current,
+      job,
+      jobDuplicateDismissedHash:
+        job.jobText.trim() === current.job.jobText.trim()
+          ? current.jobDuplicateDismissedHash
+          : null,
+    }));
   }, []);
 
   const patchJob = useCallback((patch: Partial<GenerateJobState>) => {
-    setSession((current) => ({
-      ...current,
-      job: { ...current.job, ...patch },
-    }));
+    setSession((current) => {
+      const nextJob = { ...current.job, ...patch };
+      return {
+        ...current,
+        job: nextJob,
+        jobDuplicateDismissedHash:
+          typeof patch.jobText === "string" &&
+          patch.jobText.trim() !== current.job.jobText.trim()
+            ? null
+            : current.jobDuplicateDismissedHash,
+      };
+    });
   }, []);
 
   const setCombine = useCallback((combine: CombineSnapshot) => {
@@ -223,6 +239,37 @@ export function useGenerateSession() {
     });
   }, [userId]);
 
+  const dismissJobDuplicateCheck = useCallback((hash: string) => {
+    setSession((current) => ({
+      ...current,
+      jobDuplicateDismissedHash: hash,
+    }));
+  }, []);
+
+  const restoreSession = useCallback((next: GenerateSession) => {
+    setSession(next);
+  }, []);
+
+  const clearJobAndPersist = useCallback(async () => {
+    const snapshot = toGenerationSnapshot(session);
+    if (!snapshot) {
+      return { error: "Generation session is not ready." };
+    }
+
+    const nextSession = withoutResume({
+      ...session,
+      job: EMPTY_JOB_STATE,
+      jobDuplicateDismissedHash: null,
+      verdictInputKey: null,
+    });
+    setSession(nextSession);
+
+    return persistGenerationSnapshot({
+      ...snapshot,
+      job: EMPTY_JOB_STATE,
+    });
+  }, [session]);
+
   return {
     ready,
     userId,
@@ -249,5 +296,9 @@ export function useGenerateSession() {
     resetSession,
     markFinalized,
     finalized: session.finalized,
+    jobDuplicateDismissedHash: session.jobDuplicateDismissedHash,
+    dismissJobDuplicateCheck,
+    restoreSession,
+    clearJobAndPersist,
   };
 }
