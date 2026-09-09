@@ -417,6 +417,8 @@ export const en = {
       companies: "Companies",
       companiesHint:
         "Select a profile first, then toggle companies to include them on the résumé. Work periods are limited from the profile graduation year (January) through the present.",
+      resetCompanies: "Reset",
+      resetCompaniesAria: "Deselect all companies",
       selectProfileFirst: "Select a profile before choosing companies.",
       profileGraduationYearMissing:
         "This profile has no graduation year. Edit the profile and add a graduation year before choosing companies.",
@@ -443,10 +445,10 @@ export const en = {
       },
       experiencesSection: "Experiences",
       experiencesSectionHint:
-        "Link shared capability cards to each included company. Optional Keyword context on a company card steers which cards AI picks for that company; leave it empty for Auto (job/Verdict and role context only).",
+        "Link capability cards to each included company. Keyword context steers AI picks; leave empty for Auto.",
       keywordContext: "Keyword context",
       keywordContextHint:
-        "Optional. Comma-separated words or phrases that steer which capability cards to link for this company (e.g. AWS, blockchain). Not your job title — use Role context for that.",
+        "Optional. Comma-separated hints (e.g. AWS, blockchain). Use Role context for job titles.",
       keywordContextPlaceholder: "e.g. AWS, Blockchain, Senior, payments API",
       suggestVerdictRequired:
         "Complete the Verdict step before suggesting experiences when Do Verdict is enabled.",

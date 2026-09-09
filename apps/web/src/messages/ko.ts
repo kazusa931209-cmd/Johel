@@ -418,6 +418,8 @@ export const ko: MessageTree = {
       companies: "회사",
       companiesHint:
         "먼저 개인정보를 선택한 다음 포함할 회사를 고릅니다. 근무기간은 개인정보 졸업년도 1월부터 현재까지 선택할 수 있습니다.",
+      resetCompanies: "재설정",
+      resetCompaniesAria: "선택한 회사 모두 해제",
       selectProfileFirst: "회사를 선택하기 전에 개인정보를 선택하여주십시오.",
       profileGraduationYearMissing:
         "이 개인정보에 졸업년도가 없습니다. 개인정보를 편집하여 졸업년도를 추가한 후 회사를 선택하여주십시오.",
@@ -443,10 +445,10 @@ export const ko: MessageTree = {
       },
       experiencesSection: "경험",
       experiencesSectionHint:
-        "포함된 각 회사에 공유 경험카드를 련결합니다. 회사카드의 선택적 실마리어 문맥으로 해당회사만 맞춤대응하고, 비워두면 AI선택(직업광고문·검토·역할문맥)으로 동작합니다.",
+        "포함 회사마다 경험카드를 연결합니다. 실마리어 문맥으로 AI 선택을 안내하고, 비우면 자동입니다.",
       keywordContext: "실마리어 문맥",
       keywordContextHint:
-        "선택. 이 회사에 연결할 역량 카드를 안내하는 쉼표 구분 실마리어(예: AWS, blockchain). 직함은 역할 문맥에 입력하십시오.",
+        "선택. 쉼표로 구분한 실마리어(예: AWS, blockchain). 직함은 역할 문맥에 입력하십시오.",
       keywordContextPlaceholder: "예: AWS, Blockchain, Senior, payments API",
       suggestVerdictRequired:
         "[검토]를 실행하는 경우 경험 제안 전에 검토 단계를 완료하여주십시오.",

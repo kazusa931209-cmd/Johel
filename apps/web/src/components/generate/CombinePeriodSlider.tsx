@@ -59,10 +59,6 @@ export function CombinePeriodSlider({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-muted">
-        {t("generate.combine.periodGraduationHint", { year: graduationYear })}
-      </p>
-      <p className="text-sm font-medium">{rangeLabel}</p>
       <div className="relative h-8 pt-3">
         <div className="absolute top-1/2 right-0 left-0 h-1.5 -translate-y-1/2 rounded-full bg-[var(--period-track)]" />
         <div

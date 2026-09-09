@@ -143,6 +143,11 @@ export function CombineCompanyCards({
     );
   }
 
+  function resetCompanies() {
+    if (companies.length === 0) return;
+    updateIncluded([]);
+  }
+
   if (loading) {
     return <p className="text-sm text-muted">{t("shared.detail.loading")}</p>;
   }
@@ -161,13 +166,24 @@ export function CombineCompanyCards({
 
   return (
     <section className="space-y-3">
-      <div className="space-y-1">
-        <h3 className="text-sm font-medium">{t("generate.combine.companies")}</h3>
-        <p className="text-xs text-muted">{t("generate.combine.companiesHint")}</p>
-        {disabledMessage ? (
-          <p className="text-sm text-muted">{disabledMessage}</p>
-        ) : null}
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
+          <h3 className="text-sm font-medium">{t("generate.combine.companies")}</h3>
+          <p className="text-xs text-muted">{t("generate.combine.companiesHint")}</p>
+          {disabledMessage ? (
+            <p className="text-sm text-muted">{disabledMessage}</p>
+          ) : null}
+          {error ? <p className="text-sm text-danger">{error}</p> : null}
+        </div>
+        <button
+          type="button"
+          onClick={resetCompanies}
+          disabled={companies.length === 0}
+          aria-label={t("generate.combine.resetCompaniesAria")}
+          className="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
+        >
+          {t("generate.combine.resetCompanies")}
+        </button>
       </div>
 
       <div
@@ -209,9 +225,17 @@ export function CombineCompanyCards({
               {included && entry && graduationYear != null ? (
                 <div className="space-y-4 border-t border-border p-4">
                   <div className="space-y-1">
-                    <span className="text-xs font-medium text-muted">
-                      {t("generate.combine.period")}
-                    </span>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                      <span className="text-sm">
+                        {t("generate.combine.period")}
+                        <span className="ml-0.5 text-danger" aria-hidden>
+                        *
+                      </span>
+                      </span>
+                      <span className="text-sm font-medium">
+                        {entry.startDate} – {entry.endDate}
+                      </span>
+                    </div>
                     <CombinePeriodSlider
                       graduationYear={graduationYear}
                       startDate={entry.startDate}
