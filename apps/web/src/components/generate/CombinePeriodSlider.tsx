@@ -3,28 +3,34 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import {
-  COMBINE_PERIOD_MONTH_COUNT,
+  buildPeriodWindow,
   formatPeriodRangeLabel,
   indicesToPeriod,
   labelsToMonthIndices,
 } from "@/lib/combine-period";
 
 type CombinePeriodSliderProps = {
+  graduationYear: number;
   startDate: string;
   endDate: string;
   onChange: (period: { startDate: string; endDate: string }) => void;
 };
 
 export function CombinePeriodSlider({
+  graduationYear,
   startDate,
   endDate,
   onChange,
 }: CombinePeriodSliderProps) {
   const t = useT();
   const { locale } = useLocale();
+  const window = useMemo(
+    () => buildPeriodWindow(graduationYear),
+    [graduationYear],
+  );
   const parsedIndices = useMemo(
-    () => labelsToMonthIndices(startDate, endDate, locale),
-    [startDate, endDate, locale],
+    () => labelsToMonthIndices(window, startDate, endDate, locale),
+    [window, startDate, endDate, locale],
   );
   const [startIndex, setStartIndex] = useState(parsedIndices.startIndex);
   const [endIndex, setEndIndex] = useState(parsedIndices.endIndex);
@@ -34,7 +40,6 @@ export function CombinePeriodSlider({
     setEndIndex(parsedIndices.endIndex);
   }, [parsedIndices.endIndex, parsedIndices.startIndex]);
 
-  const maxIndex = COMBINE_PERIOD_MONTH_COUNT - 1;
   const safeStart = Math.min(startIndex, endIndex);
   const safeEnd = Math.max(startIndex, endIndex);
 
@@ -43,15 +48,20 @@ export function CombinePeriodSlider({
     const end = Math.max(nextStart, nextEnd);
     setStartIndex(start);
     setEndIndex(end);
-    onChange(indicesToPeriod(start, end, locale));
+    onChange(indicesToPeriod(window, start, end, locale));
   }
 
-  const rangeLabel = formatPeriodRangeLabel(safeStart, safeEnd, locale);
-  const startPercent = (safeStart / maxIndex) * 100;
-  const endPercent = (safeEnd / maxIndex) * 100;
+  const rangeLabel = formatPeriodRangeLabel(window, safeStart, safeEnd, locale);
+  const startPercent =
+    window.maxIndex > 0 ? (safeStart / window.maxIndex) * 100 : 0;
+  const endPercent =
+    window.maxIndex > 0 ? (safeEnd / window.maxIndex) * 100 : 100;
 
   return (
     <div className="space-y-2">
+      <p className="text-xs text-muted">
+        {t("generate.combine.periodGraduationHint", { year: graduationYear })}
+      </p>
       <p className="text-sm font-medium">{rangeLabel}</p>
       <div className="relative h-8 pt-3">
         <div className="absolute top-1/2 right-0 left-0 h-1.5 -translate-y-1/2 rounded-full bg-surface-muted" />
@@ -65,7 +75,7 @@ export function CombinePeriodSlider({
         <input
           type="range"
           min={0}
-          max={maxIndex}
+          max={window.maxIndex}
           value={safeStart}
           onChange={(event) =>
             emitPeriod(Number(event.target.value), safeEnd)
@@ -76,7 +86,7 @@ export function CombinePeriodSlider({
         <input
           type="range"
           min={0}
-          max={maxIndex}
+          max={window.maxIndex}
           value={safeEnd}
           onChange={(event) =>
             emitPeriod(safeStart, Number(event.target.value))

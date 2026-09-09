@@ -20,7 +20,7 @@ import {
   type ProfileDetail,
 } from "@/lib/api";
 import { useCrudListParams } from "@/lib/crud-list-params";
-import { formatLinksCell, fullName } from "@/lib/profile";
+import { formatEducationCell, formatLinksCell, fullName } from "@/lib/profile";
 
 function ProfilesPageFallback() {
   const t = useT();
@@ -199,7 +199,7 @@ function ProfilesPageContent() {
                     {row.residence ?? ""}
                   </td>
                   <td className="max-w-20 truncate px-3 py-2 text-muted">
-                    {row.education ?? ""}
+                    {formatEducationCell(row)}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"

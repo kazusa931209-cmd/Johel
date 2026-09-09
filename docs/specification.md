@@ -141,13 +141,13 @@ Aligned with the product flow above:
     * Prompts
 * **Profiles**
   * One signed-in user can manage **multiple** profiles
-  * Per-user list: No, Full Name (first + last), birth date, email, PN, links, residence, education
-  * Keyword filter on name parts, email, PN, residence, education; 10 rows per page
+  * Per-user list: No, Full Name (first + last), birth date, email, PN, links, residence, education summary (university, graduation year, degree)
+  * Keyword filter on name parts, email, PN, residence, university, degree; 10 rows per page
   * List rows show hover; clicking a row opens a read-only detail dialog (Edit/Delete icons still work separately)
   * Add and edit use dedicated pages (not dialogs); delete uses a confirm dialog
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole profile
   * Links add/edit/delete is local on the page until Save persists the profile (same pattern as workflow Metadata)
-  * Editor fields: first name (required), last name (required), birth date, email, PN, residence, education (optional); links table (Key required; Value/link optional)
+  * Editor fields: first name (required), last name (required), birth date, email, PN, residence, university (optional), graduation year (required), degree (optional); links table (Key required; Value/link optional)
   * Distinct from header menu **Profile** (account email page)
 * **Companies**
   * One signed-in user can manage **multiple** companies
@@ -193,7 +193,7 @@ Aligned with the product flow above:
   * Previous-step content by current step (respecting **Do Verdict** / **Do Evaluate** flags): **Verdict** ← noise-filtered Job Description; **Combine** ← AI Verdict Markdown when Do Verdict is on, otherwise noise-filtered Job Description; **Generate** ← read-only Combine summary (profile name, language, emphasis, included company entries with dates and role context — not the Combine editors); **Evaluate** ← generated résumé Markdown preview
   * **Job** **Next**: validates the Job Description (inline error if empty); runs **Noise Filter** silently; advances to Verdict or Combine (does not run AI on this step)
   * **Verdict** (when enabled): auto-runs **AI Verdict** on entry with the noise-filtered JD and saved Verdict Prompt; shows result Markdown; **Next** advances to Combine when complete
-  * **Combine**: choose profile, résumé language, optional **Run guidance**, and included companies (card grid with include toggle, period slider, inline role context); **Next** validates inline (profile, ≥1 included company with period + role context; no experience requirement) then advances to Generate (resume generation runs on the Generate step)
+  * **Combine**: choose profile, résumé language, optional **Run guidance**, and included companies (card grid with include toggle, period slider, inline role context); company selection is enabled only after a profile is selected; work period slider range is from **January of the profile graduation year** through the present; **Next** validates inline (profile with graduation year, ≥1 included company with period + role context; no experience requirement) then advances to Generate (resume generation runs on the Generate step)
   * Session remembers step, Job, Verdict, Combine (including Run guidance), resume JSON, and evaluation until **New** or Process settings change
   * **Generate** and **Evaluate** steps: auto-run resume generation and evaluation respectively when needed; Markdown preview; DOCX download on Evaluate (or Generate when Do Evaluate is off)
 * **Settings**

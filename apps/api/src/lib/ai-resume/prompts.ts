@@ -89,14 +89,20 @@ function formatProfileSection(input: ResumeGenerationInput): string {
     optionalLine("Birth date", profile.birthDate),
   ].filter((line): line is string => Boolean(line));
 
-  const education = profile.education?.trim();
+  const educationLines = [
+    optionalLine("University", profile.university),
+    profile.graduationYear != null
+      ? `- Graduation year: ${profile.graduationYear}`
+      : null,
+    optionalLine("Degree", profile.degree),
+  ].filter((line): line is string => Boolean(line));
   const linkLines = profile.links
     .filter((link) => link.link?.trim())
     .map((link) => `- ${link.key}: ${link.link?.trim()}`);
 
   const blocks = [`## Profile`, lines.join("\n")];
-  if (education) {
-    blocks.push(`Education:\n${education}`);
+  if (educationLines.length > 0) {
+    blocks.push(`Education:\n${educationLines.join("\n")}`);
   }
   if (linkLines.length > 0) {
     blocks.push(`Links:\n${linkLines.join("\n")}`);

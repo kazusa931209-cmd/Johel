@@ -125,7 +125,9 @@ export async function assembleFromCombineSnapshot(
       email: profile.email,
       pn: profile.pn,
       residence: profile.residence,
-      education: profile.education,
+      university: profile.university,
+      graduationYear: profile.graduationYear,
+      degree: profile.degree,
       links: profile.links.map((link) => ({
         key: link.key,
         link: link.link,

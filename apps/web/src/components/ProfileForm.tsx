@@ -23,6 +23,7 @@ type ProfileFormProps = {
 type FieldErrors = {
   firstName?: string;
   lastName?: string;
+  graduationYear?: string;
 };
 
 function RequiredMark() {
@@ -48,7 +49,11 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
   const [email, setEmail] = useState(initial?.email ?? "");
   const [pn, setPn] = useState(initial?.pn ?? "");
   const [residence, setResidence] = useState(initial?.residence ?? "");
-  const [education, setEducation] = useState(initial?.education ?? "");
+  const [university, setUniversity] = useState(initial?.university ?? "");
+  const [graduationYear, setGraduationYear] = useState(
+    initial?.graduationYear != null ? String(initial.graduationYear) : "",
+  );
+  const [degree, setDegree] = useState(initial?.degree ?? "");
   const [links, setLinks] = useState<ProfileLinkItem[]>(initial?.links ?? []);
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -62,6 +67,10 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
     if (!lastName.trim()) {
       nextErrors.lastName = t("validation.lastNameRequired");
     }
+    const parsedGraduationYear = Number.parseInt(graduationYear.trim(), 10);
+    if (!graduationYear.trim() || Number.isNaN(parsedGraduationYear)) {
+      nextErrors.graduationYear = t("validation.graduationYearRequired");
+    }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -74,7 +83,9 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       email: email.trim() || null,
       pn: pn.trim() || null,
       residence: residence.trim() || null,
-      education: education.trim() || null,
+      university: university.trim() || null,
+      graduationYear: parsedGraduationYear,
+      degree: degree.trim() || null,
       links,
     };
     setSaving(true);
@@ -201,12 +212,47 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
         />
       </label>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block space-y-1 text-sm">
+          <span>{t("crud.profiles.form.university")}</span>
+          <input
+            value={university}
+            onChange={(e) => setUniversity(e.target.value)}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          />
+        </label>
+        <label className="block space-y-1 text-sm">
+          <span>
+            {t("crud.profiles.form.graduationYear")}
+            <RequiredMark />
+          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1950}
+            max={new Date().getFullYear()}
+            value={graduationYear}
+            onChange={(e) => {
+              setGraduationYear(e.target.value);
+              if (fieldErrors.graduationYear) {
+                setFieldErrors((errors) => ({
+                  ...errors,
+                  graduationYear: undefined,
+                }));
+              }
+            }}
+            aria-invalid={Boolean(fieldErrors.graduationYear)}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          />
+          <FieldError message={fieldErrors.graduationYear} />
+        </label>
+      </div>
+
       <label className="block space-y-1 text-sm">
-        <span>{t("crud.profiles.form.education")}</span>
-        <textarea
-          value={education}
-          onChange={(e) => setEducation(e.target.value)}
-          rows={3}
+        <span>{t("crud.profiles.form.degree")}</span>
+        <input
+          value={degree}
+          onChange={(e) => setDegree(e.target.value)}
           className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
         />
       </label>

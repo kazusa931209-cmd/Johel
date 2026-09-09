@@ -58,14 +58,15 @@ export function CombineProfilePicker({
           cell: (row) => row.email ?? "",
         },
         {
-          header: t("crud.profiles.form.pn"),
-          className: "whitespace-nowrap text-muted",
-          cell: (row) => row.pn ?? "",
+          header: t("crud.profiles.form.university"),
+          className: "max-w-[160px] truncate text-muted",
+          cell: (row) => row.university ?? "",
         },
         {
-          header: t("crud.profiles.form.education"),
-          className: "max-w-[160px] truncate text-muted",
-          cell: (row) => row.education ?? "",
+          header: t("crud.profiles.form.graduationYear"),
+          className: "whitespace-nowrap text-muted",
+          cell: (row) =>
+            row.graduationYear != null ? String(row.graduationYear) : "",
         },
       ]}
       renderDetailDialog={(row) => (

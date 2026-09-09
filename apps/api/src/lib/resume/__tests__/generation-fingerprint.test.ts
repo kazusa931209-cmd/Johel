@@ -10,7 +10,9 @@ const baseInput = {
     email: "jane@example.com",
     pn: null,
     residence: null,
-    education: null,
+    university: null,
+    graduationYear: 2018,
+    degree: null,
     links: [{ key: "LinkedIn", link: "https://linkedin.com/in/jane" }],
   },
   companies: [

@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { CombinePeriodSlider } from "@/components/generate/CombinePeriodSlider";
 import {
+  buildPeriodWindow,
+  clampPeriodToWindow,
   defaultPeriodIndices,
   indicesToPeriod,
 } from "@/lib/combine-period";
@@ -15,23 +17,46 @@ import { listCompanies, type CompanyDetail } from "@/lib/api";
 type CombineCompanyCardsProps = {
   companies: CombineCompanyEntry[];
   onChange: (companies: CombineCompanyEntry[]) => void;
+  disabled?: boolean;
+  graduationYear?: number | null;
   error?: string;
   onClearError?: () => void;
 };
 
-function syncIncludedOrder(
-  workspaceIds: string[],
+function normalizeIncludedEntries(
+  workspaceIds: Set<string>,
   entries: CombineCompanyEntry[],
 ): CombineCompanyEntry[] {
-  const byId = new Map(entries.map((entry) => [entry.companyId, entry]));
-  return workspaceIds
-    .map((id) => byId.get(id))
-    .filter((entry): entry is CombineCompanyEntry => Boolean(entry));
+  return entries.filter((entry) => workspaceIds.has(entry.companyId));
+}
+
+function orderCompaniesForDisplay(
+  workspaceCompanies: CompanyDetail[],
+  includedEntries: CombineCompanyEntry[],
+): CompanyDetail[] {
+  const workspaceById = new Map(
+    workspaceCompanies.map((company) => [company.id, company]),
+  );
+  const includedIds = new Set(
+    includedEntries.map((entry) => entry.companyId),
+  );
+
+  const included = includedEntries
+    .map((entry) => workspaceById.get(entry.companyId))
+    .filter((company): company is CompanyDetail => Boolean(company));
+
+  const excluded = workspaceCompanies.filter(
+    (company) => !includedIds.has(company.id),
+  );
+
+  return [...included, ...excluded];
 }
 
 export function CombineCompanyCards({
   companies,
   onChange,
+  disabled = false,
+  graduationYear = null,
   error,
   onClearError,
 }: CombineCompanyCardsProps) {
@@ -42,6 +67,10 @@ export function CombineCompanyCards({
   );
   const [loading, setLoading] = useState(true);
   const [viewCompany, setViewCompany] = useState<CompanyDetail | null>(null);
+
+  const cardsDisabled = disabled || graduationYear == null;
+  const periodWindow =
+    graduationYear != null ? buildPeriodWindow(graduationYear) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -55,37 +84,57 @@ export function CombineCompanyCards({
     };
   }, []);
 
-  const workspaceIds = workspaceCompanies.map((company) => company.id);
+  const workspaceIdSet = useMemo(
+    () => new Set(workspaceCompanies.map((company) => company.id)),
+    [workspaceCompanies],
+  );
+  const displayCompanies = useMemo(
+    () => orderCompaniesForDisplay(workspaceCompanies, companies),
+    [workspaceCompanies, companies],
+  );
   const includedById = new Map(
     companies.map((entry) => [entry.companyId, entry]),
   );
 
   function updateIncluded(nextEntries: CombineCompanyEntry[]) {
     onClearError?.();
-    onChange(syncIncludedOrder(workspaceIds, nextEntries));
+    onChange(normalizeIncludedEntries(workspaceIdSet, nextEntries));
   }
 
   function toggleInclude(companyId: string, included: boolean) {
+    if (cardsDisabled || !periodWindow) return;
+
     if (!included) {
       updateIncluded(companies.filter((entry) => entry.companyId !== companyId));
       return;
     }
 
     const existing = includedById.get(companyId);
-    const defaults = defaultPeriodIndices();
+    const defaults = defaultPeriodIndices(periodWindow);
     const defaultPeriod = indicesToPeriod(
+      periodWindow,
       defaults.startIndex,
       defaults.endIndex,
       locale,
     );
+    const restoredPeriod =
+      existing != null
+        ? clampPeriodToWindow(
+            periodWindow,
+            existing.startDate,
+            existing.endDate,
+            locale,
+          )
+        : defaultPeriod;
+
     updateIncluded([
       ...companies.filter((entry) => entry.companyId !== companyId),
-      existing ?? {
+      {
         companyId,
-        startDate: defaultPeriod.startDate,
-        endDate: defaultPeriod.endDate,
-        roleContext: "",
-        experienceIds: [],
+        startDate: restoredPeriod.startDate,
+        endDate: restoredPeriod.endDate,
+        roleContext: existing?.roleContext ?? "",
+        experienceIds: existing?.experienceIds ?? [],
       },
     ]);
   }
@@ -111,46 +160,67 @@ export function CombineCompanyCards({
     );
   }
 
+  const disabledMessage = disabled
+    ? t("generate.combine.selectProfileFirst")
+    : graduationYear == null
+      ? t("generate.combine.profileGraduationYearMissing")
+      : null;
+
   return (
     <section className="space-y-3">
       <div className="space-y-1">
         <h3 className="text-sm font-medium">{t("generate.combine.companies")}</h3>
         <p className="text-xs text-muted">{t("generate.combine.companiesHint")}</p>
+        {disabledMessage ? (
+          <p className="text-sm text-muted">{disabledMessage}</p>
+        ) : null}
         {error ? <p className="text-sm text-danger">{error}</p> : null}
       </div>
 
-      <div className="flex flex-col gap-4">
-        {workspaceCompanies.map((company) => {
+      <div
+        className={`flex flex-col gap-4 ${cardsDisabled ? "pointer-events-none opacity-60" : ""}`}
+      >
+        {displayCompanies.map((company) => {
           const included = includedById.has(company.id);
           const entry = includedById.get(company.id);
 
           return (
             <article
               key={company.id}
-              className="space-y-4 rounded-md border border-border bg-background p-4"
+              className="overflow-hidden rounded-md border border-border bg-background"
             >
-              <div className="flex items-start justify-between gap-3">
-                <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-sm hover:bg-surface-muted/60">
+              <div className="flex items-stretch">
+                <label
+                  className={`flex min-h-12 min-w-0 flex-1 items-center gap-3 px-4 py-3 ${
+                    cardsDisabled
+                      ? "cursor-not-allowed"
+                      : "cursor-pointer hover:bg-surface-muted/60"
+                  }`}
+                >
                   <input
                     type="checkbox"
                     checked={included}
+                    disabled={cardsDisabled}
                     onChange={(event) =>
                       toggleInclude(company.id, event.target.checked)
                     }
-                    className="h-4 w-4 shrink-0 rounded border-border"
+                    className="h-4 w-4 shrink-0 rounded border-border disabled:cursor-not-allowed"
                   />
                   <span className="min-w-0 flex-1 font-medium">{company.name}</span>
                 </label>
-                <ViewButton onClick={() => setViewCompany(company)} />
+                <div className="pointer-events-auto flex items-center px-3">
+                  <ViewButton onClick={() => setViewCompany(company)} />
+                </div>
               </div>
 
-              {included && entry ? (
-                <div className="space-y-4 border-t border-border pt-4">
+              {included && entry && graduationYear != null ? (
+                <div className="space-y-4 border-t border-border p-4">
                   <div className="space-y-1">
                     <span className="text-xs font-medium text-muted">
                       {t("generate.combine.period")}
                     </span>
                     <CombinePeriodSlider
+                      graduationYear={graduationYear}
                       startDate={entry.startDate}
                       endDate={entry.endDate}
                       onChange={(period) =>
@@ -169,13 +239,14 @@ export function CombineCompanyCards({
                     <input
                       type="text"
                       value={entry.roleContext}
+                      disabled={cardsDisabled}
                       onChange={(event) =>
                         patchEntry(company.id, {
                           roleContext: event.target.value,
                         })
                       }
                       placeholder={t("generate.combine.roleContextPlaceholder")}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
                     />
                   </label>
                 </div>

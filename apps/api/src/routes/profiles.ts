@@ -9,6 +9,7 @@ import {
 } from "../lib/list-pagination.js";
 
 const PAGE_SIZE = 10;
+const CURRENT_YEAR = new Date().getFullYear();
 
 const dateOnly = z
   .string()
@@ -31,7 +32,13 @@ const writeSchema = z.object({
     .optional(),
   pn: z.string().trim().max(100).optional().nullable(),
   residence: z.string().trim().max(500).optional().nullable(),
-  education: z.string().trim().max(2000).optional().nullable(),
+  university: z.string().trim().max(500).optional().nullable(),
+  graduationYear: z
+    .number()
+    .int()
+    .min(1950, "Graduation year is required")
+    .max(CURRENT_YEAR, "Graduation year cannot be in the future"),
+  degree: z.string().trim().max(500).optional().nullable(),
   links: z.array(linkItemSchema).max(100),
 });
 
@@ -48,7 +55,9 @@ type ProfileWithLinks = {
   email: string | null;
   pn: string | null;
   residence: string | null;
-  education: string | null;
+  university: string | null;
+  graduationYear: number | null;
+  degree: string | null;
   createdAt: Date;
   updatedAt: Date;
   links: {
@@ -106,7 +115,9 @@ function toDetail(row: ProfileWithLinks) {
     email: row.email,
     pn: row.pn,
     residence: row.residence,
-    education: row.education,
+    university: row.university,
+    graduationYear: row.graduationYear,
+    degree: row.degree,
     links: mapLinks(row.links),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -155,7 +166,8 @@ profilesRoutes.get("/", async (c) => {
           { email: { contains: q } },
           { pn: { contains: q } },
           { residence: { contains: q } },
-          { education: { contains: q } },
+          { university: { contains: q } },
+          { degree: { contains: q } },
         ],
       }
     : {};
@@ -226,7 +238,9 @@ profilesRoutes.post("/", async (c) => {
         email: emptyToNull(parsed.data.email),
         pn: emptyToNull(parsed.data.pn),
         residence: emptyToNull(parsed.data.residence),
-        education: emptyToNull(parsed.data.education),
+        university: emptyToNull(parsed.data.university),
+        graduationYear: parsed.data.graduationYear,
+        degree: emptyToNull(parsed.data.degree),
       },
     });
     await replaceLinks(tx, created.id, links.value);
@@ -274,7 +288,9 @@ profilesRoutes.put("/:id", async (c) => {
         email: emptyToNull(parsed.data.email),
         pn: emptyToNull(parsed.data.pn),
         residence: emptyToNull(parsed.data.residence),
-        education: emptyToNull(parsed.data.education),
+        university: emptyToNull(parsed.data.university),
+        graduationYear: parsed.data.graduationYear,
+        degree: emptyToNull(parsed.data.degree),
       },
     });
     await replaceLinks(tx, id, links.value);

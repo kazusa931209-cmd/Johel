@@ -43,10 +43,15 @@ export function formatCompanyPeriod(startDate: string, endDate: string): string 
 export function validateCombineSnapshot(
   snapshot: CombineSnapshot,
   t: (key: string) => string,
+  graduationYear?: number | null,
 ): CombineFieldErrors {
   const errors: CombineFieldErrors = {};
   if (!snapshot.profileId) {
     errors.profileId = t("validation.profileRequired");
+  }
+  if (snapshot.profileId && graduationYear == null) {
+    errors.companies = t("validation.profileGraduationYearRequired");
+    return errors;
   }
   if (snapshot.companies.length < 1) {
     errors.companies = t("validation.companiesMinOne");

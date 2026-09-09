@@ -19,7 +19,9 @@ export type ResumeGenerationProfile = {
   email: string | null;
   pn: string | null;
   residence: string | null;
-  education: string | null;
+  university: string | null;
+  graduationYear: number | null;
+  degree: string | null;
   links: { key: string; link: string | null }[];
 };
 

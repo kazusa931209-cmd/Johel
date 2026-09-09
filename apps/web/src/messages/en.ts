@@ -164,7 +164,7 @@ export const en = {
       noLinks: "No links.",
       notFound: "No profiles found.",
       title: "Profiles",
-      searchPlaceholder: "Search name, email, PN, residence, education",
+      searchPlaceholder: "Search name, email, PN, residence, university, degree",
       empty: "No profiles yet.",
       columns: {
         fullName: "Full Name",
@@ -188,7 +188,9 @@ export const en = {
         email: "Email",
         pn: "PN",
         residence: "Residence",
-        education: "Education",
+        university: "University",
+        graduationYear: "Graduation year",
+        degree: "Degree",
       },
       links: {
         title: "Links",
@@ -458,7 +460,12 @@ export const en = {
         "e.g. Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups.",
       companies: "Companies",
       companiesHint:
-        "Toggle companies to include them on the résumé. Included cards need a period and role context.",
+        "Select a profile first, then toggle companies to include them on the résumé. Work periods are limited from the profile graduation year (January) through the present.",
+      selectProfileFirst: "Select a profile before choosing companies.",
+      profileGraduationYearMissing:
+        "This profile has no graduation year. Edit the profile and add a graduation year before choosing companies.",
+      periodGraduationHint:
+        "Work period can be selected from January {year} through the present.",
       includeCompany: "Include",
       noCompanies: "Add companies in the workspace before combining.",
       period: "Period",
@@ -706,6 +713,9 @@ export const en = {
     nameRequired: "Name is required.",
     descriptionRequired: "Description is required.",
     profileRequired: "Select one profile.",
+    graduationYearRequired: "Graduation year is required.",
+    profileGraduationYearRequired:
+      "The selected profile must have a graduation year before choosing companies.",
     combineCompaniesRequired: "Add at least one company entry.",
     companyRequired: "Select one company.",
     startDateRequired: "Start is required.",

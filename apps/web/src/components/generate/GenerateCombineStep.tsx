@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
 import { CombineProfilePicker } from "@/components/generate/CombineProfilePicker";
@@ -12,6 +12,7 @@ import {
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
+import { getProfile } from "@/lib/api";
 
 type GenerateCombineStepProps = {
   combine: CombineSnapshot;
@@ -45,16 +46,34 @@ export function GenerateCombineStep({
 }: GenerateCombineStepProps) {
   const t = useT();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
+  const [graduationYear, setGraduationYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!combine.profileId) {
+      setGraduationYear(null);
+      return;
+    }
+
+    let cancelled = false;
+    getProfile(combine.profileId).then((res) => {
+      if (cancelled) return;
+      setGraduationYear(res.data?.graduationYear ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [combine.profileId]);
 
   const handleNext = useCallback(() => {
-    const errors = validateCombineSnapshot(combine, t);
+    const errors = validateCombineSnapshot(combine, t, graduationYear);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
     setFieldErrors({});
     void onNext();
-  }, [combine, onNext, t]);
+  }, [combine, graduationYear, onNext, t]);
 
   useRegisterGenerateStepNav({
     onPrev,
@@ -63,6 +82,14 @@ export function GenerateCombineStep({
 
   function patchCombine(patch: Partial<CombineSnapshot>) {
     onCombineChange({ ...combine, ...patch });
+  }
+
+  function handleProfileIdChange(profileId: string) {
+    onCombineChange({
+      ...combine,
+      profileId,
+      companies: profileId === combine.profileId ? combine.companies : [],
+    });
   }
 
   return (
@@ -76,7 +103,7 @@ export function GenerateCombineStep({
 
       <CombineProfilePicker
         profileId={combine.profileId}
-        onProfileIdChange={(profileId) => patchCombine({ profileId })}
+        onProfileIdChange={handleProfileIdChange}
         fieldErrors={fieldErrors}
         onClearError={() =>
           setFieldErrors((errors) => ({ ...errors, profileId: undefined }))
@@ -108,6 +135,8 @@ export function GenerateCombineStep({
       <CombineCompanyCards
         companies={combine.companies}
         onChange={(companies) => patchCombine({ companies })}
+        disabled={!combine.profileId}
+        graduationYear={graduationYear}
         error={fieldErrors.companies}
         onClearError={() =>
           setFieldErrors((errors) => ({ ...errors, companies: undefined }))

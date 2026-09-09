@@ -1,22 +1,42 @@
-/** Ten-year month window ending at the current month (120 months, indices 0–119). */
-export const COMBINE_PERIOD_MONTH_COUNT = 120;
-
 export const COMBINE_PRESENT_LABEL = "Present";
 
 const EN_MONTH_YEAR = "en-US";
 
-function windowAnchorDate(): Date {
+export type PeriodWindow = {
+  graduationYear: number;
+  monthCount: number;
+  maxIndex: number;
+};
+
+function currentMonthAnchor(): { year: number; month: number } {
   const now = new Date();
-  return new Date(
-    now.getFullYear(),
-    now.getMonth() - (COMBINE_PERIOD_MONTH_COUNT - 1),
-    1,
-  );
+  return { year: now.getFullYear(), month: now.getMonth() };
 }
 
-function monthIndexToDate(index: number): Date {
-  const anchor = windowAnchorDate();
-  return new Date(anchor.getFullYear(), anchor.getMonth() + index, 1);
+function monthsBetweenInclusive(
+  startYear: number,
+  startMonth: number,
+  endYear: number,
+  endMonth: number,
+): number {
+  return (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
+}
+
+export function buildPeriodWindow(graduationYear: number): PeriodWindow {
+  const current = currentMonthAnchor();
+  const monthCount = Math.max(
+    1,
+    monthsBetweenInclusive(graduationYear, 0, current.year, current.month),
+  );
+  return {
+    graduationYear,
+    monthCount,
+    maxIndex: monthCount - 1,
+  };
+}
+
+function monthIndexToDate(window: PeriodWindow, index: number): Date {
+  return new Date(window.graduationYear, index, 1);
 }
 
 function intlLocale(locale: string): string {
@@ -38,77 +58,99 @@ export function formatMonthYear(
   }).format(new Date(year, month, 1));
 }
 
-export function monthIndexToStartLabel(index: number, locale: string): string {
-  const date = monthIndexToDate(index);
+export function monthIndexToStartLabel(
+  window: PeriodWindow,
+  index: number,
+  locale: string,
+): string {
+  const date = monthIndexToDate(window, index);
   return formatMonthYear(date.getFullYear(), date.getMonth(), locale);
 }
 
-export function monthIndexToEndLabel(index: number, locale: string): string {
-  if (index >= COMBINE_PERIOD_MONTH_COUNT - 1) {
+export function monthIndexToEndLabel(
+  window: PeriodWindow,
+  index: number,
+  locale: string,
+): string {
+  if (index >= window.maxIndex) {
     return COMBINE_PRESENT_LABEL;
   }
-  const date = monthIndexToDate(index);
+  const date = monthIndexToDate(window, index);
   return formatMonthYear(date.getFullYear(), date.getMonth(), locale);
 }
 
-export function defaultPeriodIndices(): {
+export function defaultPeriodIndices(window: PeriodWindow): {
   startIndex: number;
   endIndex: number;
 } {
   return {
-    startIndex: Math.max(0, COMBINE_PERIOD_MONTH_COUNT - 24),
-    endIndex: COMBINE_PERIOD_MONTH_COUNT - 1,
+    startIndex: Math.max(0, window.maxIndex - Math.min(23, window.maxIndex)),
+    endIndex: window.maxIndex,
   };
 }
 
 export function indicesToPeriod(
+  window: PeriodWindow,
   startIndex: number,
   endIndex: number,
   locale: string,
 ): { startDate: string; endDate: string } {
+  const clampedStart = clampIndex(window, startIndex);
+  const clampedEnd = clampIndex(window, endIndex);
+  const start = Math.min(clampedStart, clampedEnd);
+  const end = Math.max(clampedStart, clampedEnd);
   return {
-    startDate: monthIndexToStartLabel(startIndex, locale),
-    endDate: monthIndexToEndLabel(endIndex, locale),
+    startDate: monthIndexToStartLabel(window, start, locale),
+    endDate: monthIndexToEndLabel(window, end, locale),
   };
+}
+
+function clampIndex(window: PeriodWindow, index: number): number {
+  return Math.min(Math.max(0, index), window.maxIndex);
 }
 
 function normalizeLabel(label: string): string {
   return label.trim().toLowerCase();
 }
 
-function labelMatchesIndex(label: string, index: number, locale: string): boolean {
+function labelMatchesIndex(
+  window: PeriodWindow,
+  label: string,
+  index: number,
+  locale: string,
+): boolean {
   const normalized = normalizeLabel(label);
   if (!normalized) return false;
-  if (
-    normalized === "present" &&
-    index === COMBINE_PERIOD_MONTH_COUNT - 1
-  ) {
+  if (normalized === "present" && index === window.maxIndex) {
     return true;
   }
   return (
-    normalizeLabel(monthIndexToStartLabel(index, locale)) === normalized ||
-    normalizeLabel(monthIndexToStartLabel(index, EN_MONTH_YEAR)) === normalized
+    normalizeLabel(monthIndexToStartLabel(window, index, locale)) ===
+      normalized ||
+    normalizeLabel(monthIndexToStartLabel(window, index, EN_MONTH_YEAR)) ===
+      normalized
   );
 }
 
 export function labelsToMonthIndices(
+  window: PeriodWindow,
   startLabel: string,
   endLabel: string,
   locale: string,
 ): { startIndex: number; endIndex: number } {
-  const defaults = defaultPeriodIndices();
+  const defaults = defaultPeriodIndices(window);
   let startIndex = defaults.startIndex;
   let endIndex = defaults.endIndex;
 
-  for (let index = 0; index < COMBINE_PERIOD_MONTH_COUNT; index += 1) {
-    if (labelMatchesIndex(startLabel, index, locale)) {
+  for (let index = 0; index <= window.maxIndex; index += 1) {
+    if (labelMatchesIndex(window, startLabel, index, locale)) {
       startIndex = index;
       break;
     }
   }
 
-  for (let index = COMBINE_PERIOD_MONTH_COUNT - 1; index >= 0; index -= 1) {
-    if (labelMatchesIndex(endLabel, index, locale)) {
+  for (let index = window.maxIndex; index >= 0; index -= 1) {
+    if (labelMatchesIndex(window, endLabel, index, locale)) {
       endIndex = index;
       break;
     }
@@ -122,9 +164,25 @@ export function labelsToMonthIndices(
 }
 
 export function formatPeriodRangeLabel(
+  window: PeriodWindow,
   startIndex: number,
   endIndex: number,
   locale: string,
 ): string {
-  return `${monthIndexToStartLabel(startIndex, locale)} – ${monthIndexToEndLabel(endIndex, locale)}`;
+  return `${monthIndexToStartLabel(window, startIndex, locale)} – ${monthIndexToEndLabel(window, endIndex, locale)}`;
+}
+
+export function clampPeriodToWindow(
+  window: PeriodWindow,
+  startDate: string,
+  endDate: string,
+  locale: string,
+): { startDate: string; endDate: string } {
+  const { startIndex, endIndex } = labelsToMonthIndices(
+    window,
+    startDate,
+    endDate,
+    locale,
+  );
+  return indicesToPeriod(window, startIndex, endIndex, locale);
 }

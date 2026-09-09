@@ -78,7 +78,7 @@ export const ko: MessageTree = {
       },
       process: {
         title: "생성공정",
-        description: "생성공정 과정에 실행할 AI 단계를 선택합니다.",
+        description: "생성공정 과정에 실행할 AI단계를 선택합니다.",
         loading: "적재중…",
         doVerdict: "[검토]를 실행",
         doWorkflowRecommendation: "[작업흐름 추천]을 실행",
@@ -166,7 +166,7 @@ export const ko: MessageTree = {
       noLinks: "추가정보 없음.",
       notFound: "개인정보가 없습니다.",
       title: "개인정보",
-      searchPlaceholder: "이름, 전자우편, 전화번호, 거주지, 학력 검색",
+      searchPlaceholder: "이름, 전자우편, 전화번호, 거주지, 대학명, 학위 검색",
       empty: "개인정보가 없습니다.",
       columns: {
         fullName: "이름",
@@ -190,7 +190,9 @@ export const ko: MessageTree = {
         email: "전자우편",
         pn: "전화번호",
         residence: "거주지",
-        education: "학력",
+        university: "대학명",
+        graduationYear: "졸업년도",
+        degree: "Degree",
       },
       links: {
         title: "추가정보",
@@ -458,7 +460,12 @@ export const ko: MessageTree = {
         "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외; Skills는 3개의 모임으로.",
       companies: "회사",
       companiesHint:
-        "포함할 회사를 선택합니다. 포함된 카드에는 기간과 역할과 책임이 필요합니다.",
+        "먼저 개인정보를 선택한 다음 포함할 회사를 고릅니다. 근무기간은 개인정보 졸업년도 1월부터 현재까지 선택할 수 있습니다.",
+      selectProfileFirst: "회사를 선택하기 전에 개인정보를 선택하여주십시오.",
+      profileGraduationYearMissing:
+        "이 개인정보에 졸업년도가 없습니다. 개인정보를 편집하여 졸업년도를 추가한 후 회사를 선택하여주십시오.",
+      periodGraduationHint:
+        "근무기간은 {year}년 1월부터 현재까지 선택할 수 있습니다.",
       includeCompany: "포함",
       noCompanies: "조합하기 전에 작업공간에 회사를 추가하여주십시오.",
       period: "기간",
@@ -706,6 +713,9 @@ export const ko: MessageTree = {
     nameRequired: "이름은 필수입니다.",
     descriptionRequired: "설명은 필수입니다.",
     profileRequired: "개인정보를 하나 선택해주십시오.",
+    graduationYearRequired: "졸업년도는 필수입니다.",
+    profileGraduationYearRequired:
+      "회사를 선택하기 전에 선택한 개인정보에 졸업년도가 있어야 합니다.",
     combineCompaniesRequired: "회사항목을 하나 이상 추가해주십시오.",
     companyRequired: "회사를 하나 선택해주십시오.",
     startDateRequired: "시작일은 필수입니다.",

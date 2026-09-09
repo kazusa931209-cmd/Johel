@@ -16,7 +16,9 @@ Go, PostgreSQL`,
     email: "jane@example.com",
     pn: null,
     residence: null,
-    education: "BSc Computer Science",
+    university: "State University",
+    graduationYear: 2018,
+    degree: "BSc Computer Science",
     links: [{ key: "LinkedIn", link: "https://linkedin.com/in/jane" }],
   },
   companies: [
@@ -82,7 +84,9 @@ describe("buildAiResumeUserPrompt", () => {
       profile: {
         ...input.profile,
         email: null,
-        education: null,
+        university: null,
+        graduationYear: null,
+        degree: null,
         links: [],
       },
     });
