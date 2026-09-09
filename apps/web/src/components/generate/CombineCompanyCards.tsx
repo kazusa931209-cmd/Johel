@@ -7,8 +7,10 @@ import { CombinePeriodSlider } from "@/components/generate/CombinePeriodSlider";
 import {
   buildPeriodWindow,
   clampPeriodToWindow,
+  defaultChainedPeriodIndices,
   defaultPeriodIndices,
   indicesToPeriod,
+  labelsToMonthIndices,
 } from "@/lib/combine-period";
 import type { CombineCompanyEntry } from "@/components/generate/combine-types";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
@@ -109,15 +111,33 @@ export function CombineCompanyCards({
       defaults.endIndex,
       locale,
     );
-    const restoredPeriod =
-      existing != null
-        ? clampPeriodToWindow(
-            periodWindow,
-            existing.startDate,
-            existing.endDate,
-            locale,
-          )
-        : defaultPeriod;
+    let restoredPeriod = defaultPeriod;
+    if (existing != null) {
+      restoredPeriod = clampPeriodToWindow(
+        periodWindow,
+        existing.startDate,
+        existing.endDate,
+        locale,
+      );
+    } else if (companies.length > 0) {
+      const priorEntry = companies[companies.length - 1];
+      const priorStartIndex = labelsToMonthIndices(
+        periodWindow,
+        priorEntry.startDate,
+        priorEntry.endDate,
+        locale,
+      ).startIndex;
+      const chained = defaultChainedPeriodIndices(
+        periodWindow,
+        priorStartIndex,
+      );
+      restoredPeriod = indicesToPeriod(
+        periodWindow,
+        chained.startIndex,
+        chained.endIndex,
+        locale,
+      );
+    }
 
     updateIncluded([
       ...companies.filter((entry) => entry.companyId !== companyId),
@@ -192,6 +212,20 @@ export function CombineCompanyCards({
         {displayCompanies.map((company) => {
           const included = includedById.has(company.id);
           const entry = includedById.get(company.id);
+          const selectionIndex = companies.findIndex(
+            (item) => item.companyId === company.id,
+          );
+          const priorEntry =
+            selectionIndex > 0 ? companies[selectionIndex - 1] : null;
+          const priorStartIndex =
+            priorEntry && periodWindow
+              ? labelsToMonthIndices(
+                  periodWindow,
+                  priorEntry.startDate,
+                  priorEntry.endDate,
+                  locale,
+                ).startIndex
+              : null;
 
           return (
             <article
@@ -240,6 +274,7 @@ export function CombineCompanyCards({
                       graduationYear={graduationYear}
                       startDate={entry.startDate}
                       endDate={entry.endDate}
+                      priorStartIndex={priorStartIndex}
                       onChange={(period) =>
                         patchEntry(company.id, period)
                       }

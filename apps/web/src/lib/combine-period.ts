@@ -89,6 +89,24 @@ export function defaultPeriodIndices(window: PeriodWindow): {
   };
 }
 
+/** Default period for a company selected after another: ends before prior start. */
+export function defaultChainedPeriodIndices(
+  window: PeriodWindow,
+  priorStartIndex: number,
+): { startIndex: number; endIndex: number } {
+  const endIndex = Math.max(0, priorStartIndex - 1);
+  const startIndex = Math.max(0, endIndex - Math.min(23, endIndex));
+  return { startIndex, endIndex };
+}
+
+/** True when this company's end month is after the prior company's start month. */
+export function periodEndOverlapsPriorStart(
+  endIndex: number,
+  priorStartIndex: number,
+): boolean {
+  return endIndex > priorStartIndex;
+}
+
 export function indicesToPeriod(
   window: PeriodWindow,
   startIndex: number,

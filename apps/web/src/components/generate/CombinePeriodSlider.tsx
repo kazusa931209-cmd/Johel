@@ -7,6 +7,7 @@ import {
   formatPeriodRangeLabel,
   indicesToPeriod,
   labelsToMonthIndices,
+  periodEndOverlapsPriorStart,
 } from "@/lib/combine-period";
 
 type CombinePeriodSliderProps = {
@@ -14,6 +15,8 @@ type CombinePeriodSliderProps = {
   startDate: string;
   endDate: string;
   onChange: (period: { startDate: string; endDate: string }) => void;
+  /** Prior selected company's start month index (chain constraint). */
+  priorStartIndex?: number | null;
 };
 
 export function CombinePeriodSlider({
@@ -21,6 +24,7 @@ export function CombinePeriodSlider({
   startDate,
   endDate,
   onChange,
+  priorStartIndex = null,
 }: CombinePeriodSliderProps) {
   const t = useT();
   const { locale } = useLocale();
@@ -56,13 +60,18 @@ export function CombinePeriodSlider({
     window.maxIndex > 0 ? (safeStart / window.maxIndex) * 100 : 0;
   const endPercent =
     window.maxIndex > 0 ? (safeEnd / window.maxIndex) * 100 : 100;
+  const overlapWarning =
+    priorStartIndex != null &&
+    periodEndOverlapsPriorStart(safeEnd, priorStartIndex);
 
   return (
-    <div className="space-y-2">
+    <div
+      className={`space-y-2 ${overlapWarning ? "combine-period-overlap" : ""}`}
+    >
       <div className="relative h-8 pt-3">
         <div className="absolute top-1/2 right-0 left-0 h-1.5 -translate-y-1/2 rounded-full bg-[var(--period-track)]" />
         <div
-          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--period-range)]"
+          className="combine-period-range-fill absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--period-range)]"
           style={{
             left: `${startPercent}%`,
             width: `${Math.max(endPercent - startPercent, 0)}%`,

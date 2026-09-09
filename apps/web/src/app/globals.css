@@ -29,6 +29,7 @@
   --scrollbar-thumb-hover: #a1a1aa;
   --period-track: #e4e4e7;
   --period-range: var(--accent);
+  --period-range-warning: #ca8a04;
   --period-thumb: var(--surface);
   --period-thumb-border: var(--accent);
 }
@@ -60,6 +61,7 @@
   --scrollbar-thumb-hover: #71717a;
   --period-track: #3f3f46;
   --period-range: var(--accent);
+  --period-range-warning: var(--toast-warning-fg);
   --period-thumb: var(--surface);
   --period-thumb-border: var(--accent);
 }
@@ -191,6 +193,18 @@ html[lang="ko"] body {
 .combine-period-range::-webkit-slider-runnable-track,
 .combine-period-range::-moz-range-track {
   background: transparent;
+}
+
+.combine-period-overlap .combine-period-range-fill {
+  background: var(--period-range-warning);
+}
+
+.combine-period-overlap .combine-period-range::-webkit-slider-thumb {
+  border-color: var(--period-range-warning);
+}
+
+.combine-period-overlap .combine-period-range::-moz-range-thumb {
+  border-color: var(--period-range-warning);
 }
 
 :root {
