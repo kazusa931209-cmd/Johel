@@ -20,6 +20,8 @@ type ExperienceFactFormFieldsProps = {
   advising: boolean;
   editingCategory?: string;
   referencePanel?: ReactNode;
+  /** When false, parent renders Suggest in a drawer footer. Default true. */
+  showSuggestButton?: boolean;
 };
 
 export function ExperienceFactFormFields({
@@ -30,6 +32,7 @@ export function ExperienceFactFormFields({
   advising,
   editingCategory,
   referencePanel,
+  showSuggestButton = true,
 }: ExperienceFactFormFieldsProps) {
   const t = useT();
 
@@ -68,17 +71,19 @@ export function ExperienceFactFormFields({
         ) : null}
       </label>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={onSuggest}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
-        >
-          {advising
-            ? t("crud.experiences.advisor.running")
-            : t("crud.experiences.advisor.suggest")}
-        </button>
-      </div>
+      {showSuggestButton ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onSuggest}
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+          >
+            {advising
+              ? t("crud.experiences.advisor.running")
+              : t("crud.experiences.advisor.suggest")}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

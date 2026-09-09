@@ -14,6 +14,8 @@ import {
   formatAiUsageDate,
   formatGenerateType,
   formatStandaloneGroupLabel,
+  sortAiUsageGroupsByLatest,
+  sortAiUsageItemsByCreatedAt,
 } from "@/lib/ai-usage";
 import {
   getAiUsage,
@@ -52,6 +54,28 @@ function formatGroupLabel(
     );
   }
   return unassignedLabel;
+}
+
+/** Shared grid for group header row and each group summary row. */
+const AI_USAGE_GROUP_GRID_CLASS =
+  "grid w-full grid-cols-[1.25rem_minmax(0,1fr)_5.5rem_5.5rem_5.5rem_5.5rem] items-center gap-x-3";
+
+function AiUsageGroupListHeader() {
+  const t = useT();
+
+  return (
+    <div
+      className={`${AI_USAGE_GROUP_GRID_CLASS} border-b border-border bg-background px-4 py-2 text-xs font-medium text-muted`}
+      aria-hidden
+    >
+      <span />
+      <span className="truncate">{t("aiUsage.groups.columnGroup")}</span>
+      <span className="text-right">{t("aiUsage.groups.columnCalls")}</span>
+      <span className="text-right">{t("aiUsage.groups.columnInput")}</span>
+      <span className="text-right">{t("aiUsage.groups.columnOutput")}</span>
+      <span className="text-right">{t("aiUsage.groups.columnTotal")}</span>
+    </div>
+  );
 }
 
 function AiUsageDetailPanel({
@@ -293,91 +317,9 @@ function AiUsageHistoryDrawer({
       onClose={onClose}
       zIndex={50}
       closeOnEscape={closeOnEscape}
-    >
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-auto">
-          {loading ? (
-            <p className="px-4 py-8 text-center text-sm text-muted">
-              {t("aiUsage.loading")}
-            </p>
-          ) : groups.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-muted">
-              {t("aiUsage.empty")}
-            </p>
-          ) : (
-            <div className="divide-y divide-border">
-              {groups.map((group) => {
-                const key = buildAiUsageGroupKey(group);
-                const expanded = expandedGroups.has(key);
-                const items = groupItems[key] ?? [];
-                const itemsLoading = groupItemsLoading[key] ?? false;
-
-                return (
-                  <section key={key}>
-                    <button
-                      type="button"
-                      aria-expanded={expanded}
-                      onClick={() => onToggleGroup(group)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-surface-muted"
-                    >
-                      <ChevronRightIcon
-                        className={`h-4 w-4 shrink-0 text-muted transition-transform ${
-                          expanded ? "rotate-90" : ""
-                        }`}
-                      />
-                      <span className="min-w-0 truncate font-medium">
-                        {formatGroupLabel(group, unassignedLabel, locale)}
-                      </span>
-                      <span className="shrink-0 text-muted">
-                        {t("aiUsage.groups.callCount", {
-                          count: formatThousandsSeparated(group.callCount),
-                        })}
-                      </span>
-                      <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 tabular-nums text-muted">
-                        <span>
-                          {t("aiUsage.groups.inputTokenSum", {
-                            count: formatThousandsSeparated(group.inputToken),
-                          })}
-                        </span>
-                        <span>
-                          {t("aiUsage.groups.outputTokenSum", {
-                            count: formatThousandsSeparated(group.outputToken),
-                          })}
-                        </span>
-                        <span>
-                          {t("aiUsage.groups.totalTokenSum", {
-                            count: formatThousandsSeparated(group.tokenUsed),
-                          })}
-                        </span>
-                      </div>
-                    </button>
-                    {expanded ? (
-                      <div className="overflow-x-auto border-t border-border bg-surface-muted/40 px-2 pb-3">
-                        {itemsLoading ? (
-                          <p className="px-3 py-4 text-sm text-muted">
-                            {t("aiUsage.loading")}
-                          </p>
-                        ) : items.length === 0 ? (
-                          <p className="px-3 py-4 text-sm text-muted">
-                            {t("aiUsage.empty")}
-                          </p>
-                        ) : (
-                          <AiUsageItemsTable
-                            items={items}
-                            unassignedLabel={unassignedLabel}
-                            onRowClick={onRowClick}
-                          />
-                        )}
-                      </div>
-                    ) : null}
-                  </section>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-4 py-3 text-sm text-muted">
-          <span>
+      footer={
+        <>
+          <span className="text-sm text-muted">
             {t("crud.common.pageOf", {
               page: formatThousandsSeparated(page),
               totalPages: formatThousandsSeparated(totalPages),
@@ -387,7 +329,7 @@ function AiUsageHistoryDrawer({
             type="button"
             disabled={page <= 1 || loading}
             onClick={() => onPageChange(Math.max(1, page - 1))}
-            className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
+            className="rounded-md border border-border px-2 py-1 text-sm disabled:opacity-40"
           >
             {t("crud.common.prev")}
           </button>
@@ -395,12 +337,83 @@ function AiUsageHistoryDrawer({
             type="button"
             disabled={page >= totalPages || loading}
             onClick={() => onPageChange(page + 1)}
-            className="rounded-md border border-border px-2 py-1 disabled:opacity-40"
+            className="rounded-md border border-border px-2 py-1 text-sm disabled:opacity-40"
           >
             {t("crud.common.next")}
           </button>
+        </>
+      }
+    >
+      {loading ? (
+        <p className="px-4 py-8 text-center text-sm text-muted">
+          {t("aiUsage.loading")}
+        </p>
+      ) : groups.length === 0 ? (
+        <p className="px-4 py-8 text-center text-sm text-muted">
+          {t("aiUsage.empty")}
+        </p>
+      ) : (
+        <div className="divide-y divide-border">
+          <AiUsageGroupListHeader />
+          {groups.map((group) => {
+            const key = buildAiUsageGroupKey(group);
+            const expanded = expandedGroups.has(key);
+            const items = groupItems[key] ?? [];
+            const itemsLoading = groupItemsLoading[key] ?? false;
+
+            return (
+              <section key={key}>
+                <button
+                  type="button"
+                  aria-expanded={expanded}
+                  onClick={() => onToggleGroup(group)}
+                  className={`${AI_USAGE_GROUP_GRID_CLASS} px-4 py-3 text-left text-sm hover:bg-surface-muted`}
+                >
+                  <ChevronRightIcon
+                    className={`h-4 w-4 shrink-0 text-muted transition-transform ${
+                      expanded ? "rotate-90" : ""
+                    }`}
+                  />
+                  <span className="min-w-0 truncate font-medium">
+                    {formatGroupLabel(group, unassignedLabel, locale)}
+                  </span>
+                  <span className="text-right tabular-nums text-muted">
+                    {formatThousandsSeparated(group.callCount)}
+                  </span>
+                  <span className="text-right tabular-nums">
+                    {formatThousandsSeparated(group.inputToken)}
+                  </span>
+                  <span className="text-right tabular-nums">
+                    {formatThousandsSeparated(group.outputToken)}
+                  </span>
+                  <span className="text-right tabular-nums font-medium">
+                    {formatThousandsSeparated(group.tokenUsed)}
+                  </span>
+                </button>
+                {expanded ? (
+                  <div className="overflow-x-auto border-t border-border bg-surface-muted/40 px-2 pb-3">
+                    {itemsLoading ? (
+                      <p className="px-3 py-4 text-sm text-muted">
+                        {t("aiUsage.loading")}
+                      </p>
+                    ) : items.length === 0 ? (
+                      <p className="px-3 py-4 text-sm text-muted">
+                        {t("aiUsage.empty")}
+                      </p>
+                    ) : (
+                      <AiUsageItemsTable
+                        items={items}
+                        unassignedLabel={unassignedLabel}
+                        onRowClick={onRowClick}
+                      />
+                    )}
+                  </div>
+                ) : null}
+              </section>
+            );
+          })}
         </div>
-      </div>
+      )}
     </Drawer>
   );
 }
@@ -443,7 +456,7 @@ export function AiUsageHistory({
         toast(res.error ?? t("toast.historyLoadFailed"), "error");
         return;
       }
-      setGroups(res.data.items);
+      setGroups(sortAiUsageGroupsByLatest(res.data.items));
       setTotal(res.data.total);
       setPageSize(res.data.pageSize);
       setPage(res.data.page);
@@ -469,7 +482,10 @@ export function AiUsageHistory({
         toast(res.error ?? t("toast.historyLoadFailed"), "error");
         return;
       }
-      setGroupItems((current) => ({ ...current, [key]: res.data!.items }));
+      setGroupItems((current) => ({
+        ...current,
+        [key]: sortAiUsageItemsByCreatedAt(res.data!.items),
+      }));
     },
     [t, toast],
   );

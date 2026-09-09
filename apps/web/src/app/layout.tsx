@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { DrawerPositionProvider } from "@/components/app/DrawerPositionProvider";
 import { ThemeProvider } from "@/components/app/ThemeProvider";
 import { LocaleProvider } from "@/components/app/LocaleProvider";
 import { ToastProvider } from "@/components/app/ToastProvider";
@@ -41,7 +42,9 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider>
           <LocaleProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <DrawerPositionProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </DrawerPositionProvider>
           </LocaleProvider>
         </ThemeProvider>
       </body>

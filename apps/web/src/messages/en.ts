@@ -49,7 +49,7 @@ export const en = {
   settings: {
     environment: {
       title: "Environment",
-      description: "Theme, language, and AI agent options.",
+      description: "Theme, language, FAB & drawer position, and AI agent options.",
       theme: {
         title: "Theme",
         dark: "Dark",
@@ -59,6 +59,11 @@ export const en = {
         title: "Language",
         english: "English",
         korean: "Korean",
+      },
+      fabDrawerPosition: {
+        title: "FAB & Drawer Position",
+        left: "Left",
+        right: "Right",
       },
       aiAgent: {
         title: "AI Agent",
@@ -552,6 +557,11 @@ export const en = {
       inputTokenSum: "In {count}",
       outputTokenSum: "Out {count}",
       totalTokenSum: "Total {count}",
+      columnGroup: "Group",
+      columnCalls: "Calls",
+      columnInput: "Input",
+      columnOutput: "Output",
+      columnTotal: "Total",
     },
     providers: {
       cursor: "Cursor AI Agent",

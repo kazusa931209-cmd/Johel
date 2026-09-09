@@ -62,3 +62,22 @@ export function formatStandaloneGroupLabel(
   const typeLabel = formatGenerateType(generateType, locale);
   return `${standaloneDate}-${typeLabel}`;
 }
+
+export function sortAiUsageGroupsByLatest<
+  T extends { latestCreatedAt: string },
+>(groups: readonly T[]): T[] {
+  return [...groups].sort(
+    (a, b) =>
+      new Date(b.latestCreatedAt).getTime() -
+      new Date(a.latestCreatedAt).getTime(),
+  );
+}
+
+export function sortAiUsageItemsByCreatedAt<
+  T extends { createdAt: string },
+>(items: readonly T[]): T[] {
+  return [...items].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}

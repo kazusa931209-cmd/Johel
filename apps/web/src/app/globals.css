@@ -221,21 +221,31 @@ html[lang="ko"] body {
   opacity: 1;
 }
 
-.drawer-panel {
+.drawer-panel-right,
+.drawer-panel-left {
   pointer-events: none;
-  transform: translate3d(100%, 0, 0);
   transition: transform var(--drawer-duration) var(--drawer-ease);
   will-change: transform;
 }
 
-.drawer-panel.drawer-open {
+.drawer-panel-right {
+  transform: translate3d(100%, 0, 0);
+}
+
+.drawer-panel-left {
+  transform: translate3d(-100%, 0, 0);
+}
+
+.drawer-panel-right.drawer-open,
+.drawer-panel-left.drawer-open {
   pointer-events: auto;
   transform: translate3d(0, 0, 0);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .drawer-backdrop,
-  .drawer-panel {
+  .drawer-panel-right,
+  .drawer-panel-left {
     transition: none;
   }
 }

@@ -51,7 +51,7 @@ export const ko: MessageTree = {
   settings: {
     environment: {
       title: "환경",
-      description: "색상, 언어, AI 대리인을 설정",
+      description: "색상, 언어, FAB·Drawer 위치, AI 대리인을 설정",
       theme: {
         title: "색상",
         dark: "어두움",
@@ -61,6 +61,11 @@ export const ko: MessageTree = {
         title: "언어",
         english: "English",
         korean: "조선어",
+      },
+      fabDrawerPosition: {
+        title: "FAB·Drawer 위치",
+        left: "왼쪽",
+        right: "오른쪽",
       },
       aiAgent: {
         title: "AI 대리인",
@@ -541,9 +546,9 @@ export const ko: MessageTree = {
       generationId: "생성 ID",
       ai: "AI",
       model: "모델",
-      generateType: "생성 유형",
-      inputToken: "입력 토큰",
-      outputToken: "출력 토큰",
+      generateType: "생성류형",
+      inputToken: "입력토큰",
+      outputToken: "출력토큰",
       createdAt: "생성날자",
     },
     groups: {
@@ -552,6 +557,11 @@ export const ko: MessageTree = {
       inputTokenSum: "입력 {count}",
       outputTokenSum: "출력 {count}",
       totalTokenSum: "합계 {count}",
+      columnGroup: "모임",
+      columnCalls: "회수",
+      columnInput: "입력",
+      columnOutput: "출력",
+      columnTotal: "합계",
     },
     providers: {
       cursor: "Cursor AI Agent",

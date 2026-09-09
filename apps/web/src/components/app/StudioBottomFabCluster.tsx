@@ -3,18 +3,21 @@
 import { useState } from "react";
 import { AiUsageHistory } from "@/components/app/AiUsageHistory";
 import { QuickAddExperience } from "@/components/app/QuickAddExperience";
+import { useDrawerPosition } from "@/components/app/DrawerPositionProvider";
 import { useT } from "@/components/app/LocaleProvider";
-import { STUDIO_FAB_CLASS, STUDIO_FAB_CLUSTER_CLASS } from "@/components/app/studio-fab";
+import { studioFabClusterClass } from "@/lib/drawer-position";
+import { STUDIO_FAB_CLASS } from "@/components/app/studio-fab";
 import { HistoryIcon, PlusIcon } from "@/components/shared/icons";
 
 export function StudioBottomFabCluster() {
   const t = useT();
+  const { drawerPosition } = useDrawerPosition();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
 
   return (
     <>
-      <div className={STUDIO_FAB_CLUSTER_CLASS}>
+      <div className={studioFabClusterClass(drawerPosition)}>
         <button
           type="button"
           aria-label={t("quickAddExperience.fabAria")}

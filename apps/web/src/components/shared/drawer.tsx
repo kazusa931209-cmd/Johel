@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { useDrawerPosition } from "@/components/app/DrawerPositionProvider";
 import { CloseButton } from "@/components/shared/action-icon-buttons";
 
 type DrawerProps = {
@@ -8,6 +9,8 @@ type DrawerProps = {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
+  /** Primary actions (Save, Suggest, Apply, pagination, etc.) pinned below scrollable body. */
+  footer?: ReactNode;
   widthClass?: string;
   zIndex?: number;
   closeOnEscape?: boolean;
@@ -25,12 +28,18 @@ export function Drawer({
   open,
   onClose,
   children,
+  footer,
   widthClass = "w-[min(64rem,92vw)]",
   zIndex = 50,
   closeOnEscape = true,
 }: DrawerProps) {
+  const { drawerPosition } = useDrawerPosition();
   const [mounted, setMounted] = useState(open);
   const [entered, setEntered] = useState(false);
+  const panelSideClass =
+    drawerPosition === "left"
+      ? "drawer-panel-left left-0 border-r border-border"
+      : "drawer-panel-right right-0 border-l border-border";
 
   useEffect(() => {
     if (open) {
@@ -90,14 +99,23 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`drawer-panel absolute top-0 right-0 flex h-full flex-col border-l border-border bg-surface shadow-xl ${widthClass}${entered ? " drawer-open" : ""}`}
+        className={`${panelSideClass} absolute top-0 flex h-full flex-col bg-surface shadow-xl ${widthClass}${entered ? " drawer-open" : ""}`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3">
           <h2 className="text-lg font-semibold">{title}</h2>
           <CloseButton onClick={onClose} />
         </div>
-        {children}
+        {footer ? (
+          <>
+            <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-4 py-3">
+              {footer}
+            </div>
+          </>
+        ) : (
+          children
+        )}
       </aside>
     </div>
   );

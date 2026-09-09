@@ -47,6 +47,26 @@ function toNumber(value: number | bigint | null | undefined) {
   return typeof value === "bigint" ? Number(value) : value;
 }
 
+function latestCreatedAtToMs(value: unknown): number {
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  if (typeof value === "bigint") {
+    return Number(value);
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "string") {
+    if (/^\d+$/.test(value)) {
+      return Number(value);
+    }
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}
+
 function toIsoDate(value: unknown) {
   if (value instanceof Date) {
     return value.toISOString();
@@ -58,9 +78,20 @@ function toIsoDate(value: unknown) {
     return new Date(value).toISOString();
   }
   if (typeof value === "string") {
+    if (/^\d+$/.test(value)) {
+      return new Date(Number(value)).toISOString();
+    }
     return new Date(value).toISOString();
   }
   return new Date(String(value)).toISOString();
+}
+
+function sortGroupRowsByLatestCreatedAt(rows: AiUsageGroupRow[]) {
+  return [...rows].sort(
+    (a, b) =>
+      latestCreatedAtToMs(b.latestCreatedAt) -
+      latestCreatedAtToMs(a.latestCreatedAt),
+  );
 }
 
 function toStandaloneDateKey(createdAt: Date) {
@@ -216,7 +247,7 @@ aiUsageRoutes.get("/groups", async (c) => {
         WHERE a.userId = ${user.id} AND a.generationId IS NULL
         GROUP BY ${standaloneDateExpr}, a.generateType
       )
-      ORDER BY latestCreatedAt DESC
+      ORDER BY CAST(latestCreatedAt AS INTEGER) DESC
       LIMIT ${take} OFFSET ${skip}
     `,
   ]);
@@ -225,7 +256,7 @@ aiUsageRoutes.get("/groups", async (c) => {
   const pageSize = listResponsePageSize(pagination, total);
 
   return c.json({
-    items: groupRows.map(toGroupItem),
+    items: sortGroupRowsByLatestCreatedAt(groupRows).map(toGroupItem),
     total,
     page: pagination.page,
     pageSize,

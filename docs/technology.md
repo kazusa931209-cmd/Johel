@@ -74,12 +74,12 @@ User browser (:4041)
 - If a frontend component file exceeds **500 lines**, ask the user before growing it further; prefer splitting into smaller components/hooks
 - Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash), `CopyButton` (clipboard), `CloseButton` (X) in `components/shared/action-icon-buttons.tsx`
 - Dialogs use `DetailDialog` (`components/shared/detail-dialog.tsx`) so Close (X) is always in the top-right header; the footer holds only the main action (Apply / Delete). Do not put Close beside that action. `mode="view"` (default) allows backdrop dismiss; `mode="form"` blocks backdrop dismiss for add/edit dialogs. Delete confirms use `mode="view"`. See `.cursor/rules/dialog-dismiss.mdc`.
-- Drawers use shared `Drawer` (`components/shared/drawer.tsx`): stay mounted through open/close; panel `translate3d(100% → 0)` plus backdrop fade, 420ms `cubic-bezier(0.32, 0.72, 0, 1)` (velocity ease-out); unmount after the transition; `prefers-reduced-motion: reduce` skips the motion. Nested drawers (history + detail) each run this animation independently.
+- Drawers use shared `Drawer` (`components/shared/drawer.tsx`): stay mounted through open/close; panel `translate3d(100% → 0)` plus backdrop fade, 420ms `cubic-bezier(0.32, 0.72, 0, 1)` (velocity ease-out); unmount after the transition; `prefers-reduced-motion: reduce` skips the motion. Nested drawers (history + detail) each run this animation independently. Primary actions (Suggest, Apply, pagination, etc.) use the optional `footer` prop so they stay pinned below the scrollable body; Close remains in the header.
 
 ## Studio shell (Phase 4)
 
 - Layout: top bar + left sidebar + main content (full-height studio chrome)
-- Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`; UI locale via `LocaleProvider` + `johel-locale` in `localStorage` (`en` default, `ko`); bootstrap script in root layout sets `document.documentElement.lang` before paint; message catalogs in `apps/web/src/messages/` (`en.ts`, `ko.ts`, `translate.ts`); components use `useT()` / `useLocale()` from `LocaleProvider`; sidebar open/collapsed via `johel-sidebar` in `localStorage` (`open` default, `collapsed`). Hamburger in the header toggles `StudioSidebar` (`hidden` when collapsed; `aria-controls="studio-sidebar"`).
+- Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`; UI locale via `LocaleProvider` + `johel-locale` in `localStorage` (`en` default, `ko`); FAB & drawer side via `DrawerPositionProvider` + `johel-drawer-position` in `localStorage` (`right` default, `left`); bootstrap script in root layout sets `document.documentElement.lang` before paint; message catalogs in `apps/web/src/messages/` (`en.ts`, `ko.ts`, `translate.ts`); components use `useT()` / `useLocale()` from `LocaleProvider`; sidebar open/collapsed via `johel-sidebar` in `localStorage` (`open` default, `collapsed`). Hamburger in the header toggles `StudioSidebar` (`hidden` when collapsed; `aria-controls="studio-sidebar"`).
 - Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light. Tailwind `dark:` uses the `.dark` class (`@custom-variant dark` in `globals.css`), not `prefers-color-scheme`.
 - Prompts (`/settings/prompts`), Environment (`/settings/environment`), and Generation (`/settings/generation`) content is centered at `max-w-3xl`, matching other form pages.
 - `react-markdown` preview (`AiVerdictMarkdown`, `ResumeMarkdown`) uses `@tailwindcss/typography` `prose` with `--tw-prose-*` mapped to theme tokens (`--foreground`, `--muted`, `--border`) so body text stays readable in Light and Dark. Do not use `dark:prose-invert` (it follows OS color-scheme unless the class variant is set, and it ignores app tokens).
@@ -90,7 +90,7 @@ User browser (:4041)
   - `/companies` — Workspace / Companies
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
-  - `/settings/environment` — Settings / Environment (theme, UI language, AI Agent); `/settings` redirects here
+  - `/settings/environment` — Settings / Environment (theme, UI language, FAB & drawer position, AI Agent); `/settings` redirects here
   - `/settings/generation` — Settings / Generation (Process, Resume Language)
   - `/settings/prompts` — Settings / Prompts
   - `/prompts` — legacy redirect to `/settings/prompts`

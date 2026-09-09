@@ -1,0 +1,74 @@
+---
+description: Drawer primary actions belong in the sticky footer, not scrollable body
+alwaysApply: true
+---
+
+# Drawer Footer Actions
+
+Apply to every **right-side or left-side drawer** in the web UI (`Drawer` from `components/shared/drawer.tsx`).
+
+## Rules
+
+1. **Primary actions in footer** — Save, Suggest, Apply, Display, pagination, and other main drawer actions must use the shared `Drawer` **`footer`** prop so they stay pinned below the scrollable body. Do not place them at the bottom of scrollable content.
+
+2. **Close in header** — Close (X) stays in the **top-right header** only (same as dialogs). Do not put Close beside the footer action.
+
+3. **Scrollable body** — Drawer `children` hold form fields, previews, tables, and other scrollable content only. When `footer` is set, `Drawer` wraps `children` in the scroll region automatically.
+
+4. **Shared content components** — If a component renders an inline action button and is reused in a drawer plus a full page or dialog, add a prop (e.g. `showSuggestButton={false}`) so the drawer parent can hide the inline button and render it in `footer` instead.
+
+## Implementation
+
+- Prefer shared `Drawer` from `components/shared/drawer.tsx`.
+- Pass primary actions via `footer={...}`; omit `footer` only when the drawer has no primary action (e.g. read-only detail with in-content controls).
+- Match dialog footer semantics: header = title + Close; footer = main action(s) only.
+
+## Examples
+
+```tsx
+// ❌ BAD — Suggest scrolls away with the form
+<Drawer title="Quick Add Experience" open={open} onClose={onClose}>
+  <div className="overflow-y-auto p-4">
+    <ExperienceFactFormFields onSuggest={onSuggest} />
+  </div>
+</Drawer>
+
+// ✅ GOOD — Suggest pinned in drawer footer
+<Drawer
+  title="Quick Add Experience"
+  open={open}
+  onClose={onClose}
+  footer={
+    <button type="button" onClick={onSuggest}>
+      Suggest
+    </button>
+  }
+>
+  <div className="p-4">
+    <ExperienceFactFormFields onSuggest={onSuggest} showSuggestButton={false} />
+  </div>
+</Drawer>
+```
+
+```tsx
+// ❌ BAD — Apply at end of long suggestion preview
+<Drawer title="Suggestion" open={open} onClose={onClose}>
+  <ExperienceSuggestionContent onApply={onApply} />
+</Drawer>
+
+// ✅ GOOD — Apply in footer; preview scrolls
+<Drawer
+  title="Suggestion"
+  open={open}
+  onClose={onClose}
+  footer={
+    <button type="button" onClick={onApply}>
+      Apply
+    </button>
+  }
+>
+  <div className="p-4">
+    <ExperienceSuggestionContent onApply={onApply} showApplyButton={false} />
+  </div>
+</Drawer>
+```

@@ -1,7 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useDrawerPosition } from "@/components/app/DrawerPositionProvider";
 import { useLocale } from "@/components/app/LocaleProvider";
+import type { DrawerPosition } from "@/lib/drawer-position";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { getSettings, saveSettings } from "@/lib/api";
@@ -12,6 +14,14 @@ import type { Theme } from "@/lib/theme";
 const LANGUAGE_OPTIONS: { value: Locale; labelKey: string }[] = [
   { value: "en", labelKey: "settings.environment.language.english" },
   { value: "ko", labelKey: "settings.environment.language.korean" },
+];
+
+const DRAWER_POSITION_OPTIONS: {
+  value: DrawerPosition;
+  labelKey: string;
+}[] = [
+  { value: "left", labelKey: "settings.environment.fabDrawerPosition.left" },
+  { value: "right", labelKey: "settings.environment.fabDrawerPosition.right" },
 ];
 
 function ChevronDownIcon({ className }: { className?: string }) {
@@ -77,6 +87,7 @@ type FormErrors = {
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { locale, setLocale, t } = useLocale();
+  const { drawerPosition, setDrawerPosition } = useDrawerPosition();
   const { toast } = useToast();
   const [savedProvider, setSavedProvider] = useState<AiProviderId | null>(null);
   const [provider, setProvider] = useState<AiProviderId>("cursor");
@@ -173,6 +184,30 @@ export default function SettingsPage() {
                 }`}
               >
                 {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
+        <h2 className="text-sm font-medium">
+          {t("settings.environment.fabDrawerPosition.title")}
+        </h2>
+        <div className="flex gap-2">
+          {DRAWER_POSITION_OPTIONS.map((option) => {
+            const active = drawerPosition === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setDrawerPosition(option.value)}
+                className={`rounded-md px-3 py-2 text-sm ${
+                  active
+                    ? "bg-accent text-accent-fg"
+                    : "border border-border bg-surface-muted text-foreground hover:opacity-90"
+                }`}
+              >
+                {t(option.labelKey)}
               </button>
             );
           })}

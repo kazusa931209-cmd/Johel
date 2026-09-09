@@ -15,6 +15,8 @@ type ExperienceSuggestionContentProps = {
   displayOperations: ExperienceAdviseDisplayOperation[];
   onApply: () => void;
   applying: boolean;
+  /** When false, parent renders Apply in a drawer footer. Default true. */
+  showApplyButton?: boolean;
 };
 
 export function ExperienceSuggestionContent({
@@ -22,6 +24,7 @@ export function ExperienceSuggestionContent({
   displayOperations,
   onApply,
   applying,
+  showApplyButton = true,
 }: ExperienceSuggestionContentProps) {
   const t = useT();
   const { toast } = useToast();
@@ -141,7 +144,7 @@ export function ExperienceSuggestionContent({
         ))}
       </div>
 
-      {actionable ? (
+      {showApplyButton && actionable ? (
         <div className="flex justify-end border-t border-border pt-4">
           <button
             type="button"

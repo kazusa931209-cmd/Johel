@@ -57,8 +57,19 @@ export function QuickAddExperience({
         open={open}
         onClose={closeMainDrawer}
         closeOnEscape={!suggestionOpen}
+        footer={
+          <button
+            type="button"
+            onClick={() => void handleSuggest()}
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+          >
+            {advising
+              ? t("crud.experiences.advisor.running")
+              : t("crud.experiences.advisor.suggest")}
+          </button>
+        }
       >
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+        <div className="p-4">
           <ExperienceFactFormFields
             userFacts={userFacts}
             onUserFactsChange={(value) => {
@@ -68,6 +79,7 @@ export function QuickAddExperience({
             factsError={factsError}
             onSuggest={() => void handleSuggest()}
             advising={advising}
+            showSuggestButton={false}
             referencePanel={
               shouldShowInlineExperienceSuggestionReference(
                 result,
