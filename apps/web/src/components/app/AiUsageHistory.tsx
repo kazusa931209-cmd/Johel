@@ -32,6 +32,8 @@ type AiUsageHistoryProps = {
   showFab?: boolean;
 };
 
+const AI_USAGE_HISTORY_DRAWER_WIDTH = "w-[min(80rem,92vw)]";
+
 const HISTORY_TABS: { id: AiUsageHistoryTab; labelKey: string }[] = [
   { id: "all", labelKey: "aiUsage.historyTabs.all" },
   { id: "generation", labelKey: "aiUsage.historyTabs.generation" },
@@ -85,6 +87,7 @@ function AiUsageHistoryDrawer({
       title={t("aiUsage.historyTitle")}
       open={open}
       onClose={onClose}
+      widthClass={AI_USAGE_HISTORY_DRAWER_WIDTH}
       zIndex={50}
       closeOnEscape={closeOnEscape}
       footer={
