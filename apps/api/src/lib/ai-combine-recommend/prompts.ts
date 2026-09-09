@@ -91,6 +91,8 @@ export function buildCombineRecommendUserPrompt(
     "",
     "## Company entries",
     companiesBlock,
+    "",
+    "Respond with a JSON object only (schema in instructions). Do not wrap in a code fence.",
   ];
 
   return lines.join("\n");

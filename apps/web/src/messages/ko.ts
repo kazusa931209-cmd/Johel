@@ -489,14 +489,18 @@ export const ko: MessageTree = {
         title: "리력서 생성중…",
         description: "AI가 직업광고문에 맞춰 리력서를 작성하는중입니다.",
       },
-      suggestExperiences: "경험 제안",
-      suggesting: "제안중…",
+      suggestExperiences: "경험제안",
+      suggesting: "경험제안중…",
+      suggestingOverlay: {
+        title: "경험제안중…",
+        description: "AI가 회사별로 력량카드를 대응하는중입니다.",
+      },
       experiencesSection: "경험",
       experiencesSectionHint:
-        "포함된 각 회사에 공유 경험 카드를 연결합니다. 회사 카드의 선택적 키워드 맥락으로 해당 회사만 맞춤 매핑하고, 비워 두면 AI선택(직업광고문·검토·역할맥락)으로 동작합니다.",
-      keywordContext: "키워드 맥락",
+        "포함된 각 회사에 공유 경험카드를 련결합니다. 회사카드의 선택적 실마리어 문맥으로 해당회사만 맞춤대응하고, 비워두면 AI선택(직업광고문·검토·역할문맥)으로 동작합니다.",
+      keywordContext: "실마리어 문맥",
       keywordContextHint:
-        "선택. 이 회사에 연결할 역량 카드를 안내하는 쉼표 구분 키워드(예: AWS, blockchain). 직함은 역할 맥락에 입력하십시오.",
+        "선택. 이 회사에 연결할 역량 카드를 안내하는 쉼표 구분 실마리어(예: AWS, blockchain). 직함은 역할 문맥에 입력하십시오.",
       keywordContextPlaceholder: "예: AWS, Blockchain, Senior, payments API",
       suggestVerdictRequired:
         "[검토]를 실행하는 경우 경험 제안 전에 검토 단계를 완료하여주십시오.",
@@ -505,8 +509,10 @@ export const ko: MessageTree = {
       suggestionExperienceMissing: "알 수 없는 경험",
       suggestionNoExperiences: "이 회사에 제안된 경험이 없습니다.",
       suggestionRationale: "근거",
+      suggestionCancel: "취소",
+      suggestionRetry: "다시 시도",
       suggestionApply: "적용",
-      linkedExperiences: "연결된 경험",
+      linkedExperiences: "련결된 경험",
     },
     generateStep: {
       noResume:

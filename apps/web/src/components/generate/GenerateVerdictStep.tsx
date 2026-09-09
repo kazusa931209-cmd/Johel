@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
+import { useStepMountAutoRun } from "@/components/generate/useStepMountAutoRun";
 import {
   buildVerdictInputKey,
   canReuseStoredVerdict,
@@ -96,16 +97,7 @@ export function GenerateVerdictStep({
     verdictPrompt,
   ]);
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      await runVerdict();
-      if (cancelled) return;
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [runVerdict]);
+  useStepMountAutoRun(runVerdict);
 
   useRegisterGenerateStepNav({
     onPrev,

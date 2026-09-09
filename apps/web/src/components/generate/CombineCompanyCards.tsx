@@ -12,7 +12,7 @@ import {
 } from "@/lib/combine-period";
 import type { CombineCompanyEntry } from "@/components/generate/combine-types";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
-import { listCompanies, type CompanyDetail } from "@/lib/api";
+import { listCompanies, listExperiences, type CompanyDetail } from "@/lib/api";
 
 type CombineCompanyCardsProps = {
   companies: CombineCompanyEntry[];
@@ -67,6 +67,9 @@ export function CombineCompanyCards({
   );
   const [loading, setLoading] = useState(true);
   const [viewCompany, setViewCompany] = useState<CompanyDetail | null>(null);
+  const [categoryById, setCategoryById] = useState<Map<string, string>>(
+    new Map(),
+  );
 
   const cardsDisabled = disabled || graduationYear == null;
   const periodWindow =
@@ -74,11 +77,21 @@ export function CombineCompanyCards({
 
   useEffect(() => {
     let cancelled = false;
-    listCompanies("", null).then((res) => {
-      if (cancelled) return;
-      setWorkspaceCompanies(res.data?.items ?? []);
-      setLoading(false);
-    });
+    Promise.all([listCompanies("", null), listExperiences("", null)]).then(
+      ([companiesRes, experiencesRes]) => {
+        if (cancelled) return;
+        setWorkspaceCompanies(companiesRes.data?.items ?? []);
+        setCategoryById(
+          new Map(
+            (experiencesRes.data?.items ?? []).map((item) => [
+              item.id,
+              item.category,
+            ]),
+          ),
+        );
+        setLoading(false);
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -271,6 +284,22 @@ export function CombineCompanyCards({
                       className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
                     />
                   </label>
+
+                  {entry.experienceIds.length > 0 ? (
+                    <div>
+                      <p className="text-xs font-medium text-muted">
+                        {t("generate.combine.linkedExperiences")}
+                      </p>
+                      <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
+                        {entry.experienceIds.map((id) => (
+                          <li key={id}>
+                            {categoryById.get(id) ??
+                              t("generate.combine.suggestionExperienceMissing")}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </article>

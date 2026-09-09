@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
+import { useStepMountAutoRun } from "@/components/generate/useStepMountAutoRun";
 import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
 
 type GenerateEvaluateStepProps = {
@@ -27,16 +27,7 @@ export function GenerateEvaluateStep({
   const t = useT();
   const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      await onAutoEvaluate();
-      if (cancelled) return;
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [onAutoEvaluate]);
+  useStepMountAutoRun(onAutoEvaluate);
 
   useRegisterGenerateStepNav({
     onPrev,

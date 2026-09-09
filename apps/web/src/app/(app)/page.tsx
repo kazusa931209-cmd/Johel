@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -23,7 +23,6 @@ import {
   GenerateStepNavProvider,
 } from "@/components/generate/GenerateStepNav";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
-import { validateCombineSnapshot } from "@/components/generate/combine-types";
 import {
   buildEvaluationInputKey,
   buildGenerationInputKey,
@@ -36,6 +35,10 @@ import {
   getGenerateSteps,
   normalizeGenerateActiveStep,
 } from "@/lib/generate-steps";
+import {
+  claimAutoRun,
+  releaseAutoRun,
+} from "@/lib/generate-auto-run";
 import {
   getCombineGenerationFingerprint,
   getGenerationProcess,
@@ -67,6 +70,8 @@ export default function GeneratePage() {
   const [loading, setLoading] = useState(true);
   const [generatingResume, setGeneratingResume] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
+  const generatingResumeRef = useRef(false);
+  const evaluatingRef = useRef(false);
   const [verdictRunning, setVerdictRunning] = useState(false);
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
   const [processSettings, setProcessSettings] = useState(DEFAULT_PROCESS);
@@ -253,79 +258,87 @@ export default function GeneratePage() {
   }, [job, processSettings.doVerdict, setActiveStep, setJob]);
 
   function onCombineNext() {
-    const errors = validateCombineSnapshot(combine, t);
-    if (Object.keys(errors).length > 0) return;
     setActiveStep("Generate");
   }
 
   const runResumeGeneration = useCallback(async () => {
-    if (generatingResume) return;
-
-    const fingerprintRes = await getCombineGenerationFingerprint(combine);
-    if (!fingerprintRes.data?.fingerprint) {
-      toast(
-        fingerprintRes.error ?? t("toast.combineFingerprintFailed"),
-        "error",
-      );
-      return;
-    }
-
-    const inputKey = buildGenerationInputKey(
-      job,
-      processSettings.doVerdict,
-      combine,
-      fingerprintRes.data.fingerprint,
-      promptCacheContext,
-    );
-    if (
-      canReuseStoredResume(
-        {
-          activeStep: normalizedActiveStep,
-          job,
-          combine,
-          verdictInputKey,
-          resume,
-          generationInputKey,
-          evaluationMarkdown,
-          evaluationInputKey,
-        },
-        inputKey,
-      )
-    ) {
-      return;
-    }
-
-    const jobContext = buildResumeJobContext(job, processSettings.doVerdict);
-    if (processSettings.doVerdict && !jobContext) {
-      toast(t("toast.verdictMissing"), "error");
-      return;
-    }
-
+    if (generatingResumeRef.current) return;
+    generatingResumeRef.current = true;
     setGeneratingResume(true);
+
     try {
-      const res = await runAiResume({
-        jobContext,
-        combine,
-      });
-      if (!res.data) {
-        toast(res.error ?? t("toast.resumeGenerateFailed"), "error");
+      const fingerprintRes = await getCombineGenerationFingerprint(combine);
+      if (!fingerprintRes.data?.fingerprint) {
+        toast(
+          fingerprintRes.error ?? t("toast.combineFingerprintFailed"),
+          "error",
+        );
         return;
       }
 
-      setResumeResult(res.data.resume, inputKey);
-      setTokenUsed(res.data.tokenUsed);
-      await refreshTokenUsed();
-      toast(t("toast.resumeGenerated"), "success");
+      const inputKey = buildGenerationInputKey(
+        job,
+        processSettings.doVerdict,
+        combine,
+        fingerprintRes.data.fingerprint,
+        promptCacheContext,
+      );
+      if (
+        canReuseStoredResume(
+          {
+            activeStep: normalizedActiveStep,
+            job,
+            combine,
+            verdictInputKey,
+            resume,
+            generationInputKey,
+            evaluationMarkdown,
+            evaluationInputKey,
+          },
+          inputKey,
+        )
+      ) {
+        return;
+      }
+
+      const jobContext = buildResumeJobContext(job, processSettings.doVerdict);
+      if (processSettings.doVerdict && !jobContext) {
+        toast(t("toast.verdictMissing"), "error");
+        return;
+      }
+
+      const autoRunKey = `generate:resume:${inputKey}`;
+      if (!claimAutoRun(autoRunKey)) {
+        return;
+      }
+
+      try {
+        const res = await runAiResume({
+          jobContext,
+          combine,
+        });
+        if (!res.data) {
+          toast(res.error ?? t("toast.resumeGenerateFailed"), "error");
+          return;
+        }
+
+        setResumeResult(res.data.resume, inputKey);
+        setTokenUsed(res.data.tokenUsed);
+        await refreshTokenUsed();
+        toast(t("toast.resumeGenerated"), "success");
+      } finally {
+        releaseAutoRun(autoRunKey);
+      }
     } catch {
       toast(t("toast.resumeGenerateFailed"), "error");
     } finally {
+      generatingResumeRef.current = false;
       setGeneratingResume(false);
     }
   }, [
     combine,
     evaluationInputKey,
     evaluationMarkdown,
-    generatingResume,
     generationInputKey,
     job,
     normalizedActiveStep,
@@ -349,80 +362,90 @@ export default function GeneratePage() {
   }
 
   const runEvaluation = useCallback(async () => {
-    if (evaluating) return;
-
-    if (!resume || !generationInputKey) {
-      toast(t("toast.noResumeForEvaluate"), "error");
-      return;
-    }
-
-    const fingerprintRes = await getCombineGenerationFingerprint(combine);
-    if (!fingerprintRes.data?.fingerprint) {
-      toast(
-        fingerprintRes.error ?? t("toast.evaluationFingerprintFailed"),
-        "error",
-      );
-      return;
-    }
-
-    const currentInputKey = buildGenerationInputKey(
-      job,
-      processSettings.doVerdict,
-      combine,
-      fingerprintRes.data.fingerprint,
-      promptCacheContext,
-    );
-    if (currentInputKey !== generationInputKey) {
-      toast(t("toast.combineContentChanged"), "error");
-      return;
-    }
-
-    const nextEvaluationInputKey = buildEvaluationInputKey(
-      job,
-      processSettings.doVerdict,
-      combine,
-      fingerprintRes.data.fingerprint,
-      promptCacheContext,
-    );
-    if (
-      canReuseStoredEvaluation(
-        {
-          activeStep: normalizedActiveStep,
-          job,
-          combine,
-          verdictInputKey,
-          resume,
-          generationInputKey,
-          evaluationMarkdown,
-          evaluationInputKey,
-        },
-        nextEvaluationInputKey,
-      )
-    ) {
-      return;
-    }
-
-    const jobContext = buildResumeJobContext(job, processSettings.doVerdict);
+    if (evaluatingRef.current) return;
+    evaluatingRef.current = true;
     setEvaluating(true);
+
     try {
-      const res = await runAiEvaluate({ jobContext, resume });
-      if (!res.data) {
-        toast(res.error ?? t("toast.evaluateFailed"), "error");
+      if (!resume || !generationInputKey) {
+        toast(t("toast.noResumeForEvaluate"), "error");
         return;
       }
 
-      setEvaluationResult(res.data.markdown, nextEvaluationInputKey);
-      setTokenUsed(res.data.tokenUsed);
-      await refreshTokenUsed();
-      toast(t("toast.resumeEvaluated"), "success");
+      const fingerprintRes = await getCombineGenerationFingerprint(combine);
+      if (!fingerprintRes.data?.fingerprint) {
+        toast(
+          fingerprintRes.error ?? t("toast.evaluationFingerprintFailed"),
+          "error",
+        );
+        return;
+      }
+
+      const currentInputKey = buildGenerationInputKey(
+        job,
+        processSettings.doVerdict,
+        combine,
+        fingerprintRes.data.fingerprint,
+        promptCacheContext,
+      );
+      if (currentInputKey !== generationInputKey) {
+        toast(t("toast.combineContentChanged"), "error");
+        return;
+      }
+
+      const nextEvaluationInputKey = buildEvaluationInputKey(
+        job,
+        processSettings.doVerdict,
+        combine,
+        fingerprintRes.data.fingerprint,
+        promptCacheContext,
+      );
+      if (
+        canReuseStoredEvaluation(
+          {
+            activeStep: normalizedActiveStep,
+            job,
+            combine,
+            verdictInputKey,
+            resume,
+            generationInputKey,
+            evaluationMarkdown,
+            evaluationInputKey,
+          },
+          nextEvaluationInputKey,
+        )
+      ) {
+        return;
+      }
+
+      const jobContext = buildResumeJobContext(job, processSettings.doVerdict);
+      const autoRunKey = `generate:evaluate:${nextEvaluationInputKey}`;
+      if (!claimAutoRun(autoRunKey)) {
+        return;
+      }
+
+      try {
+        const res = await runAiEvaluate({ jobContext, resume });
+        if (!res.data) {
+          toast(res.error ?? t("toast.evaluateFailed"), "error");
+          return;
+        }
+
+        setEvaluationResult(res.data.markdown, nextEvaluationInputKey);
+        setTokenUsed(res.data.tokenUsed);
+        await refreshTokenUsed();
+        toast(t("toast.resumeEvaluated"), "success");
+      } finally {
+        releaseAutoRun(autoRunKey);
+      }
     } catch {
       toast(t("toast.evaluateFailed"), "error");
     } finally {
+      evaluatingRef.current = false;
       setEvaluating(false);
     }
   }, [
     combine,
-    evaluating,
     evaluationInputKey,
     evaluationMarkdown,
     generationInputKey,

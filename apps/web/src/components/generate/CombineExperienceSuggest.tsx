@@ -9,6 +9,7 @@ import {
   type CombineSnapshot,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
+import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
@@ -88,23 +89,24 @@ export function CombineExperienceSuggest({
     };
   }, [pendingResult]);
 
-  async function onSuggest(e: FormEvent) {
-    e.preventDefault();
+  async function runSuggest(): Promise<boolean> {
+    if (suggesting) return false;
+
     setSuggestError(null);
     const errors = validateCombineSnapshot(combine, t, graduationYear);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
-      return;
+      return false;
     }
 
     const filteredJob = noiseFilter(job.jobText.trim()).text;
     if (!filteredJob) {
       setSuggestError(t("validation.jobDescriptionRequired"));
-      return;
+      return false;
     }
     if (doVerdict && !job.acceptedMarkdown?.trim()) {
       setSuggestError(t("generate.combine.suggestVerdictRequired"));
-      return;
+      return false;
     }
 
     setSuggesting(true);
@@ -120,7 +122,7 @@ export function CombineExperienceSuggest({
 
     if (res.error || !res.data) {
       toast(res.error ?? t("toast.combineRecommendFailed"), "error");
-      return;
+      return false;
     }
 
     if (res.data.tokenUsed != null) {
@@ -130,6 +132,16 @@ export function CombineExperienceSuggest({
     }
 
     setPendingResult(res.data);
+    return true;
+  }
+
+  async function onSuggest(e: FormEvent) {
+    e.preventDefault();
+    await runSuggest();
+  }
+
+  function onCancelSuggestions() {
+    setPendingResult(null);
   }
 
   function onApplySuggestions() {
@@ -177,10 +189,17 @@ export function CombineExperienceSuggest({
         </div>
       </form>
 
+      {suggesting ? (
+        <BusyOverlay
+          title={t("generate.combine.suggestingOverlay.title")}
+          description={t("generate.combine.suggestingOverlay.description")}
+        />
+      ) : null}
+
       {pendingResult ? (
         <DetailDialog
           title={t("generate.combine.suggestionDialogTitle")}
-          onClose={() => setPendingResult(null)}
+          onClose={onCancelSuggestions}
           mode="view"
           panelClassName="max-w-2xl"
         >
@@ -230,7 +249,21 @@ export function CombineExperienceSuggest({
               ))}
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
+              <button
+                type="button"
+                onClick={onCancelSuggestions}
+                className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-surface-muted"
+              >
+                {t("generate.combine.suggestionCancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void runSuggest()}
+                className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-surface-muted"
+              >
+                {t("generate.combine.suggestionRetry")}
+              </button>
               <button
                 type="button"
                 onClick={onApplySuggestions}

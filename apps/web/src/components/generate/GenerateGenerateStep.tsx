@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { resumeToMarkdown } from "@johel/resume";
 import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
+import { useStepMountAutoRun } from "@/components/generate/useStepMountAutoRun";
 import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
 
 type GenerateGenerateStepProps = {
@@ -34,16 +35,7 @@ export function GenerateGenerateStep({
     [resume],
   );
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      await onAutoGenerate();
-      if (cancelled) return;
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [onAutoGenerate]);
+  useStepMountAutoRun(onAutoGenerate);
 
   useRegisterGenerateStepNav({
     onPrev,

@@ -491,6 +491,11 @@ export const en = {
       },
       suggestExperiences: "Suggest experiences",
       suggesting: "Suggesting…",
+      suggestingOverlay: {
+        title: "Suggesting experiences…",
+        description:
+          "Please wait while the AI maps capability cards to your companies.",
+      },
       experiencesSection: "Experiences",
       experiencesSectionHint:
         "Link shared capability cards to each included company. Optional Keyword context on a company card steers which cards AI picks for that company; leave it empty for Auto (job/Verdict and role context only).",
@@ -505,6 +510,8 @@ export const en = {
       suggestionExperienceMissing: "Unknown experience",
       suggestionNoExperiences: "No experiences suggested for this company.",
       suggestionRationale: "Rationale",
+      suggestionCancel: "Cancel",
+      suggestionRetry: "Retry",
       suggestionApply: "Apply",
       linkedExperiences: "Linked experiences",
     },
