@@ -437,9 +437,9 @@ export const ko: MessageTree = {
     },
     job: {
       title: "직업광고문",
-      filteredPreviewTitle: "거른 직업광고",
+      filteredPreviewTitle: "잡음제거된 직업광고",
       filteredPreviewHint:
-        "잡음 필터를 거친 미리보기입니다. 검토를 끄면 이후 단계에서 이 내용을 사용합니다.",
+        "잡음제거를 거친 미리보기입니다. [검토]를 끄면 이후 단계에서 이 내용을 사용합니다.",
       methods: {
         manual: "수동",
         url: "URL",
@@ -453,7 +453,7 @@ export const ko: MessageTree = {
       placeholder: "직업광고문를 붙여넣거나 입력하여주십시오…",
       runningVerdict: {
         title: "AI검토 실행중…",
-        description: "잠시만 기다려주십시오. 잡음제거와 AI 분석이 진행중입니다.",
+        description: "잠시만 기다려주십시오. 잡음제거와 AI분석이 진행중입니다.",
       },
     },
     verdict: {

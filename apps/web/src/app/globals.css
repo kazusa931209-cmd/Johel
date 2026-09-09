@@ -138,3 +138,36 @@ html[lang="ko"] body {
 .combine-period-range::-moz-range-track {
   background: transparent;
 }
+
+:root {
+  --drawer-duration: 420ms;
+  --drawer-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.drawer-backdrop {
+  opacity: 0;
+  transition: opacity var(--drawer-duration) var(--drawer-ease);
+}
+
+.drawer-backdrop.drawer-open {
+  opacity: 1;
+}
+
+.drawer-panel {
+  pointer-events: none;
+  transform: translate3d(100%, 0, 0);
+  transition: transform var(--drawer-duration) var(--drawer-ease);
+  will-change: transform;
+}
+
+.drawer-panel.drawer-open {
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-backdrop,
+  .drawer-panel {
+    transition: none;
+  }
+}

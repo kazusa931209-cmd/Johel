@@ -74,6 +74,7 @@ User browser (:4041)
 - If a frontend component file exceeds **500 lines**, ask the user before growing it further; prefer splitting into smaller components/hooks
 - Action controls: `AddButton` (plus), `EditButton` (pencil), `DeleteButton` (red trash), `CopyButton` (clipboard), `CloseButton` (X) in `components/shared/action-icon-buttons.tsx`
 - Dialogs use `DetailDialog` (`components/shared/detail-dialog.tsx`) so Close (X) is always in the top-right header; the footer holds only the main action (Apply / Delete). Do not put Close beside that action. `mode="view"` (default) allows backdrop dismiss; `mode="form"` blocks backdrop dismiss for add/edit dialogs. Delete confirms use `mode="view"`. See `.cursor/rules/dialog-dismiss.mdc`.
+- Drawers use shared `Drawer` (`components/shared/drawer.tsx`): stay mounted through open/close; panel `translate3d(100% → 0)` plus backdrop fade, 420ms `cubic-bezier(0.32, 0.72, 0, 1)` (velocity ease-out); unmount after the transition; `prefers-reduced-motion: reduce` skips the motion. Nested drawers (history + detail) each run this animation independently.
 
 ## Studio shell (Phase 4)
 

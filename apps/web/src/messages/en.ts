@@ -437,7 +437,7 @@ export const en = {
     },
     job: {
       title: "Job",
-      filteredPreviewTitle: "Filtered Job Description",
+      filteredPreviewTitle: "Noise-Filtered Job Description",
       filteredPreviewHint:
         "Live preview after the noise filter. Later steps use this text when Do Verdict is off.",
       methods: {

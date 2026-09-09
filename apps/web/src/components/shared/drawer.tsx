@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CloseButton } from "@/components/shared/action-icon-buttons";
 
 type DrawerProps = {
@@ -13,6 +13,13 @@ type DrawerProps = {
   closeOnEscape?: boolean;
 };
 
+/** Keep in sync with `--drawer-duration` in `globals.css`. */
+export const DRAWER_TRANSITION_MS = 420;
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export function Drawer({
   title,
   open,
@@ -22,6 +29,39 @@ export function Drawer({
   zIndex = 50,
   closeOnEscape = true,
 }: DrawerProps) {
+  const [mounted, setMounted] = useState(open);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    if (open) {
+      let innerFrame = 0;
+      const outerFrame = window.requestAnimationFrame(() => {
+        innerFrame = window.requestAnimationFrame(() => setEntered(true));
+      });
+      return () => {
+        window.cancelAnimationFrame(outerFrame);
+        if (innerFrame) {
+          window.cancelAnimationFrame(innerFrame);
+        }
+      };
+    }
+
+    setEntered(false);
+    const delay = prefersReducedMotion() ? 0 : DRAWER_TRANSITION_MS;
+    const timeout = window.setTimeout(() => setMounted(false), delay);
+    return () => window.clearTimeout(timeout);
+  }, [open, mounted]);
+
   useEffect(() => {
     if (!open || !closeOnEscape) return;
 
@@ -35,14 +75,14 @@ export function Drawer({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, closeOnEscape, onClose]);
 
-  if (!open) {
+  if (!mounted) {
     return null;
   }
 
   return (
     <div className="fixed inset-0" style={{ zIndex }} role="presentation">
       <div
-        className="absolute inset-0 bg-black/50"
+        className={`drawer-backdrop absolute inset-0 bg-black/50${entered ? " drawer-open" : ""}`}
         aria-hidden
         onClick={onClose}
       />
@@ -50,7 +90,7 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute top-0 right-0 flex h-full flex-col border-l border-border bg-surface shadow-xl ${widthClass}`}
+        className={`drawer-panel absolute top-0 right-0 flex h-full flex-col border-l border-border bg-surface shadow-xl ${widthClass}${entered ? " drawer-open" : ""}`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3">
