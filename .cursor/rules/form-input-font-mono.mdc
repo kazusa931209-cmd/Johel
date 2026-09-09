@@ -1,0 +1,44 @@
+---
+description: Use font-mono on text inputs and textareas in form UI
+alwaysApply: true
+---
+
+# Form Input Font
+
+Apply to every **text-like form control** in the web UI (`apps/web`): create/edit forms, dialogs, drawers, settings, auth, search filters, and generate steps.
+
+## Rules
+
+1. **Add `font-mono`** — Every `<input>` and `<textarea>` that accepts user-typed text must include the Tailwind `font-mono` class on the element (or on a shared input className constant that includes it).
+
+2. **Text-like inputs** — Applies to `type="text"`, `type="search"`, `type="email"`, `type="password"`, `type="number"`, `type="date"`, `type="url"`, `type="tel"`, and `<textarea>`. Also applies when `type` is omitted and the control behaves as a text field.
+
+3. **Exceptions** — Do **not** add `font-mono` to checkbox, radio, range, file, hidden, submit, or button inputs. Labels, buttons, and read-only display text follow their own typography rules unless they are the input itself.
+
+4. **Shared classNames** — When extracting a reusable input class string, include `font-mono` in that shared value so new fields inherit the rule automatically.
+
+## Examples
+
+```tsx
+// ❌ BAD — sans-serif on a text field
+<input
+  value={name}
+  onChange={...}
+  className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+/>
+
+// ✅ GOOD
+<textarea
+  value={facts}
+  onChange={...}
+  className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
+/>
+```
+
+```tsx
+// ❌ BAD — checkbox styled as form control
+<input type="checkbox" className="font-mono h-4 w-4" />
+
+// ✅ GOOD — checkbox keeps default sizing only
+<input type="checkbox" className="h-4 w-4 rounded border-border" />
+```

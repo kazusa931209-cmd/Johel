@@ -225,7 +225,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
             }
           }}
           aria-invalid={Boolean(fieldErrors.displayPriority)}
-          className="w-full max-w-40 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full max-w-40 rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
         <FieldError message={fieldErrors.displayPriority} />
       </label>
@@ -244,7 +244,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
             }
           }}
           aria-invalid={Boolean(fieldErrors.alias)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
         <FieldError message={fieldErrors.alias} />
       </label>
@@ -263,7 +263,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
             }
           }}
           aria-invalid={Boolean(fieldErrors.name)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
         <FieldError message={fieldErrors.name} />
       </label>
@@ -289,7 +289,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           }}
           rows={6}
           aria-invalid={Boolean(fieldErrors.whatCompanyIs)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
         <FieldExamples
           t={t}
@@ -327,7 +327,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           }}
           rows={10}
           aria-invalid={Boolean(fieldErrors.domainAndStack)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
         <FieldExamples
           t={t}

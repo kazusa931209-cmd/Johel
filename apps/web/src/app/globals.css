@@ -27,6 +27,10 @@
   --scrollbar-track: var(--surface-muted);
   --scrollbar-thumb: #d4d4d8;
   --scrollbar-thumb-hover: #a1a1aa;
+  --period-track: #e4e4e7;
+  --period-range: var(--accent);
+  --period-thumb: var(--surface);
+  --period-thumb-border: var(--accent);
 }
 
 .dark {
@@ -54,6 +58,10 @@
   --scrollbar-track: var(--surface-muted);
   --scrollbar-thumb: #52525b;
   --scrollbar-thumb-hover: #71717a;
+  --period-track: #3f3f46;
+  --period-range: var(--accent);
+  --period-thumb: var(--surface);
+  --period-thumb-border: var(--accent);
 }
 
 @theme inline {
@@ -163,8 +171,9 @@ html[lang="ko"] body {
   height: 1rem;
   width: 1rem;
   border-radius: 9999px;
-  border: 2px solid var(--border);
-  background: var(--background);
+  border: 2px solid var(--period-thumb-border);
+  background: var(--period-thumb);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
   cursor: pointer;
 }
 
@@ -173,8 +182,9 @@ html[lang="ko"] body {
   height: 1rem;
   width: 1rem;
   border-radius: 9999px;
-  border: 2px solid var(--border);
-  background: var(--background);
+  border: 2px solid var(--period-thumb-border);
+  background: var(--period-thumb);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
   cursor: pointer;
 }
 

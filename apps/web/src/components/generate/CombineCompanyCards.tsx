@@ -239,7 +239,7 @@ export function CombineCompanyCards({
                         })
                       }
                       placeholder={t("generate.combine.roleContextPlaceholder")}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
                     />
                   </label>
 
@@ -260,7 +260,7 @@ export function CombineCompanyCards({
                       placeholder={t(
                         "generate.combine.keywordContextPlaceholder",
                       )}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
                     />
                   </label>
 

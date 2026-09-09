@@ -15,6 +15,7 @@ import {
   toExperienceAdviseApplyOperations,
   type ExperienceAdviseDisplayOperation,
 } from "@/lib/build-experience-advise-display-operations";
+import { isExperienceSuggestionActionable } from "@/lib/experience-advise-suggestion-state";
 import { dispatchWorkspaceUpdated } from "@/lib/workspace-updated";
 
 export const EXPERIENCE_FACTS_MAX = 10_000;
@@ -92,7 +93,7 @@ export function useExperienceAdviseFlow({
     setWorkspaceFingerprint(res.data.workspaceFingerprint);
     setTokenUsed(res.data.tokenUsed);
     void refreshTokenUsed();
-    setSuggestionOpen(true);
+    setSuggestionOpen(isExperienceSuggestionActionable(display));
     toast(t("toast.experienceSuggestionReady"), "success");
   }
 

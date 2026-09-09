@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { EXPERIENCE_FACTS_MAX } from "@/lib/use-experience-advise-flow";
 
@@ -18,6 +19,7 @@ type ExperienceFactFormFieldsProps = {
   onSuggest: () => void;
   advising: boolean;
   editingCategory?: string;
+  referencePanel?: ReactNode;
 };
 
 export function ExperienceFactFormFields({
@@ -27,6 +29,7 @@ export function ExperienceFactFormFields({
   onSuggest,
   advising,
   editingCategory,
+  referencePanel,
 }: ExperienceFactFormFieldsProps) {
   const t = useT();
 
@@ -44,6 +47,8 @@ export function ExperienceFactFormFields({
         {t("crud.experiences.advisor.description")}
       </p>
 
+      {referencePanel}
+
       <label className="block space-y-1 text-sm">
         <span>
           {t("crud.experiences.advisor.factsLabel")}
@@ -56,7 +61,7 @@ export function ExperienceFactFormFields({
           maxLength={EXPERIENCE_FACTS_MAX}
           placeholder={t("crud.experiences.advisor.factsPlaceholder")}
           aria-invalid={Boolean(factsError)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
         />
         {factsError ? (
           <p className="text-sm text-danger">{factsError}</p>

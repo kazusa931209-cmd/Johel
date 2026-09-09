@@ -194,7 +194,7 @@ export function ProfileLinksEditor({
                 if (keyError) setKeyError(undefined);
               }}
               aria-invalid={Boolean(keyError)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
             />
             <FieldError message={keyError} />
           </label>
@@ -205,7 +205,7 @@ export function ProfileLinksEditor({
               onChange={(e) =>
                 setDraft((d) => ({ ...d, link: e.target.value }))
               }
-              className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
             />
           </label>
           <div className="flex justify-end">

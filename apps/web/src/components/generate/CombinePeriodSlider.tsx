@@ -64,9 +64,9 @@ export function CombinePeriodSlider({
       </p>
       <p className="text-sm font-medium">{rangeLabel}</p>
       <div className="relative h-8 pt-3">
-        <div className="absolute top-1/2 right-0 left-0 h-1.5 -translate-y-1/2 rounded-full bg-surface-muted" />
+        <div className="absolute top-1/2 right-0 left-0 h-1.5 -translate-y-1/2 rounded-full bg-[var(--period-track)]" />
         <div
-          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-foreground/70"
+          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--period-range)]"
           style={{
             left: `${startPercent}%`,
             width: `${Math.max(endPercent - startPercent, 0)}%`,

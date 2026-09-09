@@ -290,11 +290,16 @@ export const ko: MessageTree = {
         apply: "적용",
         suggestionTitle: "경험제안",
         rationale: "리유",
+        warnings: "경고",
         questions: "질질",
         editingCard: '"{category}" 카드에 사실을 추가합니다.',
         busy: {
           title: "경험초안 작성중…",
           description: "AI가 사실을 STAR형식으로 구조화하는 중입니다.",
+        },
+        applyingBusy: {
+          title: "경험적용중…",
+          description: "경험카드가 저장되는 동안 기다려주십시오.",
         },
         placements: {
           create: "새 경험카드",

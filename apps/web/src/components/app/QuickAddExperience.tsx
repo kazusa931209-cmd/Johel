@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { ExperienceFactFormFields } from "@/components/ExperienceFactFormFields";
 import { ExperienceSuggestionDrawer } from "@/components/ExperienceSuggestionDrawer";
+import { ExperienceSuggestionReferencePanel } from "@/components/ExperienceSuggestionReferencePanel";
+import { shouldShowInlineExperienceSuggestionReference } from "@/lib/experience-advise-suggestion-state";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { Drawer } from "@/components/shared/drawer";
 import { useExperienceAdviseFlow } from "@/lib/use-experience-advise-flow";
@@ -66,6 +68,14 @@ export function QuickAddExperience({
             factsError={factsError}
             onSuggest={() => void handleSuggest()}
             advising={advising}
+            referencePanel={
+              shouldShowInlineExperienceSuggestionReference(
+                result,
+                displayOperations,
+              ) ? (
+                <ExperienceSuggestionReferencePanel result={result} />
+              ) : undefined
+            }
           />
         </div>
       </Drawer>
@@ -83,6 +93,11 @@ export function QuickAddExperience({
         <BusyOverlay
           title={t("crud.experiences.advisor.busy.title")}
           description={t("crud.experiences.advisor.busy.description")}
+        />
+      ) : applying ? (
+        <BusyOverlay
+          title={t("crud.experiences.advisor.applyingBusy.title")}
+          description={t("crud.experiences.advisor.applyingBusy.description")}
         />
       ) : null}
     </>

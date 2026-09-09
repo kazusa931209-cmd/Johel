@@ -68,7 +68,7 @@ export default function RegisterPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
           />
         </label>
         <label className="block space-y-1 text-sm">
@@ -79,7 +79,7 @@ export default function RegisterPage() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
           />
         </label>
         {error ? <p className="text-sm text-danger">{error}</p> : null}

@@ -3,6 +3,8 @@
 import { useT } from "@/components/app/LocaleProvider";
 import { ExperienceFactFormFields } from "@/components/ExperienceFactFormFields";
 import { ExperienceSuggestionDialog } from "@/components/ExperienceSuggestionDialog";
+import { ExperienceSuggestionReferencePanel } from "@/components/ExperienceSuggestionReferencePanel";
+import { shouldShowInlineExperienceSuggestionReference } from "@/lib/experience-advise-suggestion-state";
 import { BackButton } from "@/components/shared/back-button";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { useCrudFormNavigation } from "@/lib/crud-form-navigation";
@@ -69,6 +71,14 @@ export function ExperienceFactForm({
           editingCategory={
             mode === "edit" ? initialCategory : undefined
           }
+          referencePanel={
+            shouldShowInlineExperienceSuggestionReference(
+              result,
+              displayOperations,
+            ) ? (
+              <ExperienceSuggestionReferencePanel result={result} />
+            ) : undefined
+          }
         />
       </section>
 
@@ -85,6 +95,11 @@ export function ExperienceFactForm({
         <BusyOverlay
           title={t("crud.experiences.advisor.busy.title")}
           description={t("crud.experiences.advisor.busy.description")}
+        />
+      ) : applying ? (
+        <BusyOverlay
+          title={t("crud.experiences.advisor.applyingBusy.title")}
+          description={t("crud.experiences.advisor.applyingBusy.description")}
         />
       ) : null}
     </>

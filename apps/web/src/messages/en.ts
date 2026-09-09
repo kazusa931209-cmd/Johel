@@ -288,11 +288,16 @@ export const en = {
         apply: "Apply",
         suggestionTitle: "Experience suggestion",
         rationale: "Rationale",
+        warnings: "Warnings",
         questions: "Questions",
         editingCard: 'Adding facts to "{category}".',
         busy: {
           title: "Drafting experience…",
           description: "Please wait while the AI structures your facts.",
+        },
+        applyingBusy: {
+          title: "Applying experience…",
+          description: "Please wait while your experience card is saved.",
         },
         placements: {
           create: "New experience card",

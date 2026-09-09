@@ -147,7 +147,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
               }
             }}
             aria-invalid={Boolean(fieldErrors.firstName)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
           />
           <FieldError message={fieldErrors.firstName} />
         </label>
@@ -168,7 +168,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
               }
             }}
             aria-invalid={Boolean(fieldErrors.lastName)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
           />
           <FieldError message={fieldErrors.lastName} />
         </label>
@@ -180,7 +180,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
           type="date"
           value={birthDate}
           onChange={(e) => setBirthDate(e.target.value)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
       </label>
 
@@ -190,7 +190,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
       </label>
 
@@ -199,7 +199,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
         <input
           value={pn}
           onChange={(e) => setPn(e.target.value)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
       </label>
 
@@ -208,7 +208,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
         <input
           value={residence}
           onChange={(e) => setResidence(e.target.value)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
       </label>
 
@@ -218,7 +218,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
           <input
             value={university}
             onChange={(e) => setUniversity(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
           />
         </label>
         <label className="block space-y-1 text-sm">
@@ -242,7 +242,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
               }
             }}
             aria-invalid={Boolean(fieldErrors.graduationYear)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
           />
           <FieldError message={fieldErrors.graduationYear} />
         </label>
@@ -253,7 +253,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
         <input
           value={degree}
           onChange={(e) => setDegree(e.target.value)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
         />
       </label>
 

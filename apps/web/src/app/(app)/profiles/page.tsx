@@ -121,7 +121,7 @@ function ProfilesPageContent() {
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
           placeholder={t("crud.profiles.searchPlaceholder")}
-          className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
+          className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
         />
         <button
           type="submit"

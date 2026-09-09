@@ -263,7 +263,7 @@ export default function SettingsPage() {
                   : t("settings.environment.aiAgent.placeholderEnterKey")
               }
               aria-invalid={Boolean(errors.apiKey)}
-              className="w-full rounded-md border border-border bg-background py-2 pr-10 pl-3 outline-none focus:border-muted"
+              className="w-full rounded-md border border-border bg-background py-2 pr-10 pl-3 font-mono outline-none focus:border-muted"
             />
             <button
               type="button"
