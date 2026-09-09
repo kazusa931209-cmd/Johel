@@ -16,6 +16,7 @@ import { GENERATE_SESSION_CHANGED_EVENT } from "@/lib/generate-session-events";
 import { loadGenerateSession } from "@/lib/generate-session";
 
 export type HeaderGenerationStatus = {
+  generationId: string | null;
   generationPublicId: string | null;
   processedStep: string | null;
   doVerdict: boolean;
@@ -24,6 +25,7 @@ export type HeaderGenerationStatus = {
 };
 
 const EMPTY_STATUS: HeaderGenerationStatus = {
+  generationId: null,
   generationPublicId: null,
   processedStep: null,
   doVerdict: true,
@@ -49,6 +51,7 @@ function readSessionStatus(
     return { ...EMPTY_STATUS, doVerdict, doEvaluate };
   }
   return {
+    generationId: session.generationId,
     generationPublicId: session.generationPublicId,
     processedStep: deriveProcessedStepFromSession(session),
     doVerdict,

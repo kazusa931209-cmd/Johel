@@ -698,8 +698,15 @@ export function applyExperienceAdvise(payload: ExperienceAdviseApplyRequest) {
   });
 }
 
-export function getAiUsageSummary() {
-  return request<AiUsageSummary>("/ai-usage/summary");
+export function getAiUsageSummary(generationId?: string | null) {
+  const params = new URLSearchParams();
+  if (generationId?.trim()) {
+    params.set("generationId", generationId.trim());
+  }
+  const query = params.toString();
+  return request<AiUsageSummary>(
+    query ? `/ai-usage/summary?${query}` : "/ai-usage/summary",
+  );
 }
 
 export function listAiUsageGroups(page = 1) {

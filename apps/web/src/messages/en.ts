@@ -4,8 +4,10 @@ export const en = {
     header: {
       collapseSidebar: "Collapse sidebar",
       openSidebar: "Open sidebar",
-      tokenUsageTitle: "Token usage",
-      tokenUsed: "Token Used: {count}",
+      tokenUsageTitle: "Total token usage across all generations",
+      tokenUsed: "Total Token Used: {count}",
+      generationTokenUsed: "Token Used: {count}",
+      generationTokenUsedTitle: "Tokens used for this generation",
       statusIdle: "No active generation",
       statusCurrent: "Current",
       statusTitle: "Generation {id} · {step}",

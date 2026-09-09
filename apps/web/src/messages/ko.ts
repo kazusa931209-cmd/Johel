@@ -6,8 +6,10 @@ export const ko: MessageTree = {
     header: {
       collapseSidebar: "사이드바 접기",
       openSidebar: "사이드바 열기",
-      tokenUsageTitle: "토큰 사용량",
-      tokenUsed: "사용 토큰: {count}",
+      tokenUsageTitle: "모든 생성의 전체 토큰 사용량",
+      tokenUsed: "전체 사용 토큰: {count}",
+      generationTokenUsed: "사용 토큰: {count}",
+      generationTokenUsedTitle: "이 생성에서 사용한 토큰",
       statusIdle: "활성 생성 없음",
       statusCurrent: "현재",
       statusTitle: "생성 {id} · {step}",

@@ -154,6 +154,19 @@ aiUsageRoutes.get("/summary", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
+  const generationId = c.req.query("generationId")?.trim();
+  if (generationId) {
+    const generation = await prisma.generation.findFirst({
+      where: { id: generationId, userId: user.id },
+      select: { inputToken: true, outputToken: true },
+    });
+    return c.json({
+      tokenUsed: generation
+        ? generation.inputToken + generation.outputToken
+        : 0,
+    });
+  }
+
   const tokenUsed = await sumTokenUsed(user.id);
   return c.json({ tokenUsed });
 });
