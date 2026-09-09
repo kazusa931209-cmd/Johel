@@ -32,7 +32,7 @@ function StepPanel({
       {showHeader ? (
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
           {title ? (
-            <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+            <h2 className="text-xl font-semibold tracking-tight leading-8">{title}</h2>
           ) : (
             <span />
           )}
