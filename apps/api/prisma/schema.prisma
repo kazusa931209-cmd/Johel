@@ -19,6 +19,7 @@ model User {
   companies    Company[]
   experiences  Experience[]
   aiUsages     AiUsage[]
+  generations  Generation[]
   prompt       Prompt?
   generationProcess GenerationProcess?
 
@@ -105,9 +106,11 @@ model Experience {
 }
 
 model AiUsage {
-  id           String   @id @default(cuid())
+  id           String      @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generationId String?
+  generation   Generation? @relation(fields: [generationId], references: [id], onDelete: SetNull)
   aiProvider   String
   modelName    String
   generateType String
@@ -115,11 +118,41 @@ model AiUsage {
   output       String
   inputToken   Int
   outputToken  Int
-  createdAt    DateTime @default(now())
+  createdAt    DateTime    @default(now())
 
   @@index([userId])
   @@index([userId, createdAt])
+  @@index([generationId])
   @@map("aiUsage")
+}
+
+model Generation {
+  id                 String    @id @default(cuid())
+  publicId           String
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status             String
+  inputToken         Int       @default(0)
+  outputToken        Int       @default(0)
+  activeStep         String
+  jobJson            String
+  combineJson        String
+  verdictMarkdown    String?
+  resumeJson         String?
+  evaluationMarkdown String?
+  doVerdict          Boolean
+  doEvaluate         Boolean
+  resumeLanguage     String
+  verdictPrompt      String
+  generatePrompt     String
+  evaluatePrompt     String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  aiUsages           AiUsage[]
+
+  @@unique([userId, publicId])
+  @@index([userId, createdAt])
+  @@map("generations")
 }
 
 model Prompt {

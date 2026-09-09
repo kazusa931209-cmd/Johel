@@ -353,6 +353,38 @@ User browser (:4041)
 - `assembleFromCombineSnapshot()` in `apps/api/src/lib/resume/assemble-input.ts`
 - `ResumeGenerationInput.run` — `{ language, emphasis? }` replaces workflow block
 
+## Generation history (Phase 62)
+
+### Schema
+
+- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `status` (`in_progress` | `completed`), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps
+- `AiUsage.generationId` optional FK → `generations.id` (`onDelete: SetNull`); indexed
+- Migration: `20260909100004_generations`
+
+### Public ID
+
+- Format: `GEN-YYYYMMDD-NNN` (per user, per calendar day; `NNN` zero-padded sequence)
+
+### API
+
+- `POST /generations/start` — allocate `publicId`, snapshot current prompts + process flags, create `in_progress` row
+- `PUT /generations/:id` — upsert session snapshot (internal cuid)
+- `GET /generations` — paginated list (`page`, `q`, pageSize 10); search `jobJson` + snapshotted prompt fields; newest first
+- `GET /generations/:publicId` — full snapshot for detail page
+- Generation-scoped AI routes accept optional `generationId`; `recordAiUsage` links rows and increments generation token totals
+
+### Persistence triggers
+
+- **Start:** first Generate visit (or after **+ New**) calls `POST /generations/start`
+- **Snapshot:** debounced `PUT` on session changes; status `completed` when user reaches the last timeline step
+- **+ New:** `PUT` current run, clear session, `POST /generations/start` for fresh ID
+
+### Web
+
+- Generate page: Generation ID subtitle under title; session stores `generationId` / `generationPublicId`
+- `/history` list (CRUD list pattern); `/history/[publicId]` read-only detail reusing `GenerateTimeline`, `GenerateStepLayout`, preview panels, and `GenerateHistoryStepView`
+- Sidebar **Run** → **History** after **Generate**
+
 ## Plans
 
 Built Cursor plans for completed work are archived under [`docs/plans/`](./plans/) with a `YYYY-MM-DD-` filename prefix.

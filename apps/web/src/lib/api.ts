@@ -1,6 +1,7 @@
 import type { ProfileDetail, ProfileWritePayload } from "./profile";
 import type { CompanyDetail, CompanyWritePayload } from "./company";
 import type { ExperienceDetail, ExperienceWritePayload } from "./experience";
+import type { GenerateJobState } from "./generate-session";
 import { AI_API_TIMEOUT_MS, API_TIMEOUT_MS } from "./api-timeout";
 
 export type {
@@ -226,7 +227,13 @@ export type CombineRecommendResult = {
   tokenUsed: number;
 };
 
-export function runAiCombineRecommend(payload: CombineRecommendRequest) {
+export type GenerationScopedRequest = {
+  generationId?: string | null;
+};
+
+export function runAiCombineRecommend(
+  payload: CombineRecommendRequest & GenerationScopedRequest,
+) {
   return request<CombineRecommendResult>("/ai-combine-recommend", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -409,10 +416,16 @@ export type AiUsageDetail = AiUsageListItem & {
   output: string;
 };
 
-export function runAiVerdict(jobDescription: string) {
+export function runAiVerdict(
+  jobDescription: string,
+  generationId?: string | null,
+) {
   return request<AiVerdictResult>("/ai-verdict", {
     method: "POST",
-    body: JSON.stringify({ jobDescription }),
+    body: JSON.stringify({
+      jobDescription,
+      ...(generationId ? { generationId } : {}),
+    }),
     timeoutMs: AI_API_TIMEOUT_MS,
   });
 }
@@ -428,7 +441,9 @@ export type AiResumeResult = {
   tokenUsed: number;
 };
 
-export function runAiResume(payload: AiResumeRequest) {
+export function runAiResume(
+  payload: AiResumeRequest & GenerationScopedRequest,
+) {
   return request<AiResumeResult>("/ai-resume", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -447,12 +462,94 @@ export type AiEvaluateResult = {
   tokenUsed: number;
 };
 
-export function runAiEvaluate(payload: AiEvaluateRequest) {
+export function runAiEvaluate(
+  payload: AiEvaluateRequest & GenerationScopedRequest,
+) {
   return request<AiEvaluateResult>("/ai-evaluate", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,
   });
+}
+
+export type GenerationStatus = "in_progress" | "completed";
+
+export type GenerationStartResult = {
+  id: string;
+  publicId: string;
+};
+
+export type GenerationListItem = {
+  id: string;
+  publicId: string;
+  status: GenerationStatus;
+  inputToken: number;
+  outputToken: number;
+  tokenUsed: number;
+  createdAt: string;
+};
+
+export type GenerationList = {
+  items: GenerationListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type GenerationDetail = {
+  id: string;
+  publicId: string;
+  status: GenerationStatus;
+  inputToken: number;
+  outputToken: number;
+  tokenUsed: number;
+  activeStep: string;
+  job: GenerateJobState;
+  combine: CombineSnapshot;
+  verdictMarkdown: string | null;
+  resume: import("@johel/resume").GeneratedResume | null;
+  evaluationMarkdown: string | null;
+  doVerdict: boolean;
+  doEvaluate: boolean;
+  resumeLanguage: ResumeLanguage;
+  verdictPrompt: string;
+  generatePrompt: string;
+  evaluatePrompt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GenerationUpdatePayload = {
+  activeStep: string;
+  job: GenerateJobState;
+  combine: CombineSnapshot;
+  verdictMarkdown?: string | null;
+  resume?: import("@johel/resume").GeneratedResume | null;
+  evaluationMarkdown?: string | null;
+  status?: GenerationStatus;
+};
+
+export function startGeneration() {
+  return request<GenerationStartResult>("/generations/start", {
+    method: "POST",
+  });
+}
+
+export function updateGeneration(id: string, payload: GenerationUpdatePayload) {
+  return request<GenerationDetail>(`/generations/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listGenerations(q: string, page: number | null = 1) {
+  const params = new URLSearchParams();
+  appendListParams(params, q, page);
+  return request<GenerationList>(`/generations?${params.toString()}`);
+}
+
+export function getGeneration(publicId: string) {
+  return request<GenerationDetail>(`/generations/${publicId}`);
 }
 
 export type ExperienceAdvisePlacement =

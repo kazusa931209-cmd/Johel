@@ -23,9 +23,14 @@ const STEP_LABEL_KEYS: Record<GenerateStep, string> = {
 type GenerateTimelineProps = {
   active: GenerateStep;
   steps: readonly GenerateStep[];
+  onStepSelect?: (step: GenerateStep) => void;
 };
 
-export function GenerateTimeline({ active, steps }: GenerateTimelineProps) {
+export function GenerateTimeline({
+  active,
+  steps,
+  onStepSelect,
+}: GenerateTimelineProps) {
   const t = useT();
 
   return (
@@ -36,27 +41,45 @@ export function GenerateTimeline({ active, steps }: GenerateTimelineProps) {
       <ol className="flex min-w-[320px] items-center gap-1">
         {steps.map((step, index) => {
           const isActive = step === active;
+          const content = (
+            <>
+              <span
+                className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs ${
+                  isActive
+                    ? "border-foreground bg-accent text-accent-fg"
+                    : "border-border"
+                }`}
+              >
+                {index + 1}
+              </span>
+              <span>{t(STEP_LABEL_KEYS[step])}</span>
+            </>
+          );
+          const className = `flex w-full flex-col items-center gap-1 rounded-md px-2 py-2 text-center text-xs sm:text-sm ${
+            isActive
+              ? "bg-surface-muted font-medium text-foreground"
+              : "text-muted"
+          }`;
+
           return (
             <li key={step} className="flex min-w-0 flex-1 items-center gap-1">
-              <div
-                className={`flex w-full flex-col items-center gap-1 rounded-md px-2 py-2 text-center text-xs sm:text-sm ${
-                  isActive
-                    ? "bg-surface-muted font-medium text-foreground"
-                    : "text-muted"
-                }`}
-                aria-current={isActive ? "step" : undefined}
-              >
-                <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs ${
-                    isActive
-                      ? "border-foreground bg-accent text-accent-fg"
-                      : "border-border"
-                  }`}
+              {onStepSelect ? (
+                <button
+                  type="button"
+                  onClick={() => onStepSelect(step)}
+                  className={`${className} hover:bg-surface-muted`}
+                  aria-current={isActive ? "step" : undefined}
                 >
-                  {index + 1}
-                </span>
-                <span>{t(STEP_LABEL_KEYS[step])}</span>
-              </div>
+                  {content}
+                </button>
+              ) : (
+                <div
+                  className={className}
+                  aria-current={isActive ? "step" : undefined}
+                >
+                  {content}
+                </div>
+              )}
               {index < steps.length - 1 ? (
                 <span
                   className="hidden h-px w-4 shrink-0 bg-border sm:block"

@@ -6,6 +6,7 @@ import { isAiProviderId } from "../lib/ai-provider.js";
 import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
+import { resolveOwnedGenerationId } from "../lib/resolve-generation-id.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
@@ -15,6 +16,7 @@ const postSchema = z.object({
   jobContext: z.string().trim().min(1).max(JOB_TEXT_MAX).optional(),
   jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX).optional(),
   resume: generatedResumeSchema,
+  generationId: z.string().trim().min(1).optional(),
 });
 
 export const aiEvaluateRoutes = new Hono();
@@ -99,10 +101,16 @@ aiEvaluateRoutes.post("/", async (c) => {
       apiKey: setting.apiKey,
     });
 
+    const generationId = await resolveOwnedGenerationId(
+      user.id,
+      parsed.data.generationId,
+    );
+
     await recordAiUsage({
       userId: user.id,
       aiProvider: provider,
       generateType: "evaluate",
+      generationId,
       usage: result.usage,
     });
 

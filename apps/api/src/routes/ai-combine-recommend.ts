@@ -8,6 +8,7 @@ import {
 import { isAiProviderId, type AiProviderId } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
+import { resolveOwnedGenerationId } from "../lib/resolve-generation-id.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
@@ -28,6 +29,7 @@ const postSchema = z.object({
   acceptedMarkdown: z.string().trim().max(JOB_MAX).optional(),
   profileId: z.string().trim().min(1),
   companies: z.array(companySchema).min(1),
+  generationId: z.string().trim().min(1).optional(),
 });
 
 export const aiCombineRecommendRoutes = new Hono();
@@ -119,10 +121,16 @@ aiCombineRecommendRoutes.post("/", async (c) => {
         ? await runCombineRecommendOpenAi(runInput)
         : await runCombineRecommendCursor(runInput);
 
+    const generationId = await resolveOwnedGenerationId(
+      user.id,
+      parsed.data.generationId,
+    );
+
     await recordAiUsage({
       userId: user.id,
       aiProvider: provider,
       generateType: "combineRecommend",
+      generationId,
       usage: result.usage,
     });
 

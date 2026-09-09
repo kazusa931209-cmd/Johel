@@ -17,6 +17,8 @@ export type GenerateJobState = {
 };
 
 export type GenerateSession = {
+  generationId: string | null;
+  generationPublicId: string | null;
   activeStep: GenerateStep;
   job: GenerateJobState;
   combine: CombineSnapshot;
@@ -39,6 +41,8 @@ export const EMPTY_JOB_STATE: GenerateJobState = {
 };
 
 export const EMPTY_GENERATE_SESSION: GenerateSession = {
+  generationId: null,
+  generationPublicId: null,
   activeStep: "Job",
   job: EMPTY_JOB_STATE,
   combine: EMPTY_COMBINE_SNAPSHOT,
@@ -265,6 +269,12 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
     });
   }
   return {
+    generationId:
+      typeof raw.generationId === "string" ? raw.generationId : null,
+    generationPublicId:
+      typeof raw.generationPublicId === "string"
+        ? raw.generationPublicId
+        : null,
     activeStep: normalizeActiveStep(raw.activeStep),
     job,
     combine,
@@ -286,6 +296,7 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
 }
 
 export function isGenerateInProgress(session: GenerateSession): boolean {
+  if (session.generationId) return true;
   if (session.activeStep !== "Job") return true;
   if (session.evaluationMarkdown) return true;
   if (session.resume) return true;

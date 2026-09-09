@@ -24,6 +24,7 @@ type GenerateVerdictStepProps = {
   job: GenerateJobState;
   verdictInputKey: string | null;
   verdictPrompt: string;
+  generationId?: string | null;
   onVerdictResult: (markdown: string, verdictInputKey: string) => void;
   onPrev: () => void;
   onNext: () => void;
@@ -35,6 +36,7 @@ export function GenerateVerdictStep({
   job,
   verdictInputKey,
   verdictPrompt,
+  generationId,
   onVerdictResult,
   onPrev,
   onNext,
@@ -69,7 +71,7 @@ export function GenerateVerdictStep({
 
     setRunningState(true);
     try {
-      const res = await runAiVerdict(filtered);
+      const res = await runAiVerdict(filtered, generationId);
       if (!res.data) {
         toast(res.error ?? t("toast.verdictFailed"), "error");
         return;
@@ -93,6 +95,7 @@ export function GenerateVerdictStep({
     setTokenUsed,
     t,
     toast,
+    generationId,
     verdictInputKey,
     verdictPrompt,
   ]);

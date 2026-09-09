@@ -78,6 +78,8 @@ export default function GeneratePage() {
   const [promptSettings, setPromptSettings] = useState(DEFAULT_PROMPTS);
   const {
     ready: sessionReady,
+    generationId,
+    generationPublicId,
     activeStep,
     setActiveStep,
     job,
@@ -92,6 +94,7 @@ export default function GeneratePage() {
     evaluationMarkdown,
     evaluationInputKey,
     setEvaluationResult,
+    saveSnapshot,
     resetSession,
   } = useGenerateSession();
 
@@ -228,6 +231,29 @@ export default function GeneratePage() {
     setCombine,
   ]);
 
+  useEffect(() => {
+    if (!sessionReady || loading || !generationId) return;
+    const lastStep = visibleSteps[visibleSteps.length - 1];
+    const status =
+      normalizedActiveStep === lastStep ? ("completed" as const) : undefined;
+    const timer = window.setTimeout(() => {
+      void saveSnapshot(status);
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [
+    activeStep,
+    combine,
+    evaluationMarkdown,
+    generationId,
+    job,
+    loading,
+    normalizedActiveStep,
+    resume,
+    saveSnapshot,
+    sessionReady,
+    visibleSteps,
+  ]);
+
   function goToAdjacentStep(direction: "prev" | "next") {
     const next = getAdjacentGenerateStep(
       visibleSteps,
@@ -286,6 +312,8 @@ export default function GeneratePage() {
       if (
         canReuseStoredResume(
           {
+            generationId,
+            generationPublicId,
             activeStep: normalizedActiveStep,
             job,
             combine,
@@ -316,6 +344,7 @@ export default function GeneratePage() {
         const res = await runAiResume({
           jobContext,
           combine,
+          generationId,
         });
         if (!res.data) {
           toast(res.error ?? t("toast.resumeGenerateFailed"), "error");
@@ -339,6 +368,8 @@ export default function GeneratePage() {
     combine,
     evaluationInputKey,
     evaluationMarkdown,
+    generationId,
+    generationPublicId,
     generationInputKey,
     job,
     normalizedActiveStep,
@@ -403,6 +434,8 @@ export default function GeneratePage() {
       if (
         canReuseStoredEvaluation(
           {
+            generationId,
+            generationPublicId,
             activeStep: normalizedActiveStep,
             job,
             combine,
@@ -425,7 +458,11 @@ export default function GeneratePage() {
       }
 
       try {
-        const res = await runAiEvaluate({ jobContext, resume });
+        const res = await runAiEvaluate({
+          jobContext,
+          resume,
+          generationId,
+        });
         if (!res.data) {
           toast(res.error ?? t("toast.evaluateFailed"), "error");
           return;
@@ -448,6 +485,8 @@ export default function GeneratePage() {
     combine,
     evaluationInputKey,
     evaluationMarkdown,
+    generationId,
+    generationPublicId,
     generationInputKey,
     job,
     normalizedActiveStep,
@@ -491,13 +530,19 @@ export default function GeneratePage() {
           <div className="space-y-4">
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-3">
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  {t("generate.title")}
-                </h1>
+                <div className="space-y-1">
+                  <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+                    {t("generate.title")}
+                    {generationPublicId ? (
+                      <span className="text-sm text-muted">{generationPublicId}</span>
+                    ) : null}
+                  </h1>
+                  
+                </div>
                 <AddButton
                   showLabel
                   label={t("generate.new")}
-                  onClick={resetSession}
+                  onClick={() => void resetSession()}
                   disabled={processBusy}
                 />
               </div>
@@ -531,6 +576,7 @@ export default function GeneratePage() {
                 job={job}
                 verdictInputKey={verdictInputKey}
                 verdictPrompt={promptSettings.verdictPrompt}
+                generationId={generationId}
                 onVerdictResult={setVerdictResult}
                 onPrev={() => goToAdjacentStep("prev")}
                 onNext={() => setActiveStep("Combine")}
@@ -544,6 +590,7 @@ export default function GeneratePage() {
                 onCombineChange={setCombine}
                 job={job}
                 doVerdict={processSettings.doVerdict}
+                generationId={generationId}
                 onPrev={() => goToAdjacentStep("prev")}
                 onNext={onCombineNext}
               />

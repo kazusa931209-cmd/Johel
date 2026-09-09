@@ -26,6 +26,7 @@ type CombineExperienceSuggestProps = {
   job: GenerateJobState;
   doVerdict: boolean;
   graduationYear: number | null;
+  generationId?: string | null;
 };
 
 function mergeExperienceSuggestions(
@@ -47,6 +48,7 @@ export function CombineExperienceSuggest({
   job,
   doVerdict,
   graduationYear,
+  generationId,
 }: CombineExperienceSuggestProps) {
   const t = useT();
   const { toast } = useToast();
@@ -117,6 +119,7 @@ export function CombineExperienceSuggest({
         : undefined,
       profileId: combine.profileId,
       companies: combine.companies,
+      generationId,
     });
     setSuggesting(false);
 

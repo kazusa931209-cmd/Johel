@@ -40,6 +40,8 @@ export function StudioSidebar({ open }: { open: boolean }) {
     pathname === "/verdict" ||
     pathname.startsWith("/verdict/");
   const generateActive = pathname === "/";
+  const historyActive =
+    pathname === "/history" || pathname.startsWith("/history/");
 
   return (
     <aside
@@ -66,6 +68,9 @@ export function StudioSidebar({ open }: { open: boolean }) {
         <div className={`${sectionLabelClass()} mt-2`}>{t("nav.sidebar.run")}</div>
         <Link href="/" className={navLinkClass(generateActive)}>
           {t("nav.sidebar.generate")}
+        </Link>
+        <Link href="/history" className={navLinkClass(historyActive)}>
+          {t("nav.sidebar.history")}
         </Link>
 
         <div className={`${sectionLabelClass()} mt-2`}>

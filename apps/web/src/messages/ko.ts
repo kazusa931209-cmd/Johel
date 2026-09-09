@@ -20,6 +20,7 @@ export const ko: MessageTree = {
       experiences: "경험",
       workflows: "작업흐름",
       generate: "생성",
+      history: "리력",
       environment: "환경",
       generation: "생성",
       prompts: "프롬프트",
@@ -543,6 +544,29 @@ export const ko: MessageTree = {
     download: {
       failed: "내리적재에 실패했습니다.",
       success: "리력서를 내리적재했습니다.",
+      downloading: "내리적재중…",
+    },
+  },
+  history: {
+    list: {
+      title: "리력",
+      searchPlaceholder: "직무기술서 또는 프롬프트 검색…",
+      empty: "생성 리력이 없습니다.",
+      columns: {
+        generationId: "생성 ID",
+        tokenUsed: "사용한 토큰",
+        createdAt: "생성 일시",
+        status: "상태",
+      },
+    },
+    detail: {
+      title: "생성",
+      back: "리력으로 돌아가기",
+      notFound: "생성을 찾을 수 없습니다.",
+    },
+    status: {
+      inProgress: "진행중",
+      completed: "완료",
     },
   },
   quickExperience: {
@@ -718,6 +742,8 @@ export const ko: MessageTree = {
     workspaceUpdated: "작업공간를 갱신했습니다.",
     historyLoadFailed: "AI사용리력을 적재하지 못했습니다",
     detailLoadFailed: "AI사용상세를 적재하지 못했습니다",
+    generationHistoryLoadFailed: "생성 리력을 적재하지 못했습니다",
+    historyDetailLoadFailed: "생성 상세를 적재하지 못했습니다",
     copied: "복사했습니다.",
     copyFailed: "복사하지 못했습니다.",
   },

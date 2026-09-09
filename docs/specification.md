@@ -136,6 +136,7 @@ Aligned with the product flow above:
     * Experiences
   * **Run** (always-open submenus)
     * Generate (`/` is Generate)
+    * History (`/history`)
   * **Settings** (always-open submenus)
     * Environment
     * Prompts
@@ -183,6 +184,7 @@ Aligned with the product flow above:
   * Load all prompts via `GET /prompts`; save per tab via `PUT /prompts/verdict`, `PUT /prompts/generate`, or `PUT /prompts/evaluate`; toast on API success or failure
   * The Verdict Prompt is used when checking Job Descriptions; when **Do Verdict** is enabled its Markdown output replaces the raw job description as job context for resume generation and résumé evaluation (Verdict structure and extracted fields affect resume quality); the Generate Prompt is used when generating résumés; the Evaluate Prompt scores the résumé against the same Verdict dimensions (Role, Technical Requirements, Final Verdict, and related sections)—the Evaluate step sends the same job context as Generate (none run on this page)
 * **Generate** (`/`)
+  * Each run has a short readable **Generation ID** (e.g. `GEN-20260909-001`) shown under the **Generate** title; a new ID is allocated when the user starts a new run (**+ New** or first visit after prerequisites pass)
   * Before the flow starts, the page checks that the user has at least one Profile, Company, and Experience and a saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to the matching workspace area or Prompts tab
   * When ready, a timeline shows steps: Job → **Verdict** (when **Do Verdict** is on) → **Combine** → Generate, and **Evaluate** when **Do Evaluate** is enabled; sticky header with **Previous** / **Next** (or **Download** on the last step)
   * Generate uses the **full width** of the main content area (no centered max-width cap)
@@ -194,8 +196,12 @@ Aligned with the product flow above:
   * **Job** **Next**: validates the Job Description (inline error if empty); runs **Noise Filter** silently; advances to Verdict or Combine (does not run AI on this step)
   * **Verdict** (when enabled): auto-runs **AI Verdict** on entry with the noise-filtered JD and saved Verdict Prompt; shows result Markdown; **Next** advances to Combine when complete
   * **Combine**: choose profile, optional **Run guidance**, included companies (card grid with include toggle, period slider, inline role context, optional **Keyword context** per company, and linked experiences after **Apply**), and **Suggest experiences** to link capability cards per company (Keyword context filled → keyword-guided mapping for that company; empty → Auto from job/Verdict and role context); **Suggest** shows a fullscreen wait overlay; the suggestion dialog shows rationale, warnings, and **Cancel** / **Retry** / **Apply**; company selection is enabled only after a profile is selected; work period slider range is from **January of the profile graduation year** through the present; **Next** validates inline (profile with graduation year, ≥1 included company with period + role context; no experience requirement) then advances to Generate (resume generation runs on the Generate step)
-  * Session remembers step, Job, Verdict, Combine (including Run guidance), resume JSON, and evaluation until **New** or Generation settings change
+  * Session remembers step, Job, Verdict, Combine (including Run guidance), resume JSON, and evaluation until **New** or Generation settings change; **+ New** persists the current run to History (even if incomplete) and starts a fresh Generation ID
   * **Generate** and **Evaluate** steps: auto-run resume generation and evaluation respectively when needed; Markdown preview; DOCX download on Evaluate (or Generate when Do Evaluate is off)
+* **History** (`/history`)
+  * Read-only list of saved generation runs; keyword search matches Job Description text and the Verdict / Generate / Evaluate prompts snapshotted at run start
+  * Table columns: **Generation ID**, **Token Used**, **Created At**, **Status** (`In progress` / `Completed`); 10 rows per page; row click opens a dedicated detail page (not a dialog)
+  * Detail page (`/history/[publicId]`): same timeline and two-column step layout as Generate, fully read-only (browse steps only; no edits or AI re-run); **Download** (not **+ New**) when status is **Completed** and a resume was generated
 * **Settings**
   * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here
   * Theme (Dark / Light)
@@ -338,6 +344,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-09):** Migration `20260909100001_user_role_prompt_extensions`, extension PUT routes, Settings Prompts UI. Plan archived at [`docs/plans/2026-09-09-architecture-refactor-phases-54-60.md`](./plans/2026-09-09-architecture-refactor-phases-54-60.md).
 * [x] **Phase 61 — Combine per-company Keyword context** — Replace global Keyword guided / Auto mode on **Suggest experiences** with an optional **Keyword context** on each included company card. When Keyword context is filled, AI maps experiences for that company using keywords plus job/Verdict and role context; when empty, that company uses Auto (job/Verdict and role context only). Keyword context is not required. When keywords match but job overlap is thin, AI selects fewer cards and surfaces a warning. No global steering UX (e.g. copy-to-all). Keyword context is separate from Run guidance (`emphasis`).
   * **Outcome (2026-09-09):** `CombineCompanyEntry.keywordContext`, per-company hybrid `POST /ai-combine-recommend`, simplified `CombineExperienceSuggest`. Plan archived at [`docs/plans/2026-09-09-combine-per-company-keyword-context.md`](./plans/2026-09-09-combine-per-company-keyword-context.md).
+* [x] **Phase 62 — Generation history** — Per-run **Generation ID** on Generate; persist runs to History on **+ New** and when the last step is reached; **History** list and read-only detail pages under **Run**.
+  * **Outcome (2026-09-09):** `generations` table, `/generations` API, `/history` list and `/history/[publicId]` detail. Plan archived at [`docs/plans/2026-09-09-generation-history.md`](./plans/2026-09-09-generation-history.md).
 
 ## Cursor Rules (Documentation Governance)
 

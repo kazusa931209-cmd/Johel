@@ -19,6 +19,7 @@ type GenerateCombineStepProps = {
   onCombineChange: (combine: CombineSnapshot) => void;
   job: GenerateJobState;
   doVerdict: boolean;
+  generationId?: string | null;
   onPrev: () => void;
   onNext: () => void | Promise<void>;
 };
@@ -28,6 +29,7 @@ export function GenerateCombineStep({
   onCombineChange,
   job,
   doVerdict,
+  generationId,
   onPrev,
   onNext,
 }: GenerateCombineStepProps) {
@@ -114,6 +116,7 @@ export function GenerateCombineStep({
         job={job}
         doVerdict={doVerdict}
         graduationYear={graduationYear}
+        generationId={generationId}
       />
 
       <label className="block space-y-1 text-sm">

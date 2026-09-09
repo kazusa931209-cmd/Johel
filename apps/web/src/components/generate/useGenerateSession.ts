@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
@@ -13,6 +13,11 @@ import {
   loadGenerateSession,
   saveGenerateSession,
 } from "@/lib/generate-session";
+import {
+  allocateNewGeneration,
+  persistGenerationSnapshot,
+  type GenerationSnapshot,
+} from "@/lib/generation-persistence";
 import {
   WORKSPACE_UPDATED_EVENT,
   type WorkspaceUpdatedDetail,
@@ -43,10 +48,27 @@ function applyJobUpdate(
   });
 }
 
+function toGenerationSnapshot(
+  session: GenerateSession,
+  status?: GenerationSnapshot["status"],
+): GenerationSnapshot | null {
+  if (!session.generationId) return null;
+  return {
+    generationId: session.generationId,
+    activeStep: session.activeStep,
+    job: session.job,
+    combine: session.combine,
+    resume: session.resume,
+    evaluationMarkdown: session.evaluationMarkdown,
+    status,
+  };
+}
+
 export function useGenerateSession() {
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<GenerateSession>(EMPTY_GENERATE_SESSION);
+  const startingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +86,36 @@ export function useGenerateSession() {
       cancelled = true;
     };
   }, []);
+
+  const ensureGenerationStarted = useCallback(async () => {
+    if (startingRef.current) return null;
+    startingRef.current = true;
+    try {
+      const res = await allocateNewGeneration();
+      if (!res.data) {
+        return null;
+      }
+      return res.data;
+    } finally {
+      startingRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !userId || session.generationId) return;
+    let cancelled = false;
+    void ensureGenerationStarted().then((started) => {
+      if (cancelled || !started) return;
+      setSession((current) => ({
+        ...current,
+        generationId: started.id,
+        generationPublicId: started.publicId,
+      }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ensureGenerationStarted, ready, session.generationId, userId]);
 
   useEffect(() => {
     if (!ready || !userId) return;
@@ -105,6 +157,15 @@ export function useGenerateSession() {
       window.removeEventListener(WORKSPACE_UPDATED_EVENT, onWorkspaceUpdated);
     };
   }, []);
+
+  const saveSnapshot = useCallback(
+    async (status?: GenerationSnapshot["status"]) => {
+      const snapshot = toGenerationSnapshot(session, status);
+      if (!snapshot) return;
+      await persistGenerationSnapshot(snapshot);
+    },
+    [session],
+  );
 
   const setActiveStep = useCallback((activeStep: GenerateStep) => {
     setSession((current) => ({ ...current, activeStep }));
@@ -161,14 +222,24 @@ export function useGenerateSession() {
     [],
   );
 
-  const resetSession = useCallback(() => {
-    setSession(EMPTY_GENERATE_SESSION);
-    if (userId) clearGenerateSession(userId);
-  }, [userId]);
+  const resetSession = useCallback(async () => {
+    await saveSnapshot();
+    if (userId) {
+      clearGenerateSession(userId);
+    }
+    const started = await ensureGenerationStarted();
+    setSession({
+      ...EMPTY_GENERATE_SESSION,
+      generationId: started?.id ?? null,
+      generationPublicId: started?.publicId ?? null,
+    });
+  }, [ensureGenerationStarted, saveSnapshot, userId]);
 
   return {
     ready,
     userId,
+    generationId: session.generationId,
+    generationPublicId: session.generationPublicId,
     activeStep: session.activeStep,
     setActiveStep,
     job: session.job,
@@ -184,6 +255,7 @@ export function useGenerateSession() {
     evaluationMarkdown: session.evaluationMarkdown,
     evaluationInputKey: session.evaluationInputKey,
     setEvaluationResult,
+    saveSnapshot,
     resetSession,
   };
 }

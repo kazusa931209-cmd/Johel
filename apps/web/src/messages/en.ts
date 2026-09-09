@@ -18,6 +18,7 @@ export const en = {
       experiences: "Experiences",
       workflows: "Workflows",
       generate: "Generate",
+      history: "History",
       environment: "Environment",
       generation: "Generation",
       prompts: "Prompts",
@@ -544,6 +545,29 @@ export const en = {
     download: {
       failed: "Download failed.",
       success: "Resume downloaded.",
+      downloading: "Downloading…",
+    },
+  },
+  history: {
+    list: {
+      title: "History",
+      searchPlaceholder: "Search job description or prompts…",
+      empty: "No generation history yet.",
+      columns: {
+        generationId: "Generation ID",
+        tokenUsed: "Token Used",
+        createdAt: "Created At",
+        status: "Status",
+      },
+    },
+    detail: {
+      title: "Generation",
+      back: "Back to History",
+      notFound: "Generation not found.",
+    },
+    status: {
+      inProgress: "In progress",
+      completed: "Completed",
     },
   },
   quickExperience: {
@@ -719,6 +743,8 @@ export const en = {
     workspaceUpdated: "Workspace updated.",
     historyLoadFailed: "Failed to load AI usage history",
     detailLoadFailed: "Failed to load AI usage detail",
+    generationHistoryLoadFailed: "Failed to load generation history",
+    historyDetailLoadFailed: "Failed to load generation detail",
     copied: "Copied to clipboard.",
     copyFailed: "Could not copy to clipboard.",
   },

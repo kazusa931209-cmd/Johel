@@ -5,6 +5,7 @@ import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { runAiVerdict, type AiProviderId } from "../lib/ai-verdict/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
+import { resolveOwnedGenerationId } from "../lib/resolve-generation-id.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
@@ -12,6 +13,7 @@ const JOB_TEXT_MAX = 10_000;
 
 const postSchema = z.object({
   jobDescription: z.string().trim().min(1).max(JOB_TEXT_MAX),
+  generationId: z.string().trim().min(1).optional(),
 });
 
 export const aiVerdictRoutes = new Hono();
@@ -80,10 +82,16 @@ aiVerdictRoutes.post("/", async (c) => {
       apiKey: setting.apiKey,
     });
 
+    const generationId = await resolveOwnedGenerationId(
+      user.id,
+      parsed.data.generationId,
+    );
+
     await recordAiUsage({
       userId: user.id,
       aiProvider: provider,
       generateType: "verdict",
+      generationId,
       usage: result.usage,
     });
 

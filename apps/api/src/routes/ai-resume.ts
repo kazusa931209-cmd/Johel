@@ -6,6 +6,7 @@ import { assembleFromCombineSnapshot } from "../lib/resume/assemble-input.js";
 import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
+import { resolveOwnedGenerationId } from "../lib/resolve-generation-id.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
@@ -29,6 +30,7 @@ const combineSchema = z.object({
 const postSchema = z.object({
   jobContext: z.string().trim().min(1).max(JOB_TEXT_MAX),
   combine: combineSchema,
+  generationId: z.string().trim().min(1).optional(),
 });
 
 export const aiResumeRoutes = new Hono();
@@ -114,10 +116,16 @@ aiResumeRoutes.post("/", async (c) => {
       input: generationInput,
     });
 
+    const generationId = await resolveOwnedGenerationId(
+      user.id,
+      parsed.data.generationId,
+    );
+
     await recordAiUsage({
       userId: user.id,
       aiProvider: provider,
       generateType: "generate",
+      generationId,
       usage: result.usage,
     });
 

@@ -48,11 +48,13 @@ export async function recordAiUsage(input: {
   userId: string;
   aiProvider: AiProviderId;
   generateType: AiGenerateType;
+  generationId?: string;
   usage: TokenUsage;
 }) {
   await prisma.aiUsage.create({
     data: {
       userId: input.userId,
+      generationId: input.generationId,
       aiProvider: input.aiProvider,
       modelName: resolveAiModelName(input.aiProvider, input.generateType),
       generateType: input.generateType,
@@ -62,4 +64,17 @@ export async function recordAiUsage(input: {
       output: input.usage.output,
     },
   });
+
+  if (input.generationId) {
+    await prisma.generation.updateMany({
+      where: {
+        id: input.generationId,
+        userId: input.userId,
+      },
+      data: {
+        inputToken: { increment: input.usage.inputToken },
+        outputToken: { increment: input.usage.outputToken },
+      },
+    });
+  }
 }
