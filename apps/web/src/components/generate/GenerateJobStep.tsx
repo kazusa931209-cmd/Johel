@@ -72,12 +72,12 @@ export function GenerateJobStep({
   } as const;
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold tracking-tight">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <h2 className="shrink-0 text-lg font-semibold tracking-tight">
         {t("generate.job.title")}
       </h2>
 
-      <div className="flex flex-wrap gap-1 rounded-md border border-border p-1">
+      <div className="flex shrink-0 flex-wrap gap-1 rounded-md border border-border p-1">
         {(
           [
             ["manual", methodLabels.manual],
@@ -108,8 +108,8 @@ export function GenerateJobStep({
       ) : null}
 
       {method === "manual" ? (
-        <label className="block space-y-1 text-sm">
-          <span className="flex items-center justify-between gap-2">
+        <label className="flex min-h-0 flex-1 flex-col gap-1 text-sm">
+          <span className="flex shrink-0 items-center justify-between gap-2">
             <span>
               {t("generate.job.jobDescription")}
               <span className="ml-0.5 text-danger" aria-hidden>*</span>
@@ -119,18 +119,19 @@ export function GenerateJobStep({
               {formatThousandsSeparated(JOB_TEXT_MAX)}
             </span>
           </span>
-          <textarea
-            value={jobText}
-            onChange={(e) => {
-              setJobTextCapped(e.target.value);
-              if (jobError) setJobError(undefined);
-            }}
-            rows={24}
-            maxLength={JOB_TEXT_MAX}
-            placeholder={t("generate.job.placeholder")}
-            aria-invalid={Boolean(jobError)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
-          />
+          <div className="relative min-h-0 flex-1">
+            <textarea
+              value={jobText}
+              onChange={(e) => {
+                setJobTextCapped(e.target.value);
+                if (jobError) setJobError(undefined);
+              }}
+              maxLength={JOB_TEXT_MAX}
+              placeholder={t("generate.job.placeholder")}
+              aria-invalid={Boolean(jobError)}
+              className="absolute inset-0 h-full w-full resize-none overflow-y-auto rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
+            />
+          </div>
           <FieldError message={jobError} />
         </label>
       ) : null}

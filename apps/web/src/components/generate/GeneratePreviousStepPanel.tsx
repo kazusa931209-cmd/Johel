@@ -10,7 +10,9 @@ import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { GenerateCombineSummary } from "@/components/generate/GenerateCombineSummary";
 import { GenerateJobDescriptionPreview } from "@/components/generate/GenerateJobDescriptionPreview";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
+import { formatThousandsSeparated } from "@/lib/helper";
 import type { GenerateJobState } from "@/lib/generate-session";
+import { noiseFilter } from "@/lib/jobNoiseFilter";
 import { getAdjacentGenerateStep } from "@/lib/generate-steps";
 
 type GeneratePreviousStepPanelProps = {
@@ -38,6 +40,7 @@ export function useGeneratePreviousStepPanel({
 }: GeneratePreviousStepPanelProps): {
   previousTitle?: string;
   previousContent: ReactNode | null;
+  previousHeaderRight?: ReactNode;
 } {
   const t = useT();
 
@@ -46,12 +49,29 @@ export function useGeneratePreviousStepPanel({
     [currentStep, visibleSteps],
   );
 
+  const filteredJobText = useMemo(
+    () => noiseFilter(job.jobText.trim()).text,
+    [job.jobText],
+  );
+  const filteredCharCount = formatThousandsSeparated(filteredJobText.length);
+
   const previousTitle =
     currentStep === "Job"
       ? t("generate.job.filteredPreviewTitle")
       : previousStep
         ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
         : undefined;
+
+  const previousHeaderRight =
+    currentStep === "Job" ? (
+      <span
+        aria-label={t("generate.job.filteredCharCountAria", {
+          count: filteredCharCount,
+        })}
+      >
+        {filteredCharCount}
+      </span>
+    ) : undefined;
 
   const previousContent = useMemo(() => {
     if (currentStep === "Job") {
@@ -93,5 +113,5 @@ export function useGeneratePreviousStepPanel({
     }
   }, [combine, currentStep, job.acceptedMarkdown, job.jobText, previousStep, resume, t]);
 
-  return { previousTitle, previousContent };
+  return { previousTitle, previousContent, previousHeaderRight };
 }

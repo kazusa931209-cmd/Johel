@@ -440,6 +440,7 @@ export const ko: MessageTree = {
       filteredPreviewTitle: "잡음제거된 직업광고",
       filteredPreviewHint:
         "잡음제거를 거친 미리보기입니다. [검토]를 끄면 이후 단계에서 이 내용을 사용합니다.",
+      filteredCharCountAria: "잡음 제거 후 {count}자",
       methods: {
         manual: "수동",
         url: "URL",

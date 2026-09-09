@@ -440,6 +440,7 @@ export const en = {
       filteredPreviewTitle: "Noise-Filtered Job Description",
       filteredPreviewHint:
         "Live preview after the noise filter. Later steps use this text when Do Verdict is off.",
+      filteredCharCountAria: "{count} characters after noise filter",
       methods: {
         manual: "Manual",
         url: "URL",
