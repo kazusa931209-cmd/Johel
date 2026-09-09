@@ -576,7 +576,7 @@ export const ko: MessageTree = {
       experienceAdvise: "경험 조언",
       combineRecommend: "조합 추천",
       promptHelper: "프롬프트 방조자",
-      markdownFormat: "형식 초기화",
+      markdownFormat: "MD형식화",
     },
   },
   shared: {
