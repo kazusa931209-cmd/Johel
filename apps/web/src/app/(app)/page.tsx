@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { AddButton } from "@/components/shared/action-icon-buttons";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
@@ -18,6 +17,7 @@ import { useGeneratePreviousStepPanel } from "@/components/generate/GeneratePrev
 import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
 import { GenerateVerdictStep } from "@/components/generate/GenerateVerdictStep";
 import {
+  GenerateNewButton,
   GenerateStepNavNextButton,
   GenerateStepNavPrevButton,
   GenerateStepNavProvider,
@@ -527,28 +527,22 @@ export default function GeneratePage() {
     <GenerateStepNavProvider>
       <section className="-m-6 flex h-[calc(100dvh-3.5rem)] w-auto flex-col overflow-hidden">
         <div className="sticky top-0 z-10 shrink-0 border-b border-border bg-background px-6 pt-6 pb-4">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-                    {t("generate.title")}
-                    {generationPublicId ? (
-                      <span className="text-sm text-muted">{generationPublicId}</span>
-                    ) : null}
-                  </h1>
-                  
-                </div>
-                <AddButton
-                  showLabel
-                  label={t("generate.new")}
-                  onClick={() => void resetSession()}
-                  disabled={processBusy}
-                />
+          <div className="flex items-center gap-4">
+            <div className="flex shrink-0 items-center gap-3">
+              <GenerateNewButton
+                onClick={() => void resetSession()}
+                disabled={processBusy}
+              />
+              <div className="space-y-1">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  {t("generate.title")}
+                </h1>
+                {generationPublicId ? (
+                  <p className="text-sm text-muted">{generationPublicId}</p>
+                ) : null}
               </div>
-              <p className="text-sm text-muted">{t("generate.description")}</p>
             </div>
-            <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-3">
+            <div className="grid min-w-0 flex-1 grid-cols-[3.5rem_1fr_3.5rem] items-center gap-3">
               <GenerateStepNavPrevButton />
               <GenerateTimeline
                 active={normalizedActiveStep}

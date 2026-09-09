@@ -15,6 +15,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DownloadIcon,
+  PlusIcon,
 } from "@/components/shared/icons";
 
 export type GenerateStepNavState = {
@@ -134,6 +135,28 @@ function useGenerateStepNavContext() {
     );
   }
   return ctx;
+}
+
+export function GenerateNewButton({
+  onClick,
+  disabled = false,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  const t = useT();
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={t("generate.new")}
+      className={circleButtonClass}
+    >
+      <PlusIcon className="h-6 w-6" />
+    </button>
+  );
 }
 
 export function GenerateStepNavPrevButton() {
