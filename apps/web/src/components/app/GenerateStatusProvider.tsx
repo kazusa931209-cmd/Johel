@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getGenerationProcess } from "@/lib/api";
+import { loadGenerationProcess } from "@/lib/cached-settings";
 import { GENERATION_FINALIZED_EVENT } from "@/lib/generation-finalized-events";
 import { deriveProcessedStepFromSession } from "@/lib/generation-step-progress";
 import { GENERATE_SESSION_CHANGED_EVENT } from "@/lib/generate-session-events";
@@ -70,7 +70,7 @@ export function GenerateStatusProvider({
 
   useEffect(() => {
     let cancelled = false;
-    void getGenerationProcess().then((res) => {
+    void loadGenerationProcess().then((res) => {
       if (cancelled || !res.data) return;
       setDoVerdict(res.data.doVerdict);
       setDoEvaluate(res.data.doEvaluate);

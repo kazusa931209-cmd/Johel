@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { CombinePeriodSlider } from "@/components/generate/CombinePeriodSlider";
@@ -14,8 +14,9 @@ import {
 } from "@/lib/combine-period";
 import type { CombineCompanyEntry } from "@/components/generate/combine-types";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
-import { listCompanies, listExperiences, type CompanyDetail } from "@/lib/api";
+import type { CompanyDetail } from "@/lib/api";
 import { orderCompaniesForCombineDisplay } from "@/lib/company";
+import { usePce } from "@/lib/pce";
 
 type CombineCompanyCardsProps = {
   companies: CombineCompanyEntry[];
@@ -43,40 +44,18 @@ export function CombineCompanyCards({
 }: CombineCompanyCardsProps) {
   const t = useT();
   const { locale } = useLocale();
-  const [workspaceCompanies, setWorkspaceCompanies] = useState<CompanyDetail[]>(
-    [],
-  );
-  const [loading, setLoading] = useState(true);
+  const { companies: workspaceCompanies, experiences, loading } = usePce();
   const [viewCompany, setViewCompany] = useState<CompanyDetail | null>(null);
-  const [categoryById, setCategoryById] = useState<Map<string, string>>(
-    new Map(),
+
+  const categoryById = useMemo(
+    () =>
+      new Map(experiences.map((item) => [item.id, item.category])),
+    [experiences],
   );
 
   const cardsDisabled = disabled || graduationYear == null;
   const periodWindow =
     graduationYear != null ? buildPeriodWindow(graduationYear) : null;
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([listCompanies("", null), listExperiences("", null)]).then(
-      ([companiesRes, experiencesRes]) => {
-        if (cancelled) return;
-        setWorkspaceCompanies(companiesRes.data?.items ?? []);
-        setCategoryById(
-          new Map(
-            (experiencesRes.data?.items ?? []).map((item) => [
-              item.id,
-              item.category,
-            ]),
-          ),
-        );
-        setLoading(false);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const workspaceIdSet = useMemo(
     () => new Set(workspaceCompanies.map((company) => company.id)),

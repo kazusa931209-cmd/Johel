@@ -8,7 +8,8 @@ import { useT } from "@/components/app/LocaleProvider";
 import { StudioBottomFabCluster } from "@/components/app/StudioBottomFabCluster";
 import { StudioHeader } from "@/components/app/StudioHeader";
 import { StudioSidebar } from "@/components/app/StudioSidebar";
-import { getMe, type User } from "@/lib/api";
+import type { User } from "@/lib/api";
+import { loadMe } from "@/lib/cached-settings";
 import { getStoredSidebar, persistSidebar } from "@/lib/sidebar";
 
 function AppShell({
@@ -62,7 +63,7 @@ export default function AppLayout({
 
   useEffect(() => {
     let cancelled = false;
-    getMe().then((res) => {
+    loadMe().then((res) => {
       if (cancelled) return;
       if (!res.data) {
         router.replace("/login");

@@ -15,11 +15,11 @@ import {
 } from "@/components/shared/detail-dialog";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
+import { deleteCompany, type CompanyDetail } from "@/lib/api";
 import {
-  deleteCompany,
-  listCompanies,
-  type CompanyDetail,
-} from "@/lib/api";
+  invalidateWorkspaceCrudCaches,
+  loadCompanyList,
+} from "@/lib/cached-crud-list";
 import { useCrudListParams } from "@/lib/crud-list-params";
 
 function CompaniesPageFallback() {
@@ -65,7 +65,7 @@ function CompaniesPageContent() {
   const load = useCallback(
     async (nextQ: string, nextPage: number) => {
       setLoading(true);
-      const res = await listCompanies(nextQ, nextPage);
+      const res = await loadCompanyList(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
         toast(res.error ?? t("toast.companiesLoadFailed"), "error");
@@ -83,7 +83,8 @@ function CompaniesPageContent() {
 
   useEffect(() => {
     void load(q, page);
-  }, [load, q, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change; cached loader dedupes Strict Mode
+  }, [q, page]);
 
   async function onConfirmDelete() {
     if (!deleting) return;
@@ -95,6 +96,7 @@ function CompaniesPageContent() {
       return;
     }
     setDeleting(null);
+    invalidateWorkspaceCrudCaches("companies");
     toast(t("toast.companyDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     if (nextPage !== page) {

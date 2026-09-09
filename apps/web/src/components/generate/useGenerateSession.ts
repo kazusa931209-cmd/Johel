@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
-import { getMe } from "@/lib/api";
+import { loadMe } from "@/lib/cached-settings";
 import {
   clearDownstreamFromGenerate,
   clearDownstreamFromVerdict,
@@ -58,7 +58,7 @@ export function useGenerateSession() {
     let cancelled = false;
 
     async function bootstrap() {
-      const meRes = await getMe();
+      const meRes = await loadMe();
       if (cancelled) return;
 
       const id = meRes.data?.id ?? null;

@@ -275,6 +275,16 @@ export type ProfileList = {
   pageSize: number;
 };
 
+export type PceBundle = {
+  profiles: ProfileDetail[];
+  companies: CompanyDetail[];
+  experiences: ExperienceDetail[];
+};
+
+export function getPce() {
+  return request<PceBundle>("/pce");
+}
+
 export function listProfiles(
   q: string,
   page: number | null = 1,
@@ -422,11 +432,8 @@ export type AiUsageList = {
 };
 
 export type AiUsageGroupItem = {
-  kind: "generation" | "standalone";
-  generationId: string | null;
+  generationId: string;
   generationPublicId: string | null;
-  standaloneDate: string | null;
-  generateType: string | null;
   callCount: number;
   inputToken: number;
   outputToken: number;
@@ -694,8 +701,6 @@ export function listAiUsage(
   page = 1,
   options?: {
     generationId?: string | null;
-    standaloneDate?: string | null;
-    generateType?: string | null;
     limit?: number | null;
   },
 ) {
@@ -705,12 +710,6 @@ export function listAiUsage(
     params.set("generationId", "none");
   } else if (options?.generationId) {
     params.set("generationId", options.generationId);
-  }
-  if (options?.standaloneDate) {
-    params.set("standaloneDate", options.standaloneDate);
-  }
-  if (options?.generateType) {
-    params.set("generateType", options.generateType);
   }
   if (options?.limit === null) {
     params.set("limit", "null");

@@ -15,11 +15,11 @@ import {
 } from "@/components/shared/detail-dialog";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
+import { deleteExperience, type ExperienceDetail } from "@/lib/api";
 import {
-  deleteExperience,
-  listExperiences,
-  type ExperienceDetail,
-} from "@/lib/api";
+  invalidateWorkspaceCrudCaches,
+  loadExperienceList,
+} from "@/lib/cached-crud-list";
 import { useCrudListParams } from "@/lib/crud-list-params";
 
 function ExperiencesPageFallback() {
@@ -65,7 +65,7 @@ function ExperiencesPageContent() {
   const load = useCallback(
     async (nextQ: string, nextPage: number) => {
       setLoading(true);
-      const res = await listExperiences(nextQ, nextPage);
+      const res = await loadExperienceList(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
         toast(res.error ?? t("toast.experiencesLoadFailed"), "error");
@@ -83,7 +83,8 @@ function ExperiencesPageContent() {
 
   useEffect(() => {
     void load(q, page);
-  }, [load, q, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change; cached loader dedupes Strict Mode
+  }, [q, page]);
 
   async function onConfirmDelete() {
     if (!deleting) return;
@@ -95,6 +96,7 @@ function ExperiencesPageContent() {
       return;
     }
     setDeleting(null);
+    invalidateWorkspaceCrudCaches("experiences");
     toast(t("toast.experienceDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     if (nextPage !== page) {

@@ -10,7 +10,8 @@ import { EditButton } from "@/components/shared/action-icon-buttons";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { DetailDialog } from "@/components/shared/detail-dialog";
-import { getPrompts, getMe, savePrompt, savePromptExtension, type PromptKind } from "@/lib/api";
+import { savePrompt, savePromptExtension, type PromptKind } from "@/lib/api";
+import { loadMe, loadPrompts, setPromptsCache } from "@/lib/cached-settings";
 import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 import {
   DEFAULT_EVALUATE_PROMPT,
@@ -173,7 +174,7 @@ function PromptsPageContent() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getPrompts(), getMe()]).then(([promptsRes, meRes]) => {
+    Promise.all([loadPrompts(), loadMe()]).then(([promptsRes, meRes]) => {
       if (cancelled) return;
       if (promptsRes.error) {
         toast(promptsRes.error ?? t("toast.promptsLoadFailed"), "error");
@@ -187,7 +188,8 @@ function PromptsPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [t, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once; cached loader dedupes Strict Mode remounts
+  }, []);
 
   useEffect(() => {
     setFieldError(undefined);
@@ -224,6 +226,7 @@ function PromptsPageContent() {
         toast(res.error ?? t("toast.promptSaveFailed"), "error");
         return;
       }
+      setPromptsCache(res.data);
       setPrompts(res.data);
       setStoredPrompts(res.data);
       await refreshTokenUsed();
@@ -240,6 +243,7 @@ function PromptsPageContent() {
       toast(res.error ?? t("toast.promptSaveFailed"), "error");
       return;
     }
+    setPromptsCache(res.data);
     setPrompts(res.data);
     setStoredPrompts(res.data);
     toast(t("toast.promptSaved", { label: extensionLabel }), "success");
@@ -253,6 +257,7 @@ function PromptsPageContent() {
       toast(res.error ?? t("toast.promptResetFailed"), "error");
       return;
     }
+    setPromptsCache(res.data);
     setPrompts(res.data);
     setStoredPrompts(res.data);
     setConfirmReset(false);

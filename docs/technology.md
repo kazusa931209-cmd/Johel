@@ -97,7 +97,7 @@ User browser (:4041)
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
-- **Global FAB cluster (Phase 32, 41, 63):** fixed bottom-right vertical stack (`StudioBottomFabCluster`): **Quick Add Experience** plus FAB (above) opens `QuickAddExperience` drawer; history (clock) FAB opens AI Usage History `Drawer`; suggestion preview uses nested `ExperienceSuggestionDrawer` (z-index 60). AI Usage History row click opens nested detail `Drawer` with **Input** / **Output** tabs; `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`
+- **Global FAB cluster (Phase 32, 41, 63, 75):** fixed bottom-right vertical stack (`StudioBottomFabCluster`): **Quick Add Experience** plus FAB (above) opens `QuickAddExperience` drawer; history (clock) FAB opens AI Usage History `Drawer` with **All** / **Generation** / **Other** tabs; suggestion preview uses nested `ExperienceSuggestionDrawer` (z-index 60). AI Usage History row click opens nested detail `Drawer` with **Input** / **Output** tabs; `listAiUsage` / `listAiUsageGroups` / `getAiUsage` in `apps/web/src/lib/api.ts`
 - Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows — always open), **Run** (Generate — always open), **Settings** (Environment, Generation, Prompts — always open); section labels use normal title case (not all caps)
 
 ## AI Agent settings (Phase 5, 21)
@@ -196,7 +196,7 @@ User browser (:4041)
 - In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, Combine snapshot (including Run guidance / `emphasis`), `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + combine + server combine fingerprint), `evaluationMarkdown`, and `evaluationInputKey`; legacy `oneTimePrompt` session keys migrate into `combine.emphasis` on load; **editing Job/Combine or Quick Add Experience does not clear cached results until the user Run**s from an earlier step (confirm dialog when resume/evaluation would be discarded); `clearDownstreamFromVerdict` / `clearDownstreamFromGenerate` in `generate-session.ts`; no mount auto-run (`useStepMountAutoRun` removed from AI steps)
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` (delegates to `formatThousandsSeparated` in `apps/web/src/lib/helper.ts`); all user-visible numbers use thousand-separated formatting; header from `GET /ai-usage/summary`
-- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowProfilePicker`, `WorkflowCompaniesEditor`, and `WorkflowCompanyDialog`
+- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PceSection`); workflow editor uses `WorkflowProfilePicker`, `WorkflowCompaniesEditor`, and `WorkflowCompanyDialog`
 
 ## AI Verdict (Phase 13, 19, 40)
 
@@ -345,7 +345,10 @@ User browser (:4041)
 ### Web
 
 - `GenerateVerdictStep`, `GenerateCombineStep`, `combine-types.ts`, `CombineProfilePicker`, `CombineCompanyCards`, `CombinePeriodSlider`, `combine-period.ts`
-- Combine step: all workspace companies as a single-column card list (`listCompanies("", null)`); when no companies are included, cards sort by **displayPriority** (1-based); when at least one is included, included cards follow **selection order** (`combine.companies` array order) and unselected cards follow **displayPriority** via `orderCompaniesForCombineDisplay`; company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context and optional **Keyword context**; linked experience categories shown on each included card after **Apply**; **Suggest experiences** (`CombineExperienceSuggest`) calls `POST /ai-combine-recommend` per-company hybrid (keyword context or Auto); fullscreen `BusyOverlay` while suggesting; suggestion dialog shows per-company rationale and warnings with **Cancel** / **Retry** / **Apply**; `experienceIds` on each company entry after apply
+- **PCE bundle (Phase 71, renamed Phase 72):** `GET /pce` returns `{ profiles, companies, experiences }` (unpaginated, same detail shapes as CRUD list items). Web `loadPce` / `usePce` cache one in-flight request and reuse data across Generate prerequisites, `CombineProfilePicker`, `CombineCompanyCards`, `GenerateCombineSummary`, and `CombineExperienceSuggest`. **PCE** = Profile, Company, Experience (legacy **PCEW** / “workspace” naming removed).
+- **Settings read cache (Phase 73):** `apps/web/src/lib/cached-settings.ts` dedupes `GET /settings`, `GET /settings/process`, `GET /prompts`, and `GET /auth/me` across Settings pages, app layout, `GenerateStatusProvider`, and Generate bootstrap; caches update on save and clear on sign-out.
+- **Workspace CRUD list cache (Phase 74):** `apps/web/src/lib/cached-crud-list.ts` dedupes paginated `GET /profiles`, `GET /companies`, and `GET /experiences` by search + page; list effects depend on `[q, page]` only; `invalidateWorkspaceCrudCaches` clears list + PCE cache on CRUD mutations.
+- Combine step: all workspace companies as a single-column card list; when no companies are included, cards sort by **displayPriority** (1-based); when at least one is included, included cards follow **selection order** (`combine.companies` array order) and unselected cards follow **displayPriority** via `orderCompaniesForCombineDisplay`; company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context and optional **Keyword context**; linked experience categories shown on each included card after **Apply**; **Suggest experiences** (`CombineExperienceSuggest`) calls `POST /ai-combine-recommend` per-company hybrid (keyword context or Auto); fullscreen `BusyOverlay` while suggesting; suggestion dialog shows per-company rationale and warnings with **Cancel** / **Retry** / **Apply**; `experienceIds` on each company entry after apply
 - Combine validation (`validateCombineSnapshot`): profile required with graduation year, ≥1 included company, each with period + role context; no experience requirement
 - Migration `20260909100002_profile_education_split`: legacy `education` text copied to `university`; column dropped
 - `POST /ai-resume` and `POST /resume/combine-fingerprint` accept `experienceIds: []` per company; `assembleFromCombineSnapshot` allows empty experiences per company
@@ -398,9 +401,10 @@ User browser (:4041)
 
 ### AI Usage History grouping
 
-- `GET /ai-usage/groups` — paginated summaries (50 groups/page): rows with `generationId` group by generation (`generationPublicId`, token sums, `latestCreatedAt`); rows without `generationId` group by UTC `{YYYYMMDD}-{generateType}` (`kind: "standalone"`, `standaloneDate`, `generateType`)
-- `GET /ai-usage?generationId=` — filter call rows (`none` for unlinked rows); optional `standaloneDate` + `generateType` narrow a standalone group; list items include `generationId` and `generationPublicId`
-- Drawer UI expands a group to load and show nested call rows
+- Drawer tabs (Phase 75): **All** (`GET /ai-usage`, ungrouped, newest first, 100/page); **Generation** (`GET /ai-usage/groups`, grouped by `generationId`, newest groups first, 50/page); **Other** (`GET /ai-usage?generationId=none`, unlinked rows only, ungrouped, newest first, 100/page)
+- `GET /ai-usage/groups` — paginated generation-linked summaries only: `generationId`, `generationPublicId`, call count, token sums, `latestCreatedAt`
+- `GET /ai-usage?generationId=` — filter call rows (`none` for unlinked / Other rows); omit `generationId` for All; list items include `generationId` and `generationPublicId`
+- Generation tab expands a group to load nested call rows via `GET /ai-usage?generationId={id}&limit=null`
 
 ## AI prompt optimization (Phase 65+)
 

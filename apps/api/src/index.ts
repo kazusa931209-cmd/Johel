@@ -16,6 +16,7 @@ import { aiUsageRoutes } from "./routes/ai-usage.js";
 import { promptsRoutes } from "./routes/prompts.js";
 import { aiExperienceAdviseRoutes } from "./routes/ai-experience-advise.js";
 import { generationsRoutes } from "./routes/generations.js";
+import { pceRoutes } from "./routes/pce.js";
 
 const app = new Hono();
 
@@ -42,6 +43,7 @@ app.route("/resume", resumeRoutes);
 app.route("/ai-usage", aiUsageRoutes);
 app.route("/prompts", promptsRoutes);
 app.route("/generations", generationsRoutes);
+app.route("/pce", pceRoutes);
 
 const port = Number(process.env.PORT ?? 4042);
 const hostname = process.env.HOST ?? "127.0.0.1";

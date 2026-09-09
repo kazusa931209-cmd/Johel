@@ -5,6 +5,7 @@ import { useT } from "@/components/app/LocaleProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { ProfileLinksEditor } from "@/components/ProfileLinksEditor";
 import { useToast } from "@/components/app/ToastProvider";
+import { invalidateWorkspaceCrudCaches } from "@/lib/cached-crud-list";
 import {
   createProfile,
   updateProfile,
@@ -98,6 +99,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       toast(res.error ?? t("toast.profileSaveFailed"), "error");
       return;
     }
+    invalidateWorkspaceCrudCaches("profiles");
     toast(
       mode === "edit" ? t("toast.profileUpdated") : t("toast.profileCreated"),
       "success",

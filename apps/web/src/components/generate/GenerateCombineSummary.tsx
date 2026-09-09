@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import {
   formatCompanyPeriod,
   RUN_LANGUAGES,
   type CombineSnapshot,
 } from "@/components/generate/combine-types";
-import { listCompanies, listExperiences, listProfiles } from "@/lib/api";
 import { fullName } from "@/lib/profile";
+import { usePce } from "@/lib/pce";
 
 type GenerateCombineSummaryProps = {
   combine: CombineSnapshot;
@@ -24,50 +24,22 @@ export function GenerateCombineSummary({
   combine,
 }: GenerateCombineSummaryProps) {
   const t = useT();
-  const [profileName, setProfileName] = useState<string | null>(null);
-  const [companyNameById, setCompanyNameById] = useState<Map<string, string>>(
-    new Map(),
+  const { profiles, companies, experiences, loading } = usePce();
+
+  const profileName = useMemo(() => {
+    const profile = profiles.find((item) => item.id === combine.profileId);
+    return profile ? fullName(profile.firstName, profile.lastName) : null;
+  }, [combine.profileId, profiles]);
+
+  const companyNameById = useMemo(
+    () => new Map(companies.map((item) => [item.id, item.name])),
+    [companies],
   );
-  const [categoryById, setCategoryById] = useState<Map<string, string>>(
-    new Map(),
+
+  const categoryById = useMemo(
+    () => new Map(experiences.map((item) => [item.id, item.category])),
+    [experiences],
   );
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([
-      listProfiles("", null),
-      listCompanies("", null),
-      listExperiences("", null),
-    ]).then(([profilesRes, companiesRes, experiencesRes]) => {
-      if (cancelled) return;
-
-      const profile = (profilesRes.data?.items ?? []).find(
-        (item) => item.id === combine.profileId,
-      );
-      setProfileName(
-        profile ? fullName(profile.firstName, profile.lastName) : null,
-      );
-      setCompanyNameById(
-        new Map(
-          (companiesRes.data?.items ?? []).map((item) => [item.id, item.name]),
-        ),
-      );
-      setCategoryById(
-        new Map(
-          (experiencesRes.data?.items ?? []).map((item) => [
-            item.id,
-            item.category,
-          ]),
-        ),
-      );
-      setLoading(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [combine.profileId]);
 
   if (loading) {
     return <p className="text-sm text-muted">{t("shared.detail.loading")}</p>;

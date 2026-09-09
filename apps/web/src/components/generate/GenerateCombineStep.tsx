@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
 import { CombineExperienceSuggest } from "@/components/generate/CombineExperienceSuggest";
@@ -11,8 +11,8 @@ import {
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
-import { getProfile } from "@/lib/api";
 import type { GenerateJobState } from "@/lib/generate-session";
+import { usePce } from "@/lib/pce";
 
 type GenerateCombineStepProps = {
   combine: CombineSnapshot;
@@ -32,25 +32,16 @@ export function GenerateCombineStep({
   onRunFromCombine,
 }: GenerateCombineStepProps) {
   const t = useT();
+  const { profiles } = usePce();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
-  const [graduationYear, setGraduationYear] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!combine.profileId) {
-      setGraduationYear(null);
-      return;
-    }
-
-    let cancelled = false;
-    getProfile(combine.profileId).then((res) => {
-      if (cancelled) return;
-      setGraduationYear(res.data?.graduationYear ?? null);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [combine.profileId]);
+  const graduationYear = useMemo(() => {
+    if (!combine.profileId) return null;
+    return (
+      profiles.find((profile) => profile.id === combine.profileId)
+        ?.graduationYear ?? null
+    );
+  }, [combine.profileId, profiles]);
 
   const handleRun = useCallback(() => {
     const errors = validateCombineSnapshot(combine, t, graduationYear);

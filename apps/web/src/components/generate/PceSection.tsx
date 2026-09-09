@@ -1,8 +1,7 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { useT } from "@/components/app/LocaleProvider";
-import { useToast } from "@/components/app/ToastProvider";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 
@@ -12,7 +11,7 @@ type Column<T> = {
   cell: (row: T) => ReactNode;
 };
 
-type PcewSectionProps<T extends { id: string }> = {
+type PceSectionProps<T extends { id: string }> = {
   title: string;
   emptyLabel: string;
   error?: string;
@@ -21,11 +20,8 @@ type PcewSectionProps<T extends { id: string }> = {
   onRowSelect: (id: string, row: T) => void;
   columns: Column<T>[];
   minWidthClass?: string;
-  fetchAll: () => Promise<{
-    data?: { items: T[] };
-    error?: string;
-  }>;
-  loadErrorLabel: string;
+  items: T[];
+  loading: boolean;
   viewing: T | null;
   onView: (row: T) => void;
   renderDetailDialog: (row: T) => ReactNode;
@@ -33,7 +29,7 @@ type PcewSectionProps<T extends { id: string }> = {
 
 const SELECTED_ROW_CLASS = "bg-accent-fg text-accent";
 
-export function PcewSection<T extends { id: string }>({
+export function PceSection<T extends { id: string }>({
   title,
   emptyLabel,
   error,
@@ -42,36 +38,13 @@ export function PcewSection<T extends { id: string }>({
   onRowSelect,
   columns,
   minWidthClass = "min-w-[640px]",
-  fetchAll,
-  loadErrorLabel,
+  items,
+  loading,
   viewing,
   onView,
   renderDetailDialog,
-}: PcewSectionProps<T>) {
-  const { toast } = useToast();
+}: PceSectionProps<T>) {
   const t = useT();
-  const [items, setItems] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetchAll().then((res) => {
-      if (cancelled) return;
-      if (res.error || !res.data) {
-        toast(res.error ?? loadErrorLabel, "error");
-        setItems([]);
-        setLoading(false);
-        return;
-      }
-      setItems(res.data.items);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchAll, loadErrorLabel, toast]);
-
   const colSpan = columns.length + 2;
 
   return (
@@ -79,10 +52,10 @@ export function PcewSection<T extends { id: string }>({
       <div className="space-y-1">
         <h3 className="text-base font-semibold tracking-tight">{title}</h3>
         {selectionMode === "single" ? (
-          <p className="text-xs text-muted">{t("generate.pcewSection.selectSingle")}</p>
+          <p className="text-xs text-muted">{t("generate.pceSection.selectSingle")}</p>
         ) : (
           <p className="text-xs text-muted">
-            {t("generate.pcewSection.selectMultiple")}
+            {t("generate.pceSection.selectMultiple")}
           </p>
         )}
       </div>
@@ -92,7 +65,7 @@ export function PcewSection<T extends { id: string }>({
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="w-10 px-3 py-2">
-                <span className="sr-only">{t("generate.pcewSection.selectColumn")}</span>
+                <span className="sr-only">{t("generate.pceSection.selectColumn")}</span>
               </th>
               {columns.map((column) => (
                 <th
@@ -109,7 +82,7 @@ export function PcewSection<T extends { id: string }>({
             {loading ? (
               <tr>
                 <td colSpan={colSpan} className="px-3 py-8 text-center text-muted">
-                  {t("generate.pcewSection.loading")}
+                  {t("generate.pceSection.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (

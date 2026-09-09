@@ -15,11 +15,11 @@ import {
 } from "@/components/shared/detail-dialog";
 import { ProfileDetailDialog } from "@/components/ProfileDetailDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
+import { deleteProfile, type ProfileDetail } from "@/lib/api";
 import {
-  deleteProfile,
-  listProfiles,
-  type ProfileDetail,
-} from "@/lib/api";
+  invalidateWorkspaceCrudCaches,
+  loadProfileList,
+} from "@/lib/cached-crud-list";
 import { useCrudListParams } from "@/lib/crud-list-params";
 import { formatEducationCell, formatLinksCell, fullName } from "@/lib/profile";
 
@@ -66,7 +66,7 @@ function ProfilesPageContent() {
   const load = useCallback(
     async (nextQ: string, nextPage: number) => {
       setLoading(true);
-      const res = await listProfiles(nextQ, nextPage);
+      const res = await loadProfileList(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
         toast(res.error ?? t("toast.profilesLoadFailed"), "error");
@@ -84,7 +84,8 @@ function ProfilesPageContent() {
 
   useEffect(() => {
     void load(q, page);
-  }, [load, q, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change; cached loader dedupes Strict Mode
+  }, [q, page]);
 
   async function onConfirmDelete() {
     if (!deleting) return;
@@ -96,6 +97,7 @@ function ProfilesPageContent() {
       return;
     }
     setDeleting(null);
+    invalidateWorkspaceCrudCaches("profiles");
     toast(t("toast.profileDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     if (nextPage !== page) {

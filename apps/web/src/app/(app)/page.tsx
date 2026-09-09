@@ -49,16 +49,13 @@ import {
 } from "@/lib/generate-auto-run";
 import {
   getCombineGenerationFingerprint,
-  getGenerationProcess,
-  getPrompts,
-  listCompanies,
-  listExperiences,
-  listProfiles,
   runAiEvaluate,
   runAiResume,
   runAiVerdict,
   type ResumeLanguage,
 } from "@/lib/api";
+import { loadGenerationProcess, loadPrompts } from "@/lib/cached-settings";
+import { loadPce } from "@/lib/pce";
 
 const DEFAULT_PROCESS = {
   doVerdict: true,
@@ -147,17 +144,13 @@ export default function GeneratePage() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      listProfiles("", null),
-      listCompanies("", null),
-      listExperiences("", null),
-      getPrompts(),
-      getGenerationProcess(),
-    ]).then(([profilesRes, companiesRes, experiencesRes, prompts, process]) => {
+      loadPce(),
+      loadPrompts(),
+      loadGenerationProcess(),
+    ]).then(([pceRes, prompts, process]) => {
       if (cancelled) return;
       const errors = [
-        profilesRes.error,
-        companiesRes.error,
-        experiencesRes.error,
+        pceRes.error,
         prompts.error,
         process.error,
       ].filter(Boolean);
@@ -190,20 +183,21 @@ export default function GeneratePage() {
         evaluatePrompt: prompts.data?.evaluatePrompt ?? "",
       });
 
+      const pce = pceRes.data;
       const nextMissing: MissingPrerequisite[] = [];
-      if ((profilesRes.data?.total ?? 0) < 1) {
+      if ((pce?.profiles.length ?? 0) < 1) {
         nextMissing.push({
           label: t("generate.prerequisites.labels.profiles"),
           href: "/profiles",
         });
       }
-      if ((companiesRes.data?.total ?? 0) < 1) {
+      if ((pce?.companies.length ?? 0) < 1) {
         nextMissing.push({
           label: t("generate.prerequisites.labels.companies"),
           href: "/companies",
         });
       }
-      if ((experiencesRes.data?.total ?? 0) < 1) {
+      if ((pce?.experiences.length ?? 0) < 1) {
         nextMissing.push({
           label: t("generate.prerequisites.labels.experiences"),
           href: "/experiences",

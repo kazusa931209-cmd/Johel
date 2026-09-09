@@ -512,7 +512,7 @@ export const en = {
         description: "Please wait while the AI scores your resume against the job.",
       },
     },
-    pcewSection: {
+    pceSection: {
       selectSingle: "Click a row to select one.",
       selectMultiple: "Click rows to select or deselect multiple.",
       selectColumn: "Select",
@@ -566,6 +566,12 @@ export const en = {
     detailTitle: "AI Usage Detail",
     detailContentAria: "AI usage detail content",
     tabsAria: "Input and output",
+    historyTabsAria: "AI usage history views",
+    historyTabs: {
+      all: "All",
+      generation: "Generation",
+      other: "Other",
+    },
     input: "Input",
     output: "Output",
     loading: "Loading…",
@@ -586,7 +592,6 @@ export const en = {
       inputTokenSum: "In {count}",
       outputTokenSum: "Out {count}",
       totalTokenSum: "Total {count}",
-      columnGroup: "Group",
       columnCalls: "Calls",
       columnInput: "Input",
       columnOutput: "Output",

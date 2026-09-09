@@ -8,6 +8,9 @@ import { useT } from "@/components/app/LocaleProvider";
 import { StudioHeaderStatus } from "@/components/app/StudioHeaderStatus";
 import { MenuIcon } from "@/components/shared/icons";
 import { logout } from "@/lib/api";
+import { clearAllCrudListCaches } from "@/lib/cached-crud-list";
+import { clearAllSettingsCaches } from "@/lib/cached-settings";
+import { clearPceCache } from "@/lib/pce";
 import { formatTokenUsed } from "@/lib/tokens";
 
 type StudioHeaderProps = {
@@ -41,6 +44,9 @@ export function StudioHeader({
   async function onSignOut() {
     setOpen(false);
     await logout();
+    clearAllSettingsCaches();
+    clearAllCrudListCaches();
+    clearPceCache();
     router.replace("/login");
   }
 

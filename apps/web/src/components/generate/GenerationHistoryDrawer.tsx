@@ -22,13 +22,12 @@ import { DownloadIcon, PlayIcon } from "@/components/shared/icons";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import {
   getGeneration,
-  getGenerationProcess,
-  getMe,
   updateGeneration,
   type GenerationDetail,
 } from "@/lib/api";
 import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
 import { loadGenerateSession, type GenerateJobState } from "@/lib/generate-session";
+import { loadGenerationProcess, loadMe } from "@/lib/cached-settings";
 import { resumeGenerationFromHistory } from "@/lib/generation-persistence";
 import {
   getGenerateSteps,
@@ -128,7 +127,7 @@ export function GenerationHistoryDrawer({
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([getMe(), getGenerationProcess()]).then(
+    void Promise.all([loadMe(), loadGenerationProcess()]).then(
       ([meRes, processRes]) => {
         if (cancelled) return;
         const id = meRes.data?.id ?? null;

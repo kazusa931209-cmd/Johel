@@ -6,7 +6,8 @@ import { useLocale } from "@/components/app/LocaleProvider";
 import type { DrawerPosition } from "@/lib/drawer-position";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { getSettings, saveSettings } from "@/lib/api";
+import { saveSettings } from "@/lib/api";
+import { loadSettings, setSettingsCache } from "@/lib/cached-settings";
 import type { Locale } from "@/lib/locale";
 import type { Theme } from "@/lib/theme";
 
@@ -85,7 +86,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getSettings().then((res) => {
+    loadSettings().then((res) => {
       if (cancelled) return;
       if (res.data) {
         setHasSavedKey(Boolean(res.data.provider && res.data.apiKeyMasked));
@@ -116,6 +117,7 @@ export default function SettingsPage() {
       toast(res.error ?? t("toast.aiAgentSaveFailed"), "error");
       return;
     }
+    setSettingsCache(res.data);
     setHasSavedKey(Boolean(res.data.provider && res.data.apiKeyMasked));
     setMasked(res.data.apiKeyMasked);
     setApiKey("");

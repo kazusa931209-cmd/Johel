@@ -8,11 +8,14 @@ import {
   type RunLanguage,
 } from "@/components/generate/combine-types";
 import {
-  getGenerationProcess,
-  getMe,
   saveGenerationProcess,
   type ExperienceAdvisePoolDepth,
 } from "@/lib/api";
+import {
+  loadGenerationProcess,
+  loadMe,
+  setGenerationProcessCache,
+} from "@/lib/cached-settings";
 import type { ResumeLanguage } from "@/lib/api";
 import { clearGenerateSession } from "@/lib/generate-session";
 
@@ -74,7 +77,7 @@ export default function GenerationSettingsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getGenerationProcess().then((res) => {
+    loadGenerationProcess().then((res) => {
       if (cancelled) return;
       if (res.data) {
         setDoVerdict(res.data.doVerdict);
@@ -88,7 +91,7 @@ export default function GenerationSettingsPage() {
       }
       setLoading(false);
     });
-    getMe().then((res) => {
+    loadMe().then((res) => {
       if (cancelled) return;
       setUserId(res.data?.id ?? null);
     });
@@ -112,6 +115,7 @@ export default function GenerationSettingsPage() {
       toast(res.error ?? t("toast.generationSaveFailed"), "error");
       return;
     }
+    setGenerationProcessCache(res.data);
     setDoVerdict(res.data.doVerdict);
     setDoEvaluate(res.data.doEvaluate);
     setResumeLanguage(res.data.resumeLanguage);

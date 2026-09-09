@@ -513,7 +513,7 @@ export const ko: MessageTree = {
         description: "AI가 채용 공고와 이력서를 비교 평가하는 중입니다.",
       },
     },
-    pcewSection: {
+    pceSection: {
       selectSingle: "행을 클릭하여 하나를 선택합니다.",
       selectMultiple: "행을 클릭하여 여러 개를 선택하거나 선택 해제합니다.",
       selectColumn: "선택",
@@ -566,6 +566,12 @@ export const ko: MessageTree = {
     detailTitle: "AI 사용 상세",
     detailContentAria: "AI 사용 상세 내용",
     tabsAria: "입력 및 출력",
+    historyTabsAria: "AI 사용 기록 보기",
+    historyTabs: {
+      all: "전체",
+      generation: "생성",
+      other: "기타",
+    },
     input: "입력",
     output: "출력",
     loading: "불러오는 중…",
@@ -586,7 +592,6 @@ export const ko: MessageTree = {
       inputTokenSum: "입력 {count}",
       outputTokenSum: "출력 {count}",
       totalTokenSum: "합계 {count}",
-      columnGroup: "그룹",
       columnCalls: "호출 수",
       columnInput: "입력",
       columnOutput: "출력",

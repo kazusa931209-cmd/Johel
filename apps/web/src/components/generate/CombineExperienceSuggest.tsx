@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -13,11 +13,10 @@ import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
-  listCompanies,
-  listExperiences,
   runAiCombineRecommend,
   type CombineRecommendResult,
 } from "@/lib/api";
+import { usePce } from "@/lib/pce";
 
 type CombineExperienceSuggestProps = {
   combine: CombineSnapshot;
@@ -57,38 +56,17 @@ export function CombineExperienceSuggest({
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [pendingResult, setPendingResult] =
     useState<CombineRecommendResult | null>(null);
-  const [categoryById, setCategoryById] = useState<Map<string, string>>(
-    new Map(),
-  );
-  const [companyNameById, setCompanyNameById] = useState<Map<string, string>>(
-    new Map(),
+  const { companies, experiences } = usePce();
+
+  const categoryById = useMemo(
+    () => new Map(experiences.map((item) => [item.id, item.category])),
+    [experiences],
   );
 
-  useEffect(() => {
-    if (!pendingResult) return;
-    let cancelled = false;
-    Promise.all([listExperiences("", null), listCompanies("", null)]).then(
-      ([experiencesRes, companiesRes]) => {
-        if (cancelled) return;
-        setCategoryById(
-          new Map(
-            (experiencesRes.data?.items ?? []).map((item) => [
-              item.id,
-              item.category,
-            ]),
-          ),
-        );
-        setCompanyNameById(
-          new Map(
-            (companiesRes.data?.items ?? []).map((item) => [item.id, item.name]),
-          ),
-        );
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [pendingResult]);
+  const companyNameById = useMemo(
+    () => new Map(companies.map((item) => [item.id, item.name])),
+    [companies],
+  );
 
   async function runSuggest(): Promise<boolean> {
     if (suggesting) return false;
