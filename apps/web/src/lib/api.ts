@@ -105,6 +105,13 @@ export function logout() {
   return request<{ ok: boolean }>("/auth/logout", { method: "POST" });
 }
 
+export function changePassword(currentPassword: string, newPassword: string) {
+  return request<{ ok: boolean }>("/auth/password", {
+    method: "PUT",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
 export type AiProviderId = "openai";
 
 export type ExperienceAdvisePoolDepth =

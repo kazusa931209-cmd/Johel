@@ -12,7 +12,7 @@ export const ko: MessageTree = {
       statusCurrent: "현재",
       statusTitle: "생성 {id} · {step}",
       statusStepUnknown: "알 수 없는 단계",
-      profile: "계정",
+      account: "계정",
       signOut: "로그아웃",
     },
     sidebar: {
@@ -333,11 +333,18 @@ export const ko: MessageTree = {
     },
   },
   account: {
-    profile: {
-      title: "계정",
-      description: "계정 정보입니다.",
-      loginId: "로그인 ID",
-      loadingPlaceholder: "…",
+    title: "계정",
+    description: "계정 정보입니다.",
+    loginId: "로그인 ID",
+    loadingPlaceholder: "…",
+    resetPassword: {
+      title: "비밀번호 재설정",
+      description: "현재 비밀번호를 입력한 뒤 새 비밀번호를 설정하세요.",
+      currentPassword: "현재 비밀번호",
+      newPassword: "새 비밀번호",
+      confirmPassword: "새 비밀번호 확인",
+      submit: "비밀번호 재설정",
+      submitting: "재설정 중…",
     },
   },
   generate: {
@@ -684,6 +691,9 @@ export const ko: MessageTree = {
     generationResumed: "생성을 재개했습니다.",
     copied: "클립보드에 복사했습니다.",
     copyFailed: "클립보드에 복사하지 못했습니다.",
+    passwordResetSuccess: "비밀번호를 변경했습니다.",
+    passwordResetFailed: "비밀번호를 변경하지 못했습니다.",
+    passwordResetCurrentIncorrect: "현재 비밀번호가 올바르지 않습니다.",
   },
   validation: {
     loginFailed: "로그인에 실패했습니다.",
@@ -693,6 +703,7 @@ export const ko: MessageTree = {
     passwordMinLength: "비밀번호는 8자 이상이어야 합니다.",
     confirmPasswordRequired: "비밀번호 확인은 필수입니다.",
     passwordMismatch: "비밀번호가 일치하지 않습니다.",
+    currentPasswordRequired: "현재 비밀번호는 필수입니다.",
     providerRequired: "제공자는 필수입니다.",
     apiKeyMinLength: "API 키는 최소 8자 이상이어야 합니다.",
     promptRequired: "{label}은(는) 필수입니다.",

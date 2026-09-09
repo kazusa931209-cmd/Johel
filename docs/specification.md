@@ -127,7 +127,7 @@ Aligned with the product flow above:
 * **Dark theme** is the default; users can switch between **Dark** and **Light**.
 * **Top header**
   * Left: hamburger control (opens / collapses the left sidebar) beside project title **JoHEL**
-  * Right: **Token Used** (compact K / M / G / T, e.g. `0.3K`, `12.5K`, `0.6M`) beside the user email dropdown containing **Profile** and **Sign out**
+  * Right: **Token Used** (compact K / M / G / T, e.g. `0.3K`, `12.5K`, `0.6M`) beside the user login-ID dropdown containing **Account** and **Sign out**
 * **Left sidebar** menus:
   * The sidebar starts **open**; the hamburger toggles it open or collapsed with a slide animation (same velocity easing as drawers). The last choice is remembered for the browser. Icon-only hamburger uses `aria-label` **Collapse sidebar** or **Open sidebar**.
   * **Workspace** (always-open submenus)
@@ -149,7 +149,7 @@ Aligned with the product flow above:
   * Editor pages show a back control beside the title; Cancel and Save apply to the whole profile
   * Links add/edit/delete is local on the page until Save persists the profile (same pattern as workflow Metadata)
   * Editor fields: first name (required), last name (required), birth date, email, PN, residence, university (optional), graduation year (required), degree (optional); links table (Key required; Value/link optional)
-  * Distinct from header menu **Profile** (account email page)
+  * Distinct from header menu **Account** (`/account`)
 * **Companies**
   * One signed-in user can manage **multiple** companies
   * Per-user list: No, **Display Priority**, Alias, Company Name, What this company is (truncated), Domain & Stack (truncated)
@@ -212,6 +212,7 @@ Aligned with the product flow above:
   * **Process**: **Do Verdict** and **Do Evaluate** checkboxes (both default on)
   * **Resume Language**: default resume output language for Generate (`en`, `ja`, `zh-TW`, `zh-CN`, `ko`; default `en`); one **Save** persists Process and Resume Language per user; changing either clears an in-progress Generate session
   * **Prompts** — see **Prompts** above (`/settings/prompts`)
+* **Account** (`/account`) — Header user-menu **Account** (distinct from Workspace **Profiles**). Shows the signed-in **Login ID**. **Reset Password** requires current password, new password, and confirm new password; Save/Reset stays enabled; inline errors on submit; toast on API result. Legacy `/profile` redirects here.
 * **AI Usage History** — A fixed bottom-right round button (history / clock icon) on every authenticated page opens a right-side drawer with the user’s AI usage history. The drawer has **All**, **Generation**, and **Other** tabs. **All** lists every AI usage call without grouping, newest first. **Generation** groups calls by Generation ID (newest groups first); each group row shows the Generation ID, **AI call count**, and **sum of tokens used**; expanding a group loads that group’s call rows. **Other** lists AI usage that is not linked to a generation run, without grouping, newest first. Call rows include **Generation ID** plus: No, AI, Model, Generate Type, Input Token, Output Token, Created At. Pagination is stuck to the bottom of the drawer (100 calls per page on All/Other; 50 groups per page on Generation). Clicking a call row opens a nested overlapping drawer on the right with **Input** and **Output** tabs (**Input** is the default); the active tab’s text is previewed as Markdown (`AiVerdictMarkdown`); a **Copy** icon copies the raw stored text for the active tab (not the rendered preview) and toasts success or failure. Clicking outside a drawer (or its Close control) collapses the topmost drawer; closing the history drawer also closes the detail drawer.
 * **Drawers** — Every right-side drawer slides in from the right on open and slides out on close, with velocity easing (fast start, decelerate). Drawers do not appear or disappear instantly. Nested drawers animate independently.
 * **Dialogs** — View-only dialogs (detail/read-only, delete confirms) close when the user clicks the outer backdrop. Add/Edit form dialogs do not close on backdrop click; the user must use Close (X) or the main action (Apply/Save).
@@ -373,6 +374,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-10):** `cached-crud-list.ts` with `loadProfileList`, `loadCompanyList`, `loadExperienceList`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-74-workspace-crud-list-dedup.md`](./plans/2026-09-10-phase-74-workspace-crud-list-dedup.md).
 * [x] **Phase 75 — AI Usage History tabs** — AI Usage History drawer adds **All**, **Generation**, and **Other** tabs. All lists every call ungrouped (newest first). Generation groups by Generation ID (newest first). Other lists non-generation usage ungrouped (newest first).
   * **Outcome (2026-09-10):** Drawer tabs; `GET /ai-usage/groups` is generation-only; All/Other use `GET /ai-usage` (optional `generationId=none`). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-75-ai-usage-history-tabs.md`](./plans/2026-09-10-phase-75-ai-usage-history-tabs.md).
+* [x] **Phase 76 — Account page and reset password** — Header user-menu **Profile** is renamed **Account**; route `/profile` moves to `/account`. The Account page shows Login ID and **Reset Password** (current password, new password, confirm).
+  * **Outcome (2026-09-10):** `/account` page, `/profile` redirect, `PUT /auth/password`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-76-account-reset-password.md`](./plans/2026-09-10-phase-76-account-reset-password.md).
 
 ## Cursor Rules (Documentation Governance)
 

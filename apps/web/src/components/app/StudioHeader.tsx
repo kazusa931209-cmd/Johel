@@ -108,12 +108,12 @@ export function StudioHeader({
               className="absolute right-0 z-50 mt-1 w-44 overflow-hidden rounded-md border border-border bg-surface py-1 shadow-lg"
             >
               <Link
-                href="/profile"
+                href="/account"
                 role="menuitem"
                 onClick={() => setOpen(false)}
                 className="block px-3 py-2 text-sm hover:bg-surface-muted"
               >
-                {t("nav.header.profile")}
+                {t("nav.header.account")}
               </Link>
               <button
                 type="button"

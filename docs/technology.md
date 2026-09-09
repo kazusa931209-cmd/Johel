@@ -43,8 +43,9 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `PUT /auth/password`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`
 - Prisma `User` → table `users`: `id`, `email` (login ID), `passwordHash`, `createdAt`, `updatedAt`
+- **Phase 76:** `PUT /auth/password` `{ currentPassword, newPassword }` (min 8); verifies current hash then updates `passwordHash` only; `changePassword` in `apps/web/src/lib/api.ts`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
 - Prisma `WorkflowCompany` → table `workflowCompanies`: `id`, `workflowId`, `companyId`, `startDate`, `endDate`, `roleContext`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, companyId)`; cascade delete with workflow
@@ -94,8 +95,9 @@ User browser (:4041)
   - `/settings/generation` — Settings / Generation (Process, Resume Language)
   - `/settings/prompts` — Settings / Prompts
   - `/prompts` — legacy redirect to `/settings/prompts`
-  - `/profile` — account Profile (email display; distinct from Workspace Profiles)
-- User menu: Profile, Sign out
+  - `/account` — account page (login ID + reset password; distinct from Workspace Profiles)
+  - `/profile` — legacy redirect to `/account`
+- User menu: Account, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
 - **Global FAB cluster (Phase 32, 41, 63, 75):** fixed bottom-right vertical stack (`StudioBottomFabCluster`): **Quick Add Experience** plus FAB (above) opens `QuickAddExperience` drawer; history (clock) FAB opens AI Usage History `Drawer` with **All** / **Generation** / **Other** tabs; suggestion preview uses nested `ExperienceSuggestionDrawer` (z-index 60). AI Usage History row click opens nested detail `Drawer` with **Input** / **Output** tabs; `listAiUsage` / `listAiUsageGroups` / `getAiUsage` in `apps/web/src/lib/api.ts`
 - Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows — always open), **Run** (Generate — always open), **Settings** (Environment, Generation, Prompts — always open); section labels use normal title case (not all caps)

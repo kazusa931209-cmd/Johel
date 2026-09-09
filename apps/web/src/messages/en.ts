@@ -10,7 +10,7 @@ export const en = {
       statusCurrent: "Current",
       statusTitle: "Generation {id} · {step}",
       statusStepUnknown: "Unknown step",
-      profile: "Profile",
+      account: "Account",
       signOut: "Sign out",
     },
     sidebar: {
@@ -331,11 +331,18 @@ export const en = {
     },
   },
   account: {
-    profile: {
-      title: "Profile",
-      description: "Your account details.",
-      loginId: "Login ID",
-      loadingPlaceholder: "…",
+    title: "Account",
+    description: "Your account details.",
+    loginId: "Login ID",
+    loadingPlaceholder: "…",
+    resetPassword: {
+      title: "Reset Password",
+      description: "Enter your current password, then choose a new one.",
+      currentPassword: "Current password",
+      newPassword: "New password",
+      confirmPassword: "Confirm new password",
+      submit: "Reset Password",
+      submitting: "Resetting…",
     },
   },
   generate: {
@@ -682,6 +689,9 @@ export const en = {
     generationResumed: "Generation resumed.",
     copied: "Copied to clipboard.",
     copyFailed: "Could not copy to clipboard.",
+    passwordResetSuccess: "Password updated.",
+    passwordResetFailed: "Could not update password.",
+    passwordResetCurrentIncorrect: "Current password is incorrect.",
   },
   validation: {
     loginFailed: "Login failed",
@@ -691,6 +701,7 @@ export const en = {
     passwordMinLength: "Password must be at least 8 characters.",
     confirmPasswordRequired: "Confirm password is required.",
     passwordMismatch: "Passwords do not match.",
+    currentPasswordRequired: "Current password is required.",
     providerRequired: "Provider is required.",
     apiKeyMinLength: "API key must be at least 8 characters.",
     promptRequired: "{label} is required.",

@@ -19,6 +19,11 @@ const credentialsSchema = z.object({
   password: z.string().min(8).max(128),
 });
 
+const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z.string().min(8).max(128),
+});
+
 export const authRoutes = new Hono();
 
 authRoutes.post("/register", async (c) => {
@@ -84,6 +89,43 @@ authRoutes.post("/login", async (c) => {
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
 
   return c.json({ id: user.id, loginId: user.email, role: user.role });
+});
+
+authRoutes.put("/password", async (c) => {
+  const sessionUser = await requireUser(c);
+  if (!sessionUser) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const body = await c.req.json().catch(() => null);
+  const parsed = passwordChangeSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid password" }, 400);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: sessionUser.id },
+    select: { id: true, passwordHash: true },
+  });
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const currentOk = await verifyPassword(
+    parsed.data.currentPassword,
+    user.passwordHash,
+  );
+  if (!currentOk) {
+    return c.json({ error: "Current password is incorrect" }, 400);
+  }
+
+  const passwordHash = await hashPassword(parsed.data.newPassword);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash },
+  });
+
+  return c.json({ ok: true });
 });
 
 authRoutes.post("/logout", (c) => {
