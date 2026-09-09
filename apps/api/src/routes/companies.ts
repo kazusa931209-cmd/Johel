@@ -12,6 +12,7 @@ import {
 const PAGE_SIZE = 10;
 
 const writeSchema = z.object({
+  displayPriority: z.coerce.number().int().min(1).max(999_999),
   alias: z.string().trim().min(1).max(200),
   name: z.string().trim().min(1).max(200),
   whatCompanyIs: z.string().trim().min(1).max(20000),
@@ -20,6 +21,7 @@ const writeSchema = z.object({
 
 type CompanyRow = {
   id: string;
+  displayPriority: number;
   alias: string;
   name: string;
   whatCompanyIs: string;
@@ -33,6 +35,7 @@ export const companiesRoutes = new Hono();
 function toDetail(row: CompanyRow) {
   return {
     id: row.id,
+    displayPriority: row.displayPriority,
     alias: row.alias,
     name: row.name,
     whatCompanyIs: row.whatCompanyIs,
@@ -75,7 +78,7 @@ companiesRoutes.get("/", async (c) => {
     prisma.company.count({ where }),
     prisma.company.findMany({
       where,
-      orderBy: { name: "asc" },
+      orderBy: [{ displayPriority: "asc" }, { name: "asc" }, { id: "asc" }],
       ...(pagination.skip != null ? { skip: pagination.skip } : {}),
       ...(pagination.take != null ? { take: pagination.take } : {}),
     }),
@@ -137,6 +140,7 @@ companiesRoutes.post("/", async (c) => {
     const row = await prisma.company.create({
       data: {
         userId: user.id,
+        displayPriority: parsed.data.displayPriority,
         alias: parsed.data.alias,
         name: parsed.data.name,
         whatCompanyIs,
@@ -196,6 +200,7 @@ companiesRoutes.put("/:id", async (c) => {
     const row = await prisma.company.update({
       where: { id },
       data: {
+        displayPriority: parsed.data.displayPriority,
         alias: parsed.data.alias,
         name: parsed.data.name,
         whatCompanyIs,

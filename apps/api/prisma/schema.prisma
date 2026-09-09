@@ -76,15 +76,16 @@ model ProfileLink {
 }
 
 model Company {
-  id             String   @id @default(cuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  alias          String
-  name           String
-  whatCompanyIs  String
-  domainAndStack String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayPriority Int      @default(1)
+  alias           String
+  name            String
+  whatCompanyIs   String
+  domainAndStack  String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([userId])
   @@map("companies")

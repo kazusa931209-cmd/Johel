@@ -22,6 +22,7 @@ type CompanyFormProps = {
 };
 
 type FieldErrors = {
+  displayPriority?: string;
   alias?: string;
   name?: string;
   whatCompanyIs?: string;
@@ -99,6 +100,9 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
   const { toast } = useToast();
   const { refreshTokenUsed } = useAiUsage();
   const { goBack } = useCrudFormNavigation("/companies");
+  const [displayPriority, setDisplayPriority] = useState(
+    initial?.displayPriority != null ? String(initial.displayPriority) : "1",
+  );
   const [alias, setAlias] = useState(initial?.alias ?? "");
   const [name, setName] = useState(initial?.name ?? "");
   const [whatCompanyIs, setWhatCompanyIs] = useState(
@@ -115,6 +119,12 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const nextErrors: FieldErrors = {};
+    const parsedDisplayPriority = Number.parseInt(displayPriority.trim(), 10);
+    if (!displayPriority.trim() || Number.isNaN(parsedDisplayPriority)) {
+      nextErrors.displayPriority = t("validation.displayPriorityRequired");
+    } else if (parsedDisplayPriority < 1) {
+      nextErrors.displayPriority = t("validation.displayPriorityMin");
+    }
     if (!alias.trim()) {
       nextErrors.alias = t("validation.aliasRequired");
     }
@@ -133,6 +143,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     }
 
     const payload: CompanyWritePayload = {
+      displayPriority: parsedDisplayPriority,
       alias: alias.trim(),
       name: name.trim(),
       whatCompanyIs: whatCompanyIs.trim(),
@@ -189,6 +200,35 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
           {t("crud.companies.form.description")}
         </p>
       </div>
+
+      <label className="block space-y-1 text-sm">
+        <span>
+          {t("crud.companies.form.displayPriority")}
+          <RequiredMark />
+        </span>
+        <p className="text-xs text-muted">
+          {t("crud.companies.form.displayPriorityHint")}
+        </p>
+        <input
+          type="number"
+          min={1}
+          step={1}
+          inputMode="numeric"
+          value={displayPriority}
+          onChange={(e) => {
+            setDisplayPriority(e.target.value);
+            if (fieldErrors.displayPriority) {
+              setFieldErrors((errors) => ({
+                ...errors,
+                displayPriority: undefined,
+              }));
+            }
+          }}
+          aria-invalid={Boolean(fieldErrors.displayPriority)}
+          className="w-full max-w-40 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-muted"
+        />
+        <FieldError message={fieldErrors.displayPriority} />
+      </label>
 
       <label className="block space-y-1 text-sm">
         <span>

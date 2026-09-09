@@ -138,6 +138,9 @@ function CompaniesPageContent() {
             <tr>
               <th className="px-3 py-2 font-medium">{t("crud.common.no")}</th>
               <th className="px-3 py-2 font-medium">
+                {t("crud.companies.columns.displayPriority")}
+              </th>
+              <th className="px-3 py-2 font-medium">
                 {t("crud.companies.columns.alias")}
               </th>
               <th className="px-3 py-2 font-medium">
@@ -155,13 +158,13 @@ function CompaniesPageContent() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-muted">
+                <td colSpan={7} className="px-3 py-8 text-center text-muted">
                   {t("crud.common.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-muted">
+                <td colSpan={7} className="px-3 py-8 text-center text-muted">
                   {t("crud.companies.empty")}
                 </td>
               </tr>
@@ -181,6 +184,9 @@ function CompaniesPageContent() {
                 >
                   <td className="w-16 px-3 py-2 text-muted">
                     {(page - 1) * pageSize + index + 1}
+                  </td>
+                  <td className="max-w-10 px-3 py-2 tabular-nums text-muted">
+                    {row.displayPriority}
                   </td>
                   <td className="px-3 py-2 font-medium">{row.alias}</td>
                   <td className="px-3 py-2">{row.name}</td>

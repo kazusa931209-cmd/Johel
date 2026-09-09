@@ -23,6 +23,10 @@ export function CompanyDetailDialog({
     >
       <DetailField label={t("crud.companies.columns.alias")} value={company.alias} />
       <DetailField
+        label={t("crud.companies.columns.displayPriority")}
+        value={company.displayPriority}
+      />
+      <DetailField
         label={t("crud.companies.columns.companyName")}
         value={company.name}
       />

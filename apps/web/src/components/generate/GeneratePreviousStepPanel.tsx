@@ -55,23 +55,25 @@ export function useGeneratePreviousStepPanel({
   );
   const filteredCharCount = formatThousandsSeparated(filteredJobText.length);
 
-  const previousTitle =
-    currentStep === "Job"
-      ? t("generate.job.filteredPreviewTitle")
-      : previousStep
-        ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
-        : undefined;
+  const isFilteredJobPanel =
+    currentStep === "Job" ||
+    (currentStep === "Verdict" && previousStep === "Job");
 
-  const previousHeaderRight =
-    currentStep === "Job" ? (
-      <span
-        aria-label={t("generate.job.filteredCharCountAria", {
-          count: filteredCharCount,
-        })}
-      >
-        {filteredCharCount}
-      </span>
-    ) : undefined;
+  const previousTitle = isFilteredJobPanel
+    ? t("generate.job.filteredPreviewTitle")
+    : previousStep
+      ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
+      : undefined;
+
+  const previousHeaderRight = isFilteredJobPanel ? (
+    <span
+      aria-label={t("generate.job.filteredCharCountAria", {
+        count: filteredCharCount,
+      })}
+    >
+      {filteredCharCount}
+    </span>
+  ) : undefined;
 
   const previousContent = useMemo(() => {
     if (currentStep === "Job") {

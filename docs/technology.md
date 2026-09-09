@@ -51,7 +51,7 @@ User browser (:4041)
 - Prisma `WorkflowCompanyExperience` → table `workflowCompanyExperiences`: `id`, `workflowCompanyId`, `experienceId`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowCompanyId, experienceId)`; cascade delete with workflow company row
 - Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `university?`, `graduationYear` (required on write), `degree?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
-- Prisma `Company` → table `companies` (per user): `id`, `userId`, `alias`, `name`, `whatCompanyIs`, `domainAndStack`, `createdAt`, `updatedAt`
+- Prisma `Company` → table `companies` (per user): `id`, `userId`, `displayPriority`, `alias`, `name`, `whatCompanyIs`, `domainAndStack`, `createdAt`, `updatedAt`
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `problem`, `actions`, `outcome`, `createdAt`, `updatedAt`
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
@@ -153,12 +153,13 @@ User browser (:4041)
 ## Companies (Phase 9, 30, 31, 44)
 
 - `GET /companies?q=&page=` — page size 10
-- List order: `name` ascending
+- List order: `displayPriority` ascending, then `name` ascending
 - `GET /companies/:id` — full detail for the editor (owner only)
-- `POST /companies` / `PUT /companies/:id` — `{ alias, name, whatCompanyIs, domainAndStack }`; on write, `whatCompanyIs` and `domainAndStack` are converted to markdown via AI when changed since last save (create always converts); unchanged fields skip conversion; requires Settings provider/apiKey when conversion runs
+- `POST /companies` / `PUT /companies/:id` — `{ displayPriority, alias, name, whatCompanyIs, domainAndStack }` where `displayPriority` is a 1-based integer; on write, `whatCompanyIs` and `domainAndStack` are converted to markdown via AI when changed since last save (create always converts); unchanged fields skip conversion; requires Settings provider/apiKey when conversion runs
 - Search `q` across alias, name, whatCompanyIs, and domainAndStack
-- Web routes: `/companies` list (columns: Alias, Company Name, What this company is, Domain & Stack); `/companies/new` add; `/companies/[id]/edit` edit; editor fields in order: alias, company name, what this company is, domain & stack; English guidelines and good/bad examples on the two prompt fields; shared guidance that personal achievements belong in shared experiences
+- Web routes: `/companies` list (columns: Display Priority, Alias, Company Name, What this company is, Domain & Stack); `/companies/new` add; `/companies/[id]/edit` edit; editor fields in order: display priority, alias, company name, what this company is, domain & stack; English guidelines and good/bad examples on the two prompt fields; shared guidance that personal achievements belong in shared experiences
 - **Phase 44 migration note:** `companies.description` dropped; existing rows backfill `alias` and `name` from former `name`, `whatCompanyIs` from former `description`, `domainAndStack` to empty string — users must fill domain & stack on next edit
+- **Display priority migration:** existing companies receive sequential 1-based priorities per user ordered by former `name` sort
 
 ## Experiences (Phase 10, 30, 45)
 
@@ -340,7 +341,7 @@ User browser (:4041)
 ### Web
 
 - `GenerateVerdictStep`, `GenerateCombineStep`, `combine-types.ts`, `CombineProfilePicker`, `CombineCompanyCards`, `CombinePeriodSlider`, `combine-period.ts`
-- Combine step: all workspace companies as a single-column card list (`listCompanies("", null)`); company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context and optional **Keyword context**; linked experience categories shown on each included card after **Apply**; **Suggest experiences** (`CombineExperienceSuggest`) calls `POST /ai-combine-recommend` per-company hybrid (keyword context or Auto); fullscreen `BusyOverlay` while suggesting; suggestion dialog shows per-company rationale and warnings with **Cancel** / **Retry** / **Apply**; `experienceIds` on each company entry after apply
+- Combine step: all workspace companies as a single-column card list (`listCompanies("", null)`); when no companies are included, cards sort by **displayPriority** (1-based); when at least one is included, included cards follow **selection order** (`combine.companies` array order) and unselected cards follow **displayPriority** via `orderCompaniesForCombineDisplay`; company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context and optional **Keyword context**; linked experience categories shown on each included card after **Apply**; **Suggest experiences** (`CombineExperienceSuggest`) calls `POST /ai-combine-recommend` per-company hybrid (keyword context or Auto); fullscreen `BusyOverlay` while suggesting; suggestion dialog shows per-company rationale and warnings with **Cancel** / **Retry** / **Apply**; `experienceIds` on each company entry after apply
 - Combine validation (`validateCombineSnapshot`): profile required with graduation year, ≥1 included company, each with period + role context; no experience requirement
 - Migration `20260909100002_profile_education_split`: legacy `education` text copied to `university`; column dropped
 - `POST /ai-resume` and `POST /resume/combine-fingerprint` accept `experienceIds: []` per company; `assembleFromCombineSnapshot` allows empty experiences per company

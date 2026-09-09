@@ -13,6 +13,7 @@ import {
 import type { CombineCompanyEntry } from "@/components/generate/combine-types";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
 import { listCompanies, listExperiences, type CompanyDetail } from "@/lib/api";
+import { orderCompaniesForCombineDisplay } from "@/lib/company";
 
 type CombineCompanyCardsProps = {
   companies: CombineCompanyEntry[];
@@ -28,28 +29,6 @@ function normalizeIncludedEntries(
   entries: CombineCompanyEntry[],
 ): CombineCompanyEntry[] {
   return entries.filter((entry) => workspaceIds.has(entry.companyId));
-}
-
-function orderCompaniesForDisplay(
-  workspaceCompanies: CompanyDetail[],
-  includedEntries: CombineCompanyEntry[],
-): CompanyDetail[] {
-  const workspaceById = new Map(
-    workspaceCompanies.map((company) => [company.id, company]),
-  );
-  const includedIds = new Set(
-    includedEntries.map((entry) => entry.companyId),
-  );
-
-  const included = includedEntries
-    .map((entry) => workspaceById.get(entry.companyId))
-    .filter((company): company is CompanyDetail => Boolean(company));
-
-  const excluded = workspaceCompanies.filter(
-    (company) => !includedIds.has(company.id),
-  );
-
-  return [...included, ...excluded];
 }
 
 export function CombineCompanyCards({
@@ -102,7 +81,7 @@ export function CombineCompanyCards({
     [workspaceCompanies],
   );
   const displayCompanies = useMemo(
-    () => orderCompaniesForDisplay(workspaceCompanies, companies),
+    () => orderCompaniesForCombineDisplay(workspaceCompanies, companies),
     [workspaceCompanies, companies],
   );
   const includedById = new Map(

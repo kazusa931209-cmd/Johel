@@ -228,6 +228,7 @@ export const ko: MessageTree = {
       searchPlaceholder: "별칭, 회사명, 설명 검색",
       empty: "회사가 없습니다.",
       columns: {
+        displayPriority: "표시 우선순위",
         alias: "별칭",
         companyName: "회사명",
         whatCompanyIs: "회사 소개",
@@ -243,6 +244,9 @@ export const ko: MessageTree = {
         description:
           "별칭, 회사명, 리력서생성프롬프트용 구조화 마당을 설정합니다.",
         backAria: "회사 목록으로",
+        displayPriority: "표시 우선순위",
+        displayPriorityHint:
+          "회사 목록과 Generate Combine 회사 카드의 1부터 시작하는 정렬 순서입니다(숫자가 작을수록 먼저 표시).",
         alias: "별칭",
         companyName: "회사명",
         whatCompanyIs: "회사 소개",
@@ -771,6 +775,8 @@ export const ko: MessageTree = {
     firstNameRequired: "이름은 필수입니다.",
     lastNameRequired: "성은 필수입니다.",
     aliasRequired: "별칭은 필수입니다.",
+    displayPriorityRequired: "표시 우선순위는 필수입니다.",
+    displayPriorityMin: "표시 우선순위는 1 이상이어야 합니다.",
     companyNameRequired: "회사명은 필수입니다.",
     whatCompanyIsRequired: "회사소개는 필수입니다.",
     domainAndStackRequired: "분야 및 기술은 필수입니다.",

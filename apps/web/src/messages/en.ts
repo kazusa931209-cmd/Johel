@@ -226,6 +226,7 @@ export const en = {
       searchPlaceholder: "Search alias, name, or description",
       empty: "No companies yet.",
       columns: {
+        displayPriority: "Display Priority",
         alias: "Alias",
         companyName: "Company Name",
         whatCompanyIs: "What this company is",
@@ -241,6 +242,9 @@ export const en = {
         description:
           "Configure alias, company name, and structured context fields used as resume-generation prompts.",
         backAria: "Back to companies",
+        displayPriority: "Display Priority",
+        displayPriorityHint:
+          "1-based sort order for the Companies list and Generate Combine company cards (lower numbers appear first).",
         alias: "Alias",
         companyName: "Company Name",
         whatCompanyIs: "What this company is",
@@ -407,7 +411,7 @@ export const en = {
     },
     previous: {
       jobTitle: "Job Description",
-      verdictTitle: "AI Verdict",
+      verdictTitle: "Verdict",
       combineTitle: "Combine",
       resumeTitle: "Generated résumé",
       evaluationTitle: "Evaluation",
@@ -772,6 +776,8 @@ export const en = {
     firstNameRequired: "First Name is required.",
     lastNameRequired: "Last Name is required.",
     aliasRequired: "Alias is required.",
+    displayPriorityRequired: "Display Priority is required.",
+    displayPriorityMin: "Display Priority must be at least 1.",
     companyNameRequired: "Company Name is required.",
     whatCompanyIsRequired: "What this company is is required.",
     domainAndStackRequired: "Domain & Stack is required.",
