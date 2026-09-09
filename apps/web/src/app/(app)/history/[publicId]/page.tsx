@@ -185,35 +185,38 @@ export default function HistoryDetailPage() {
   return (
     <section className="-m-6 flex h-[calc(100dvh-3.5rem)] w-auto flex-col overflow-hidden">
       <div className="sticky top-0 z-10 shrink-0 border-b border-border bg-background px-6 pt-6 pb-4">
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-2">
-              <BackButton href="/history" aria-label={t("history.detail.back")} />
-              <div className="space-y-1">
-                <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-                  {t("history.detail.title")}
-                  <span className="text-sm text-muted">{detail.publicId}</span>
-                </h1>
-              </div>
+        <div className="flex items-center gap-4">
+          <div className="shrink-0 space-y-1">
+            <div className="flex items-center gap-3">
+              <BackButton
+                href="/history"
+                aria-label={t("history.detail.back")}
+              />
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {t("history.detail.title")}
+              </h1>
             </div>
-            {showDownload ? (
-              <button
-                type="button"
-                disabled={downloading}
-                onClick={() => void onDownload()}
-                className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
-              >
-                {downloading
-                  ? t("generate.download.downloading")
-                  : t("generate.nav.download")}
-              </button>
-            ) : null}
+            <p className="pl-12 text-sm text-muted">{detail.publicId}</p>
           </div>
-          <GenerateTimeline
-            active={normalizedActiveStep}
-            steps={visibleSteps}
-            onStepSelect={setActiveStep}
-          />
+          <div className="min-w-0 flex-1">
+            <GenerateTimeline
+              active={normalizedActiveStep}
+              steps={visibleSteps}
+              onStepSelect={setActiveStep}
+            />
+          </div>
+          {showDownload ? (
+            <button
+              type="button"
+              disabled={downloading}
+              onClick={() => void onDownload()}
+              className="shrink-0 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+            >
+              {downloading
+                ? t("generate.download.downloading")
+                : t("generate.nav.download")}
+            </button>
+          ) : null}
         </div>
       </div>
 
