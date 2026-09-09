@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  CURSOR_MODEL_NAME,
-  resolveAiModelName,
-} from "../record-ai-usage.js";
+import { resolveAiModelName } from "../record-ai-usage.js";
+import { OPENAI_EMBEDDING_MODEL } from "../openai/embeddings.js";
 import {
   OPENAI_FORMAT_MODEL,
   OPENAI_RESUME_MODEL,
@@ -10,11 +8,6 @@ import {
 } from "../openai/responses.js";
 
 describe("resolveAiModelName", () => {
-  it("returns auto for Cursor", () => {
-    expect(resolveAiModelName("cursor", "verdict")).toBe(CURSOR_MODEL_NAME);
-    expect(resolveAiModelName("cursor", "generate")).toBe(CURSOR_MODEL_NAME);
-  });
-
   it("returns resume model for OpenAI generate", () => {
     expect(resolveAiModelName("openai", "generate")).toBe(OPENAI_RESUME_MODEL);
   });
@@ -30,6 +23,12 @@ describe("resolveAiModelName", () => {
     );
     expect(resolveAiModelName("openai", "markdownFormat")).toBe(
       OPENAI_FORMAT_MODEL,
+    );
+  });
+
+  it("returns embedding model for embedding generateType", () => {
+    expect(resolveAiModelName("openai", "embedding")).toBe(
+      OPENAI_EMBEDDING_MODEL,
     );
   });
 });

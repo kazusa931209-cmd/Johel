@@ -1,4 +1,5 @@
 import type { AiProviderId } from "./ai-provider.js";
+import { OPENAI_EMBEDDING_MODEL } from "./openai/embeddings.js";
 import {
   OPENAI_FORMAT_MODEL,
   OPENAI_RESUME_MODEL,
@@ -15,11 +16,10 @@ export const AI_GENERATE_TYPES = [
   "authorAdvise",
   "experienceAdvise",
   "combineRecommend",
+  "embedding",
 ] as const;
 
 export type AiGenerateType = (typeof AI_GENERATE_TYPES)[number];
-
-export const CURSOR_MODEL_NAME = "auto";
 
 type TokenUsage = {
   inputToken: number;
@@ -29,17 +29,17 @@ type TokenUsage = {
 };
 
 export function resolveAiModelName(
-  provider: AiProviderId,
+  _provider: AiProviderId,
   generateType: AiGenerateType,
 ): string {
-  if (provider === "cursor") {
-    return CURSOR_MODEL_NAME;
-  }
   if (generateType === "generate") {
     return OPENAI_RESUME_MODEL;
   }
   if (generateType === "markdownFormat") {
     return OPENAI_FORMAT_MODEL;
+  }
+  if (generateType === "embedding") {
+    return OPENAI_EMBEDDING_MODEL;
   }
   return OPENAI_VERDICT_MODEL;
 }

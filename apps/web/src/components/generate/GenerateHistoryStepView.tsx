@@ -8,7 +8,6 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { GenerateCombineSummary } from "@/components/generate/GenerateCombineSummary";
-import { GenerateJobDescriptionPreview } from "@/components/generate/GenerateJobDescriptionPreview";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import type { GenerateJobState } from "@/lib/generate-session";
 
@@ -34,15 +33,19 @@ export function GenerateHistoryStepView({
   );
 
   switch (step) {
-    case "Job":
+    case "Job": {
+      const rawJobText = job.jobText.trim();
+      if (!rawJobText) {
+        return (
+          <p className="text-sm text-muted">{t("generate.previous.jobEmpty")}</p>
+        );
+      }
       return (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-tight">
-            {t("generate.steps.job")}
-          </h2>
-          <GenerateJobDescriptionPreview jobText={job.jobText} />
-        </div>
+        <pre className="whitespace-pre-wrap font-mono text-sm text-foreground">
+          {rawJobText}
+        </pre>
       );
+    }
     case "Verdict":
       return (
         <div className="space-y-2">

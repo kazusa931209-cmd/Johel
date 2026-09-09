@@ -2,11 +2,14 @@ import { isAiProviderId, type AiProviderId } from "../ai-provider.js";
 import { prisma } from "../prisma.js";
 import { recordAiUsage } from "../record-ai-usage.js";
 import {
+  areCompanyFieldsUnchanged,
   areExperienceFieldsUnchanged,
+  finalizeCompanyFieldsOnSave,
   finalizeExperienceFieldsOnSave,
   finalizeFormattedMarkdown,
   isMarkdownFormatUnchanged,
 } from "./prompts.js";
+import { runAiCompanyFieldsMarkdownFormat } from "./run-company-fields-format.js";
 import { runAiExperienceFieldsMarkdownFormat } from "./run-experience-fields-format.js";
 import { runAiMarkdownFormat } from "./run.js";
 import type { MarkdownFormatKind } from "./types.js";
@@ -162,6 +165,73 @@ export async function formatExperienceFieldsOnSave(
     problem: result.problem,
     actions: result.actions,
     outcome: result.outcome,
+    skipped: false,
+  };
+}
+
+export type FormatCompanyFieldsOnSaveInput = {
+  userId: string;
+  whatCompanyIs: string;
+  domainAndStack: string;
+  stored?: {
+    whatCompanyIs?: string | null;
+    domainAndStack?: string | null;
+  };
+  maxLen?: number;
+};
+
+export type FormatCompanyFieldsOnSaveResult = {
+  whatCompanyIs: string;
+  domainAndStack: string;
+  skipped: boolean;
+};
+
+export async function formatCompanyFieldsOnSave(
+  input: FormatCompanyFieldsOnSaveInput,
+): Promise<FormatCompanyFieldsOnSaveResult> {
+  const maxLen = input.maxLen ?? 20_000;
+  const whatCompanyIs = input.whatCompanyIs.trim();
+  const domainAndStack = input.domainAndStack.trim();
+
+  if (
+    areCompanyFieldsUnchanged({
+      whatCompanyIs,
+      domainAndStack,
+      stored: input.stored,
+    })
+  ) {
+    return {
+      ...finalizeCompanyFieldsOnSave({ whatCompanyIs, domainAndStack }),
+      skipped: true,
+    };
+  }
+
+  const { provider, apiKey } = await loadUserAiSettings(input.userId);
+  const result = await runAiCompanyFieldsMarkdownFormat(provider, {
+    whatCompanyIs,
+    domainAndStack,
+    apiKey,
+  });
+
+  if (!result.whatCompanyIs.trim() || !result.domainAndStack.trim()) {
+    throw new Error("Markdown conversion returned empty text.");
+  }
+  if (result.whatCompanyIs.length > maxLen || result.domainAndStack.length > maxLen) {
+    throw new Error(
+      `Markdown conversion exceeded the maximum length of ${maxLen} characters.`,
+    );
+  }
+
+  await recordAiUsage({
+    userId: input.userId,
+    aiProvider: provider,
+    generateType: "markdownFormat",
+    usage: result.usage,
+  });
+
+  return {
+    whatCompanyIs: result.whatCompanyIs,
+    domainAndStack: result.domainAndStack,
     skipped: false,
   };
 }

@@ -36,6 +36,18 @@ export type ExperienceFieldsMarkdownFormatResult = {
   usage: AiVerdictUsage;
 };
 
+export type CompanyFieldsMarkdownFormatRequest = {
+  whatCompanyIs: string;
+  domainAndStack: string;
+  apiKey: string;
+};
+
+export type CompanyFieldsMarkdownFormatResult = {
+  whatCompanyIs: string;
+  domainAndStack: string;
+  usage: AiVerdictUsage;
+};
+
 export type MarkdownFormatProvider = {
   id: AiProviderId;
   run(input: MarkdownFormatRequest): Promise<MarkdownFormatResult>;

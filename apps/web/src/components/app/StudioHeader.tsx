@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
+import { StudioHeaderStatus } from "@/components/app/StudioHeaderStatus";
 import { MenuIcon } from "@/components/shared/icons";
 import { logout } from "@/lib/api";
 import { formatTokenUsed } from "@/lib/tokens";
@@ -43,8 +45,8 @@ export function StudioHeader({
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-header px-4">
-      <div className="flex items-center gap-2">
+    <header className="grid h-14 shrink-0 grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-3 border-b border-border bg-header px-4">
+      <div className="flex min-w-0 items-center gap-2 justify-self-start">
         <button
           type="button"
           onClick={onToggleSidebar}
@@ -59,11 +61,29 @@ export function StudioHeader({
         >
           <MenuIcon className="h-5 w-5" />
         </button>
-        <div className="text-base font-semibold tracking-tight">
-          {t("nav.brand")}
-        </div>
+        <Link
+          href="/"
+          aria-label={t("nav.brand")}
+          className="flex items-center gap-2 rounded-md hover:opacity-90"
+        >
+          <Image
+            src="/logo-header.png"
+            alt=""
+            aria-hidden
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0"
+            priority
+          />
+          <span className="text-base font-semibold tracking-tight">
+            {t("nav.brand")}
+          </span>
+        </Link>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="min-w-0 justify-self-center px-2">
+        <StudioHeaderStatus />
+      </div>
+      <div className="flex min-w-0 items-center justify-end gap-3 justify-self-end">
         <span
           className="text-sm text-muted"
           title={t("nav.header.tokenUsageTitle")}

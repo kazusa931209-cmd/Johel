@@ -1,4 +1,3 @@
-import type { AiProviderId } from "../ai-provider.js";
 import type { CombineRecommendRunCompany } from "./types.js";
 
 const JSON_SCHEMA = `{
@@ -31,12 +30,8 @@ Return ONLY valid JSON matching the schema. Do NOT wrap in a code fence.
 Schema:
 ${JSON_SCHEMA}`;
 
-export function getCombineRecommendSystemPrompt(provider: AiProviderId): string {
-  const notes =
-    provider === "cursor"
-      ? "Provider notes (Cursor): Return ONLY valid JSON."
-      : "Provider notes (OpenAI): Return ONLY valid JSON.";
-  return `${SHARED_RULES}\n\n${notes}`;
+export function getCombineRecommendSystemPrompt(): string {
+  return `${SHARED_RULES}\n\nProvider notes (OpenAI): Return ONLY valid JSON.`;
 }
 
 function formatKeywordContext(keywordContext?: string): string {

@@ -1,7 +1,7 @@
 import {
-  getExperience,
   type ExperienceAdviseApplyOperation,
   type ExperienceAdviseDraft,
+  type ExperienceAdviseExperienceSnapshot,
   type ExperienceAdviseOperation,
 } from "@/lib/api";
 import { mergeExperienceFieldUpdate } from "@/lib/merge-experience-field-update";
@@ -16,6 +16,7 @@ export type ExperienceAdviseDisplayOperation = {
 
 export async function buildExperienceAdviseDisplayOperations(
   operations: ExperienceAdviseOperation[],
+  experiencesById: Record<string, ExperienceAdviseExperienceSnapshot>,
 ): Promise<ExperienceAdviseDisplayOperation[]> {
   const actionable = operations.filter(
     (op) => op.placement !== "need_more_facts",
@@ -39,8 +40,7 @@ export async function buildExperienceAdviseDisplayOperations(
       operation.placement === "update_experience" &&
       operation.targetExperienceId
     ) {
-      const experienceRes = await getExperience(operation.targetExperienceId);
-      const existing = experienceRes.data;
+      const existing = experiencesById[operation.targetExperienceId];
       const delta = operation.draft;
 
       display.push({

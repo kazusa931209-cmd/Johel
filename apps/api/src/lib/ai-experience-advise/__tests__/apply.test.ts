@@ -1,5 +1,8 @@
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { finalizeExperienceFieldsOnSave } from "../../ai-markdown-format/prompts.js";
+
+const EMPTY_FINGERPRINT = createHash("sha256").update("").digest("hex");
 
 const formatExperienceFieldsOnSave = vi.fn();
 
@@ -12,6 +15,8 @@ const findFirst = vi.fn();
 const create = vi.fn();
 const update = vi.fn();
 
+const settingFindUnique = vi.fn();
+
 vi.mock("../../prisma.js", () => ({
   prisma: {
     experience: {
@@ -19,6 +24,9 @@ vi.mock("../../prisma.js", () => ({
       findFirst,
       create,
       update,
+    },
+    setting: {
+      findUnique: settingFindUnique,
     },
   },
 }));
@@ -56,6 +64,7 @@ describe("applyExperienceAdviseOperations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     findMany.mockResolvedValue([]);
+    settingFindUnique.mockResolvedValue(null);
   });
 
   it("create_experience persists finalized fields without AI markdown format", async () => {
@@ -75,7 +84,7 @@ describe("applyExperienceAdviseOperations", () => {
 
     const result = await applyExperienceAdviseOperations({
       userId: "user-1",
-      workspaceFingerprint: "[]",
+      workspaceFingerprint: EMPTY_FINGERPRINT,
       operations: [
         {
           placement: "create_experience",
@@ -124,7 +133,7 @@ describe("applyExperienceAdviseOperations", () => {
 
     const result = await applyExperienceAdviseOperations({
       userId: "user-1",
-      workspaceFingerprint: "[]",
+      workspaceFingerprint: EMPTY_FINGERPRINT,
       operations: [
         {
           placement: "update_experience",

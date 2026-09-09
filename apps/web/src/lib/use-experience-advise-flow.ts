@@ -86,6 +86,7 @@ export function useExperienceAdviseFlow({
 
     const display = await buildExperienceAdviseDisplayOperations(
       res.data.result.operations,
+      res.data.experiencesById ?? {},
     );
 
     setResult(res.data.result);

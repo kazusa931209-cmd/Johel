@@ -2,10 +2,16 @@ import { Hono } from "hono";
 import { z } from "zod";
 import {
   applyExperienceAdviseOperations,
-  buildExperienceAdviseFingerprint,
-  loadExperienceAdviseGraph,
   runExperienceAdvise,
 } from "../lib/ai-experience-advise/index.js";
+import { loadExperienceAdviseContext } from "../lib/ai-experience-advise/load-context.js";
+import type { ExperienceAdviseExperienceSnapshot } from "../lib/ai-experience-advise/types.js";
+import {
+  ensureExperienceEmbeddings,
+  normalizeExperienceAdvisePoolDepth,
+  selectExpandedExperienceIdsWithEmbedding,
+} from "../lib/experience-embedding/index.js";
+import { createOpenAiEmbedding } from "../lib/openai/embeddings.js";
 import { isAiProviderId, type AiProviderId } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
@@ -38,6 +44,28 @@ const applySchema = z.object({
 });
 
 export const aiExperienceAdviseRoutes = new Hono();
+
+function buildExperiencesById(
+  experiences: Array<{
+    id: string;
+    category: string;
+    problem: string;
+    actions: string;
+    outcome: string;
+  }>,
+): Record<string, ExperienceAdviseExperienceSnapshot> {
+  return Object.fromEntries(
+    experiences.map((experience) => [
+      experience.id,
+      {
+        category: experience.category,
+        problem: experience.problem,
+        actions: experience.actions,
+        outcome: experience.outcome,
+      },
+    ]),
+  );
+}
 
 aiExperienceAdviseRoutes.post("/", async (c) => {
   const user = await requireUser(c);
@@ -79,18 +107,52 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
   const provider: AiProviderId = setting.provider;
 
   try {
-    const graph = await loadExperienceAdviseGraph(
-      user.id,
-      parsed.data.targetExperienceId,
+    const [{ graph, workspaceFingerprint }, generationProcess] =
+      await Promise.all([
+        loadExperienceAdviseContext(user.id, parsed.data.targetExperienceId),
+        prisma.generationProcess.findUnique({ where: { userId: user.id } }),
+      ]);
+
+    const poolDepth = normalizeExperienceAdvisePoolDepth(
+      generationProcess?.experienceAdvisePoolDepth,
     );
-    const workspaceFingerprint = await buildExperienceAdviseFingerprint(
-      user.id,
+
+    const embeddingCandidates = await ensureExperienceEmbeddings({
+      userId: user.id,
+      apiKey: setting.apiKey,
+      experiences: graph.experiences,
+    });
+
+    const queryEmbedding = await createOpenAiEmbedding(
+      setting.apiKey,
+      parsed.data.userFacts,
     );
+
+    await recordAiUsage({
+      userId: user.id,
+      aiProvider: provider,
+      generateType: "embedding",
+      usage: {
+        inputToken: queryEmbedding.inputToken,
+        outputToken: 0,
+        input: parsed.data.userFacts,
+        output: "",
+      },
+    });
+
+    const expandedIds = selectExpandedExperienceIdsWithEmbedding({
+      experiences: graph.experiences,
+      targetExperienceId: graph.targetExperienceId,
+      poolDepth,
+      queryVector: queryEmbedding.vector,
+      embeddingCandidates,
+    });
 
     const result = await runExperienceAdvise(provider, {
       apiKey: setting.apiKey,
       graph,
       userFacts: parsed.data.userFacts,
+      expandedIds,
     });
 
     await recordAiUsage({
@@ -105,6 +167,7 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
     return c.json({
       result: result.result,
       workspaceFingerprint,
+      experiencesById: buildExperiencesById(graph.experiences),
       usage: result.usage,
       tokenUsed,
     });

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiUsageProvider, useAiUsage } from "@/components/app/AiUsageProvider";
+import { GenerateStatusProvider } from "@/components/app/GenerateStatusProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { StudioBottomFabCluster } from "@/components/app/StudioBottomFabCluster";
 import { StudioHeader } from "@/components/app/StudioHeader";
@@ -85,7 +86,9 @@ export default function AppLayout({
 
   return (
     <AiUsageProvider>
-      <AppShell user={user}>{children}</AppShell>
+      <GenerateStatusProvider userId={user.id}>
+        <AppShell user={user}>{children}</AppShell>
+      </GenerateStatusProvider>
     </AiUsageProvider>
   );
 }

@@ -105,7 +105,13 @@ export function logout() {
   return request<{ ok: boolean }>("/auth/logout", { method: "POST" });
 }
 
-export type AiProviderId = "cursor" | "openai";
+export type AiProviderId = "openai";
+
+export type ExperienceAdvisePoolDepth =
+  | "compact"
+  | "normal"
+  | "thorough"
+  | "full";
 
 export type AiSettings = {
   provider: AiProviderId | null;
@@ -116,10 +122,10 @@ export function getSettings() {
   return request<AiSettings>("/settings");
 }
 
-export function saveSettings(provider: AiProviderId, apiKey: string) {
+export function saveSettings(apiKey: string) {
   return request<AiSettings>("/settings", {
     method: "PUT",
-    body: JSON.stringify({ provider, apiKey }),
+    body: JSON.stringify({ provider: "openai", apiKey }),
   });
 }
 
@@ -129,6 +135,7 @@ export type GenerationProcessSettings = {
   doVerdict: boolean;
   doEvaluate: boolean;
   resumeLanguage: ResumeLanguage;
+  experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
 };
 
 export function getGenerationProcess() {
@@ -139,6 +146,7 @@ export function saveGenerationProcess(payload: {
   doVerdict: boolean;
   doEvaluate: boolean;
   resumeLanguage: ResumeLanguage;
+  experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
 }) {
   return request<GenerationProcessSettings>("/settings/process", {
     method: "PUT",
@@ -605,9 +613,17 @@ export type ExperienceAdviseRequest = {
   userFacts: string;
 };
 
+export type ExperienceAdviseExperienceSnapshot = {
+  category: string;
+  problem: string;
+  actions: string;
+  outcome: string;
+};
+
 export type ExperienceAdviseApiResult = {
   result: ExperienceAdviseResult;
   workspaceFingerprint: string;
+  experiencesById: Record<string, ExperienceAdviseExperienceSnapshot>;
   usage: AiVerdictUsage;
   tokenUsed: number;
 };

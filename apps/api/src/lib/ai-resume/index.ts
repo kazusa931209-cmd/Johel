@@ -1,4 +1,3 @@
-import { cursorAiResumeProvider } from "./cursor-provider.js";
 import { openAiResumeProvider } from "./openai-provider.js";
 import type {
   AiResumeProviderResult,
@@ -11,21 +10,11 @@ export type {
   AiResumeRequest,
   AiResumeUsage,
   AiProviderId,
-  ResumeGenerationInput,
 } from "./types.js";
 
-const providers = {
-  cursor: cursorAiResumeProvider,
-  openai: openAiResumeProvider,
-} as const;
-
 export async function runAiResume(
-  provider: AiProviderId,
+  _provider: AiProviderId,
   input: AiResumeRequest,
 ): Promise<AiResumeProviderResult> {
-  const adapter = providers[provider];
-  if (!adapter) {
-    throw new Error(`Unsupported AI provider: ${provider}`);
-  }
-  return adapter.run(input);
+  return openAiResumeProvider.run(input);
 }

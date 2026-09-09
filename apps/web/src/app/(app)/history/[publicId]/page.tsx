@@ -7,6 +7,7 @@ import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { GenerateHistoryStepView } from "@/components/generate/GenerateHistoryStepView";
+import { GeneratePanelCopyActions } from "@/components/generate/GeneratePanelCopyActions";
 import { useGeneratePreviousStepPanel } from "@/components/generate/GeneratePreviousStepPanel";
 import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
 import {
@@ -22,6 +23,8 @@ import {
   getGenerateSteps,
   normalizeGenerateActiveStep,
 } from "@/lib/generate-steps";
+import { formatThousandsSeparated } from "@/lib/helper";
+import { noiseFilter } from "@/lib/jobNoiseFilter";
 
 function parseResume(value: unknown): GeneratedResume | null {
   if (!value || typeof value !== "object") return null;
@@ -157,6 +160,14 @@ export default function HistoryDetailPage() {
   const showDownload =
     detail?.status === "completed" && resume != null;
 
+  const rawJobText = job.jobText.trim();
+  const filteredJobText = useMemo(
+    () => noiseFilter(rawJobText).text,
+    [rawJobText],
+  );
+  const filteredCharCount = formatThousandsSeparated(filteredJobText.length);
+  const isJobStep = normalizedActiveStep === "Job";
+
   const { previousTitle, previousContent, previousHeaderRight, previousMatchCurrent } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
@@ -225,10 +236,33 @@ export default function HistoryDetailPage() {
         <GenerateStepLayout
           previousTitle={previousTitle}
           previous={previousContent}
-          previousHeaderRight={previousHeaderRight}
+          previousHeaderRight={
+            isJobStep ? (
+              <GeneratePanelCopyActions
+                text={filteredJobText}
+                trailing={
+                  <span
+                    aria-label={t("generate.job.filteredCharCountAria", {
+                      count: filteredCharCount,
+                    })}
+                  >
+                    {filteredCharCount}
+                  </span>
+                }
+              />
+            ) : (
+              previousHeaderRight
+            )
+          }
+          currentTitle={isJobStep ? t("generate.steps.job") : undefined}
+          currentHeaderRight={
+            isJobStep ? (
+              <GeneratePanelCopyActions text={rawJobText} />
+            ) : undefined
+          }
           previousMatchCurrent={previousMatchCurrent}
-          swapColumns={normalizedActiveStep === "Job"}
-          currentFill={normalizedActiveStep === "Job"}
+          swapColumns={isJobStep}
+          currentFill={isJobStep}
         >
           <GenerateHistoryStepView
             step={normalizedActiveStep}

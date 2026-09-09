@@ -2,8 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import {
   loadExperienceIndex,
-  runCombineRecommendCursor,
-  runCombineRecommendOpenAi,
+  runCombineRecommend,
 } from "../lib/ai-combine-recommend/index.js";
 import { isAiProviderId, type AiProviderId } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
@@ -116,10 +115,7 @@ aiCombineRecommendRoutes.post("/", async (c) => {
   };
 
   try {
-    const result =
-      provider === "openai"
-        ? await runCombineRecommendOpenAi(runInput)
-        : await runCombineRecommendCursor(runInput);
+    const result = await runCombineRecommend(runInput);
 
     const generationId = await resolveOwnedGenerationId(
       user.id,

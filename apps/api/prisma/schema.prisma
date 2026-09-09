@@ -92,18 +92,29 @@ model Company {
 }
 
 model Experience {
-  id          String   @id @default(cuid())
+  id          String               @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    String
   problem     String
   actions     String
   outcome     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  embedding   ExperienceEmbedding?
 
   @@index([userId])
   @@map("experiences")
+}
+
+model ExperienceEmbedding {
+  experienceId String     @id
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  model        String
+  vector       Bytes
+  updatedAt    DateTime   @updatedAt
+
+  @@map("experienceEmbeddings")
 }
 
 model AiUsage {
@@ -173,14 +184,15 @@ model Prompt {
 }
 
 model GenerationProcess {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  doVerdict      Boolean  @default(true)
-  doEvaluate     Boolean  @default(true)
-  resumeLanguage String   @default("en")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                        String   @id @default(cuid())
+  userId                    String   @unique
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doVerdict                 Boolean  @default(true)
+  doEvaluate                Boolean  @default(true)
+  resumeLanguage            String   @default("en")
+  experienceAdvisePoolDepth String   @default("normal")
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   @@map("generationProcess")
 }

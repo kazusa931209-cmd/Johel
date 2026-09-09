@@ -1,4 +1,4 @@
-export const AI_PROVIDER_IDS = ["cursor", "openai"] as const;
+export const AI_PROVIDER_IDS = ["openai"] as const;
 
 export type AiProviderId = (typeof AI_PROVIDER_IDS)[number];
 

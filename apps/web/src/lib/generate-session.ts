@@ -6,6 +6,7 @@ import {
   type CombineSnapshot,
 } from "@/components/generate/combine-types";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
+import { notifyGenerateSessionChanged } from "@/lib/generate-session-events";
 import { hashPromptForCache } from "@/lib/prompt-hash";
 
 export type GenerateJobInputMethod = "url" | "file" | "manual";
@@ -359,9 +360,11 @@ export function saveGenerateSession(userId: string, session: GenerateSession) {
   try {
     if (!isGenerateInProgress(session)) {
       sessionStorage.removeItem(storageKey(userId));
+      notifyGenerateSessionChanged(userId);
       return;
     }
     sessionStorage.setItem(storageKey(userId), JSON.stringify(session));
+    notifyGenerateSessionChanged(userId);
   } catch {
     // Ignore quota / private-mode errors.
   }
@@ -371,6 +374,7 @@ export function clearGenerateSession(userId: string) {
   if (typeof window === "undefined") return;
   try {
     sessionStorage.removeItem(storageKey(userId));
+    notifyGenerateSessionChanged(userId);
   } catch {
     // Ignore storage errors.
   }

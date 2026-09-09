@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { formatMarkdownOnSave } from "../lib/ai-markdown-format/format-on-save.js";
+import { formatCompanyFieldsOnSave } from "../lib/ai-markdown-format/format-on-save.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 import {
@@ -119,23 +119,16 @@ companiesRoutes.post("/", async (c) => {
   }
 
   try {
-    const [{ formatted: whatCompanyIs }, { formatted: domainAndStack }] =
-      await Promise.all([
-        formatMarkdownOnSave({
-          userId: user.id,
-          kind: "companyWhatItIs",
-          submitted: parsed.data.whatCompanyIs,
-          stored: "",
-          maxLen: 20_000,
-        }),
-        formatMarkdownOnSave({
-          userId: user.id,
-          kind: "companyDomainAndStack",
-          submitted: parsed.data.domainAndStack,
-          stored: "",
-          maxLen: 20_000,
-        }),
-      ]);
+    const formatted = await formatCompanyFieldsOnSave({
+      userId: user.id,
+      whatCompanyIs: parsed.data.whatCompanyIs,
+      domainAndStack: parsed.data.domainAndStack,
+      stored: {
+        whatCompanyIs: "",
+        domainAndStack: "",
+      },
+    });
+    const { whatCompanyIs, domainAndStack } = formatted;
 
     const row = await prisma.company.create({
       data: {
@@ -179,23 +172,16 @@ companiesRoutes.put("/:id", async (c) => {
   }
 
   try {
-    const [{ formatted: whatCompanyIs }, { formatted: domainAndStack }] =
-      await Promise.all([
-        formatMarkdownOnSave({
-          userId: user.id,
-          kind: "companyWhatItIs",
-          submitted: parsed.data.whatCompanyIs,
-          stored: existing.whatCompanyIs,
-          maxLen: 20_000,
-        }),
-        formatMarkdownOnSave({
-          userId: user.id,
-          kind: "companyDomainAndStack",
-          submitted: parsed.data.domainAndStack,
-          stored: existing.domainAndStack,
-          maxLen: 20_000,
-        }),
-      ]);
+    const formatted = await formatCompanyFieldsOnSave({
+      userId: user.id,
+      whatCompanyIs: parsed.data.whatCompanyIs,
+      domainAndStack: parsed.data.domainAndStack,
+      stored: {
+        whatCompanyIs: existing.whatCompanyIs,
+        domainAndStack: existing.domainAndStack,
+      },
+    });
+    const { whatCompanyIs, domainAndStack } = formatted;
 
     const row = await prisma.company.update({
       where: { id },

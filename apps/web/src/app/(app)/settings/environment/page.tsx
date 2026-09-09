@@ -7,7 +7,6 @@ import type { DrawerPosition } from "@/lib/drawer-position";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { getSettings, saveSettings } from "@/lib/api";
-import type { AiProviderId } from "@/lib/api";
 import type { Locale } from "@/lib/locale";
 import type { Theme } from "@/lib/theme";
 
@@ -23,23 +22,6 @@ const DRAWER_POSITION_OPTIONS: {
   { value: "left", labelKey: "settings.environment.fabDrawerPosition.left" },
   { value: "right", labelKey: "settings.environment.fabDrawerPosition.right" },
 ];
-
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
 
 function EyeIcon({ className }: { className?: string }) {
   return (
@@ -80,7 +62,6 @@ function EyeOffIcon({ className }: { className?: string }) {
 }
 
 type FormErrors = {
-  provider?: string;
   apiKey?: string;
 };
 
@@ -89,8 +70,7 @@ export default function SettingsPage() {
   const { locale, setLocale, t } = useLocale();
   const { drawerPosition, setDrawerPosition } = useDrawerPosition();
   const { toast } = useToast();
-  const [savedProvider, setSavedProvider] = useState<AiProviderId | null>(null);
-  const [provider, setProvider] = useState<AiProviderId>("cursor");
+  const [hasSavedKey, setHasSavedKey] = useState(false);
   const [masked, setMasked] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
@@ -103,23 +83,12 @@ export default function SettingsPage() {
     { value: "light", label: t("settings.environment.theme.light") },
   ];
 
-  const providerOptions: { value: AiProviderId; label: string }[] = [
-    { value: "cursor", label: t("settings.environment.aiAgent.providerCursor") },
-    { value: "openai", label: t("settings.environment.aiAgent.providerOpenai") },
-  ];
-
-  const providerMatchesSaved = savedProvider === provider;
-  const showMaskedKey = providerMatchesSaved && masked;
-
   useEffect(() => {
     let cancelled = false;
     getSettings().then((res) => {
       if (cancelled) return;
       if (res.data) {
-        if (res.data.provider) {
-          setSavedProvider(res.data.provider);
-          setProvider(res.data.provider);
-        }
+        setHasSavedKey(Boolean(res.data.provider && res.data.apiKeyMasked));
         setMasked(res.data.apiKeyMasked);
       }
       setLoading(false);
@@ -132,9 +101,6 @@ export default function SettingsPage() {
   async function onSave(e: FormEvent) {
     e.preventDefault();
     const nextErrors: FormErrors = {};
-    if (!provider) {
-      nextErrors.provider = t("validation.providerRequired");
-    }
     if (apiKey.trim().length < 8) {
       nextErrors.apiKey = t("validation.apiKeyMinLength");
     }
@@ -144,14 +110,13 @@ export default function SettingsPage() {
     }
 
     setSaving(true);
-    const res = await saveSettings(provider, apiKey);
+    const res = await saveSettings(apiKey);
     setSaving(false);
     if (res.error || !res.data) {
       toast(res.error ?? t("toast.aiAgentSaveFailed"), "error");
       return;
     }
-    setSavedProvider(res.data.provider);
-    setProvider(res.data.provider ?? provider);
+    setHasSavedKey(Boolean(res.data.provider && res.data.apiKeyMasked));
     setMasked(res.data.apiKeyMasked);
     setApiKey("");
     setShowApiKey(false);
@@ -242,33 +207,9 @@ export default function SettingsPage() {
         className="space-y-3 rounded-lg border border-border bg-surface p-4"
       >
         <h2 className="text-sm font-medium">{t("settings.environment.aiAgent.title")}</h2>
-        <label className="block space-y-1 text-sm">
-          <span>
-            {t("settings.environment.aiAgent.provider")}
-            <span className="ml-0.5 text-danger" aria-hidden>*</span>
-          </span>
-          <div className="relative">
-            <select
-              value={provider}
-              onChange={(e) => {
-                setProvider(e.target.value as AiProviderId);
-                setErrors((prev) => ({ ...prev, provider: undefined }));
-              }}
-              aria-invalid={Boolean(errors.provider)}
-              className="w-full appearance-none rounded-md border border-border bg-background py-2 pl-3 pr-10 outline-none"
-            >
-              {providerOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
-          </div>
-          {errors.provider ? (
-            <p className="text-sm text-danger">{errors.provider}</p>
-          ) : null}
-        </label>
+        <p className="text-sm text-muted">
+          {t("settings.environment.aiAgent.openAiDescription")}
+        </p>
         <label className="block space-y-1 text-sm">
           <span>
             {t("settings.environment.aiAgent.apiKey")}
@@ -276,7 +217,7 @@ export default function SettingsPage() {
           </span>
           {loading ? (
             <p className="text-muted">{t("settings.environment.aiAgent.loading")}</p>
-          ) : showMaskedKey ? (
+          ) : hasSavedKey && masked ? (
             <p className="font-mono text-sm text-muted">{masked}</p>
           ) : (
             <p className="text-sm text-muted">
@@ -293,7 +234,7 @@ export default function SettingsPage() {
                 setErrors((prev) => ({ ...prev, apiKey: undefined }));
               }}
               placeholder={
-                showMaskedKey
+                hasSavedKey
                   ? t("settings.environment.aiAgent.placeholderNewKey")
                   : t("settings.environment.aiAgent.placeholderEnterKey")
               }

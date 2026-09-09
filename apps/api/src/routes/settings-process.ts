@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { EXPERIENCE_ADVISE_POOL_DEPTHS } from "../lib/experience-embedding/pool-depth.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 
@@ -9,12 +10,14 @@ const putSchema = z.object({
   doVerdict: z.boolean(),
   doEvaluate: z.boolean(),
   resumeLanguage: z.enum(RESUME_LANGUAGES),
+  experienceAdvisePoolDepth: z.enum(EXPERIENCE_ADVISE_POOL_DEPTHS),
 });
 
 export const DEFAULT_GENERATION_PROCESS = {
   doVerdict: true,
   doEvaluate: true,
   resumeLanguage: "en",
+  experienceAdvisePoolDepth: "normal",
 } as const;
 
 function toProcessResponse(
@@ -22,9 +25,13 @@ function toProcessResponse(
     doVerdict: boolean;
     doEvaluate: boolean;
     resumeLanguage: string;
+    experienceAdvisePoolDepth: string;
   } | null,
 ) {
   const resumeLanguage = process?.resumeLanguage ?? DEFAULT_GENERATION_PROCESS.resumeLanguage;
+  const experienceAdvisePoolDepth =
+    process?.experienceAdvisePoolDepth ??
+    DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth;
   return {
     doVerdict: process?.doVerdict ?? DEFAULT_GENERATION_PROCESS.doVerdict,
     doEvaluate: process?.doEvaluate ?? DEFAULT_GENERATION_PROCESS.doEvaluate,
@@ -33,6 +40,11 @@ function toProcessResponse(
     )
       ? resumeLanguage
       : DEFAULT_GENERATION_PROCESS.resumeLanguage,
+    experienceAdvisePoolDepth: EXPERIENCE_ADVISE_POOL_DEPTHS.includes(
+      experienceAdvisePoolDepth as (typeof EXPERIENCE_ADVISE_POOL_DEPTHS)[number],
+    )
+      ? experienceAdvisePoolDepth
+      : DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
   };
 }
 
@@ -70,11 +82,13 @@ settingsProcessRoutes.put("/", async (c) => {
       doVerdict: parsed.data.doVerdict,
       doEvaluate: parsed.data.doEvaluate,
       resumeLanguage: parsed.data.resumeLanguage,
+      experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
     },
     update: {
       doVerdict: parsed.data.doVerdict,
       doEvaluate: parsed.data.doEvaluate,
       resumeLanguage: parsed.data.resumeLanguage,
+      experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
     },
   });
 

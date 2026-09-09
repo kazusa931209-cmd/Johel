@@ -325,7 +325,7 @@ User browser (:4041)
 
 ### API additions / changes
 
-- `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); **create** mode (no `targetExperienceId`) sends full STAR for every pool card; **edit** mode sends full STAR for the target card only and an index (`id`, category, problem summary via `summarizeExperienceProblem`) for the rest (Phase 66); `generateType: experienceAdvise`
+- `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); Suggest embeds user facts, ranks pool by in-memory cosine against stored experience embeddings, and builds a tiered prompt (full STAR for expanded ids + compact index for **all** cards); pool depth from `generationProcess.experienceAdvisePoolDepth`; response includes `experiencesById`; `generateType: experienceAdvise` (+ `embedding` for query/backfill vectors)
 - `POST /ai-experience-advise/apply` — body `{ workspaceFingerprint, operations[] }`; fingerprint stale → 409; persists create/update with deterministic STAR finalize (no `markdownFormat` AI)
 - `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, profileId, companies[] }` where each company may include optional `keywordContext` (comma-separated steering text, max 500 chars); empty `keywordContext` → Auto for that company (job/Verdict + role context); filled → keyword-guided mapping for that company; when keywords match but JD overlap is thin, AI selects fewer cards and returns warnings; returns per-company `experienceIds`, `rationale`, and `warnings`; `generateType: combineRecommend`
 - `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run
@@ -338,6 +338,7 @@ User browser (:4041)
 
 - Dropped: `workflows`, `workflowCompanies`, `workflowCompanyExperiences`; `generationProcess.doWorkflowRecommendation`, `workflowRecommendationThreshold`, `lastSelectedWorkflowId`
 - Added: `generationProcess.resumeLanguage` (per-user default resume output language; migration `20260909100003_generation_resume_language`)
+- Added: `experienceEmbeddings` table + `generationProcess.experienceAdvisePoolDepth` (migration `20260909100006_experience_embedding_pool_depth`)
 - Added: `users.role` (default `user`); `prompts.verdictExtension`, `generateExtension`, `evaluateExtension`
 - Migrations: `20260909100000_remove_workflows`, `20260909100001_user_role_prompt_extensions`
 
@@ -401,8 +402,9 @@ User browser (:4041)
 Tiered strategy to reduce redundant AI calls and prompt size (see Embedding + RAG review, 2026-09-09):
 
 - **Tier 1 (Phase 65):** Experience advisor **Apply** skips `markdownFormat` — Suggest→Apply is one LLM call (`experienceAdvise`) plus deterministic STAR finalize on persist; direct `POST/PUT /experiences` still uses AI markdown format when fields change
-- **Tier 2 (Phase 66):** Edit-mode tiered pool on Suggest — target card full STAR + compact index for other cards; create / Quick Add still use full pool (`formatExperiencePoolForAdvise` in `apps/api/src/lib/ai-experience-advise/prompts.ts`; shared `summarizeExperienceProblem` in `apps/api/src/lib/experience-problem-summary.ts`)
-- **Tier 3 (future):** Optional embedding hybrid retrieval when pool size and Suggest frequency warrant it
+- **Tier 2 (Phase 66):** Edit-mode tiered pool on Suggest — target card full STAR + compact index for other cards
+- **Tier 2.5 (Phase 67):** Generalized tiered pool — index for **all** cards + full STAR for expanded set; `loadExperienceAdviseContext` (single query + SHA-256 fingerprint); Suggest returns `experiencesById`; company save one batched markdown call; direct experience CRUD uses deterministic finalize; modules under `apps/api/src/lib/experience-pool-rank/` (keyword rank superseded by Phase 68 on Suggest)
+- **Tier 3 (Phase 68):** Embedding retrieval — `text-embedding-3-small` in `experienceEmbeddings`; in-memory cosine top-K from `generationProcess.experienceAdvisePoolDepth` (`compact` 5 / `normal` 10 / `thorough` 25 / `full` all); edit target + recent N=3 always expanded; embedding upsert on experience save/apply; `generateType: embedding` in AI usage; **OpenAI-only** provider (Cursor removed)
 
 ## Plans
 

@@ -16,6 +16,7 @@ const GENERATE_TYPE_KEYS: Record<string, string> = {
   combineRecommend: "aiUsage.generateTypes.combineRecommend",
   promptHelper: "aiUsage.generateTypes.promptHelper",
   markdownFormat: "aiUsage.generateTypes.markdownFormat",
+  embedding: "aiUsage.generateTypes.embedding",
 };
 
 export function formatAiProvider(aiProvider: string, locale: Locale = "en"): string {

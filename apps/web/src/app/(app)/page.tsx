@@ -675,14 +675,9 @@ export default function GeneratePage() {
                 onClick={requestNewGeneration}
                 disabled={processBusy || resetting}
               />
-              <div className="space-y-1">
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  {t("generate.title")}
-                </h1>
-                {generationPublicId ? (
-                  <p className="text-sm text-muted">{generationPublicId}</p>
-                ) : null}
-              </div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {t("generate.title")}
+              </h1>
             </div>
             <div className="grid min-w-0 flex-1 grid-cols-[1fr_3.5rem] items-center gap-3">
               <GenerateTimeline

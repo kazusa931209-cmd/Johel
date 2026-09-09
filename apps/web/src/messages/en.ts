@@ -6,6 +6,9 @@ export const en = {
       openSidebar: "Open sidebar",
       tokenUsageTitle: "Token usage",
       tokenUsed: "Token Used: {count}",
+      statusIdle: "No active generation",
+      statusTitle: "Generation {id} · {step}",
+      statusStepUnknown: "Unknown step",
       profile: "Profile",
       signOut: "Sign out",
     },
@@ -68,11 +71,13 @@ export const en = {
       aiAgent: {
         title: "AI Agent",
         provider: "Provider",
-        apiKey: "API Key",
+        apiKey: "OpenAI API Key",
+        openAiDescription:
+          "JoHEL uses OpenAI for AI features and experience embedding retrieval.",
         loading: "Loading…",
-        noKeySaved: "No key saved yet for this provider.",
+        noKeySaved: "No API key saved yet.",
         placeholderNewKey: "Enter a new key to replace",
-        placeholderEnterKey: "Enter API key",
+        placeholderEnterKey: "Enter OpenAI API key",
         showApiKey: "Show API key",
         hideApiKey: "Hide API key",
         save: "Save",
@@ -98,6 +103,18 @@ export const en = {
         description:
           "Default output language for generated resumes. Change in Settings before starting a run.",
         label: "Resume language",
+      },
+      experienceAdvisePoolDepth: {
+        title: "Experience advisor pool depth",
+        description:
+          "How many experience cards receive full STAR text in Suggest prompts. All cards always appear in the compact index; higher depth improves duplicate detection at higher token cost.",
+        label: "Pool depth",
+        options: {
+          compact: "Compact (5 full STAR cards)",
+          normal: "Normal (10 full STAR cards)",
+          thorough: "Thorough (25 full STAR cards)",
+          full: "Full pool (all cards full STAR)",
+        },
       },
     },
     prompts: {
@@ -571,6 +588,7 @@ export const en = {
       verdict: "Verdict",
       generate: "Generate",
       evaluate: "Evaluate",
+      embedding: "Embedding",
       workflowRecommend: "Workflow Recommend",
       authorAdvise: "Quick Experience",
       experienceAdvise: "Experience advisor",
