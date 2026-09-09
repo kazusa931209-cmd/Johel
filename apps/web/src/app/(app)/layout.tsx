@@ -36,7 +36,7 @@ function AppShell({
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
       <StudioHeader
-        userName={user.email}
+        userName={user.loginId}
         tokenUsage={tokenUsed}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={onToggleSidebar}

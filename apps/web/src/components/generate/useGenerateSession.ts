@@ -191,6 +191,16 @@ export function useGenerateSession() {
     });
   }, [ensureGenerationStarted, saveSnapshot, userId]);
 
+  const markFinalized = useCallback(() => {
+    setSession((current) => {
+      const next = { ...current, finalized: true };
+      if (userId) {
+        saveGenerateSession(userId, next);
+      }
+      return next;
+    });
+  }, [userId]);
+
   return {
     ready,
     userId,
@@ -215,5 +225,7 @@ export function useGenerateSession() {
     clearDownstreamFromGenerateSession,
     saveSnapshot,
     resetSession,
+    markFinalized,
+    finalized: session.finalized,
   };
 }

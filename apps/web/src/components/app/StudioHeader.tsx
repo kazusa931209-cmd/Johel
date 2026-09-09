@@ -70,9 +70,9 @@ export function StudioHeader({
             src="/logo-header.png"
             alt=""
             aria-hidden
-            width={32}
-            height={32}
-            className="h-8 w-8 shrink-0"
+            width={44}
+            height={44}
+            className="h-11 w-11 shrink-0"
             priority
           />
           <span className="text-base font-semibold tracking-tight">

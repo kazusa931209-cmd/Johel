@@ -24,9 +24,9 @@ export default function ProfilePage() {
       </div>
       <div className="max-w-md space-y-3 rounded-lg border border-border bg-surface p-4">
         <div className="space-y-1 text-sm">
-          <div className="text-muted">{t("account.profile.email")}</div>
-          <div className="font-medium">
-            {user?.email ?? t("account.profile.loadingPlaceholder")}
+          <div className="text-muted">{t("account.profile.loginId")}</div>
+          <div className="font-medium font-mono">
+            {user?.loginId ?? t("account.profile.loadingPlaceholder")}
           </div>
         </div>
       </div>

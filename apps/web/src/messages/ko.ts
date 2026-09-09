@@ -30,11 +30,11 @@ export const ko: MessageTree = {
   },
   auth: {
     checkingSession: "세션 확인 중…",
-    email: "이메일",
+    loginId: "로그인 ID",
     password: "비밀번호",
     login: {
       title: "로그인",
-      subtitle: "이메일로 로그인",
+      subtitle: "로그인 ID로 로그인",
       submit: "로그인",
       submitting: "로그인 중…",
       failed: "로그인에 실패했습니다.",
@@ -43,7 +43,7 @@ export const ko: MessageTree = {
     },
     register: {
       title: "회원가입",
-      subtitle: "이메일로 계정 만들기",
+      subtitle: "로그인 ID로 계정 만들기",
       submit: "계정 만들기",
       submitting: "생성 중…",
       failed: "회원가입에 실패했습니다.",
@@ -334,7 +334,7 @@ export const ko: MessageTree = {
     profile: {
       title: "계정",
       description: "계정 정보입니다.",
-      email: "이메일",
+      loginId: "로그인 ID",
       loadingPlaceholder: "…",
     },
   },
@@ -543,6 +543,7 @@ export const ko: MessageTree = {
     status: {
       inProgress: "진행 중",
       completed: "완료",
+      finalized: "확정",
     },
   },
   quickAddExperience: {

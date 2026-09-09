@@ -17,7 +17,12 @@ import {
 import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
 import { BackButton } from "@/components/shared/back-button";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
-import { getGeneration, type GenerationDetail } from "@/lib/api";
+import {
+  getGeneration,
+  updateGeneration,
+  type GenerationDetail,
+} from "@/lib/api";
+import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
 import type { GenerateJobState } from "@/lib/generate-session";
 import {
   getGenerateSteps,
@@ -156,9 +161,30 @@ export default function HistoryDetailPage() {
   );
 
   const runLabel = combine.emphasis.trim() || combine.language;
-  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
+
+  async function handleHistoryDownloaded() {
+    if (!detail) return;
+    const res = await updateGeneration(detail.id, {
+      activeStep: detail.activeStep,
+      job: detail.job,
+      combine: detail.combine,
+      verdictMarkdown: detail.verdictMarkdown,
+      resume: detail.resume,
+      evaluationMarkdown: detail.evaluationMarkdown,
+      status: "finalized",
+    });
+    if (res.data) {
+      setDetail(res.data);
+      notifyGenerationFinalized(res.data.publicId);
+    }
+  }
+
+  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel, {
+    onDownloaded: handleHistoryDownloaded,
+  });
   const showDownload =
-    detail?.status === "completed" && resume != null;
+    resume != null &&
+    (detail?.status === "completed" || detail?.status === "finalized");
 
   const rawJobText = job.jobText.trim();
   const filteredJobText = useMemo(

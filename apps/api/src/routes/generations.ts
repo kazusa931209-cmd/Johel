@@ -11,7 +11,7 @@ import { requireUser } from "../lib/session.js";
 
 const PAGE_SIZE = 10;
 
-const GENERATION_STATUSES = ["in_progress", "completed"] as const;
+const GENERATION_STATUSES = ["in_progress", "completed", "finalized"] as const;
 const GENERATION_STEPS = [
   "Job",
   "Verdict",
@@ -196,9 +196,16 @@ generationsRoutes.put("/:id", async (c) => {
     return c.json({ error: "Invalid generation snapshot." }, 400);
   }
 
+  const requestedStatus = parsed.data.status;
   const nextStatus =
-    parsed.data.status ??
-    (existing.status === "completed" ? "completed" : "in_progress");
+    existing.status === "finalized"
+      ? "finalized"
+      : requestedStatus === "finalized"
+        ? "finalized"
+        : requestedStatus ??
+          (existing.status === "completed" || existing.status === "finalized"
+            ? existing.status
+            : "in_progress");
 
   const generation = await prisma.generation.update({
     where: { id: existing.id },

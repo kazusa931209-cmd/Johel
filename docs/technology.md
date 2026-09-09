@@ -18,7 +18,7 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | API | **Hono** (standalone process) | Local API separate from UI; lightweight TypeScript server |
 | UI | Next.js (App Router) + Tailwind CSS | Frontend only; no paid UI SaaS |
 | Database | SQLite via Prisma | On-disk multi-user data; no hosted DB cost |
-| Auth | Email + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP |
+| Auth | Login ID + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP. API field `loginId`; DB column `users.email` stores the login ID (no email-format validation). |
 | Secrets / API keys | Per-user **plaintext** `Setting.apiKey` (Phase 5) | Masked on read; encrypt later if needed |
 | LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `apps/api` | User-owned keys; Anthropic adapters later |
 | JD ingest (later) | Manual / URL (`fetch` + cheerio) / file (`pdf-parse`, `mammoth`) | No scraping or parse SaaS |
@@ -44,7 +44,7 @@ User browser (:4041)
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
 - Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`
-- Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
+- Prisma `User` → table `users`: `id`, `email` (login ID), `passwordHash`, `createdAt`, `updatedAt`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
 - Prisma `WorkflowCompany` → table `workflowCompanies`: `id`, `workflowId`, `companyId`, `startDate`, `endDate`, `roleContext`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, companyId)`; cascade delete with workflow
@@ -363,7 +363,7 @@ User browser (:4041)
 
 ### Schema
 
-- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `status` (`in_progress` | `completed`), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps
+- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `status` (`in_progress` | `completed` | `finalized`), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps. **`completed`** = Evaluate finished (or Generate finished when Evaluate is disabled); **`finalized`** = user downloaded the resume DOCX.
 - `AiUsage.generationId` optional FK → `generations.id` (`onDelete: SetNull`); indexed
 - Migration: `20260909100004_generations`
 

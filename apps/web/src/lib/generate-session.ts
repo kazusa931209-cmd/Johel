@@ -28,6 +28,7 @@ export type GenerateSession = {
   generationInputKey: string | null;
   evaluationMarkdown: string | null;
   evaluationInputKey: string | null;
+  finalized: boolean;
 };
 
 const STORAGE_KEY_PREFIX = "johel:generate-session:";
@@ -52,6 +53,7 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   generationInputKey: null,
   evaluationMarkdown: null,
   evaluationInputKey: null,
+  finalized: false,
 };
 
 function storageKey(userId: string) {
@@ -328,6 +330,7 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
       typeof raw.evaluationInputKey === "string"
         ? raw.evaluationInputKey
         : null,
+    finalized: raw.finalized === true,
   };
 }
 

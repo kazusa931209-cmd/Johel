@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AuthBrand } from "@/components/auth/AuthBrand";
 import { useT } from "@/components/app/LocaleProvider";
 import { getMe, login } from "@/lib/api";
 
 export default function LoginPage() {
   const t = useT();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,7 +35,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const res = await login(email, password);
+    const res = await login(loginId, password);
     setLoading(false);
     if (res.error || !res.data) {
       setError(res.error ?? t("validation.loginFailed"));
@@ -57,17 +58,18 @@ export default function LoginPage() {
         onSubmit={onSubmit}
         className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-surface p-6 shadow-sm"
       >
+        <AuthBrand />
         <div>
           <h1 className="text-xl font-semibold">{t("auth.login.title")}</h1>
           <p className="mt-1 text-sm text-muted">{t("auth.login.subtitle")}</p>
         </div>
         <label className="block space-y-1 text-sm">
-          <span>{t("auth.email")}</span>
+          <span>{t("auth.loginId")}</span>
           <input
-            type="email"
+            type="text"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={loginId}
+            onChange={(e) => setLoginId(e.target.value)}
             className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
           />
         </label>

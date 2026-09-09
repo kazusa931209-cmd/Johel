@@ -28,11 +28,11 @@ export const en = {
   },
   auth: {
     checkingSession: "Checking session…",
-    email: "Email",
+    loginId: "Login ID",
     password: "Password",
     login: {
       title: "Log in",
-      subtitle: "Sign in with your email",
+      subtitle: "Sign in with your login ID",
       submit: "Sign in",
       submitting: "Signing in…",
       failed: "Login failed",
@@ -41,7 +41,7 @@ export const en = {
     },
     register: {
       title: "Register",
-      subtitle: "Create an account with email",
+      subtitle: "Create an account with a login ID",
       submit: "Create account",
       submitting: "Creating…",
       failed: "Registration failed",
@@ -332,7 +332,7 @@ export const en = {
     profile: {
       title: "Profile",
       description: "Your account details.",
-      email: "Email",
+      loginId: "Login ID",
       loadingPlaceholder: "…",
     },
   },
@@ -542,6 +542,7 @@ export const en = {
     status: {
       inProgress: "In progress",
       completed: "Completed",
+      finalized: "Finalized",
     },
   },
   quickAddExperience: {

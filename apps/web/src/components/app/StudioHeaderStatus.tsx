@@ -4,6 +4,21 @@ import Link from "next/link";
 import { useT } from "@/components/app/LocaleProvider";
 import { useGenerateStatus } from "@/components/app/GenerateStatusProvider";
 import { GENERATE_STEP_LABEL_KEYS } from "@/lib/generate-step-labels";
+import type { GenerationLifecycleStatus } from "@/lib/generation-lifecycle-status";
+
+function lifecycleStatusLabel(
+  t: ReturnType<typeof useT>,
+  status: GenerationLifecycleStatus,
+): string {
+  switch (status) {
+    case "finalized":
+      return t("history.status.finalized");
+    case "completed":
+      return t("history.status.completed");
+    case "in_progress":
+      return t("history.status.inProgress");
+  }
+}
 
 export function StudioHeaderStatus() {
   const t = useT();
@@ -20,12 +35,10 @@ export function StudioHeaderStatus() {
       ? t(GENERATE_STEP_LABEL_KEYS[status.activeStep])
       : null;
 
-  const historyStatusLabel =
-    status.historyStatus === "completed"
-      ? t("history.status.completed")
-      : status.historyStatus === "in_progress"
-        ? t("history.status.inProgress")
-        : null;
+  const lifecycleLabel =
+    status.lifecycleStatus != null
+      ? lifecycleStatusLabel(t, status.lifecycleStatus)
+      : null;
 
   const historyHref = `/history/${status.generationPublicId}`;
 
@@ -51,12 +64,12 @@ export function StudioHeaderStatus() {
           <span className="shrink-0 text-muted">{stepLabel}</span>
         </>
       ) : null}
-      {historyStatusLabel ? (
+      {lifecycleLabel ? (
         <>
           <span className="shrink-0 text-muted" aria-hidden>
             ·
           </span>
-          <span className="shrink-0 text-muted">{historyStatusLabel}</span>
+          <span className="shrink-0 text-muted">{lifecycleLabel}</span>
         </>
       ) : null}
     </div>

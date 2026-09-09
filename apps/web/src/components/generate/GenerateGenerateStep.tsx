@@ -14,6 +14,7 @@ type GenerateGenerateStepProps = {
   doEvaluate: boolean;
   generating: boolean;
   onRun: () => void;
+  onDownloaded?: () => void | Promise<void>;
 };
 
 export function GenerateGenerateStep({
@@ -22,9 +23,12 @@ export function GenerateGenerateStep({
   doEvaluate,
   generating,
   onRun,
+  onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
+  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel, {
+    onDownloaded,
+  });
   const markdown = useMemo(
     () => (resume ? resumeToMarkdown(resume) : ""),
     [resume],

@@ -82,9 +82,13 @@ function HistoryPageContent() {
   }
 
   function statusLabel(status: GenerationListItem["status"]) {
-    return status === "completed"
-      ? t("history.status.completed")
-      : t("history.status.inProgress");
+    if (status === "finalized") {
+      return t("history.status.finalized");
+    }
+    if (status === "completed") {
+      return t("history.status.completed");
+    }
+    return t("history.status.inProgress");
   }
 
   return (

@@ -11,21 +11,29 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
-import { getGeneration } from "@/lib/api";
+import { getGeneration, getGenerationProcess } from "@/lib/api";
 import { isGenerateStep } from "@/lib/generate-step-labels";
+import { GENERATION_FINALIZED_EVENT } from "@/lib/generation-finalized-events";
+import {
+  deriveLifecycleStatusFromRecord,
+  deriveLifecycleStatusFromSession,
+  type GenerationLifecycleStatus,
+} from "@/lib/generation-lifecycle-status";
 import { GENERATE_SESSION_CHANGED_EVENT } from "@/lib/generate-session-events";
 import { loadGenerateSession } from "@/lib/generate-session";
 
 export type HeaderGenerationStatus = {
   generationPublicId: string | null;
   activeStep: GenerateStep | null;
-  historyStatus: "completed" | "in_progress" | null;
+  lifecycleStatus: GenerationLifecycleStatus | null;
+  isHistoryView: boolean;
 };
 
 const EMPTY_STATUS: HeaderGenerationStatus = {
   generationPublicId: null,
   activeStep: null,
-  historyStatus: null,
+  lifecycleStatus: null,
+  isHistoryView: false,
 };
 
 type GenerateStatusContextValue = {
@@ -41,7 +49,10 @@ function parseHistoryPublicId(pathname: string): string | null {
   return match?.[1] ?? null;
 }
 
-function readSessionStatus(userId: string): HeaderGenerationStatus {
+function readSessionStatus(
+  userId: string,
+  doEvaluate: boolean,
+): HeaderGenerationStatus {
   const session = loadGenerateSession(userId);
   if (!session?.generationPublicId) {
     return EMPTY_STATUS;
@@ -49,7 +60,8 @@ function readSessionStatus(userId: string): HeaderGenerationStatus {
   return {
     generationPublicId: session.generationPublicId,
     activeStep: session.activeStep,
-    historyStatus: null,
+    lifecycleStatus: deriveLifecycleStatusFromSession(session, doEvaluate),
+    isHistoryView: false,
   };
 }
 
@@ -65,18 +77,57 @@ export function GenerateStatusProvider({
     () => parseHistoryPublicId(pathname),
     [pathname],
   );
+  const [doEvaluate, setDoEvaluate] = useState(true);
   const [status, setStatus] = useState<HeaderGenerationStatus>(EMPTY_STATUS);
 
+  useEffect(() => {
+    let cancelled = false;
+    void getGenerationProcess().then((res) => {
+      if (cancelled || !res.data) return;
+      setDoEvaluate(res.data.doEvaluate);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const syncFromSession = useCallback(() => {
-    setStatus(readSessionStatus(userId));
-  }, [userId]);
+    setStatus(readSessionStatus(userId, doEvaluate));
+  }, [doEvaluate, userId]);
+
+  const loadHistoryStatus = useCallback(async (publicId: string) => {
+    const res = await getGeneration(publicId);
+    if (!res.data) {
+      setStatus({
+        generationPublicId: publicId,
+        activeStep: null,
+        lifecycleStatus: null,
+        isHistoryView: true,
+      });
+      return;
+    }
+    const activeStep = isGenerateStep(res.data.activeStep)
+      ? res.data.activeStep
+      : null;
+    setStatus({
+      generationPublicId: res.data.publicId,
+      activeStep,
+      lifecycleStatus: deriveLifecycleStatusFromRecord({
+        status: res.data.status,
+        evaluationMarkdown: res.data.evaluationMarkdown,
+        doEvaluate: res.data.doEvaluate,
+        resume: res.data.resume,
+      }),
+      isHistoryView: true,
+    });
+  }, []);
 
   useEffect(() => {
     if (historyPublicId) {
       return;
     }
     syncFromSession();
-  }, [historyPublicId, syncFromSession]);
+  }, [doEvaluate, historyPublicId, syncFromSession]);
 
   useEffect(() => {
     if (!historyPublicId) {
@@ -84,30 +135,14 @@ export function GenerateStatusProvider({
     }
 
     let cancelled = false;
-    void getGeneration(historyPublicId).then((res) => {
+    void loadHistoryStatus(historyPublicId).then(() => {
       if (cancelled) return;
-      if (!res.data) {
-        setStatus({
-          generationPublicId: historyPublicId,
-          activeStep: null,
-          historyStatus: null,
-        });
-        return;
-      }
-      const activeStep = isGenerateStep(res.data.activeStep)
-        ? res.data.activeStep
-        : null;
-      setStatus({
-        generationPublicId: res.data.publicId,
-        activeStep,
-        historyStatus: res.data.status,
-      });
     });
 
     return () => {
       cancelled = true;
     };
-  }, [historyPublicId]);
+  }, [historyPublicId, loadHistoryStatus]);
 
   useEffect(() => {
     function onSessionChanged(event: Event) {
@@ -118,11 +153,21 @@ export function GenerateStatusProvider({
       syncFromSession();
     }
 
+    function onFinalized(event: Event) {
+      const detail = (event as CustomEvent<{ publicId?: string }>).detail;
+      if (!historyPublicId || detail?.publicId !== historyPublicId) {
+        return;
+      }
+      void loadHistoryStatus(historyPublicId);
+    }
+
     window.addEventListener(GENERATE_SESSION_CHANGED_EVENT, onSessionChanged);
+    window.addEventListener(GENERATION_FINALIZED_EVENT, onFinalized);
     return () => {
       window.removeEventListener(GENERATE_SESSION_CHANGED_EVENT, onSessionChanged);
+      window.removeEventListener(GENERATION_FINALIZED_EVENT, onFinalized);
     };
-  }, [historyPublicId, syncFromSession, userId]);
+  }, [historyPublicId, loadHistoryStatus, syncFromSession, userId]);
 
   const value = useMemo(() => ({ status }), [status]);
 

@@ -7,9 +7,14 @@ import { downloadResumeDocx } from "@/lib/api";
 import { useToast } from "@/components/app/ToastProvider";
 import { useT } from "@/components/app/LocaleProvider";
 
+type UseResumeDocxDownloadOptions = {
+  onDownloaded?: () => void | Promise<void>;
+};
+
 export function useResumeDocxDownload(
   resume: GeneratedResume | null,
   runLabel?: string,
+  options?: UseResumeDocxDownloadOptions,
 ) {
   const { toast } = useToast();
   const t = useT();
@@ -34,12 +39,13 @@ export function useResumeDocxDownload(
       anchor.click();
       URL.revokeObjectURL(url);
       toast(t("generate.download.success"), "success");
+      await options?.onDownloaded?.();
     } catch {
       toast(t("generate.download.failed"), "error");
     } finally {
       setDownloading(false);
     }
-  }, [downloading, resume, runLabel, t, toast]);
+  }, [downloading, options, resume, runLabel, t, toast]);
 
   return { onDownload, downloading };
 }

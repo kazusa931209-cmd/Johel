@@ -11,6 +11,7 @@ type GenerateEvaluateStepProps = {
   runLabel?: string;
   evaluationMarkdown: string | null;
   evaluating: boolean;
+  onDownloaded?: () => void | Promise<void>;
 };
 
 export function GenerateEvaluateStep({
@@ -18,9 +19,12 @@ export function GenerateEvaluateStep({
   runLabel,
   evaluationMarkdown,
   evaluating,
+  onDownloaded,
 }: GenerateEvaluateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
+  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel, {
+    onDownloaded,
+  });
 
   useRegisterGenerateStepNav({
     onDownload: resume ? () => void onDownload() : undefined,

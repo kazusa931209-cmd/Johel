@@ -24,6 +24,8 @@ import {
 } from "@/components/generate/GenerateStepNav";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
+import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
+import { resolvePersistedGenerationStatus } from "@/lib/generation-lifecycle-status";
 import {
   buildEvaluationInputKey,
   buildGenerationInputKey,
@@ -110,6 +112,8 @@ export default function GeneratePage() {
     clearDownstreamFromGenerateSession,
     saveSnapshot,
     resetSession,
+    markFinalized,
+    finalized,
   } = useGenerateSession();
 
   const processBusy =
@@ -247,26 +251,32 @@ export default function GeneratePage() {
 
   useEffect(() => {
     if (!sessionReady || loading || !generationId) return;
-    const lastStep = visibleSteps[visibleSteps.length - 1];
-    const status =
-      normalizedActiveStep === lastStep ? ("completed" as const) : undefined;
+    const status = resolvePersistedGenerationStatus(
+      { finalized, evaluationMarkdown, resume },
+      processSettings.doEvaluate,
+    );
     const timer = window.setTimeout(() => {
       void saveSnapshot(status);
     }, 500);
     return () => window.clearTimeout(timer);
   }, [
-    activeStep,
-    combine,
     evaluationMarkdown,
+    finalized,
     generationId,
-    job,
     loading,
-    normalizedActiveStep,
+    processSettings.doEvaluate,
     resume,
     saveSnapshot,
     sessionReady,
-    visibleSteps,
   ]);
+
+  const handleResumeDownloaded = useCallback(async () => {
+    markFinalized();
+    await saveSnapshot("finalized");
+    if (generationPublicId) {
+      notifyGenerationFinalized(generationPublicId);
+    }
+  }, [generationPublicId, markFinalized, saveSnapshot]);
 
   const sessionSnapshot = useMemo<GenerateSession>(
     () => ({
@@ -280,11 +290,13 @@ export default function GeneratePage() {
       generationInputKey,
       evaluationMarkdown,
       evaluationInputKey,
+      finalized,
     }),
     [
       combine,
       evaluationInputKey,
       evaluationMarkdown,
+      finalized,
       generationId,
       generationPublicId,
       generationInputKey,
@@ -413,18 +425,7 @@ export default function GeneratePage() {
       if (
         !options?.force &&
         canReuseStoredResume(
-          {
-            generationId,
-            generationPublicId,
-            activeStep: normalizedActiveStep,
-            job,
-            combine,
-            verdictInputKey,
-            resume,
-            generationInputKey,
-            evaluationMarkdown,
-            evaluationInputKey,
-          },
+          sessionSnapshot,
           inputKey,
         )
       ) {
@@ -540,18 +541,7 @@ export default function GeneratePage() {
       );
       if (
         canReuseStoredEvaluation(
-          {
-            generationId,
-            generationPublicId,
-            activeStep: normalizedActiveStep,
-            job,
-            combine,
-            verdictInputKey,
-            resume,
-            generationInputKey,
-            evaluationMarkdown,
-            evaluationInputKey,
-          },
+          sessionSnapshot,
           nextEvaluationInputKey,
         )
       ) {
@@ -730,6 +720,7 @@ export default function GeneratePage() {
                 doEvaluate={processSettings.doEvaluate}
                 generating={generatingResume}
                 onRun={runFromGenerate}
+                onDownloaded={handleResumeDownloaded}
               />
             ) : null}
             {processSettings.doEvaluate &&
@@ -739,6 +730,7 @@ export default function GeneratePage() {
                 runLabel={runLabel}
                 evaluationMarkdown={evaluationMarkdown}
                 evaluating={evaluating}
+                onDownloaded={handleResumeDownloaded}
               />
             ) : null}
           </GenerateStepLayout>
