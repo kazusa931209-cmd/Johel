@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
+import { DetailDialog } from "@/components/shared/detail-dialog";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
@@ -33,6 +34,7 @@ import {
 import {
   getAdjacentGenerateStep,
   getGenerateSteps,
+  needsNewGenerationConfirm,
   normalizeGenerateActiveStep,
 } from "@/lib/generate-steps";
 import {
@@ -76,6 +78,8 @@ export default function GeneratePage() {
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
   const [processSettings, setProcessSettings] = useState(DEFAULT_PROCESS);
   const [promptSettings, setPromptSettings] = useState(DEFAULT_PROMPTS);
+  const [newConfirmOpen, setNewConfirmOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const {
     ready: sessionReady,
     generationId,
@@ -503,6 +507,22 @@ export default function GeneratePage() {
 
   const runLabel = combine.emphasis.trim() || combine.language;
 
+  const requestNewGeneration = useCallback(() => {
+    if (processBusy) return;
+    if (needsNewGenerationConfirm(normalizedActiveStep, visibleSteps)) {
+      setNewConfirmOpen(true);
+      return;
+    }
+    void resetSession();
+  }, [normalizedActiveStep, processBusy, resetSession, visibleSteps]);
+
+  async function confirmNewGeneration() {
+    setResetting(true);
+    await resetSession();
+    setResetting(false);
+    setNewConfirmOpen(false);
+  }
+
   const { previousTitle, previousContent } = useGeneratePreviousStepPanel({
     currentStep: normalizedActiveStep,
     visibleSteps,
@@ -530,8 +550,8 @@ export default function GeneratePage() {
           <div className="flex items-center gap-4">
             <div className="flex shrink-0 items-center gap-3">
               <GenerateNewButton
-                onClick={() => void resetSession()}
-                disabled={processBusy}
+                onClick={requestNewGeneration}
+                disabled={processBusy || resetting}
               />
               <div className="space-y-1">
                 <h1 className="text-2xl font-semibold tracking-tight">
@@ -614,6 +634,27 @@ export default function GeneratePage() {
           </GenerateStepLayout>
         </div>
       </section>
+
+      {newConfirmOpen ? (
+        <DetailDialog
+          title={t("generate.newConfirm.title")}
+          role="alertdialog"
+          closeDisabled={resetting}
+          onClose={() => setNewConfirmOpen(false)}
+        >
+          <p className="text-muted">{t("generate.newConfirm.body")}</p>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              disabled={resetting}
+              onClick={() => void confirmNewGeneration()}
+              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
+            >
+              {resetting ? t("generate.newConfirm.confirming") : t("generate.new")}
+            </button>
+          </div>
+        </DetailDialog>
+      ) : null}
     </GenerateStepNavProvider>
   );
 }

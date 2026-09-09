@@ -384,6 +384,11 @@ export const ko: MessageTree = {
     title: "생성",
     description: "직업광고를 준비한 뒤 이번 실행에 사용할 개인정보·회사·경험을 조합합니다.",
     new: "새로작성",
+    newConfirm: {
+      title: "새 생성을 시작할까요?",
+      body: "이번 실행이 아직 끝나지 않았습니다. 새 생성을 시작하면 현재 실행이 리력에 보관되고 세션이 초기화됩니다.",
+      confirming: "시작중…",
+    },
     loading: "적재중…",
     steps: {
       ariaLabel: "생성 단계",
@@ -432,6 +437,9 @@ export const ko: MessageTree = {
     },
     job: {
       title: "직업광고문",
+      filteredPreviewTitle: "거른 직업광고",
+      filteredPreviewHint:
+        "잡음 필터를 거친 미리보기입니다. 검토를 끄면 이후 단계에서 이 내용을 사용합니다.",
       methods: {
         manual: "수동",
         url: "URL",
@@ -642,12 +650,17 @@ export const ko: MessageTree = {
     empty: "AI사용리력이 없습니다.",
     columns: {
       no: "번호",
+      generationId: "생성 ID",
       ai: "AI",
       model: "모델",
       generateType: "생성 유형",
       inputToken: "입력 토큰",
       outputToken: "출력 토큰",
       createdAt: "생성날자",
+    },
+    groups: {
+      unassigned: "미할당",
+      callCount: "{count}회",
     },
     providers: {
       cursor: "Cursor AI Agent",

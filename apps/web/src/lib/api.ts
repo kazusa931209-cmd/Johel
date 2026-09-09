@@ -396,6 +396,8 @@ export type AiUsageSummary = {
 
 export type AiUsageListItem = {
   id: string;
+  generationId: string | null;
+  generationPublicId: string | null;
   aiProvider: string;
   modelName: string;
   generateType: string;
@@ -406,6 +408,23 @@ export type AiUsageListItem = {
 
 export type AiUsageList = {
   items: AiUsageListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type AiUsageGroupItem = {
+  generationId: string | null;
+  generationPublicId: string | null;
+  callCount: number;
+  inputToken: number;
+  outputToken: number;
+  tokenUsed: number;
+  latestCreatedAt: string;
+};
+
+export type AiUsageGroupList = {
+  items: AiUsageGroupItem[];
   total: number;
   page: number;
   pageSize: number;
@@ -627,9 +646,28 @@ export function getAiUsageSummary() {
   return request<AiUsageSummary>("/ai-usage/summary");
 }
 
-export function listAiUsage(page = 1) {
+export function listAiUsageGroups(page = 1) {
   const params = new URLSearchParams();
   params.set("page", String(page));
+  return request<AiUsageGroupList>(`/ai-usage/groups?${params.toString()}`);
+}
+
+export function listAiUsage(
+  page = 1,
+  options?: { generationId?: string | null; limit?: number | null },
+) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  if (options?.generationId === null) {
+    params.set("generationId", "none");
+  } else if (options?.generationId) {
+    params.set("generationId", options.generationId);
+  }
+  if (options?.limit === null) {
+    params.set("limit", "null");
+  } else if (options?.limit != null) {
+    params.set("limit", String(options.limit));
+  }
   return request<AiUsageList>(`/ai-usage?${params.toString()}`);
 }
 

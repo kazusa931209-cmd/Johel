@@ -7,7 +7,7 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { CopyButton } from "@/components/shared/action-icon-buttons";
 import { Drawer } from "@/components/shared/drawer";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
-import { HistoryIcon } from "@/components/shared/icons";
+import { ChevronRightIcon, HistoryIcon } from "@/components/shared/icons";
 import {
   formatAiProvider,
   formatAiUsageDate,
@@ -16,10 +16,13 @@ import {
 import {
   getAiUsage,
   listAiUsage,
+  listAiUsageGroups,
   type AiUsageDetail,
+  type AiUsageGroupItem,
   type AiUsageListItem,
 } from "@/lib/api";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { formatTokenUsed } from "@/lib/tokens";
 import { STUDIO_FAB_CLASS } from "@/components/app/studio-fab";
 
 type AiUsageHistoryProps = {
@@ -29,6 +32,17 @@ type AiUsageHistoryProps = {
 };
 
 type AiUsageDetailTab = "input" | "output";
+
+function groupKey(generationId: string | null) {
+  return generationId ?? "__none__";
+}
+
+function formatGenerationLabel(
+  group: Pick<AiUsageGroupItem, "generationPublicId">,
+  unassignedLabel: string,
+) {
+  return group.generationPublicId ?? unassignedLabel;
+}
 
 function AiUsageDetailPanel({
   detail,
@@ -148,31 +162,112 @@ function AiUsageDetailDrawer({
   );
 }
 
+function AiUsageItemsTable({
+  items,
+  unassignedLabel,
+  onRowClick,
+}: {
+  items: AiUsageListItem[];
+  unassignedLabel: string;
+  onRowClick: (id: string) => void;
+}) {
+  const t = useT();
+  const { locale } = useLocale();
+
+  return (
+    <table className="w-full min-w-240 text-left text-sm">
+      <thead className="border-b border-border bg-background text-muted">
+        <tr>
+          <th className="px-3 py-2 font-medium">{t("aiUsage.columns.no")}</th>
+          <th className="px-3 py-2 font-medium">
+            {t("aiUsage.columns.generationId")}
+          </th>
+          <th className="px-3 py-2 font-medium">{t("aiUsage.columns.ai")}</th>
+          <th className="px-3 py-2 font-medium">{t("aiUsage.columns.model")}</th>
+          <th className="px-3 py-2 font-medium">
+            {t("aiUsage.columns.generateType")}
+          </th>
+          <th className="px-3 py-2 font-medium">
+            {t("aiUsage.columns.inputToken")}
+          </th>
+          <th className="px-3 py-2 font-medium">
+            {t("aiUsage.columns.outputToken")}
+          </th>
+          <th className="px-3 py-2 font-medium">
+            {t("aiUsage.columns.createdAt")}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((row, index) => (
+          <tr
+            key={row.id}
+            className={TABLE_ROW_HOVER_CLASS}
+            tabIndex={0}
+            onClick={() => onRowClick(row.id)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onRowClick(row.id);
+              }
+            }}
+          >
+            <td className="px-3 py-2 text-muted">{index + 1}</td>
+            <td className="px-3 py-2 text-muted">
+              {row.generationPublicId ?? unassignedLabel}
+            </td>
+            <td className="px-3 py-2">
+              {formatAiProvider(row.aiProvider, locale)}
+            </td>
+            <td className="px-3 py-2 text-muted">{row.modelName}</td>
+            <td className="px-3 py-2">
+              {formatGenerateType(row.generateType, locale)}
+            </td>
+            <td className="px-3 py-2 tabular-nums">{row.inputToken}</td>
+            <td className="px-3 py-2 tabular-nums">{row.outputToken}</td>
+            <td className="px-3 py-2 text-muted">
+              {formatAiUsageDate(row.createdAt, locale)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function AiUsageHistoryDrawer({
   open,
-  items,
+  groups,
   page,
   pageSize,
   totalPages,
   loading,
+  expandedGroups,
+  groupItems,
+  groupItemsLoading,
   onClose,
   onPageChange,
+  onToggleGroup,
   onRowClick,
   closeOnEscape,
 }: {
   open: boolean;
-  items: AiUsageListItem[];
+  groups: AiUsageGroupItem[];
   page: number;
   pageSize: number;
   totalPages: number;
   loading: boolean;
+  expandedGroups: Set<string>;
+  groupItems: Record<string, AiUsageListItem[]>;
+  groupItemsLoading: Record<string, boolean>;
   onClose: () => void;
   onPageChange: (page: number) => void;
+  onToggleGroup: (group: AiUsageGroupItem) => void;
   onRowClick: (id: string) => void;
   closeOnEscape: boolean;
 }) {
   const t = useT();
-  const { locale } = useLocale();
+  const unassignedLabel = t("aiUsage.groups.unassigned");
 
   return (
     <Drawer
@@ -184,73 +279,71 @@ function AiUsageHistoryDrawer({
     >
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-240 text-left text-sm">
-            <thead className="sticky top-0 z-10 border-b border-border bg-surface-muted text-muted">
-              <tr>
-                <th className="px-3 py-2 font-medium">{t("aiUsage.columns.no")}</th>
-                <th className="px-3 py-2 font-medium">{t("aiUsage.columns.ai")}</th>
-                <th className="px-3 py-2 font-medium">{t("aiUsage.columns.model")}</th>
-                <th className="px-3 py-2 font-medium">
-                  {t("aiUsage.columns.generateType")}
-                </th>
-                <th className="px-3 py-2 font-medium">
-                  {t("aiUsage.columns.inputToken")}
-                </th>
-                <th className="px-3 py-2 font-medium">
-                  {t("aiUsage.columns.outputToken")}
-                </th>
-                <th className="px-3 py-2 font-medium">
-                  {t("aiUsage.columns.createdAt")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-muted">
-                    {t("aiUsage.loading")}
-                  </td>
-                </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-muted">
-                    {t("aiUsage.empty")}
-                  </td>
-                </tr>
-              ) : (
-                items.map((row, index) => (
-                  <tr
-                    key={row.id}
-                    className={TABLE_ROW_HOVER_CLASS}
-                    tabIndex={0}
-                    onClick={() => onRowClick(row.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        onRowClick(row.id);
-                      }
-                    }}
-                  >
-                    <td className="px-3 py-2 text-muted">
-                      {(page - 1) * pageSize + index + 1}
-                    </td>
-                    <td className="px-3 py-2">
-                      {formatAiProvider(row.aiProvider, locale)}
-                    </td>
-                    <td className="px-3 py-2 text-muted">{row.modelName}</td>
-                    <td className="px-3 py-2">
-                      {formatGenerateType(row.generateType, locale)}
-                    </td>
-                    <td className="px-3 py-2 tabular-nums">{row.inputToken}</td>
-                    <td className="px-3 py-2 tabular-nums">{row.outputToken}</td>
-                    <td className="px-3 py-2 text-muted">
-                      {formatAiUsageDate(row.createdAt, locale)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          {loading ? (
+            <p className="px-4 py-8 text-center text-sm text-muted">
+              {t("aiUsage.loading")}
+            </p>
+          ) : groups.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-muted">
+              {t("aiUsage.empty")}
+            </p>
+          ) : (
+            <div className="divide-y divide-border">
+              {groups.map((group) => {
+                const key = groupKey(group.generationId);
+                const expanded = expandedGroups.has(key);
+                const items = groupItems[key] ?? [];
+                const itemsLoading = groupItemsLoading[key] ?? false;
+
+                return (
+                  <section key={key}>
+                    <button
+                      type="button"
+                      aria-expanded={expanded}
+                      onClick={() => onToggleGroup(group)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-surface-muted"
+                    >
+                      <ChevronRightIcon
+                        className={`h-4 w-4 shrink-0 text-muted transition-transform ${
+                          expanded ? "rotate-90" : ""
+                        }`}
+                      />
+                      <span className="min-w-0 truncate font-medium">
+                        {formatGenerationLabel(group, unassignedLabel)}
+                      </span>
+                      <span className="shrink-0 text-muted">
+                        {t("aiUsage.groups.callCount", {
+                          count: group.callCount,
+                        })}
+                      </span>
+                      <span className="ml-auto shrink-0 tabular-nums text-muted">
+                        {formatTokenUsed(group.tokenUsed)}
+                      </span>
+                    </button>
+                    {expanded ? (
+                      <div className="overflow-x-auto border-t border-border bg-surface-muted/40 px-2 pb-3">
+                        {itemsLoading ? (
+                          <p className="px-3 py-4 text-sm text-muted">
+                            {t("aiUsage.loading")}
+                          </p>
+                        ) : items.length === 0 ? (
+                          <p className="px-3 py-4 text-sm text-muted">
+                            {t("aiUsage.empty")}
+                          </p>
+                        ) : (
+                          <AiUsageItemsTable
+                            items={items}
+                            unassignedLabel={unassignedLabel}
+                            onRowClick={onRowClick}
+                          />
+                        )}
+                      </div>
+                    ) : null}
+                  </section>
+                );
+              })}
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-4 py-3 text-sm text-muted">
           <span>
@@ -289,10 +382,17 @@ export function AiUsageHistory({
   const historyOpen = controlledOpen ?? internalOpen;
   const setHistoryOpen = onOpenChange ?? setInternalOpen;
   const [page, setPage] = useState(1);
-  const [items, setItems] = useState<AiUsageListItem[]>([]);
+  const [groups, setGroups] = useState<AiUsageGroupItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [pageSize, setPageSize] = useState(100);
+  const [pageSize, setPageSize] = useState(50);
   const [loading, setLoading] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [groupItems, setGroupItems] = useState<Record<string, AiUsageListItem[]>>(
+    {},
+  );
+  const [groupItemsLoading, setGroupItemsLoading] = useState<
+    Record<string, boolean>
+  >({});
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AiUsageDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -300,27 +400,48 @@ export function AiUsageHistory({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const detailOpen = detailLoading || detail != null;
 
-  const loadList = useCallback(
+  const loadGroups = useCallback(
     async (nextPage: number) => {
       setLoading(true);
-      const res = await listAiUsage(nextPage);
+      const res = await listAiUsageGroups(nextPage);
       setLoading(false);
       if (res.error || !res.data) {
         toast(res.error ?? t("toast.historyLoadFailed"), "error");
         return;
       }
-      setItems(res.data.items);
+      setGroups(res.data.items);
       setTotal(res.data.total);
       setPageSize(res.data.pageSize);
       setPage(res.data.page);
+      setExpandedGroups(new Set());
+      setGroupItems({});
+      setGroupItemsLoading({});
+    },
+    [t, toast],
+  );
+
+  const loadGroupItems = useCallback(
+    async (group: AiUsageGroupItem) => {
+      const key = groupKey(group.generationId);
+      setGroupItemsLoading((current) => ({ ...current, [key]: true }));
+      const res = await listAiUsage(1, {
+        generationId: group.generationId,
+        limit: null,
+      });
+      setGroupItemsLoading((current) => ({ ...current, [key]: false }));
+      if (res.error || !res.data) {
+        toast(res.error ?? t("toast.historyLoadFailed"), "error");
+        return;
+      }
+      setGroupItems((current) => ({ ...current, [key]: res.data!.items }));
     },
     [t, toast],
   );
 
   useEffect(() => {
     if (!historyOpen) return;
-    void loadList(page);
-  }, [historyOpen, page, loadList]);
+    void loadGroups(page);
+  }, [historyOpen, page, loadGroups]);
 
   function openHistory() {
     setDetailId(null);
@@ -338,6 +459,24 @@ export function AiUsageHistory({
   function closeDetail() {
     setDetailId(null);
     setDetail(null);
+  }
+
+  async function onToggleGroup(group: AiUsageGroupItem) {
+    const key = groupKey(group.generationId);
+    if (expandedGroups.has(key)) {
+      setExpandedGroups((current) => {
+        const next = new Set(current);
+        next.delete(key);
+        return next;
+      });
+      return;
+    }
+
+    if (!groupItems[key]) {
+      await loadGroupItems(group);
+    }
+
+    setExpandedGroups((current) => new Set(current).add(key));
   }
 
   async function onRowClick(id: string) {
@@ -369,13 +508,17 @@ export function AiUsageHistory({
 
       <AiUsageHistoryDrawer
         open={historyOpen}
-        items={items}
+        groups={groups}
         page={page}
         pageSize={pageSize}
         totalPages={totalPages}
         loading={loading}
+        expandedGroups={expandedGroups}
+        groupItems={groupItems}
+        groupItemsLoading={groupItemsLoading}
         onClose={closeHistory}
         onPageChange={setPage}
+        onToggleGroup={(group) => void onToggleGroup(group)}
         onRowClick={(id) => void onRowClick(id)}
         closeOnEscape={!detailOpen}
       />

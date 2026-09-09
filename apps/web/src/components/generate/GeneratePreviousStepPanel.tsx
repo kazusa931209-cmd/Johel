@@ -46,11 +46,25 @@ export function useGeneratePreviousStepPanel({
     [currentStep, visibleSteps],
   );
 
-  const previousTitle = previousStep
-    ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
-    : undefined;
+  const previousTitle =
+    currentStep === "Job"
+      ? t("generate.job.filteredPreviewTitle")
+      : previousStep
+        ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
+        : undefined;
 
   const previousContent = useMemo(() => {
+    if (currentStep === "Job") {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-muted">
+            {t("generate.job.filteredPreviewHint")}
+          </p>
+          <GenerateJobDescriptionPreview jobText={job.jobText} />
+        </div>
+      );
+    }
+
     if (!previousStep) {
       return null;
     }
@@ -77,7 +91,7 @@ export function useGeneratePreviousStepPanel({
       default:
         return null;
     }
-  }, [combine, job.acceptedMarkdown, job.jobText, previousStep, resume, t]);
+  }, [combine, currentStep, job.acceptedMarkdown, job.jobText, previousStep, resume, t]);
 
   return { previousTitle, previousContent };
 }

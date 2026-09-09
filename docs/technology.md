@@ -385,6 +385,12 @@ User browser (:4041)
 - `/history` list (CRUD list pattern); `/history/[publicId]` read-only detail reusing `GenerateTimeline`, `GenerateStepLayout`, preview panels, and `GenerateHistoryStepView`
 - Sidebar **Run** → **History** after **Generate**
 
+### AI Usage History grouping
+
+- `GET /ai-usage/groups` — paginated summaries grouped by `generationId` (50 groups/page); each item includes `generationPublicId`, `callCount`, token sums, `latestCreatedAt`
+- `GET /ai-usage?generationId=` — filter call rows (`none` for unlinked rows); list items include `generationId` and `generationPublicId`
+- Drawer UI expands a group to load and show nested call rows
+
 ## Plans
 
 Built Cursor plans for completed work are archived under [`docs/plans/`](./plans/) with a `YYYY-MM-DD-` filename prefix.

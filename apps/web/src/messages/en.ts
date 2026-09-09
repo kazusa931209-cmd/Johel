@@ -383,6 +383,11 @@ export const en = {
     title: "Generate",
     description: "Prepare the Job Description, then compose profile, companies, and experiences for this run.",
     new: "New",
+    newConfirm: {
+      title: "Start a new generation?",
+      body: "This generation is not finished. Starting a new one saves the current run to History and clears the session.",
+      confirming: "Starting…",
+    },
     loading: "Loading…",
     steps: {
       ariaLabel: "Generate steps",
@@ -432,6 +437,9 @@ export const en = {
     },
     job: {
       title: "Job",
+      filteredPreviewTitle: "Filtered Job Description",
+      filteredPreviewHint:
+        "Live preview after the noise filter. Later steps use this text when Do Verdict is off.",
       methods: {
         manual: "Manual",
         url: "URL",
@@ -643,12 +651,17 @@ export const en = {
     empty: "No AI usage yet.",
     columns: {
       no: "No",
+      generationId: "Generation ID",
       ai: "AI",
       model: "Model",
       generateType: "Generate Type",
       inputToken: "Input Token",
       outputToken: "Output Token",
       createdAt: "Created At",
+    },
+    groups: {
+      unassigned: "Unassigned",
+      callCount: "{count} calls",
     },
     providers: {
       cursor: "Cursor AI Agent",

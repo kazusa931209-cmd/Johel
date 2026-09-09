@@ -26,6 +26,21 @@ export function getAdjacentGenerateStep(
   return steps[nextIndex] ?? null;
 }
 
+export function isGenerationAtLastStep(
+  activeStep: GenerateStep,
+  visibleSteps: readonly GenerateStep[],
+): boolean {
+  const lastStep = visibleSteps[visibleSteps.length - 1];
+  return activeStep === lastStep;
+}
+
+export function needsNewGenerationConfirm(
+  activeStep: GenerateStep,
+  visibleSteps: readonly GenerateStep[],
+): boolean {
+  return !isGenerationAtLastStep(activeStep, visibleSteps);
+}
+
 export function normalizeGenerateActiveStep(
   activeStep: GenerateStep,
   doEvaluate: boolean,
