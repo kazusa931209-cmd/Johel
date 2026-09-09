@@ -1,5 +1,7 @@
 -- CreateTable
 CREATE TABLE "generationJobEmbeddings" (
+    "generationId" TEXT NOT NULL PRIMARY KEY,
+    "model" TEXT NOT NULL,
     "vector" BLOB NOT NULL,
     "sourceHash" TEXT NOT NULL,
     "updatedAt" DATETIME NOT NULL,

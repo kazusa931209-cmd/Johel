@@ -1,9 +1,9 @@
 "use client";
 
-import { useT } from "@/components/app/LocaleProvider";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { DetailDialog, DetailField } from "@/components/shared/detail-dialog";
 import type { ProfileDetail } from "@/lib/api";
-import { fullName } from "@/lib/profile";
+import { formatGraduationLabel, fullName } from "@/lib/profile";
 
 type ProfileDetailDialogProps = {
   profile: ProfileDetail;
@@ -15,6 +15,7 @@ export function ProfileDetailDialog({
   onClose,
 }: ProfileDetailDialogProps) {
   const t = useT();
+  const { locale } = useLocale();
 
   return (
     <DetailDialog
@@ -47,18 +48,8 @@ export function ProfileDetailDialog({
         value={profile.university}
       />
       <DetailField
-        label={t("crud.profiles.form.graduationYear")}
-        value={
-          profile.graduationYear != null ? String(profile.graduationYear) : null
-        }
-      />
-      <DetailField
-        label={t("crud.profiles.form.graduationMonth")}
-        value={
-          profile.graduationMonth != null
-            ? String(profile.graduationMonth)
-            : null
-        }
+        label={t("crud.profiles.form.graduation")}
+        value={formatGraduationLabel(profile, locale)}
       />
       <DetailField
         label={t("crud.profiles.form.degree")}

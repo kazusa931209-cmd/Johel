@@ -69,6 +69,26 @@ export function formatLinksCell(links: ProfileLinkItem[]) {
   return links.map((item) => item.key).join(", ");
 }
 
+export function formatGraduationLabel(
+  profile: {
+    graduationYear: number | null;
+    graduationMonth: number | null;
+  },
+  locale = "en",
+  month: "short" | "long" = "long",
+) {
+  if (profile.graduationYear == null) return null;
+  if (profile.graduationMonth == null) {
+    return String(profile.graduationYear);
+  }
+  return new Intl.DateTimeFormat(locale, {
+    month,
+    year: "numeric",
+  }).format(
+    new Date(profile.graduationYear, profile.graduationMonth - 1, 1),
+  );
+}
+
 export function formatEducationCell(
   profile: {
     university: string | null;
@@ -78,21 +98,7 @@ export function formatEducationCell(
   },
   locale = "en",
 ) {
-  const graduationLabel =
-    profile.graduationYear != null && profile.graduationMonth != null
-      ? new Intl.DateTimeFormat(locale, {
-          month: "short",
-          year: "numeric",
-        }).format(
-          new Date(
-            profile.graduationYear,
-            profile.graduationMonth - 1,
-            1,
-          ),
-        )
-      : profile.graduationYear != null
-        ? String(profile.graduationYear)
-        : null;
+  const graduationLabel = formatGraduationLabel(profile, locale, "short");
 
   const parts = [
     profile.university?.trim(),
