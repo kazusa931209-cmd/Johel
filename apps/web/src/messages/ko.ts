@@ -368,12 +368,12 @@ export const ko: MessageTree = {
   },
   generate: {
     title: "생성",
-    description: "직업광고문을 준비한 뒤 이번 실행에 사용할 개인정보·회사·경험을 조합합니다.",
+    description: "직업광고를 준비한 뒤 이번 실행에 사용할 개인정보·회사·경험을 조합합니다.",
     new: "새로작성",
     loading: "적재중…",
     steps: {
       ariaLabel: "생성 단계",
-      job: "직업광고문",
+      job: "직업광고",
       verdict: "검토",
       combine: "조합",
       generate: "생성",
@@ -383,6 +383,23 @@ export const ko: MessageTree = {
       previous: "이전",
       next: "다음",
       download: "내리적재",
+    },
+    layout: {
+      emptyPrevious: "이전 단계 내용 없음",
+    },
+    previous: {
+      jobTitle: "직업광고",
+      verdictTitle: "AI검토 결과",
+      combineTitle: "조합",
+      resumeTitle: "생성된 리력서",
+      evaluationTitle: "평가",
+      jobEmpty: "직업광고가 아직 없습니다.",
+      verdictEmpty: "AI판정 결과가 아직 없습니다.",
+      resumeEmpty: "생성된 리력서가 아직 없습니다.",
+      combineEmpty: "회사항목이 아직 없습니다.",
+      combineProfileMissing: "개인정보 미선택",
+      combineCompanyMissing: "알수없는 회사",
+      combineExperienceMissing: "알수없는 경험",
     },
     prerequisites: {
       title: "생성준비가 되지 않았습니다",

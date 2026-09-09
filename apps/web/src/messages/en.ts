@@ -383,6 +383,23 @@ export const en = {
       next: "Next",
       download: "Download",
     },
+    layout: {
+      emptyPrevious: "No previous step content",
+    },
+    previous: {
+      jobTitle: "Job Description",
+      verdictTitle: "AI Verdict",
+      combineTitle: "Combine",
+      resumeTitle: "Generated résumé",
+      evaluationTitle: "Evaluation",
+      jobEmpty: "No job description yet.",
+      verdictEmpty: "No AI Verdict result yet.",
+      resumeEmpty: "No generated résumé yet.",
+      combineEmpty: "No company entries yet.",
+      combineProfileMissing: "Profile not selected",
+      combineCompanyMissing: "Unknown company",
+      combineExperienceMissing: "Unknown experience",
+    },
     prerequisites: {
       title: "Generate is not ready",
       description:

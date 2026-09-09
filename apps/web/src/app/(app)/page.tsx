@@ -14,6 +14,8 @@ import {
 } from "@/components/generate/GeneratePrerequisites";
 import { GenerateTimeline } from "@/components/generate/GenerateTimeline";
 import { GenerateJobStep } from "@/components/generate/GenerateJobStep";
+import { useGeneratePreviousStepPanel } from "@/components/generate/GeneratePreviousStepPanel";
+import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
 import { GenerateVerdictStep } from "@/components/generate/GenerateVerdictStep";
 import {
   GenerateStepNavNextButton,
@@ -436,6 +438,15 @@ export default function GeneratePage() {
 
   const runLabel = combine.emphasis.trim() || combine.language;
 
+  const { previousTitle, previousContent } = useGeneratePreviousStepPanel({
+    currentStep: normalizedActiveStep,
+    visibleSteps,
+    job,
+    combine,
+    oneTimePrompt,
+    resume,
+  });
+
   if (loading || !sessionReady) {
     return (
       <main className="flex min-h-[40vh] items-center justify-center text-sm text-muted">
@@ -450,8 +461,8 @@ export default function GeneratePage() {
 
   return (
     <GenerateStepNavProvider>
-      <section className="mx-auto w-full max-w-4xl">
-        <div className="sticky top-[-24] z-10 -mx-6 -mt-6 border-b border-border bg-background px-6 pt-6 pb-4">
+      <section className="-m-6 flex h-[calc(100dvh-3.5rem)] w-auto flex-col overflow-hidden">
+        <div className="sticky top-0 z-10 shrink-0 border-b border-border bg-background px-6 pt-6 pb-4">
           <div className="space-y-4">
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-3">
@@ -478,60 +489,66 @@ export default function GeneratePage() {
           </div>
         </div>
 
-        <div className="pt-6">
-          {normalizedActiveStep === "Job" ? (
-            <GenerateJobStep
-              job={job}
-              onJobChange={setJob}
-              onAdvanceFromJob={onAdvanceFromJob}
-            />
-          ) : null}
-          {processSettings.doVerdict && normalizedActiveStep === "Verdict" ? (
-            <GenerateVerdictStep
-              job={job}
-              verdictInputKey={verdictInputKey}
-              verdictPrompt={promptSettings.verdictPrompt}
-              onVerdictResult={setVerdictResult}
-              onPrev={() => goToAdjacentStep("prev")}
-              onNext={() => setActiveStep("Combine")}
-              running={verdictRunning}
-              onRunningChange={setVerdictRunning}
-            />
-          ) : null}
-          {normalizedActiveStep === "Combine" ? (
-            <GenerateCombineStep
-              combine={combine}
-              oneTimePrompt={oneTimePrompt}
-              jobText={job.jobText}
-              acceptedMarkdown={job.acceptedMarkdown}
-              doVerdict={processSettings.doVerdict}
-              onCombineChange={setCombine}
-              onOneTimePromptChange={setOneTimePrompt}
-              onPrev={() => goToAdjacentStep("prev")}
-              onNext={onCombineNext}
-            />
-          ) : null}
-          {normalizedActiveStep === "Generate" ? (
-            <GenerateGenerateStep
-              resume={resume}
-              runLabel={runLabel}
-              doEvaluate={processSettings.doEvaluate}
-              generating={generatingResume}
-              onAutoGenerate={runResumeGeneration}
-              onPrev={() => goToAdjacentStep("prev")}
-              onNext={onGenerateNext}
-            />
-          ) : null}
-          {processSettings.doEvaluate && normalizedActiveStep === "Evaluate" ? (
-            <GenerateEvaluateStep
-              resume={resume}
-              runLabel={runLabel}
-              evaluationMarkdown={evaluationMarkdown}
-              evaluating={evaluating}
-              onAutoEvaluate={runEvaluation}
-              onPrev={() => goToAdjacentStep("prev")}
-            />
-          ) : null}
+        <div className="min-h-0 flex-1 px-6 pt-6 pb-6">
+          <GenerateStepLayout
+            previousTitle={previousTitle}
+            previous={previousContent}
+          >
+            {normalizedActiveStep === "Job" ? (
+              <GenerateJobStep
+                job={job}
+                onJobChange={setJob}
+                onAdvanceFromJob={onAdvanceFromJob}
+              />
+            ) : null}
+            {processSettings.doVerdict && normalizedActiveStep === "Verdict" ? (
+              <GenerateVerdictStep
+                job={job}
+                verdictInputKey={verdictInputKey}
+                verdictPrompt={promptSettings.verdictPrompt}
+                onVerdictResult={setVerdictResult}
+                onPrev={() => goToAdjacentStep("prev")}
+                onNext={() => setActiveStep("Combine")}
+                running={verdictRunning}
+                onRunningChange={setVerdictRunning}
+              />
+            ) : null}
+            {normalizedActiveStep === "Combine" ? (
+              <GenerateCombineStep
+                combine={combine}
+                oneTimePrompt={oneTimePrompt}
+                jobText={job.jobText}
+                acceptedMarkdown={job.acceptedMarkdown}
+                doVerdict={processSettings.doVerdict}
+                onCombineChange={setCombine}
+                onOneTimePromptChange={setOneTimePrompt}
+                onPrev={() => goToAdjacentStep("prev")}
+                onNext={onCombineNext}
+              />
+            ) : null}
+            {normalizedActiveStep === "Generate" ? (
+              <GenerateGenerateStep
+                resume={resume}
+                runLabel={runLabel}
+                doEvaluate={processSettings.doEvaluate}
+                generating={generatingResume}
+                onAutoGenerate={runResumeGeneration}
+                onPrev={() => goToAdjacentStep("prev")}
+                onNext={onGenerateNext}
+              />
+            ) : null}
+            {processSettings.doEvaluate &&
+            normalizedActiveStep === "Evaluate" ? (
+              <GenerateEvaluateStep
+                resume={resume}
+                runLabel={runLabel}
+                evaluationMarkdown={evaluationMarkdown}
+                evaluating={evaluating}
+                onAutoEvaluate={runEvaluation}
+                onPrev={() => goToAdjacentStep("prev")}
+              />
+            ) : null}
+          </GenerateStepLayout>
         </div>
       </section>
     </GenerateStepNavProvider>

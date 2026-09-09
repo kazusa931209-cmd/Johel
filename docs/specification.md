@@ -185,11 +185,17 @@ Aligned with the product flow above:
 * **Generate** (`/`)
   * Before the flow starts, the page checks that the user has at least one Profile, Company, and Experience and a saved **Generate Prompt**; **Verdict Prompt** is required only when **Do Verdict** is enabled in Settings; **Evaluate Prompt** is required only when **Do Evaluate** is enabled. If any are missing, a centered alert lists what is missing with links to the matching workspace area or Prompts tab
   * When ready, a timeline shows steps: Job → **Verdict** (when **Do Verdict** is on) → **Combine** → Generate, and **Evaluate** when **Do Evaluate** is enabled; sticky header with **Previous** / **Next** (or **Download** on the last step)
+  * Generate uses the **full width** of the main content area (no centered max-width cap)
+  * Below the sticky header, each step body uses a **two-column layout** (equal columns on large screens; stacked on narrow viewports with the previous step above the current step). The step body fills the **remaining viewport height** below the sticky header
+  * **Left column:** read-only content from the **previous** timeline step — no edit forms, method tabs, or Save/Apply controls; **its own vertical scroll** when content exceeds the panel height
+  * **Right column:** the **current** step (forms, auto-run AI, Markdown results, loading overlays); **its own vertical scroll** independent of the left column; scrolling one column does not scroll the other or the sticky header
+  * **Job** step: left column is **empty** (no placeholder required); right column is the Job input (method tabs + manual textarea)
+  * Previous-step content by current step (respecting **Do Verdict** / **Do Evaluate** flags): **Verdict** ← noise-filtered Job Description; **Combine** ← AI Verdict Markdown when Do Verdict is on, otherwise noise-filtered Job Description; **Generate** ← read-only Combine summary (profile name, language, emphasis, ordered company entries with dates, role context, and linked experience names — not the Combine editors); **Evaluate** ← generated résumé Markdown preview
   * **Job** **Next**: validates the Job Description (inline error if empty); runs **Noise Filter** silently; advances to Verdict or Combine (does not run AI on this step)
-  * **Verdict** (when enabled): **Next** runs **AI Verdict** with the noise-filtered JD and saved Verdict Prompt; shows result Markdown; on success toasts and advances to Combine
-  * **Combine**: choose profile, résumé language, optional emphasis, ordered company entries (period, role context, experiences), optional **One-time Prompt**; optional **Suggest experiences** (guided or auto) using JD + Verdict; **Next** validates inline then runs **AI Resume generation** from the Combine snapshot
+  * **Verdict** (when enabled): auto-runs **AI Verdict** on entry with the noise-filtered JD and saved Verdict Prompt; shows result Markdown; **Next** advances to Combine when complete
+  * **Combine**: choose profile, résumé language, optional emphasis, ordered company entries (period, role context, experiences), optional **One-time Prompt**; optional **Suggest experiences** (guided or auto) using JD + Verdict; **Next** validates inline then advances to Generate (resume generation runs on the Generate step)
   * Session remembers step, Job, Verdict, Combine, one-time prompt, resume JSON, and evaluation until **New** or Process settings change
-  * **Generate** and **Evaluate** steps behave as before (Markdown preview, optional evaluation, DOCX download)
+  * **Generate** and **Evaluate** steps: auto-run resume generation and evaluation respectively when needed; Markdown preview; DOCX download on Evaluate (or Generate when Do Evaluate is off)
 * **Settings**
   * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here
   * Theme (Dark / Light)

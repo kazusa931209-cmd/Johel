@@ -177,9 +177,11 @@ User browser (:4041)
 
 ## Generate UI (Phase 11–20, 22, 24, 25, 26, 27, 28)
 
-- Route `/` gates on at least one workflow and saved Generate Prompt; Verdict Prompt required only when `doVerdict`; Evaluate Prompt required only when `doEvaluate`; otherwise a centered alert with links (not a toast)
-- Timeline steps: Job → Workflow → Generate, plus **Evaluate** when `doEvaluate` is true
-- Sticky header: page title row includes **New** (plus icon + label) to reset the in-progress Generate session to a blank Job step; step row (`GenerateStepNavPrevButton` + `GenerateTimeline` + `GenerateStepNavNextButton`) uses `sticky top-0` with `-mt-6 pt-6` to cover main padding and prevent content showing through the gap above; `bg-background` and bottom border
+- Route `/` gates on at least one Profile, Company, and Experience plus saved Generate Prompt; Verdict Prompt required only when `doVerdict`; Evaluate Prompt required only when `doEvaluate`; otherwise a centered alert with links (not a toast)
+- Timeline steps: Job → **Verdict** (when `doVerdict`) → **Combine** → Generate, plus **Evaluate** when `doEvaluate` is true
+- Page layout: full main content width (`-m-6` on the page section to cancel main padding; no `max-w-4xl`); section height `calc(100dvh - 3.5rem)` (app header) with `overflow-hidden` so step columns scroll independently
+- Two-column step body via `GenerateStepLayout`: left panel = read-only previous-step preview (`useGeneratePreviousStepPanel` + `GenerateJobDescriptionPreview`, `AiVerdictMarkdown`, `GenerateCombineSummary`, or `ResumeMarkdown`); right panel = current step; each column `overflow-y-auto` with fixed panel header; stacked on narrow viewports (`max-h-[50vh]` per section)
+- Sticky header: page title row includes **New** (plus icon + label) to reset the in-progress Generate session to a blank Job step; step row (`GenerateStepNavPrevButton` + `GenerateTimeline` + `GenerateStepNavNextButton`) uses `sticky top-0`; `bg-background` and bottom border
 - Step navigation: steps register handlers via `useRegisterGenerateStepNav`; large round controls flank the timeline on the same row
 - Job UI (Manual): Job text max 10,000 chars + right **Next** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
 - Job **Next**: inline validation if JD empty; client `noiseFilter()` runs silently (textarea unchanged); `POST /ai-verdict` with filtered text when `doVerdict` and inputs changed, or reuses stored verdict when `verdictInputKey` matches; then workflow recommendation or last-workflow restore (see Process settings); fullscreen loading during Verdict and recommendation; on success saves results, refreshes header Token Used, toast, `activeStep` → Workflow; on error stays on Job
