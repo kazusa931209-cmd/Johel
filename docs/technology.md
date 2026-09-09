@@ -55,7 +55,7 @@ User browser (:4041)
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `problem`, `actions`, `outcome`, `createdAt`, `updatedAt`
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
-- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `doWorkflowRecommendation`, `workflowRecommendationThreshold`, `lastSelectedWorkflowId?` (FK → `workflows`, SetNull on delete), `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `doWorkflowRecommendation` false, threshold `70`
+- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `resumeLanguage`, `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `resumeLanguage` `en`
 - **Phase 36:** `PromptOptimization` / `promptOptimizations` and `usePromptOptimizationAi` removed; AI routes use deterministic `compileInstruction` only (see `apps/api/src/lib/prompt-optimize/compile.ts`)
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
@@ -80,7 +80,7 @@ User browser (:4041)
 - Layout: top bar + left sidebar + main content (full-height studio chrome)
 - Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`; UI locale via `LocaleProvider` + `johel-locale` in `localStorage` (`en` default, `ko`); bootstrap script in root layout sets `document.documentElement.lang` before paint; message catalogs in `apps/web/src/messages/` (`en.ts`, `ko.ts`, `translate.ts`); components use `useT()` / `useLocale()` from `LocaleProvider`; sidebar open/collapsed via `johel-sidebar` in `localStorage` (`open` default, `collapsed`). Hamburger in the header toggles `StudioSidebar` (`hidden` when collapsed; `aria-controls="studio-sidebar"`).
 - Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light. Tailwind `dark:` uses the `.dark` class (`@custom-variant dark` in `globals.css`), not `prefers-color-scheme`.
-- Prompts (`/settings/prompts`) and Environment (`/settings/environment`) content is centered at `max-w-3xl`, matching other form pages.
+- Prompts (`/settings/prompts`), Environment (`/settings/environment`), and Generation (`/settings/generation`) content is centered at `max-w-3xl`, matching other form pages.
 - `react-markdown` preview (`AiVerdictMarkdown`, `ResumeMarkdown`) uses `@tailwindcss/typography` `prose` with `--tw-prose-*` mapped to theme tokens (`--foreground`, `--muted`, `--border`) so body text stays readable in Light and Dark. Do not use `dark:prose-invert` (it follows OS color-scheme unless the class variant is set, and it ignores app tokens).
 - Toast: top-center; variants success / warning / error / info with theme-aware bg and text tokens (`components/app/ToastProvider`). Any user action that calls the API must report the result with a toast.
 - Routes (authenticated):
@@ -89,14 +89,15 @@ User browser (:4041)
   - `/companies` — Workspace / Companies
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
-  - `/settings/environment` — Settings / Environment (theme, language, AI Agent, Process); `/settings` redirects here
+  - `/settings/environment` — Settings / Environment (theme, UI language, AI Agent); `/settings` redirects here
+  - `/settings/generation` — Settings / Generation (Process, Résumé Language)
   - `/settings/prompts` — Settings / Prompts
   - `/prompts` — legacy redirect to `/settings/prompts`
   - `/profile` — account Profile (email display; distinct from Workspace Profiles)
 - User menu: Profile, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
 - **AI Usage History (Phase 32, 41):** fixed bottom-right FAB cluster (`StudioBottomFabCluster`) with history (clock) and **Quick Experience** (plus) buttons; history opens `Drawer` panel; row click opens nested detail `Drawer` with **Input** / **Output** tabs (Input default), `AiVerdictMarkdown` preview, and **Copy** for the active tab’s raw text (`CopyButton` + `copyTextToClipboard`); `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`; labels in `apps/web/src/lib/ai-usage.ts`
-- Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows — always open), **Run** (Generate — always open), **Settings** (Environment, Prompts — always open); section labels use normal title case (not all caps)
+- Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows — always open), **Run** (Generate — always open), **Settings** (Environment, Generation, Prompts — always open); section labels use normal title case (not all caps)
 
 ## AI Agent settings (Phase 5, 21)
 
@@ -110,11 +111,10 @@ User browser (:4041)
 
 ## Process settings (Phase 26, 36)
 
-- `GET /settings/process` → `{ doVerdict, doEvaluate, doWorkflowRecommendation, workflowRecommendationThreshold, lastSelectedWorkflowId }` (defaults: Verdict/Evaluate true, recommendation false, threshold 70, last workflow null)
-- `PUT /settings/process` → `{ doVerdict, doEvaluate, doWorkflowRecommendation, workflowRecommendationThreshold }` (threshold integer 0–100); upsert by `userId`; returns saved values including `lastSelectedWorkflowId`
-- `PUT /settings/process/last-workflow` → `{ workflowId }`; validates owned workflow; upserts `lastSelectedWorkflowId` on `generationProcess`
-- Web Settings **Process** section: **Do Verdict**, **Do Evaluate**, **Do Workflow Recommendation** checkboxes; **Recommendation threshold** (0–100) when recommendation enabled; Save always enabled; inline validation on submit; toast on API result; saving changed Process flags or threshold clears in-progress Generate session
-- Generate reads process settings on load; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
+- `GET /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage }` (defaults: Verdict/Evaluate true, `resumeLanguage` `en`)
+- `PUT /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage }` where `resumeLanguage` is one of `en`, `ja`, `zh-TW`, `zh-CN`, `ko`; upsert by `userId`; returns saved values
+- Web Settings **Generation** page (`/settings/generation`): **Process** section (**Do Verdict**, **Do Evaluate** checkboxes) and **Résumé Language** select; one **Save** persists both; toast on API result; saving changed Process flags or résumé language clears in-progress Generate session
+- Generate reads process settings on load; syncs `combine.language` from saved `resumeLanguage`; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
 - When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel; resume generation uses noise-filtered job description as `jobContext`
 - When `doVerdict` is true: Workflow shows AI Verdict result; resume generation and evaluation send that Markdown as `jobContext` instead of the raw job description (Verdict Prompt structure and extracted fields affect tailoring quality)
 - When `doEvaluate` is false: timeline is Job → Workflow → Generate; Generate **Download** is last-step action; Evaluate step hidden; stored `activeStep: "Evaluate"` normalizes to Generate on load
@@ -309,7 +309,7 @@ User browser (:4041)
 - **Catalogs:** `apps/web/src/messages/en.ts` (source of key shape), `ko.ts` (`MessageTree` via `DeepStringify<typeof en>`), `translate.ts` (`translate`, `translateLines`)
 - **Settings:** `/settings/environment` Language section after Theme; toggles apply immediately (no Save)
 - **Korean typography:** when `document.documentElement.lang` is `ko`, UI sans-serif uses bundled **KP CheonRiMa** (`apps/web/src/fonts/KP-CheonRiMa-Medium.ttf` via `next/font/local` in `lib/ko-font.ts`); English keeps Geist Sans
-- **Scope:** All JoHEL UI strings including login/register; not workflow résumé output language or server/API error text
+- **Scope:** All JoHEL UI strings including login/register; not résumé output language (Settings Generation) or server/API error text
 
 ## Architecture refactor (Phases 54–60, 2026-09-09)
 
@@ -322,7 +322,7 @@ User browser (:4041)
 ### API additions / changes
 
 - `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); full experience pool; `generateType: experienceAdvise`
-- `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, mode: "guided"|"auto", profileId, companies[] }`; returns per-company `experienceIds` + `warnings`; `generateType: combineRecommend`
+- `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, mode: "guided"|"auto", guidanceKeywords?, profileId, companies[] }`; `guidanceKeywords` required when `mode` is `guided` (comma-separated steering text, max 500 chars); returns per-company `experienceIds`, `rationale`, and `warnings`; `generateType: combineRecommend`
 - `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run
 - `POST /resume/combine-fingerprint` — fingerprint for Combine snapshot (replaces workflow fingerprint)
 - `GET /auth/me` includes `role` (`admin` | `user`)
@@ -332,13 +332,14 @@ User browser (:4041)
 ### Schema
 
 - Dropped: `workflows`, `workflowCompanies`, `workflowCompanyExperiences`; `generationProcess.doWorkflowRecommendation`, `workflowRecommendationThreshold`, `lastSelectedWorkflowId`
+- Added: `generationProcess.resumeLanguage` (per-user default résumé output language; migration `20260909100003_generation_resume_language`)
 - Added: `users.role` (default `user`); `prompts.verdictExtension`, `generateExtension`, `evaluateExtension`
 - Migrations: `20260909100000_remove_workflows`, `20260909100001_user_role_prompt_extensions`
 
 ### Web
 
 - `GenerateVerdictStep`, `GenerateCombineStep`, `combine-types.ts`, `CombineProfilePicker`, `CombineCompanyCards`, `CombinePeriodSlider`, `combine-period.ts`
-- Combine step: all workspace companies as a single-column card list (`listCompanies("", null)`); company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context; `experienceIds: []` until experience selection returns; Suggest experiences UI hidden
+- Combine step: all workspace companies as a single-column card list (`listCompanies("", null)`); company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context; **Suggest experiences** (`CombineExperienceSuggest`) with **Keyword guided** (`experienceGuidanceKeywords` on session `combine`) or **Auto**; calls `POST /ai-combine-recommend`; suggestion dialog shows per-company rationale before **Apply**; `experienceIds` on each company entry after apply
 - Combine validation (`validateCombineSnapshot`): profile required with graduation year, ≥1 included company, each with period + role context; no experience requirement
 - Migration `20260909100002_profile_education_split`: legacy `education` text copied to `university`; column dropped
 - `POST /ai-resume` and `POST /resume/combine-fingerprint` accept `experienceIds: []` per company; `assembleFromCombineSnapshot` allows empty experiences per company

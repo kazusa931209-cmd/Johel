@@ -3,44 +3,31 @@
 import { useCallback, useEffect, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
+import { CombineExperienceSuggest } from "@/components/generate/CombineExperienceSuggest";
 import { CombineProfilePicker } from "@/components/generate/CombineProfilePicker";
 import {
-  RUN_LANGUAGES,
   type CombineFieldErrors,
   type CombineSnapshot,
-  type RunLanguage,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { getProfile } from "@/lib/api";
+import type { GenerateJobState } from "@/lib/generate-session";
 
 type GenerateCombineStepProps = {
   combine: CombineSnapshot;
   onCombineChange: (combine: CombineSnapshot) => void;
+  job: GenerateJobState;
+  doVerdict: boolean;
   onPrev: () => void;
   onNext: () => void | Promise<void>;
 };
 
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
-
 export function GenerateCombineStep({
   combine,
   onCombineChange,
+  job,
+  doVerdict,
   onPrev,
   onNext,
 }: GenerateCombineStepProps) {
@@ -110,28 +97,6 @@ export function GenerateCombineStep({
         }
       />
 
-      <label className="block max-w-xs space-y-1 text-sm">
-        <span>{t("generate.combine.language")}</span>
-        <div className="relative">
-          <select
-            value={combine.language}
-            onChange={(e) =>
-              patchCombine({ language: e.target.value as RunLanguage })
-            }
-            className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
-          >
-            {RUN_LANGUAGES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDownIcon
-            className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted"
-          />
-        </div>
-      </label>
-
       <CombineCompanyCards
         companies={combine.companies}
         onChange={(companies) => patchCombine({ companies })}
@@ -141,6 +106,14 @@ export function GenerateCombineStep({
         onClearError={() =>
           setFieldErrors((errors) => ({ ...errors, companies: undefined }))
         }
+      />
+
+      <CombineExperienceSuggest
+        combine={combine}
+        onCombineChange={onCombineChange}
+        job={job}
+        doVerdict={doVerdict}
+        graduationYear={graduationYear}
       />
 
       <label className="block space-y-1 text-sm">

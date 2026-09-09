@@ -106,6 +106,15 @@ function parseCombineSnapshot(value: unknown): CombineSnapshot {
     profileId: typeof raw.profileId === "string" ? raw.profileId : "",
     language: typeof raw.language === "string" ? raw.language : "en",
     emphasis: typeof raw.emphasis === "string" ? raw.emphasis : "",
+    experienceSuggestMode:
+      raw.experienceSuggestMode === "auto" ||
+      raw.experienceSuggestMode === "guided"
+        ? raw.experienceSuggestMode
+        : "guided",
+    experienceGuidanceKeywords:
+      typeof raw.experienceGuidanceKeywords === "string"
+        ? raw.experienceGuidanceKeywords
+        : "",
     companies,
   };
 }

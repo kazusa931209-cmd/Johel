@@ -3,25 +3,36 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 
+const RESUME_LANGUAGES = ["en", "ja", "zh-TW", "zh-CN", "ko"] as const;
+
 const putSchema = z.object({
   doVerdict: z.boolean(),
   doEvaluate: z.boolean(),
+  resumeLanguage: z.enum(RESUME_LANGUAGES),
 });
 
 export const DEFAULT_GENERATION_PROCESS = {
   doVerdict: true,
   doEvaluate: true,
+  resumeLanguage: "en",
 } as const;
 
 function toProcessResponse(
   process: {
     doVerdict: boolean;
     doEvaluate: boolean;
+    resumeLanguage: string;
   } | null,
 ) {
+  const resumeLanguage = process?.resumeLanguage ?? DEFAULT_GENERATION_PROCESS.resumeLanguage;
   return {
     doVerdict: process?.doVerdict ?? DEFAULT_GENERATION_PROCESS.doVerdict,
     doEvaluate: process?.doEvaluate ?? DEFAULT_GENERATION_PROCESS.doEvaluate,
+    resumeLanguage: RESUME_LANGUAGES.includes(
+      resumeLanguage as (typeof RESUME_LANGUAGES)[number],
+    )
+      ? resumeLanguage
+      : DEFAULT_GENERATION_PROCESS.resumeLanguage,
   };
 }
 
@@ -58,10 +69,12 @@ settingsProcessRoutes.put("/", async (c) => {
       userId: user.id,
       doVerdict: parsed.data.doVerdict,
       doEvaluate: parsed.data.doEvaluate,
+      resumeLanguage: parsed.data.resumeLanguage,
     },
     update: {
       doVerdict: parsed.data.doVerdict,
       doEvaluate: parsed.data.doEvaluate,
+      resumeLanguage: parsed.data.resumeLanguage,
     },
   });
 

@@ -45,11 +45,13 @@ import {
   listProfiles,
   runAiEvaluate,
   runAiResume,
+  type ResumeLanguage,
 } from "@/lib/api";
 
 const DEFAULT_PROCESS = {
   doVerdict: true,
   doEvaluate: true,
+  resumeLanguage: "en" as ResumeLanguage,
 };
 
 const DEFAULT_PROMPTS = {
@@ -153,6 +155,8 @@ export default function GeneratePage() {
       const nextProcess = {
         doVerdict: process.data?.doVerdict ?? DEFAULT_PROCESS.doVerdict,
         doEvaluate: process.data?.doEvaluate ?? DEFAULT_PROCESS.doEvaluate,
+        resumeLanguage:
+          process.data?.resumeLanguage ?? DEFAULT_PROCESS.resumeLanguage,
       };
       setProcessSettings(nextProcess);
       setPromptSettings({
@@ -206,6 +210,18 @@ export default function GeneratePage() {
       cancelled = true;
     };
   }, [t, toast]);
+
+  useEffect(() => {
+    if (!sessionReady || loading) return;
+    if (combine.language === processSettings.resumeLanguage) return;
+    setCombine({ ...combine, language: processSettings.resumeLanguage });
+  }, [
+    sessionReady,
+    loading,
+    processSettings.resumeLanguage,
+    combine,
+    setCombine,
+  ]);
 
   function goToAdjacentStep(direction: "prev" | "next") {
     const next = getAdjacentGenerateStep(
@@ -503,6 +519,8 @@ export default function GeneratePage() {
               <GenerateCombineStep
                 combine={combine}
                 onCombineChange={setCombine}
+                job={job}
+                doVerdict={processSettings.doVerdict}
                 onPrev={() => goToAdjacentStep("prev")}
                 onNext={onCombineNext}
               />

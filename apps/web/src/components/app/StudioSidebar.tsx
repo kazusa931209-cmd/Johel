@@ -29,6 +29,9 @@ export function StudioSidebar({ open }: { open: boolean }) {
     pathname === "/settings" ||
     pathname === "/settings/environment" ||
     pathname.startsWith("/settings/environment/");
+  const generationActive =
+    pathname === "/settings/generation" ||
+    pathname.startsWith("/settings/generation/");
   const promptsActive =
     pathname === "/settings/prompts" ||
     pathname.startsWith("/settings/prompts/") ||
@@ -73,6 +76,12 @@ export function StudioSidebar({ open }: { open: boolean }) {
           className={navLinkClass(environmentActive)}
         >
           {t("nav.sidebar.environment")}
+        </Link>
+        <Link
+          href="/settings/generation"
+          className={navLinkClass(generationActive)}
+        >
+          {t("nav.sidebar.generation")}
         </Link>
         <Link href="/settings/prompts" className={navLinkClass(promptsActive)}>
           {t("nav.sidebar.prompts")}

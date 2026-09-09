@@ -4,14 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useLocale } from "@/components/app/LocaleProvider";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import {
-  getGenerationProcess,
-  getMe,
-  getSettings,
-  saveGenerationProcess,
-  saveSettings,
-} from "@/lib/api";
-import { clearGenerateSession } from "@/lib/generate-session";
+import { getSettings, saveSettings } from "@/lib/api";
 import type { AiProviderId } from "@/lib/api";
 import type { Locale } from "@/lib/locale";
 import type { Theme } from "@/lib/theme";
@@ -93,13 +86,6 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [doVerdict, setDoVerdict] = useState(true);
-  const [doEvaluate, setDoEvaluate] = useState(true);
-  const [savedDoVerdict, setSavedDoVerdict] = useState(true);
-  const [savedDoEvaluate, setSavedDoEvaluate] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [processLoading, setProcessLoading] = useState(true);
-  const [processSaving, setProcessSaving] = useState(false);
 
   const themeOptions: { value: Theme; label: string }[] = [
     { value: "dark", label: t("settings.environment.theme.dark") },
@@ -126,20 +112,6 @@ export default function SettingsPage() {
         setMasked(res.data.apiKeyMasked);
       }
       setLoading(false);
-    });
-    getGenerationProcess().then((res) => {
-      if (cancelled) return;
-      if (res.data) {
-        setDoVerdict(res.data.doVerdict);
-        setDoEvaluate(res.data.doEvaluate);
-        setSavedDoVerdict(res.data.doVerdict);
-        setSavedDoEvaluate(res.data.doEvaluate);
-      }
-      setProcessLoading(false);
-    });
-    getMe().then((res) => {
-      if (cancelled) return;
-      setUserId(res.data?.id ?? null);
     });
     return () => {
       cancelled = true;
@@ -174,32 +146,6 @@ export default function SettingsPage() {
     setShowApiKey(false);
     setErrors({});
     toast(t("toast.aiAgentSaved"), "success");
-  }
-
-  async function onSaveProcess(e: FormEvent) {
-    e.preventDefault();
-
-    setProcessSaving(true);
-    const res = await saveGenerationProcess({
-      doVerdict,
-      doEvaluate,
-    });
-    setProcessSaving(false);
-    if (res.error || !res.data) {
-      toast(res.error ?? t("toast.processSaveFailed"), "error");
-      return;
-    }
-    setDoVerdict(res.data.doVerdict);
-    setDoEvaluate(res.data.doEvaluate);
-    const processChanged =
-      res.data.doVerdict !== savedDoVerdict ||
-      res.data.doEvaluate !== savedDoEvaluate;
-    if (processChanged && userId) {
-      clearGenerateSession(userId);
-    }
-    setSavedDoVerdict(res.data.doVerdict);
-    setSavedDoEvaluate(res.data.doEvaluate);
-    toast(t("toast.processSaved"), "success");
   }
 
   return (
@@ -349,49 +295,6 @@ export default function SettingsPage() {
             {saving
               ? t("settings.environment.aiAgent.saving")
               : t("settings.environment.aiAgent.save")}
-          </button>
-        </div>
-      </form>
-      <form
-        onSubmit={onSaveProcess}
-        className="space-y-3 rounded-lg border border-border bg-surface p-4"
-      >
-        <h2 className="text-sm font-medium">{t("settings.environment.process.title")}</h2>
-        <p className="text-sm text-muted">
-          {t("settings.environment.process.description")}
-        </p>
-        {processLoading ? (
-          <p className="text-sm text-muted">{t("settings.environment.process.loading")}</p>
-        ) : (
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={doVerdict}
-                onChange={(e) => setDoVerdict(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
-              />
-              <span>{t("settings.environment.process.doVerdict")}</span>
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={doEvaluate}
-                onChange={(e) => setDoEvaluate(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
-              />
-              <span>{t("settings.environment.process.doEvaluate")}</span>
-            </label>
-          </div>
-        )}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
-          >
-            {processSaving
-              ? t("settings.environment.process.saving")
-              : t("settings.environment.process.save")}
           </button>
         </div>
       </form>

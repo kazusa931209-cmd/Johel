@@ -13,6 +13,8 @@ export type CombineRecommendRequest = {
   jobDescription: string;
   acceptedMarkdown?: string;
   mode: CombineRecommendMode;
+  /** Required when mode is guided — comma-separated steering keywords (e.g. AWS, Blockchain, Senior). */
+  guidanceKeywords?: string;
   profileId: string;
   companies: CombineRecommendCompanyInput[];
 };

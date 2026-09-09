@@ -12,6 +12,7 @@ import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
 const JOB_MAX = 10_000;
+const GUIDANCE_KEYWORDS_MAX = 500;
 
 const companySchema = z.object({
   companyId: z.string().trim().min(1),
@@ -21,13 +22,24 @@ const companySchema = z.object({
   experienceIds: z.array(z.string().trim().min(1)).default([]),
 });
 
-const postSchema = z.object({
-  jobDescription: z.string().trim().min(1).max(JOB_MAX),
-  acceptedMarkdown: z.string().trim().max(JOB_MAX).optional(),
-  mode: z.enum(["auto", "guided"]).default("guided"),
-  profileId: z.string().trim().min(1),
-  companies: z.array(companySchema).min(1),
-});
+const postSchema = z
+  .object({
+    jobDescription: z.string().trim().min(1).max(JOB_MAX),
+    acceptedMarkdown: z.string().trim().max(JOB_MAX).optional(),
+    mode: z.enum(["auto", "guided"]).default("guided"),
+    guidanceKeywords: z.string().trim().max(GUIDANCE_KEYWORDS_MAX).optional(),
+    profileId: z.string().trim().min(1),
+    companies: z.array(companySchema).min(1),
+  })
+  .superRefine((data, ctx) => {
+    if (data.mode === "guided" && !data.guidanceKeywords?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Guidance keywords are required in guided mode.",
+        path: ["guidanceKeywords"],
+      });
+    }
+  });
 
 export const aiCombineRecommendRoutes = new Hono();
 
@@ -83,11 +95,19 @@ aiCombineRecommendRoutes.post("/", async (c) => {
   const companyById = new Map(companies.map((item) => [item.id, item]));
   const experienceIndex = await loadExperienceIndex(user.id);
 
+  if (experienceIndex.length < 1) {
+    return c.json(
+      { error: "Add at least one experience in the workspace first." },
+      400,
+    );
+  }
+
   const runInput = {
     apiKey: setting.apiKey,
     jobDescription: parsed.data.jobDescription,
     acceptedMarkdown: parsed.data.acceptedMarkdown,
     mode: parsed.data.mode,
+    guidanceKeywords: parsed.data.guidanceKeywords?.trim(),
     profileId: parsed.data.profileId,
     companies: parsed.data.companies.map((entry) => {
       const company = companyById.get(entry.companyId);
@@ -100,7 +120,6 @@ aiCombineRecommendRoutes.post("/", async (c) => {
         startDate: entry.startDate,
         endDate: entry.endDate,
         roleContext: entry.roleContext,
-        seedExperienceIds: entry.experienceIds,
       };
     }),
     experienceIndex,

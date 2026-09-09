@@ -23,7 +23,7 @@ Result quality depends entirely on the user's prompt authoring and the capabilit
 
 A generation run combines:
 
-**Job Description** → **Filtering** → **Verdict** (optional) → **Combine** (per-run profile, companies, experiences, language, emphasis) → **Generate** → **Evaluate** (optional)
+**Job Description** → **Filtering** → **Verdict** (optional) → **Combine** (per-run profile, companies, experiences, emphasis) → **Generate** → **Evaluate** (optional)
 
 ```text
 Job Description → Filtering → Verdict? → Combine → Generate → Evaluate?
@@ -31,7 +31,7 @@ Job Description → Filtering → Verdict? → Combine → Generate → Evaluate
 
 1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
 2. **Verdict** (when **Do Verdict** is on) — Run AI Verdict on the filtered JD; the Markdown result is the scoring rubric for generation and evaluation.
-3. **Combine** — For this run only: choose one profile, résumé output language, optional **Run guidance** (emphasis), and included companies via a card grid (include toggle, dual-thumb period slider over a 10-year window, inline role context). Experience selection and **Suggest experiences** are deferred for this phase.
+3. **Combine** — For this run only: choose one profile, optional **Run guidance** (emphasis), included companies via a card grid (include toggle, dual-thumb period slider over a 10-year window, inline role context), and link shared **Experiences** to each company via **Suggest experiences** (**Keyword guided** with comma-separated steering keywords, or **Auto** from job/Verdict only). Review AI suggestions (rationale and warnings) before **Apply**.
 4. **Generate** — Generate the résumé from the job context and the Combine snapshot.
 5. **Evaluate** (when **Do Evaluate** is on) — Score the generated résumé against the same Verdict dimensions, then download the résumé.
 
@@ -41,7 +41,7 @@ Company and Experience fields are resume-generation prompts. Generation multipli
 
 * **Company** holds scene only (industry, product, customer, domain, stack, snapshot scale). Personal achievements and before→after metrics do not belong here.
 * **Experience** holds one capability (STAR). Category names the capability (stack suffix only when keeping intentional variants). Outcome numbers stay on the card that produced them. Do not store routing instructions (“use when the JD asks for X”) in Actions. Shared STAR fields must not name employers; employer context lives on the Combine company entry.
-* **Combine** (session-only, not saved as a workspace preset) chooses profile, résumé company order, which cards attach to which company, output language, and optional run emphasis. Linking a card to a company asserts that work happened there.
+* **Combine** (session-only, not saved as a workspace preset) chooses profile, résumé company order, which cards attach to which company, and optional run emphasis. Linking uses **Suggest experiences** (**Keyword guided** or **Auto**). Résumé output language is configured in Settings **Generation**, not on the Combine step. Linking a card to a company asserts that work happened there.
 * **Prompts** (Verdict / Generate / Evaluate) say how to read the JD and write/score the résumé. They do not add facts. Run-specific tailoring uses Combine **Run guidance** (`emphasis` on the Combine snapshot).
 
 Authoring criteria, good/bad examples, stack-variant rules, and the mapping to user-defined prompts: [`docs/workspace-authoring.md`](./workspace-authoring.md).
@@ -81,9 +81,9 @@ Aligned with the product flow above:
 3. Allow the user to review the AI Verdict result on the **Verdict** step (when **Do Verdict** is on).
 4. Generate a Resume based on:
 
-   * The **Combine** snapshot for this run (profile, ordered company entries with period, role context, and linked experiences, plus résumé output language and optional emphasis)
+   * The **Combine** snapshot for this run (profile, ordered company entries with period, role context, and linked experiences, plus optional emphasis)
    * **Job context for tailoring:** when **Do Verdict** is enabled, the accepted **AI Verdict** Markdown (replacing the raw job description); when **Do Verdict** is disabled, the noise-filtered job description from the Job step. Verdict Prompt sections and extracted fields directly affect what the generator sees and thus resume quality.
-   * The Combine step’s résumé output language
+   * The user’s saved **Résumé Language** from Settings **Generation**
 5. Allow the user to review and edit the generated Resume.
 6. Allow the user to download the final Resume as:
 
@@ -193,16 +193,18 @@ Aligned with the product flow above:
   * Previous-step content by current step (respecting **Do Verdict** / **Do Evaluate** flags): **Verdict** ← noise-filtered Job Description; **Combine** ← AI Verdict Markdown when Do Verdict is on, otherwise noise-filtered Job Description; **Generate** ← read-only Combine summary (profile name, language, emphasis, included company entries with dates and role context — not the Combine editors); **Evaluate** ← generated résumé Markdown preview
   * **Job** **Next**: validates the Job Description (inline error if empty); runs **Noise Filter** silently; advances to Verdict or Combine (does not run AI on this step)
   * **Verdict** (when enabled): auto-runs **AI Verdict** on entry with the noise-filtered JD and saved Verdict Prompt; shows result Markdown; **Next** advances to Combine when complete
-  * **Combine**: choose profile, résumé language, optional **Run guidance**, and included companies (card grid with include toggle, period slider, inline role context); company selection is enabled only after a profile is selected; work period slider range is from **January of the profile graduation year** through the present; **Next** validates inline (profile with graduation year, ≥1 included company with period + role context; no experience requirement) then advances to Generate (resume generation runs on the Generate step)
-  * Session remembers step, Job, Verdict, Combine (including Run guidance), resume JSON, and evaluation until **New** or Process settings change
+  * **Combine**: choose profile, optional **Run guidance**, included companies (card grid with include toggle, period slider, inline role context), and **Suggest experiences** to link capability cards per company (**Keyword guided** requires steering keywords; **Auto** uses job/Verdict only); suggestion dialog shows rationale and warnings before **Apply**; company selection is enabled only after a profile is selected; work period slider range is from **January of the profile graduation year** through the present; **Next** validates inline (profile with graduation year, ≥1 included company with period + role context; no experience requirement) then advances to Generate (resume generation runs on the Generate step)
+  * Session remembers step, Job, Verdict, Combine (including Run guidance), resume JSON, and evaluation until **New** or Generation settings change
   * **Generate** and **Evaluate** steps: auto-run resume generation and evaluation respectively when needed; Markdown preview; DOCX download on Evaluate (or Generate when Do Evaluate is off)
 * **Settings**
   * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here
   * Theme (Dark / Light)
   * **Language** (English / Korean; English default; applies immediately and is remembered per browser)
-  * **Process**: **Do Verdict** and **Do Evaluate** checkboxes (both default on); Save persists per user; changing Process flags resets an in-progress Generate session
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
+  * **Generation** (`/settings/generation`) — centered in a readable column; sidebar between Environment and Prompts
+  * **Process**: **Do Verdict** and **Do Evaluate** checkboxes (both default on)
+  * **Résumé Language**: default résumé output language for Generate (`en`, `ja`, `zh-TW`, `zh-CN`, `ko`; default `en`); one **Save** persists Process and Résumé Language per user; changing either clears an in-progress Generate session
   * **Prompts** — see **Prompts** above (`/settings/prompts`)
 * **AI Usage History** — A fixed bottom-right round button (history / clock icon) on every authenticated page opens a right-side drawer with the user’s AI usage history table. Columns: No, AI, Model, Generate Type, Input Token, Output Token, Created At. Newest first; 100 rows per page with pagination stuck to the bottom of the drawer. Clicking a row opens a nested overlapping drawer on the right with **Input** and **Output** tabs (**Input** is the default); the active tab’s text is previewed as Markdown (`AiVerdictMarkdown`); a **Copy** icon copies the raw stored text for the active tab (not the rendered preview) and toasts success or failure. Clicking outside a drawer (or its Close control) collapses the topmost drawer; closing the history drawer also closes the detail drawer.
 * **Dialogs** — View-only dialogs (detail/read-only, delete confirms) close when the user clicks the outer backdrop. Add/Edit form dialogs do not close on backdrop click; the user must use Close (X) or the main action (Apply/Save).

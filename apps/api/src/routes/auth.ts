@@ -43,6 +43,7 @@ authRoutes.post("/register", async (c) => {
         create: {
           doVerdict: DEFAULT_GENERATION_PROCESS.doVerdict,
           doEvaluate: DEFAULT_GENERATION_PROCESS.doEvaluate,
+          resumeLanguage: DEFAULT_GENERATION_PROCESS.resumeLanguage,
         },
       },
       prompt: {

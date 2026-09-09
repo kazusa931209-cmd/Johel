@@ -21,6 +21,7 @@ export const ko: MessageTree = {
       workflows: "작업흐름",
       generate: "생성",
       environment: "환경",
+      generation: "생성",
       prompts: "프롬프트",
     },
   },
@@ -50,7 +51,7 @@ export const ko: MessageTree = {
   settings: {
     environment: {
       title: "환경",
-      description: "색상, 언어, AI 대리인, 생성공정을 설정",
+      description: "색상, 언어, AI 대리인을 설정",
       theme: {
         title: "색상",
         dark: "어두움",
@@ -76,6 +77,12 @@ export const ko: MessageTree = {
         providerCursor: "Cursor AI Agent",
         providerOpenai: "OpenAI",
       },
+    },
+    generation: {
+      title: "생성",
+      description: "생성공정 단계와 리력서 출력언어를 설정합니다.",
+      save: "보관",
+      saving: "보관중…",
       process: {
         title: "생성공정",
         description: "생성공정 과정에 실행할 AI단계를 선택합니다.",
@@ -86,8 +93,12 @@ export const ko: MessageTree = {
         recommendationThreshold: "추천 림계값",
         thresholdHint:
           "0~100 사이의 정수입니다. 최고점수 작업흐름이 이값 이상일때만 자동선택됩니다. 기본값: 80",
-        save: "보관",
-        saving: "보관중…",
+      },
+      resumeLanguage: {
+        title: "리력서 출력언어",
+        description:
+          "생성된 리력서의 기본 출력언어입니다. 실행 전에 설정에서 변경하십시오.",
+        label: "리력서 출력언어",
       },
     },
     prompts: {
@@ -450,7 +461,7 @@ export const ko: MessageTree = {
     combine: {
       title: "조합",
       description:
-        "이번생성에 사용할 개인정보, 리력서 출력언어, 포함할 회사, 실행지침을 선택합니다.",
+        "이번생성에 사용할 개인정보, 경험 연결, 포함할 회사, 실행지침을 선택합니다.",
       profile: "개인정보",
       language: "리력서 출력언어",
       emphasis: "실행지침",
@@ -481,12 +492,28 @@ export const ko: MessageTree = {
       suggestExperiences: "경험 제안",
       suggesting: "제안중…",
       suggestMode: "제안방식",
-      modeGuided: "사용자선택",
+      experiencesSection: "경험",
+      experiencesSectionHint:
+        "포함된 각 회사에 공유 경험 카드를 연결합니다. 경험 제안으로 AI 매핑을 실행할 수 있습니다.",
+      modeGuided: "키워드 안내",
       modeAuto: "AI선택",
       modeGuidedHint:
-        "현재 회사항목과 선택한 경험을 기초자료로 사용합니다. AI가 추가·제외를 제안합니다.",
+        "키워드(예: AWS, Blockchain, Senior)를 입력합니다. AI가 키워드, 직업광고문, 회사 역할맥락을 바탕으로 경험 카드를 선택합니다.",
       modeAutoHint:
-        "직업광고문과 검토 결과만으로 경험 풀 인덱스에서 회사별 매핑을 제안합니다.",
+        "직업광고문과 검토 결과만으로 경험 풀에서 회사별 매핑을 제안합니다.",
+      guidanceKeywords: "안내 키워드",
+      guidanceKeywordsHint:
+        "이번 실행에서 강조할 역량을 쉼표로 구분하여 입력합니다.",
+      guidanceKeywordsPlaceholder: "예: AWS, Blockchain, Senior, payments API",
+      suggestVerdictRequired:
+        "[검토]를 실행하는 경우 경험 제안 전에 검토 단계를 완료하여주십시오.",
+      suggestionDialogTitle: "경험 제안",
+      suggestionExperiences: "제안된 카드",
+      suggestionExperienceMissing: "알 수 없는 경험",
+      suggestionNoExperiences: "이 회사에 제안된 경험이 없습니다.",
+      suggestionRationale: "근거",
+      suggestionApply: "적용",
+      linkedExperiences: "연결된 경험",
     },
     generateStep: {
       noResume:
@@ -634,6 +661,8 @@ export const ko: MessageTree = {
     aiAgentSaved: "AI대리인 설정을 보관했습니다.",
     processSaveFailed: "보관에 실패했습니다.",
     processSaved: "공정설정을 보관했습니다.",
+    generationSaveFailed: "보관에 실패했습니다.",
+    generationSaved: "생성설정을 보관했습니다.",
     promptsLoadFailed: "프롬프트를 적재하지 못했습니다.",
     promptSaveFailed: "보관에 실패했습니다.",
     promptSaved: "{label}을(를) 보관했습니다.",
@@ -716,6 +745,7 @@ export const ko: MessageTree = {
     graduationYearRequired: "졸업년도는 필수입니다.",
     profileGraduationYearRequired:
       "회사를 선택하기 전에 선택한 개인정보에 졸업년도가 있어야 합니다.",
+    experienceGuidanceKeywordsRequired: "안내 키워드는 필수입니다.",
     combineCompaniesRequired: "회사항목을 하나 이상 추가해주십시오.",
     companyRequired: "회사를 하나 선택해주십시오.",
     startDateRequired: "시작일은 필수입니다.",

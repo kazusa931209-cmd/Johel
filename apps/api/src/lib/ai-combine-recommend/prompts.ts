@@ -20,10 +20,10 @@ Rules:
 - Pick 2–5 experience cards per company when possible; fewer only when the JD has little overlap.
 - Do not link stack variants of the same capability to the same company (e.g. NestJS and Go twins for the same story).
 - Only use experience ids from the index.
-- In guided mode, keep user seed experienceIds and add/remove only when the JD supports it.
-- In auto mode, choose the best set per company from the full index.
+- In guided mode, prioritize experience cards that match the user's guidance keywords (category and problem text) while still fitting the job context and each company's role context. Keywords steer emphasis; the JD still constrains relevance.
+- In auto mode, choose the best set per company from the full index using job context only.
 - Do not invent experience ids.
-- warnings: note stack-variant conflicts, empty selections, or thin JD overlap.
+- warnings: note stack-variant conflicts, empty selections, keyword/JD mismatches, or thin overlap.
 
 Return ONLY valid JSON matching the schema. Do NOT wrap in a code fence.
 
@@ -51,7 +51,6 @@ export function buildCombineRecommendUserPrompt(
       startDate: string;
       endDate: string;
       roleContext: string;
-      seedExperienceIds: string[];
     }>;
   },
 ): string {
@@ -71,11 +70,11 @@ export function buildCombineRecommendUserPrompt(
   const companiesBlock = input.companies
     .map(
       (company) =>
-        `### ${company.name} (${company.companyId})\nPeriod: ${company.startDate} – ${company.endDate}\nRole context: ${company.roleContext}\nSeed experience ids: ${company.seedExperienceIds.join(", ") || "(none)"}`,
+        `### ${company.name} (${company.companyId})\nPeriod: ${company.startDate} – ${company.endDate}\nRole context: ${company.roleContext}`,
     )
     .join("\n\n");
 
-  return [
+  const lines = [
     `Mode: **${input.mode}**`,
     `Profile id: ${input.profileId}`,
     "",
@@ -86,5 +85,16 @@ export function buildCombineRecommendUserPrompt(
     "",
     "## Company entries",
     companiesBlock,
-  ].join("\n");
+  ];
+
+  if (input.mode === "guided" && input.guidanceKeywords?.trim()) {
+    lines.splice(
+      3,
+      0,
+      `Guidance keywords: ${input.guidanceKeywords.trim()}`,
+      "",
+    );
+  }
+
+  return lines.join("\n");
 }

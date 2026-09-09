@@ -22,7 +22,6 @@ export type CombineRecommendRunInput = CombineRecommendRequest & {
     startDate: string;
     endDate: string;
     roleContext: string;
-    seedExperienceIds: string[];
   }>;
   experienceIndex: Array<{
     id: string;

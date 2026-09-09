@@ -122,9 +122,12 @@ export function saveSettings(provider: AiProviderId, apiKey: string) {
   });
 }
 
+export type ResumeLanguage = "en" | "ja" | "zh-TW" | "zh-CN" | "ko";
+
 export type GenerationProcessSettings = {
   doVerdict: boolean;
   doEvaluate: boolean;
+  resumeLanguage: ResumeLanguage;
 };
 
 export function getGenerationProcess() {
@@ -134,6 +137,7 @@ export function getGenerationProcess() {
 export function saveGenerationProcess(payload: {
   doVerdict: boolean;
   doEvaluate: boolean;
+  resumeLanguage: ResumeLanguage;
 }) {
   return request<GenerationProcessSettings>("/settings/process", {
     method: "PUT",
@@ -208,6 +212,7 @@ export type CombineRecommendRequest = {
   jobDescription: string;
   acceptedMarkdown?: string;
   mode: CombineRecommendMode;
+  guidanceKeywords?: string;
   profileId: string;
   companies: CombineSnapshot["companies"];
 };

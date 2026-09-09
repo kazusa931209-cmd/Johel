@@ -19,6 +19,7 @@ export const en = {
       workflows: "Workflows",
       generate: "Generate",
       environment: "Environment",
+      generation: "Generation",
       prompts: "Prompts",
     },
   },
@@ -48,7 +49,7 @@ export const en = {
   settings: {
     environment: {
       title: "Environment",
-      description: "Theme, language, AI agent, and generation process options.",
+      description: "Theme, language, and AI agent options.",
       theme: {
         title: "Theme",
         dark: "Dark",
@@ -74,6 +75,12 @@ export const en = {
         providerCursor: "Cursor AI Agent",
         providerOpenai: "OpenAI",
       },
+    },
+    generation: {
+      title: "Generation",
+      description: "Process steps and résumé output language for Generate.",
+      save: "Save",
+      saving: "Saving…",
       process: {
         title: "Process",
         description: "Choose which AI steps run during Generate.",
@@ -84,8 +91,12 @@ export const en = {
         recommendationThreshold: "Recommendation threshold",
         thresholdHint:
           "Integer from 0 to 100. The best-matching workflow is selected only when its score meets or exceeds this value.",
-        save: "Save",
-        saving: "Saving…",
+      },
+      resumeLanguage: {
+        title: "Résumé Language",
+        description:
+          "Default output language for generated résumés. Change in Settings before starting a run.",
+        label: "Résumé language",
       },
     },
     prompts: {
@@ -450,7 +461,7 @@ export const en = {
     combine: {
       title: "Combine",
       description:
-        "Choose a profile, résumé output language, run guidance, and included companies for this run.",
+        "Choose a profile, link experiences, run guidance, and included companies for this run.",
       profile: "Profile",
       language: "Résumé language",
       emphasis: "Run guidance",
@@ -481,12 +492,28 @@ export const en = {
       suggestExperiences: "Suggest experiences",
       suggesting: "Suggesting…",
       suggestMode: "Suggestion mode",
-      modeGuided: "Guided",
+      experiencesSection: "Experiences",
+      experiencesSectionHint:
+        "Link shared capability cards to each included company. Use Suggest experiences to map your pool with AI.",
+      modeGuided: "Keyword guided",
       modeAuto: "Auto",
       modeGuidedHint:
-        "Uses your current company entries and experience picks as seeds; AI suggests additions or removals.",
+        "Enter keywords (e.g. AWS, Blockchain, Senior). AI picks matching cards from your pool using keywords, the job, and each company's role context.",
       modeAutoHint:
-        "AI maps experiences from your pool index using the job and Verdict only.",
+        "AI maps experiences from your pool using the job and Verdict only.",
+      guidanceKeywords: "Guidance keywords",
+      guidanceKeywordsHint:
+        "Comma-separated words or phrases that steer which capabilities to emphasize for this run.",
+      guidanceKeywordsPlaceholder: "e.g. AWS, Blockchain, Senior, payments API",
+      suggestVerdictRequired:
+        "Complete the Verdict step before suggesting experiences when Do Verdict is enabled.",
+      suggestionDialogTitle: "Experience suggestions",
+      suggestionExperiences: "Suggested cards",
+      suggestionExperienceMissing: "Unknown experience",
+      suggestionNoExperiences: "No experiences suggested for this company.",
+      suggestionRationale: "Rationale",
+      suggestionApply: "Apply",
+      linkedExperiences: "Linked experiences",
     },
     generateStep: {
       noResume:
@@ -634,6 +661,8 @@ export const en = {
     aiAgentSaved: "AI Agent settings saved.",
     processSaveFailed: "Save failed.",
     processSaved: "Process settings saved.",
+    generationSaveFailed: "Save failed.",
+    generationSaved: "Generation settings saved.",
     promptsLoadFailed: "Failed to load prompts.",
     promptSaveFailed: "Save failed.",
     promptSaved: "{label} saved.",
@@ -716,6 +745,7 @@ export const en = {
     graduationYearRequired: "Graduation year is required.",
     profileGraduationYearRequired:
       "The selected profile must have a graduation year before choosing companies.",
+    experienceGuidanceKeywordsRequired: "Guidance keywords are required.",
     combineCompaniesRequired: "Add at least one company entry.",
     companyRequired: "Select one company.",
     startDateRequired: "Start is required.",

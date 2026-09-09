@@ -7,7 +7,7 @@ import {
   RUN_LANGUAGES,
   type CombineSnapshot,
 } from "@/components/generate/combine-types";
-import { listCompanies, listProfiles } from "@/lib/api";
+import { listCompanies, listExperiences, listProfiles } from "@/lib/api";
 import { fullName } from "@/lib/profile";
 
 type GenerateCombineSummaryProps = {
@@ -28,28 +28,41 @@ export function GenerateCombineSummary({
   const [companyNameById, setCompanyNameById] = useState<Map<string, string>>(
     new Map(),
   );
+  const [categoryById, setCategoryById] = useState<Map<string, string>>(
+    new Map(),
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listProfiles("", null), listCompanies("", null)]).then(
-      ([profilesRes, companiesRes]) => {
-        if (cancelled) return;
+    Promise.all([
+      listProfiles("", null),
+      listCompanies("", null),
+      listExperiences("", null),
+    ]).then(([profilesRes, companiesRes, experiencesRes]) => {
+      if (cancelled) return;
 
-        const profile = (profilesRes.data?.items ?? []).find(
-          (item) => item.id === combine.profileId,
-        );
-        setProfileName(
-          profile ? fullName(profile.firstName, profile.lastName) : null,
-        );
-        setCompanyNameById(
-          new Map(
-            (companiesRes.data?.items ?? []).map((item) => [item.id, item.name]),
-          ),
-        );
-        setLoading(false);
-      },
-    );
+      const profile = (profilesRes.data?.items ?? []).find(
+        (item) => item.id === combine.profileId,
+      );
+      setProfileName(
+        profile ? fullName(profile.firstName, profile.lastName) : null,
+      );
+      setCompanyNameById(
+        new Map(
+          (companiesRes.data?.items ?? []).map((item) => [item.id, item.name]),
+        ),
+      );
+      setCategoryById(
+        new Map(
+          (experiencesRes.data?.items ?? []).map((item) => [
+            item.id,
+            item.category,
+          ]),
+        ),
+      );
+      setLoading(false);
+    });
 
     return () => {
       cancelled = true;
@@ -105,6 +118,20 @@ export function GenerateCombineSummary({
                   <p className="mt-2 whitespace-pre-wrap text-muted">
                     {entry.roleContext}
                   </p>
+                ) : null}
+                {entry.experienceIds.length > 0 ? (
+                  <div className="mt-2">
+                    <p className="text-xs font-medium text-muted">
+                      {t("generate.combine.linkedExperiences")}
+                    </p>
+                    <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
+                      {entry.experienceIds.map((id) => (
+                        <li key={id}>
+                          {categoryById.get(id) ?? id}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ) : null}
               </div>
             ))
