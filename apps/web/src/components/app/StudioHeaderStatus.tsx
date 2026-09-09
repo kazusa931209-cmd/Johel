@@ -3,22 +3,11 @@
 import Link from "next/link";
 import { useT } from "@/components/app/LocaleProvider";
 import { useGenerateStatus } from "@/components/app/GenerateStatusProvider";
-import { GENERATE_STEP_LABEL_KEYS } from "@/lib/generate-step-labels";
-import type { GenerationLifecycleStatus } from "@/lib/generation-lifecycle-status";
-
-function lifecycleStatusLabel(
-  t: ReturnType<typeof useT>,
-  status: GenerationLifecycleStatus,
-): string {
-  switch (status) {
-    case "finalized":
-      return t("history.status.finalized");
-    case "completed":
-      return t("history.status.completed");
-    case "in_progress":
-      return t("history.status.inProgress");
-  }
-}
+import { HistoryStepsCell } from "@/components/generate/HistoryStepsCell";
+import {
+  GENERATE_STEP_LABEL_KEYS,
+  isGenerateStep,
+} from "@/lib/generate-step-labels";
 
 export function StudioHeaderStatus() {
   const t = useT();
@@ -30,47 +19,37 @@ export function StudioHeaderStatus() {
     );
   }
 
-  const stepLabel =
-    status.activeStep != null
-      ? t(GENERATE_STEP_LABEL_KEYS[status.activeStep])
-      : null;
-
-  const lifecycleLabel =
-    status.lifecycleStatus != null
-      ? lifecycleStatusLabel(t, status.lifecycleStatus)
-      : null;
-
-  const historyHref = `/history/${status.generationPublicId}`;
+  const processedStepLabel =
+    status.processedStep != null && isGenerateStep(status.processedStep)
+      ? t(GENERATE_STEP_LABEL_KEYS[status.processedStep])
+      : t("nav.header.statusStepUnknown");
 
   return (
     <div
-      className="flex max-w-full min-w-0 items-center justify-center gap-2 text-sm"
+      className="flex max-w-full min-w-0 flex-wrap items-center justify-center gap-4"
       title={t("nav.header.statusTitle", {
         id: status.generationPublicId,
-        step: stepLabel ?? t("nav.header.statusStepUnknown"),
+        step: processedStepLabel,
       })}
     >
-      <Link
-        href={historyHref}
-        className="truncate font-mono text-foreground hover:underline"
-      >
-        {status.generationPublicId}
-      </Link>
-      {stepLabel ? (
-        <>
-          <span className="shrink-0 text-muted" aria-hidden>
-            ·
-          </span>
-          <span className="shrink-0 text-muted">{stepLabel}</span>
-        </>
-      ) : null}
-      {lifecycleLabel ? (
-        <>
-          <span className="shrink-0 text-muted" aria-hidden>
-            ·
-          </span>
-          <span className="shrink-0 text-muted">{lifecycleLabel}</span>
-        </>
+      <div className="flex items-center gap-2">
+        <span className="shrink-0 pt-0.5 text-sm text-muted">
+          {t("nav.header.statusCurrent")}: 
+        </span>
+        <Link
+          href="/"
+          className="shrink-0 truncate font-mono text-sm text-foreground hover:underline pt-0.5"
+        >
+          {status.generationPublicId}
+        </Link>
+      </div>
+      {status.processedStep != null ? (
+        <HistoryStepsCell
+          processedStep={status.processedStep}
+          doVerdict={status.doVerdict}
+          doEvaluate={status.doEvaluate}
+          finalized={status.finalized}
+        />
       ) : null}
     </div>
   );

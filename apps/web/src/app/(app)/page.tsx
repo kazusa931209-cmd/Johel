@@ -25,7 +25,6 @@ import {
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
 import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
-import { resolvePersistedGenerationStatus } from "@/lib/generation-lifecycle-status";
 import {
   buildEvaluationInputKey,
   buildGenerationInputKey,
@@ -251,20 +250,18 @@ export default function GeneratePage() {
 
   useEffect(() => {
     if (!sessionReady || loading || !generationId) return;
-    const status = resolvePersistedGenerationStatus(
-      { finalized, evaluationMarkdown, resume },
-      processSettings.doEvaluate,
-    );
     const timer = window.setTimeout(() => {
-      void saveSnapshot(status);
+      void saveSnapshot(finalized ? true : undefined);
     }, 500);
     return () => window.clearTimeout(timer);
   }, [
+    combine,
     evaluationMarkdown,
     finalized,
     generationId,
+    job,
     loading,
-    processSettings.doEvaluate,
+    normalizedActiveStep,
     resume,
     saveSnapshot,
     sessionReady,
@@ -272,7 +269,7 @@ export default function GeneratePage() {
 
   const handleResumeDownloaded = useCallback(async () => {
     markFinalized();
-    await saveSnapshot("finalized");
+    await saveSnapshot(true);
     if (generationPublicId) {
       notifyGenerationFinalized(generationPublicId);
     }

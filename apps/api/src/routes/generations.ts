@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { deriveProcessedStep } from "../lib/generation-processed-step.js";
 import { allocateGenerationPublicId } from "../lib/generation-public-id.js";
 import {
   listResponsePageSize,
@@ -11,7 +12,6 @@ import { requireUser } from "../lib/session.js";
 
 const PAGE_SIZE = 10;
 
-const GENERATION_STATUSES = ["in_progress", "completed", "finalized"] as const;
 const GENERATION_STEPS = [
   "Job",
   "Verdict",
@@ -27,32 +27,47 @@ const updateSchema = z.object({
   verdictMarkdown: z.string().nullable().optional(),
   resume: z.record(z.unknown()).nullable().optional(),
   evaluationMarkdown: z.string().nullable().optional(),
-  status: z.enum(GENERATION_STATUSES).optional(),
+  finalized: z.boolean().optional(),
+});
+
+const resumeSchema = z.object({
+  archive: updateSchema.extend({ generationId: z.string() }).optional(),
 });
 
 function toListItem(generation: {
   id: string;
   publicId: string;
-  status: string;
+  finalized: boolean;
+  activeStep: string;
+  jobJson: string;
+  combineJson: string;
+  verdictMarkdown: string | null;
+  resumeJson: string | null;
+  evaluationMarkdown: string | null;
+  doVerdict: boolean;
+  doEvaluate: boolean;
   inputToken: number;
   outputToken: number;
-  createdAt: Date;
+  updatedAt: Date;
 }) {
   return {
     id: generation.id,
     publicId: generation.publicId,
-    status: generation.status,
+    finalized: generation.finalized,
+    processedStep: deriveProcessedStep(generation),
+    doVerdict: generation.doVerdict,
+    doEvaluate: generation.doEvaluate,
     inputToken: generation.inputToken,
     outputToken: generation.outputToken,
     tokenUsed: generation.inputToken + generation.outputToken,
-    createdAt: generation.createdAt.toISOString(),
+    updatedAt: generation.updatedAt.toISOString(),
   };
 }
 
 function toDetailResponse(generation: {
   id: string;
   publicId: string;
-  status: string;
+  finalized: boolean;
   inputToken: number;
   outputToken: number;
   activeStep: string;
@@ -95,7 +110,7 @@ function toDetailResponse(generation: {
   return {
     id: generation.id,
     publicId: generation.publicId,
-    status: generation.status,
+    finalized: generation.finalized,
     inputToken: generation.inputToken,
     outputToken: generation.outputToken,
     tokenUsed: generation.inputToken + generation.outputToken,
@@ -148,7 +163,6 @@ generationsRoutes.post("/start", async (c) => {
     data: {
       publicId,
       userId: user.id,
-      status: "in_progress",
       activeStep: "Job",
       jobJson: JSON.stringify({
         method: "manual",
@@ -196,16 +210,8 @@ generationsRoutes.put("/:id", async (c) => {
     return c.json({ error: "Invalid generation snapshot." }, 400);
   }
 
-  const requestedStatus = parsed.data.status;
-  const nextStatus =
-    existing.status === "finalized"
-      ? "finalized"
-      : requestedStatus === "finalized"
-        ? "finalized"
-        : requestedStatus ??
-          (existing.status === "completed" || existing.status === "finalized"
-            ? existing.status
-            : "in_progress");
+  const nextFinalized =
+    existing.finalized || parsed.data.finalized === true;
 
   const generation = await prisma.generation.update({
     where: { id: existing.id },
@@ -227,9 +233,92 @@ generationsRoutes.put("/:id", async (c) => {
         parsed.data.evaluationMarkdown !== undefined
           ? parsed.data.evaluationMarkdown
           : existing.evaluationMarkdown,
-      status: nextStatus,
+      finalized: nextFinalized,
     },
   });
+
+  return c.json(toDetailResponse(generation));
+});
+
+generationsRoutes.post("/:publicId/resume", async (c) => {
+  const user = await requireUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const publicId = c.req.param("publicId");
+  const target = await prisma.generation.findFirst({
+    where: { userId: user.id, publicId },
+  });
+  if (!target) {
+    return c.json({ error: "Generation not found." }, 404);
+  }
+
+  const body = await c.req.json().catch(() => null);
+  const parsed = resumeSchema.safeParse(body ?? {});
+  if (!parsed.success) {
+    return c.json({ error: "Invalid resume request." }, 400);
+  }
+
+  if (parsed.data.archive) {
+    const archive = parsed.data.archive;
+    const current = await prisma.generation.findFirst({
+      where: { id: archive.generationId, userId: user.id },
+    });
+    if (current && current.id !== target.id) {
+      const archiveFinalized =
+        current.finalized || archive.finalized === true;
+
+      await prisma.generation.update({
+        where: { id: current.id },
+        data: {
+          activeStep: archive.activeStep,
+          jobJson: JSON.stringify(archive.job),
+          combineJson: JSON.stringify(archive.combine),
+          verdictMarkdown:
+            archive.verdictMarkdown !== undefined
+              ? archive.verdictMarkdown
+              : current.verdictMarkdown,
+          resumeJson:
+            archive.resume !== undefined
+              ? archive.resume
+                ? JSON.stringify(archive.resume)
+                : null
+              : current.resumeJson,
+          evaluationMarkdown:
+            archive.evaluationMarkdown !== undefined
+              ? archive.evaluationMarkdown
+              : current.evaluationMarkdown,
+          finalized: archiveFinalized,
+        },
+      });
+    }
+  }
+
+  const generation = await prisma.generation.update({
+    where: { id: target.id },
+    data: { finalized: false },
+  });
+
+  return c.json(toDetailResponse(generation));
+});
+
+generationsRoutes.get("/current", async (c) => {
+  const user = await requireUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const generation = await prisma.generation.findFirst({
+    where: {
+      userId: user.id,
+      finalized: false,
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+  if (!generation) {
+    return c.json(null);
+  }
 
   return c.json(toDetailResponse(generation));
 });

@@ -502,8 +502,6 @@ export function runAiEvaluate(
   });
 }
 
-export type GenerationStatus = "in_progress" | "completed" | "finalized";
-
 export type GenerationStartResult = {
   id: string;
   publicId: string;
@@ -512,11 +510,14 @@ export type GenerationStartResult = {
 export type GenerationListItem = {
   id: string;
   publicId: string;
-  status: GenerationStatus;
+  finalized: boolean;
+  processedStep: string;
+  doVerdict: boolean;
+  doEvaluate: boolean;
   inputToken: number;
   outputToken: number;
   tokenUsed: number;
-  createdAt: string;
+  updatedAt: string;
 };
 
 export type GenerationList = {
@@ -529,7 +530,7 @@ export type GenerationList = {
 export type GenerationDetail = {
   id: string;
   publicId: string;
-  status: GenerationStatus;
+  finalized: boolean;
   inputToken: number;
   outputToken: number;
   tokenUsed: number;
@@ -556,7 +557,7 @@ export type GenerationUpdatePayload = {
   verdictMarkdown?: string | null;
   resume?: import("@johel/resume").GeneratedResume | null;
   evaluationMarkdown?: string | null;
-  status?: GenerationStatus;
+  finalized?: boolean;
 };
 
 export function startGeneration() {
@@ -580,6 +581,24 @@ export function listGenerations(q: string, page: number | null = 1) {
 
 export function getGeneration(publicId: string) {
   return request<GenerationDetail>(`/generations/${publicId}`);
+}
+
+export function getCurrentGeneration() {
+  return request<GenerationDetail | null>("/generations/current");
+}
+
+export type GenerationResumePayload = {
+  archive?: GenerationUpdatePayload & { generationId: string };
+};
+
+export function resumeGeneration(
+  publicId: string,
+  payload: GenerationResumePayload = {},
+) {
+  return request<GenerationDetail>(`/generations/${publicId}/resume`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export type ExperienceAdvisePlacement =

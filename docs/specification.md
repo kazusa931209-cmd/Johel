@@ -200,8 +200,8 @@ Aligned with the product flow above:
   * **Generate** and **Evaluate** steps: auto-run resume generation and evaluation respectively when needed; Markdown preview; DOCX download on Evaluate (or Generate when Do Evaluate is off)
 * **History** (`/history`)
   * Read-only list of saved generation runs; keyword search matches Job Description text and the Verdict / Generate / Evaluate prompts snapshotted at run start
-  * Table columns: **Generation ID**, **Token Used**, **Created At**, **Status** (`In progress` / `Completed`); 10 rows per page; row click opens a dedicated detail page (not a dialog)
-  * Detail page (`/history/[publicId]`): same timeline and two-column step layout as Generate, fully read-only (browse steps only; no edits or AI re-run); **Download** (not **+ New**) when status is **Completed** and a resume was generated
+  * Table columns: **Generation ID**, **Token Used**, **Steps** (all timeline steps for that run’s process settings plus **Download**; completed steps highlighted; **Download** highlighted when the user downloaded the resume DOCX), **Updated At**; 10 rows per page; row click opens a wide read-only detail drawer; drawer **Resume** is always available
+  * Detail drawer (from `/history` list or `?publicId=`): same timeline and two-column step layout as Generate, fully read-only (browse steps only; no edits or AI re-run); **Download** and **Resume** round icon buttons when applicable
 * **Settings**
   * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here
   * Theme (Dark / Light)
@@ -359,6 +359,10 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-09):** Keyword tiered pool, `loadExperienceAdviseContext`, company batch markdown, deterministic direct experience save. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-09-phase-67-non-embedding-ai-optimization.md`](./plans/2026-09-09-phase-67-non-embedding-ai-optimization.md).
 * [x] **Phase 68 — AI optimization: experience embedding retrieval** — OpenAI-only provider; `text-embedding-3-small` stored per experience; in-memory cosine top-K on Suggest with user pool-depth presets (compact / normal / thorough / full); no top-p.
   * **Outcome (2026-09-09):** `experienceEmbeddings` table, embedding upsert on save, Generation settings pool depth, Cursor provider removed. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-09-phase-68-experience-embedding-retrieval.md`](./plans/2026-09-09-phase-68-experience-embedding-retrieval.md).
+* [x] **Phase 69 — Resume generation from History** — On **Run / History**, each row (except the active generation) has a **Resume** action. Confirming saves the current Generate session to History and restores the selected generation as the active session on **Generate**.
+  * **Outcome (2026-09-10):** `POST /generations/:publicId/resume`, History table Resume button + confirm dialog, `resumeGenerationFromHistory`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-69-resume-generation-from-history.md`](./plans/2026-09-10-phase-69-resume-generation-from-history.md).
+* [x] **Phase 70 — History detail drawer** — **Run / History** opens generation detail in a wide side drawer (not a separate page). Remove the table **Resume** action; **Resume** and **Download** stay in the drawer header. Legacy `/history/[publicId]` URLs redirect to `/history?publicId=…`.
+  * **Outcome (2026-09-10):** `GenerationHistoryDrawer`, list row opens drawer via `?publicId`, header status link updated. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-70-history-detail-drawer.md`](./plans/2026-09-10-phase-70-history-detail-drawer.md).
 
 ## Cursor Rules (Documentation Governance)
 

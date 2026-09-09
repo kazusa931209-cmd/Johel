@@ -143,7 +143,7 @@ model Generation {
   publicId           String
   userId             String
   user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status             String
+  finalized          Boolean   @default(false)
   inputToken         Int       @default(0)
   outputToken        Int       @default(0)
   activeStep         String

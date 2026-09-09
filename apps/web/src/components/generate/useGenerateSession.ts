@@ -17,6 +17,7 @@ import {
 } from "@/lib/generate-session";
 import {
   allocateNewGeneration,
+  fetchCurrentGenerationSession,
   persistGenerationSnapshot,
   type GenerationSnapshot,
 } from "@/lib/generation-persistence";
@@ -33,7 +34,7 @@ function withoutResume(session: GenerateSession): GenerateSession {
 
 function toGenerationSnapshot(
   session: GenerateSession,
-  status?: GenerationSnapshot["status"],
+  finalized?: boolean,
 ): GenerationSnapshot | null {
   if (!session.generationId) return null;
   return {
@@ -43,7 +44,7 @@ function toGenerationSnapshot(
     combine: session.combine,
     resume: session.resume,
     evaluationMarkdown: session.evaluationMarkdown,
-    status,
+    ...(finalized === true ? { finalized: true } : {}),
   };
 }
 
@@ -55,16 +56,35 @@ export function useGenerateSession() {
 
   useEffect(() => {
     let cancelled = false;
-    getMe().then((res) => {
+
+    async function bootstrap() {
+      const meRes = await getMe();
       if (cancelled) return;
-      const id = res.data?.id ?? null;
+
+      const id = meRes.data?.id ?? null;
       setUserId(id);
-      if (id) {
-        const loaded = loadGenerateSession(id);
-        if (loaded) setSession(loaded);
+      if (!id) {
+        setReady(true);
+        return;
       }
+
+      const stored = loadGenerateSession(id);
+      if (stored?.generationId) {
+        setSession(stored);
+        setReady(true);
+        return;
+      }
+
+      const restored = await fetchCurrentGenerationSession();
+      if (cancelled) return;
+      if (restored?.generationId) {
+        setSession(restored);
+      }
+
       setReady(true);
-    });
+    }
+
+    void bootstrap();
     return () => {
       cancelled = true;
     };
@@ -106,8 +126,8 @@ export function useGenerateSession() {
   }, [ready, session, userId]);
 
   const saveSnapshot = useCallback(
-    async (status?: GenerationSnapshot["status"]) => {
-      const snapshot = toGenerationSnapshot(session, status);
+    async (finalized?: boolean) => {
+      const snapshot = toGenerationSnapshot(session, finalized);
       if (!snapshot) return;
       await persistGenerationSnapshot(snapshot);
     },

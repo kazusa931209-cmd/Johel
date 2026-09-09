@@ -363,9 +363,9 @@ User browser (:4041)
 
 ### Schema
 
-- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `status` (`in_progress` | `completed` | `finalized`), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps. **`completed`** = Evaluate finished (or Generate finished when Evaluate is disabled); **`finalized`** = user downloaded the resume DOCX.
+- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `finalized` (boolean; `true` when user downloaded the resume DOCX), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps.
 - `AiUsage.generationId` optional FK → `generations.id` (`onDelete: SetNull`); indexed
-- Migration: `20260909100004_generations`
+- Migrations: `20260909100004_generations`, `20260910100007_generation_finalized` (replaces `status` with `finalized` boolean)
 
 ### Public ID
 
@@ -373,22 +373,27 @@ User browser (:4041)
 
 ### API
 
-- `POST /generations/start` — allocate `publicId`, snapshot current prompts + process flags, create `in_progress` row
-- `PUT /generations/:id` — upsert session snapshot (internal cuid)
+- `POST /generations/start` — allocate `publicId`, snapshot current prompts + process flags, create row (`finalized: false`)
+- `PUT /generations/:id` — upsert session snapshot (internal cuid); optional `finalized: true` (sticky once set)
+- `POST /generations/:publicId/resume` — optional `archive` snapshot for the current run; sets target generation `finalized` to `false`; returns full detail for client session hydrate
+- `GET /generations/current` — latest non-finalized run for the user (newest `updatedAt`); used to restore Generate session after logout/login
 - `GET /generations` — paginated list (`page`, `q`, pageSize 10); search `jobJson` + snapshotted prompt fields; newest first
 - `GET /generations/:publicId` — full snapshot for detail page
 - Generation-scoped AI routes accept optional `generationId`; `recordAiUsage` links rows and increments generation token totals
 
 ### Persistence triggers
 
-- **Start:** first Generate visit (or after **+ New**) calls `POST /generations/start`
-- **Snapshot:** debounced `PUT` on session changes; status `completed` when user reaches the last timeline step
+- **Start:** first Generate visit (or after **+ New**) calls `POST /generations/start` when neither `sessionStorage` nor `GET /generations/current` has a restorable run
+- **Snapshot:** debounced `PUT` on session changes (job, combine, active step, resume, evaluation); `finalized: true` when user downloads resume DOCX
 - **+ New:** `PUT` current run, clear session, `POST /generations/start` for fresh ID
 
 ### Web
 
 - Generate page: Generation ID subtitle under title; session stores `generationId` / `generationPublicId`
-- `/history` list (CRUD list pattern); `/history/[publicId]` read-only detail reusing `GenerateTimeline`, `GenerateStepLayout`, preview panels, and `GenerateHistoryStepView`
+- **Session restore:** `sessionStorage` (`johel:generate-session:{userId}`) is the fast path for same-tab refresh; on login with empty storage, `GET /generations/current` hydrates the in-progress run (including AI cache keys from snapshotted prompts)
+- **Resume from History:** `GenerationHistoryDrawer` header uses round icon buttons (same chrome as Generate Run); Resume (play icon) opens confirm dialog; on confirm, archives current session via `POST /generations/:publicId/resume` (`archive` body when another run is active), hydrates target into `sessionStorage`, navigates to Generate
+- `/history` list (CRUD list pattern); columns include **Updated At**; row click opens wide drawer (`80vw`) with read-only detail reusing `GenerateTimeline`, `GenerateStepLayout`, preview panels, and `GenerateHistoryStepView`; drawer `publicId` is local state (row click does not touch the URL — avoids `useSearchParams` / list reload); header deep links use `?publicId=` on first load; legacy `/history/[publicId]` redirects to query form
+- Studio header center: **Current** label, active generation public ID (links to Generate `/`), plus `HistoryStepsCell` step pills (same styling as History list **Steps** column); logo-only brand link (no wordmark text)
 - Sidebar **Run** → **History** after **Generate**
 
 ### AI Usage History grouping

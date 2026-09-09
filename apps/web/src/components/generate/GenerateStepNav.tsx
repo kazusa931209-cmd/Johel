@@ -45,17 +45,43 @@ const GenerateStepNavContext = createContext<GenerateStepNavContextValue | null>
   null,
 );
 
-const circleButtonClass =
+export const generateCircleButtonClass =
   "flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-surface shadow-lg transition-colors hover:bg-surface-muted disabled:opacity-60";
 
 const navSlotClass = "flex h-14 w-14 shrink-0 items-center justify-center";
 
-function BusySpinner() {
+export function GenerateCircleBusySpinner() {
   return (
     <span
       className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-foreground"
       aria-hidden
     />
+  );
+}
+
+export function GenerateCircleIconButton({
+  icon,
+  ariaLabel,
+  onClick,
+  disabled = false,
+  busy = false,
+}: {
+  icon: ReactNode;
+  ariaLabel: string;
+  onClick: () => void;
+  disabled?: boolean;
+  busy?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || busy}
+      aria-label={ariaLabel}
+      className={generateCircleButtonClass}
+    >
+      {busy ? <GenerateCircleBusySpinner /> : icon}
+    </button>
   );
 }
 
@@ -134,15 +160,12 @@ export function GenerateNewButton({
   const t = useT();
 
   return (
-    <button
-      type="button"
+    <GenerateCircleIconButton
       onClick={onClick}
       disabled={disabled}
-      aria-label={t("generate.new")}
-      className={circleButtonClass}
-    >
-      <PlusIcon className="h-6 w-6" />
-    </button>
+      ariaLabel={t("generate.new")}
+      icon={<PlusIcon className="h-6 w-6" />}
+    />
   );
 }
 
@@ -156,8 +179,7 @@ export function GenerateStepNavRunButton() {
   }
 
   return (
-    <button
-      type="button"
+    <GenerateCircleIconButton
       onClick={() => {
         if (meta.showDownload) {
           onDownloadRef.current?.();
@@ -166,19 +188,18 @@ export function GenerateStepNavRunButton() {
         onRunRef.current?.();
       }}
       disabled={meta.runBusy || meta.downloadBusy}
-      aria-label={
+      busy={meta.runBusy || meta.downloadBusy}
+      ariaLabel={
         meta.showDownload ? t("generate.nav.download") : t("generate.nav.run")
       }
-      className={circleButtonClass}
-    >
-      {meta.runBusy || meta.downloadBusy ? (
-        <BusySpinner />
-      ) : meta.showDownload ? (
-        <DownloadIcon className="h-6 w-6" />
-      ) : (
-        <PlayIcon className="h-6 w-6" />
-      )}
-    </button>
+      icon={
+        meta.showDownload ? (
+          <DownloadIcon className="h-6 w-6" />
+        ) : (
+          <PlayIcon className="h-6 w-6" />
+        )
+      }
+    />
   );
 }
 

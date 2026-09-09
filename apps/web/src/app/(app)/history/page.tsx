@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
+import { GenerationHistoryDrawer } from "@/components/generate/GenerationHistoryDrawer";
+import { HistoryStepsCell } from "@/components/generate/HistoryStepsCell";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { listGenerations, type GenerationListItem } from "@/lib/api";
 import { useCrudListParams } from "@/lib/crud-list-params";
@@ -30,14 +32,15 @@ export default function HistoryPage() {
   );
 }
 
-function formatCreatedAt(value: string) {
+function formatUpdatedAt(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
 }
 
 function HistoryPageContent() {
-  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const t = useT();
   const { toast } = useToast();
   const { page, q, setPage, applySearch } = useCrudListParams();
@@ -47,6 +50,11 @@ function HistoryPageContent() {
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
 
+  const [selectedPublicId, setSelectedPublicId] = useState<string | null>(
+    () => searchParams.get("publicId"),
+  );
+  const drawerOpen = Boolean(selectedPublicId);
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
@@ -54,8 +62,10 @@ function HistoryPageContent() {
   }, [q]);
 
   const load = useCallback(
-    async (nextQ: string, nextPage: number) => {
-      setLoading(true);
+    async (nextQ: string, nextPage: number, options?: { silent?: boolean }) => {
+      if (!options?.silent) {
+        setLoading(true);
+      }
       const res = await listGenerations(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
@@ -74,21 +84,31 @@ function HistoryPageContent() {
 
   useEffect(() => {
     void load(q, page);
-  }, [load, q, page]);
+    // Reload only when list filters change — not when drawer opens/closes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, page]);
 
   function onFilter(e: FormEvent) {
     e.preventDefault();
     applySearch(qInput.trim());
   }
 
-  function statusLabel(status: GenerationListItem["status"]) {
-    if (status === "finalized") {
-      return t("history.status.finalized");
+  function openDetail(publicId: string) {
+    setSelectedPublicId(publicId);
+  }
+
+  function closeDetail() {
+    setSelectedPublicId(null);
+    if (searchParams.get("publicId")) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("publicId");
+      const qs = params.toString();
+      window.history.replaceState(
+        null,
+        "",
+        qs ? `${pathname}?${qs}` : pathname,
+      );
     }
-    if (status === "completed") {
-      return t("history.status.completed");
-    }
-    return t("history.status.inProgress");
   }
 
   return (
@@ -122,10 +142,10 @@ function HistoryPageContent() {
                 {t("history.list.columns.tokenUsed")}
               </th>
               <th className="px-3 py-2 font-medium">
-                {t("history.list.columns.createdAt")}
+                {t("history.list.columns.step")}
               </th>
               <th className="px-3 py-2 font-medium">
-                {t("history.list.columns.status")}
+                {t("history.list.columns.updatedAt")}
               </th>
             </tr>
           </thead>
@@ -148,11 +168,11 @@ function HistoryPageContent() {
                   key={row.id}
                   className={TABLE_ROW_HOVER_CLASS}
                   tabIndex={0}
-                  onClick={() => router.push(`/history/${row.publicId}`)}
+                  onClick={() => openDetail(row.publicId)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      router.push(`/history/${row.publicId}`);
+                      openDetail(row.publicId);
                     }
                   }}
                 >
@@ -160,11 +180,16 @@ function HistoryPageContent() {
                   <td className="px-3 py-2 text-muted">
                     {formatTokenUsed(row.tokenUsed)}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-muted">
-                    {formatCreatedAt(row.createdAt)}
+                  <td className="px-3 py-2">
+                    <HistoryStepsCell
+                      processedStep={row.processedStep}
+                      doVerdict={row.doVerdict}
+                      doEvaluate={row.doEvaluate}
+                      finalized={row.finalized}
+                    />
                   </td>
-                  <td className="px-3 py-2 text-muted">
-                    {statusLabel(row.status)}
+                  <td className="whitespace-nowrap px-3 py-2 text-muted">
+                    {formatUpdatedAt(row.updatedAt)}
                   </td>
                 </tr>
               ))
@@ -196,6 +221,13 @@ function HistoryPageContent() {
           {t("crud.common.next")}
         </button>
       </div>
+
+      <GenerationHistoryDrawer
+        publicId={selectedPublicId}
+        open={drawerOpen}
+        onClose={closeDetail}
+        onDetailUpdated={() => void load(q, page, { silent: true })}
+      />
     </section>
   );
 }

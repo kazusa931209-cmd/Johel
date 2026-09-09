@@ -68,16 +68,12 @@ export function StudioHeader({
         >
           <Image
             src="/logo-header.png"
-            alt=""
-            aria-hidden
+            alt={t("nav.brand")}
             width={44}
             height={44}
             className="h-11 w-11 shrink-0"
             priority
           />
-          <span className="text-base font-semibold tracking-tight">
-            {t("nav.brand")}
-          </span>
         </Link>
       </div>
       <div className="min-w-0 justify-self-center px-2">
