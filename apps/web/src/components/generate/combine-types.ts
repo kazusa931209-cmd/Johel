@@ -57,8 +57,7 @@ export function validateCombineSnapshot(
       !entry.companyId ||
       !entry.startDate.trim() ||
       !entry.endDate.trim() ||
-      !entry.roleContext.trim() ||
-      entry.experienceIds.length < 1,
+      !entry.roleContext.trim(),
   );
   if (invalidEntry) {
     errors.companies = t("validation.companyEntryIncomplete");

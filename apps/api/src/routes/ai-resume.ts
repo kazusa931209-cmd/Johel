@@ -16,7 +16,7 @@ const combineCompanySchema = z.object({
   startDate: z.string().trim().min(1),
   endDate: z.string().trim().min(1),
   roleContext: z.string().trim().min(1),
-  experienceIds: z.array(z.string().trim().min(1)).min(1),
+  experienceIds: z.array(z.string().trim().min(1)).default([]),
 });
 
 const combineSchema = z.object({

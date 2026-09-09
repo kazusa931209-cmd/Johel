@@ -448,9 +448,9 @@ export const ko: MessageTree = {
     combine: {
       title: "조합",
       description:
-        "이번 실행에 사용할 개인정보, 리력서 출력 언어, 강조, 회사항목(기간·역할·경험)을 선택합니다.",
+        "이번생성에 사용할 개인정보, 리력서 출력언어, 포함할 회사, 실행지침을 선택합니다.",
       profile: "개인정보",
-      language: "리력서 언어",
+      language: "리력서 출력언어",
       emphasis: "실행지침",
       emphasisHint:
         "이번 실행에만 적용되는 개인형, 강조, 맞춤지침(생성요청에 포함됩니다).",
@@ -458,18 +458,26 @@ export const ko: MessageTree = {
         "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외; Skills는 3개의 모임으로.",
       companies: "회사",
       companiesHint:
-        "리력서순서대로 회사항목을 추가합니다. 각 항목에 기간, 역할, 경험이 필요합니다.",
+        "포함할 회사를 선택합니다. 포함된 카드에는 기간과 역할과 책임이 필요합니다.",
+      includeCompany: "포함",
+      noCompanies: "조합하기 전에 작업공간에 회사를 추가하여주십시오.",
+      period: "기간",
+      periodStartAria: "{label}의 시작 월",
+      periodEndAria: "{label}의 종료 월",
+      roleContext: "역할과 책임",
+      roleContextPlaceholder:
+        "예: 시니어 백엔드 엔지니어; 결제 API와 온콜 담당.",
       generating: {
         title: "리력서 생성중…",
         description: "AI가 직업광고문에 맞춰 리력서를 작성하는중입니다.",
       },
       suggestExperiences: "경험 제안",
       suggesting: "제안중…",
-      suggestMode: "제안 모드",
-      modeGuided: "가이드",
-      modeAuto: "자동",
+      suggestMode: "제안방식",
+      modeGuided: "사용자선택",
+      modeAuto: "AI선택",
       modeGuidedHint:
-        "현재 회사항목과 선택한 경험을 시드로 사용합니다. AI가 추가·제외를 제안합니다.",
+        "현재 회사항목과 선택한 경험을 기초자료로 사용합니다. AI가 추가·제외를 제안합니다.",
       modeAutoHint:
         "직업광고문과 검토 결과만으로 경험 풀 인덱스에서 회사별 매핑을 제안합니다.",
     },
@@ -706,7 +714,7 @@ export const ko: MessageTree = {
     experiencesMinOne: "경험을 하나이상 선택해주십시오.",
     companiesMinOne: "회사항목을 하나이상 추가하여주십시오.",
     companyEntryIncomplete:
-      "각 회사항목에는 회사, 시작일·마감일, 역할과 책임, 경험 하나이상이 필요합니다.",
+      "포함된 각 회사에 기간과 역할과 책임이 필요합니다.",
     jobDescriptionRequired: "직업광고문는 필수입니다.",
     workflowRequired: "작업흐름를 하나 선택해주십시오.",
     factsRequired: "필요한 내용을 설명해주십시오.",

@@ -31,7 +31,7 @@ Job Description → Filtering → Verdict? → Combine → Generate → Evaluate
 
 1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
 2. **Verdict** (when **Do Verdict** is on) — Run AI Verdict on the filtered JD; the Markdown result is the scoring rubric for generation and evaluation.
-3. **Combine** — For this run only: choose one profile, résumé output language, optional **Run guidance** (emphasis), ordered company entries (period, role context), and linked experiences per company; optional AI **Suggest experiences** (guided or auto).
+3. **Combine** — For this run only: choose one profile, résumé output language, optional **Run guidance** (emphasis), and included companies via a card grid (include toggle, dual-thumb period slider over a 10-year window, inline role context). Experience selection and **Suggest experiences** are deferred for this phase.
 4. **Generate** — Generate the résumé from the job context and the Combine snapshot.
 5. **Evaluate** (when **Do Evaluate** is on) — Score the generated résumé against the same Verdict dimensions, then download the résumé.
 
@@ -190,10 +190,10 @@ Aligned with the product flow above:
   * **Left column:** read-only content from the **previous** timeline step — no edit forms, method tabs, or Save/Apply controls; **its own vertical scroll** when content exceeds the panel height
   * **Right column:** the **current** step (forms, auto-run AI, Markdown results, loading overlays); **its own vertical scroll** independent of the left column; scrolling one column does not scroll the other or the sticky header
   * **Job** step: left column is **empty** (no placeholder required); right column is the Job input (method tabs + manual textarea)
-  * Previous-step content by current step (respecting **Do Verdict** / **Do Evaluate** flags): **Verdict** ← noise-filtered Job Description; **Combine** ← AI Verdict Markdown when Do Verdict is on, otherwise noise-filtered Job Description; **Generate** ← read-only Combine summary (profile name, language, emphasis, ordered company entries with dates, role context, and linked experience names — not the Combine editors); **Evaluate** ← generated résumé Markdown preview
+  * Previous-step content by current step (respecting **Do Verdict** / **Do Evaluate** flags): **Verdict** ← noise-filtered Job Description; **Combine** ← AI Verdict Markdown when Do Verdict is on, otherwise noise-filtered Job Description; **Generate** ← read-only Combine summary (profile name, language, emphasis, included company entries with dates and role context — not the Combine editors); **Evaluate** ← generated résumé Markdown preview
   * **Job** **Next**: validates the Job Description (inline error if empty); runs **Noise Filter** silently; advances to Verdict or Combine (does not run AI on this step)
   * **Verdict** (when enabled): auto-runs **AI Verdict** on entry with the noise-filtered JD and saved Verdict Prompt; shows result Markdown; **Next** advances to Combine when complete
-  * **Combine**: choose profile, résumé language, optional **Run guidance**, ordered company entries (period, role context, experiences); optional **Suggest experiences** (guided or auto) using JD + Verdict; **Next** validates inline then advances to Generate (resume generation runs on the Generate step)
+  * **Combine**: choose profile, résumé language, optional **Run guidance**, and included companies (card grid with include toggle, period slider, inline role context); **Next** validates inline (profile, ≥1 included company with period + role context; no experience requirement) then advances to Generate (resume generation runs on the Generate step)
   * Session remembers step, Job, Verdict, Combine (including Run guidance), resume JSON, and evaluation until **New** or Process settings change
   * **Generate** and **Evaluate** steps: auto-run resume generation and evaluation respectively when needed; Markdown preview; DOCX download on Evaluate (or Generate when Do Evaluate is off)
 * **Settings**

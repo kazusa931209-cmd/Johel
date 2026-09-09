@@ -67,12 +67,15 @@ export async function assembleFromCombineSnapshot(
     throw new Error("One or more selected companies were not found.");
   }
 
-  const experiences = await prisma.experience.findMany({
-    where: {
-      userId,
-      id: { in: experienceIds },
-    },
-  });
+  const experiences =
+    experienceIds.length > 0
+      ? await prisma.experience.findMany({
+          where: {
+            userId,
+            id: { in: experienceIds },
+          },
+        })
+      : [];
   if (experiences.length !== experienceIds.length) {
     throw new Error("One or more selected experiences were not found.");
   }
@@ -87,12 +90,6 @@ export async function assembleFromCombineSnapshot(
     if (!company) {
       throw new Error("One or more selected companies were not found.");
     }
-    if (entry.experienceIds.length < 1) {
-      throw new Error(
-        "Each company entry must include at least one experience.",
-      );
-    }
-
     return {
       id: company.id,
       alias: company.alias,

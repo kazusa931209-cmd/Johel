@@ -502,9 +502,6 @@ export default function GeneratePage() {
             {normalizedActiveStep === "Combine" ? (
               <GenerateCombineStep
                 combine={combine}
-                jobText={job.jobText}
-                acceptedMarkdown={job.acceptedMarkdown}
-                doVerdict={processSettings.doVerdict}
                 onCombineChange={setCombine}
                 onPrev={() => goToAdjacentStep("prev")}
                 onNext={onCombineNext}

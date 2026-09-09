@@ -448,7 +448,7 @@ export const en = {
     combine: {
       title: "Combine",
       description:
-        "Choose a profile, résumé output language, emphasis, and ordered company entries with linked experiences for this run.",
+        "Choose a profile, résumé output language, run guidance, and included companies for this run.",
       profile: "Profile",
       language: "Résumé language",
       emphasis: "Run guidance",
@@ -458,7 +458,15 @@ export const en = {
         "e.g. Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups.",
       companies: "Companies",
       companiesHint:
-        "Add company entries in résumé order. Each entry needs a period, role context, and linked experiences.",
+        "Toggle companies to include them on the résumé. Included cards need a period and role context.",
+      includeCompany: "Include",
+      noCompanies: "Add companies in the workspace before combining.",
+      period: "Period",
+      periodStartAria: "Start month for {label}",
+      periodEndAria: "End month for {label}",
+      roleContext: "Role context",
+      roleContextPlaceholder:
+        "e.g. Senior backend engineer; owned payments API and on-call rotation.",
       generating: {
         title: "Generating Resume…",
         description: "Please wait while the AI tailors your resume to the job.",
@@ -706,7 +714,7 @@ export const en = {
     experiencesMinOne: "Select at least one experience.",
     companiesMinOne: "Add at least one company entry.",
     companyEntryIncomplete:
-      "Each company entry needs a company, start and end dates, role context, and at least one experience.",
+      "Each included company needs a period and role context.",
     jobDescriptionRequired: "Job Description is required.",
     workflowRequired: "Select one workflow.",
     factsRequired: "Describe what you need.",

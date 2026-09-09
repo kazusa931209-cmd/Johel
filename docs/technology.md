@@ -337,7 +337,10 @@ User browser (:4041)
 
 ### Web
 
-- `GenerateVerdictStep`, `GenerateCombineStep`, `combine-types.ts`, `CombineProfilePicker`, `CombineCompaniesEditor`, `CombineCompanyDialog`
+- `GenerateVerdictStep`, `GenerateCombineStep`, `combine-types.ts`, `CombineProfilePicker`, `CombineCompanyCards`, `CombinePeriodSlider`, `combine-period.ts`
+- Combine step: all workspace companies as a responsive card grid (`listCompanies("", null)`); per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (120-month window through current month; end at max = `Present`), inline role context; `experienceIds: []` until experience selection returns; Suggest experiences UI hidden
+- Combine validation (`validateCombineSnapshot`): profile required, ≥1 included company, each with period + role context; no experience requirement
+- `POST /ai-resume` and `POST /resume/combine-fingerprint` accept `experienceIds: []` per company; `assembleFromCombineSnapshot` allows empty experiences per company
 - Session: `combine: CombineSnapshot` instead of `workflow`
 - Experiences: `ExperienceFactForm`, `ExperienceSuggestionDialog`
 - `StudioBottomFabCluster`: history FAB only
