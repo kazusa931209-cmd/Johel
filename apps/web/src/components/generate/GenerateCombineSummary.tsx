@@ -119,6 +119,14 @@ export function GenerateCombineSummary({
                     {entry.roleContext}
                   </p>
                 ) : null}
+                {entry.keywordContext.trim() ? (
+                  <p className="mt-2 text-xs text-muted">
+                    <span className="font-medium">
+                      {t("generate.combine.keywordContext")}:{" "}
+                    </span>
+                    {entry.keywordContext}
+                  </p>
+                ) : null}
                 {entry.experienceIds.length > 0 ? (
                   <div className="mt-2">
                     <p className="text-xs font-medium text-muted">

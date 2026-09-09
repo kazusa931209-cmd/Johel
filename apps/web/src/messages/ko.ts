@@ -491,20 +491,13 @@ export const ko: MessageTree = {
       },
       suggestExperiences: "경험 제안",
       suggesting: "제안중…",
-      suggestMode: "제안방식",
       experiencesSection: "경험",
       experiencesSectionHint:
-        "포함된 각 회사에 공유 경험 카드를 연결합니다. 경험 제안으로 AI 매핑을 실행할 수 있습니다.",
-      modeGuided: "키워드 안내",
-      modeAuto: "AI선택",
-      modeGuidedHint:
-        "키워드(예: AWS, Blockchain, Senior)를 입력합니다. AI가 키워드, 직업광고문, 회사 역할맥락을 바탕으로 경험 카드를 선택합니다.",
-      modeAutoHint:
-        "직업광고문과 검토 결과만으로 경험 풀에서 회사별 매핑을 제안합니다.",
-      guidanceKeywords: "안내 키워드",
-      guidanceKeywordsHint:
-        "이번 실행에서 강조할 역량을 쉼표로 구분하여 입력합니다.",
-      guidanceKeywordsPlaceholder: "예: AWS, Blockchain, Senior, payments API",
+        "포함된 각 회사에 공유 경험 카드를 연결합니다. 회사 카드의 선택적 키워드 맥락으로 해당 회사만 맞춤 매핑하고, 비워 두면 AI선택(직업광고문·검토·역할맥락)으로 동작합니다.",
+      keywordContext: "키워드 맥락",
+      keywordContextHint:
+        "선택. 이 회사에 연결할 역량 카드를 안내하는 쉼표 구분 키워드(예: AWS, blockchain). 직함은 역할 맥락에 입력하십시오.",
+      keywordContextPlaceholder: "예: AWS, Blockchain, Senior, payments API",
       suggestVerdictRequired:
         "[검토]를 실행하는 경우 경험 제안 전에 검토 단계를 완료하여주십시오.",
       suggestionDialogTitle: "경험 제안",
@@ -745,7 +738,6 @@ export const ko: MessageTree = {
     graduationYearRequired: "졸업년도는 필수입니다.",
     profileGraduationYearRequired:
       "회사를 선택하기 전에 선택한 개인정보에 졸업년도가 있어야 합니다.",
-    experienceGuidanceKeywordsRequired: "안내 키워드는 필수입니다.",
     combineCompaniesRequired: "회사항목을 하나 이상 추가해주십시오.",
     companyRequired: "회사를 하나 선택해주십시오.",
     startDateRequired: "시작일은 필수입니다.",

@@ -322,7 +322,7 @@ User browser (:4041)
 ### API additions / changes
 
 - `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); full experience pool; `generateType: experienceAdvise`
-- `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, mode: "guided"|"auto", guidanceKeywords?, profileId, companies[] }`; `guidanceKeywords` required when `mode` is `guided` (comma-separated steering text, max 500 chars); returns per-company `experienceIds`, `rationale`, and `warnings`; `generateType: combineRecommend`
+- `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, profileId, companies[] }` where each company may include optional `keywordContext` (comma-separated steering text, max 500 chars); empty `keywordContext` → Auto for that company (job/Verdict + role context); filled → keyword-guided mapping for that company; when keywords match but JD overlap is thin, AI selects fewer cards and returns warnings; returns per-company `experienceIds`, `rationale`, and `warnings`; `generateType: combineRecommend`
 - `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run
 - `POST /resume/combine-fingerprint` — fingerprint for Combine snapshot (replaces workflow fingerprint)
 - `GET /auth/me` includes `role` (`admin` | `user`)
@@ -339,7 +339,7 @@ User browser (:4041)
 ### Web
 
 - `GenerateVerdictStep`, `GenerateCombineStep`, `combine-types.ts`, `CombineProfilePicker`, `CombineCompanyCards`, `CombinePeriodSlider`, `combine-period.ts`
-- Combine step: all workspace companies as a single-column card list (`listCompanies("", null)`); company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context; **Suggest experiences** (`CombineExperienceSuggest`) with **Keyword guided** (`experienceGuidanceKeywords` on session `combine`) or **Auto**; calls `POST /ai-combine-recommend`; suggestion dialog shows per-company rationale before **Apply**; `experienceIds` on each company entry after apply
+- Combine step: all workspace companies as a single-column card list (`listCompanies("", null)`); company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context and optional **Keyword context**; **Suggest experiences** (`CombineExperienceSuggest`) calls `POST /ai-combine-recommend` per-company hybrid (keyword context or Auto); suggestion dialog shows per-company rationale and warnings before **Apply**; `experienceIds` on each company entry after apply
 - Combine validation (`validateCombineSnapshot`): profile required with graduation year, ≥1 included company, each with period + role context; no experience requirement
 - Migration `20260909100002_profile_education_split`: legacy `education` text copied to `university`; column dropped
 - `POST /ai-resume` and `POST /resume/combine-fingerprint` accept `experienceIds: []` per company; `assembleFromCombineSnapshot` allows empty experiences per company

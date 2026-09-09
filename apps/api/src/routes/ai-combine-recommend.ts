@@ -12,34 +12,23 @@ import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
 const JOB_MAX = 10_000;
-const GUIDANCE_KEYWORDS_MAX = 500;
+const KEYWORD_CONTEXT_MAX = 500;
 
 const companySchema = z.object({
   companyId: z.string().trim().min(1),
   startDate: z.string().trim().min(1),
   endDate: z.string().trim().min(1),
   roleContext: z.string().trim().min(1),
+  keywordContext: z.string().trim().max(KEYWORD_CONTEXT_MAX).optional(),
   experienceIds: z.array(z.string().trim().min(1)).default([]),
 });
 
-const postSchema = z
-  .object({
-    jobDescription: z.string().trim().min(1).max(JOB_MAX),
-    acceptedMarkdown: z.string().trim().max(JOB_MAX).optional(),
-    mode: z.enum(["auto", "guided"]).default("guided"),
-    guidanceKeywords: z.string().trim().max(GUIDANCE_KEYWORDS_MAX).optional(),
-    profileId: z.string().trim().min(1),
-    companies: z.array(companySchema).min(1),
-  })
-  .superRefine((data, ctx) => {
-    if (data.mode === "guided" && !data.guidanceKeywords?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Guidance keywords are required in guided mode.",
-        path: ["guidanceKeywords"],
-      });
-    }
-  });
+const postSchema = z.object({
+  jobDescription: z.string().trim().min(1).max(JOB_MAX),
+  acceptedMarkdown: z.string().trim().max(JOB_MAX).optional(),
+  profileId: z.string().trim().min(1),
+  companies: z.array(companySchema).min(1),
+});
 
 export const aiCombineRecommendRoutes = new Hono();
 
@@ -106,8 +95,6 @@ aiCombineRecommendRoutes.post("/", async (c) => {
     apiKey: setting.apiKey,
     jobDescription: parsed.data.jobDescription,
     acceptedMarkdown: parsed.data.acceptedMarkdown,
-    mode: parsed.data.mode,
-    guidanceKeywords: parsed.data.guidanceKeywords?.trim(),
     profileId: parsed.data.profileId,
     companies: parsed.data.companies.map((entry) => {
       const company = companyById.get(entry.companyId);
@@ -120,6 +107,7 @@ aiCombineRecommendRoutes.post("/", async (c) => {
         startDate: entry.startDate,
         endDate: entry.endDate,
         roleContext: entry.roleContext,
+        keywordContext: entry.keywordContext?.trim(),
       };
     }),
     experienceIndex,

@@ -1,10 +1,18 @@
-export type CombineRecommendMode = "auto" | "guided";
+export type CombineRecommendRunCompany = {
+  companyId: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  roleContext: string;
+  keywordContext?: string;
+};
 
 export type CombineRecommendCompanyInput = {
   companyId: string;
   startDate: string;
   endDate: string;
   roleContext: string;
+  keywordContext?: string;
   experienceIds: string[];
 };
 
@@ -12,9 +20,6 @@ export type CombineRecommendRequest = {
   apiKey: string;
   jobDescription: string;
   acceptedMarkdown?: string;
-  mode: CombineRecommendMode;
-  /** Required when mode is guided — comma-separated steering keywords (e.g. AWS, Blockchain, Senior). */
-  guidanceKeywords?: string;
   profileId: string;
   companies: CombineRecommendCompanyInput[];
 };

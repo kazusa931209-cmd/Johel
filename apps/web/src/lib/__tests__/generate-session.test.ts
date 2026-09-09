@@ -77,6 +77,7 @@ describe("generate-session resume cache", () => {
         startDate: "2020",
         endDate: "Present",
         roleContext: "Backend engineer",
+        keywordContext: "",
         experienceIds: ["exp-1"],
       },
     ],

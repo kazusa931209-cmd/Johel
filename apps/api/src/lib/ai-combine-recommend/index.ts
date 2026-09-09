@@ -11,18 +11,16 @@ import {
   buildUsage,
   type CombineRecommendProviderResult,
   type CombineRecommendRequest,
+  type CombineRecommendRunCompany,
 } from "./types.js";
 
 export { loadExperienceIndex };
 
-export type CombineRecommendRunInput = CombineRecommendRequest & {
-  companies: Array<{
-    companyId: string;
-    name: string;
-    startDate: string;
-    endDate: string;
-    roleContext: string;
-  }>;
+export type CombineRecommendRunInput = Omit<
+  CombineRecommendRequest,
+  "companies"
+> & {
+  companies: CombineRecommendRunCompany[];
   experienceIndex: Array<{
     id: string;
     category: string;

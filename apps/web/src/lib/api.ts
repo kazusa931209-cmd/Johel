@@ -206,13 +206,9 @@ export function getCombineGenerationFingerprint(combine: CombineSnapshot) {
   });
 }
 
-export type CombineRecommendMode = "auto" | "guided";
-
 export type CombineRecommendRequest = {
   jobDescription: string;
   acceptedMarkdown?: string;
-  mode: CombineRecommendMode;
-  guidanceKeywords?: string;
   profileId: string;
   companies: CombineSnapshot["companies"];
 };

@@ -7,7 +7,6 @@ import { useToast } from "@/components/app/ToastProvider";
 import {
   type CombineFieldErrors,
   type CombineSnapshot,
-  type CombineSuggestMode,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import { DetailDialog } from "@/components/shared/detail-dialog";
@@ -89,26 +88,10 @@ export function CombineExperienceSuggest({
     };
   }, [pendingResult]);
 
-  function patchCombine(patch: Partial<CombineSnapshot>) {
-    onCombineChange({ ...combine, ...patch });
-  }
-
-  function validateForSuggest(): CombineFieldErrors {
-    const errors = validateCombineSnapshot(combine, t, graduationYear);
-    if (combine.experienceSuggestMode === "guided") {
-      if (!combine.experienceGuidanceKeywords.trim()) {
-        errors.experienceGuidanceKeywords = t(
-          "validation.experienceGuidanceKeywordsRequired",
-        );
-      }
-    }
-    return errors;
-  }
-
   async function onSuggest(e: FormEvent) {
     e.preventDefault();
     setSuggestError(null);
-    const errors = validateForSuggest();
+    const errors = validateCombineSnapshot(combine, t, graduationYear);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       return;
@@ -130,11 +113,6 @@ export function CombineExperienceSuggest({
       acceptedMarkdown: doVerdict
         ? job.acceptedMarkdown?.trim() || undefined
         : undefined,
-      mode: combine.experienceSuggestMode,
-      guidanceKeywords:
-        combine.experienceSuggestMode === "guided"
-          ? combine.experienceGuidanceKeywords.trim()
-          : undefined,
       profileId: combine.profileId,
       companies: combine.companies,
     });
@@ -164,20 +142,6 @@ export function CombineExperienceSuggest({
     toast(t("toast.combineRecommendReady"), "success");
   }
 
-  const modeOptions: { value: CombineSuggestMode; labelKey: string; hintKey: string }[] =
-    [
-      {
-        value: "guided",
-        labelKey: "generate.combine.modeGuided",
-        hintKey: "generate.combine.modeGuidedHint",
-      },
-      {
-        value: "auto",
-        labelKey: "generate.combine.modeAuto",
-        hintKey: "generate.combine.modeAutoHint",
-      },
-    ];
-
   return (
     <>
       <form
@@ -192,72 +156,6 @@ export function CombineExperienceSuggest({
             {t("generate.combine.experiencesSectionHint")}
           </p>
         </div>
-
-        <fieldset className="space-y-2">
-          <legend className="text-sm">{t("generate.combine.suggestMode")}</legend>
-          {modeOptions.map((option) => {
-            const active = combine.experienceSuggestMode === option.value;
-            return (
-              <label
-                key={option.value}
-                className={`block cursor-pointer rounded-md border px-3 py-2 ${
-                  active
-                    ? "border-accent bg-surface-muted"
-                    : "border-border bg-background"
-                }`}
-              >
-                <div className="flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="experienceSuggestMode"
-                    checked={active}
-                    onChange={() =>
-                      patchCombine({ experienceSuggestMode: option.value })
-                    }
-                    className="h-4 w-4 border-border"
-                  />
-                  <span className="font-medium">{t(option.labelKey)}</span>
-                </div>
-                <p className="mt-1 pl-6 text-xs text-muted">
-                  {t(option.hintKey)}
-                </p>
-              </label>
-            );
-          })}
-        </fieldset>
-
-        {combine.experienceSuggestMode === "guided" ? (
-          <label className="block space-y-1 text-sm">
-            <span>
-              {t("generate.combine.guidanceKeywords")}
-              <span className="ml-0.5 text-danger" aria-hidden>
-                *
-              </span>
-            </span>
-            <p className="text-xs text-muted">
-              {t("generate.combine.guidanceKeywordsHint")}
-            </p>
-            <input
-              type="text"
-              value={combine.experienceGuidanceKeywords}
-              onChange={(e) => {
-                patchCombine({ experienceGuidanceKeywords: e.target.value });
-                setFieldErrors((errors) => ({
-                  ...errors,
-                  experienceGuidanceKeywords: undefined,
-                }));
-              }}
-              placeholder={t("generate.combine.guidanceKeywordsPlaceholder")}
-              aria-invalid={Boolean(fieldErrors.experienceGuidanceKeywords)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted"
-            />
-            {fieldErrors.experienceGuidanceKeywords ? (
-              <p className="text-sm text-danger">
-                {fieldErrors.experienceGuidanceKeywords}
-              </p>
-            ) : null}
-          </label>
-        ) : null}
 
         {fieldErrors.companies ? (
           <p className="text-sm text-danger">{fieldErrors.companies}</p>

@@ -134,6 +134,7 @@ export function CombineCompanyCards({
         startDate: restoredPeriod.startDate,
         endDate: restoredPeriod.endDate,
         roleContext: existing?.roleContext ?? "",
+        keywordContext: existing?.keywordContext ?? "",
         experienceIds: existing?.experienceIds ?? [],
       },
     ]);
@@ -246,6 +247,27 @@ export function CombineCompanyCards({
                         })
                       }
                       placeholder={t("generate.combine.roleContextPlaceholder")}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
+                    />
+                  </label>
+
+                  <label className="block space-y-1 text-sm">
+                    <span>{t("generate.combine.keywordContext")}</span>
+                    <p className="text-xs text-muted">
+                      {t("generate.combine.keywordContextHint")}
+                    </p>
+                    <input
+                      type="text"
+                      value={entry.keywordContext}
+                      disabled={cardsDisabled}
+                      onChange={(event) =>
+                        patchEntry(company.id, {
+                          keywordContext: event.target.value,
+                        })
+                      }
+                      placeholder={t(
+                        "generate.combine.keywordContextPlaceholder",
+                      )}
                       className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
                     />
                   </label>

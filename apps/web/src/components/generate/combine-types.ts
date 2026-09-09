@@ -8,13 +8,12 @@ export const RUN_LANGUAGES = [
 
 export type RunLanguage = (typeof RUN_LANGUAGES)[number]["value"];
 
-export type CombineSuggestMode = "auto" | "guided";
-
 export type CombineCompanyEntry = {
   companyId: string;
   startDate: string;
   endDate: string;
   roleContext: string;
+  keywordContext: string;
   experienceIds: string[];
 };
 
@@ -22,8 +21,6 @@ export type CombineSnapshot = {
   profileId: string;
   language: RunLanguage | string;
   emphasis: string;
-  experienceSuggestMode: CombineSuggestMode;
-  experienceGuidanceKeywords: string;
   companies: CombineCompanyEntry[];
 };
 
@@ -31,8 +28,6 @@ export const EMPTY_COMBINE_SNAPSHOT: CombineSnapshot = {
   profileId: "",
   language: "en",
   emphasis: "",
-  experienceSuggestMode: "guided",
-  experienceGuidanceKeywords: "",
   companies: [],
 };
 
@@ -40,7 +35,6 @@ export type CombineFieldErrors = {
   profileId?: string;
   companies?: string;
   language?: string;
-  experienceGuidanceKeywords?: string;
 };
 
 export function formatCompanyPeriod(startDate: string, endDate: string): string {

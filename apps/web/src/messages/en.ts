@@ -491,20 +491,13 @@ export const en = {
       },
       suggestExperiences: "Suggest experiences",
       suggesting: "Suggesting…",
-      suggestMode: "Suggestion mode",
       experiencesSection: "Experiences",
       experiencesSectionHint:
-        "Link shared capability cards to each included company. Use Suggest experiences to map your pool with AI.",
-      modeGuided: "Keyword guided",
-      modeAuto: "Auto",
-      modeGuidedHint:
-        "Enter keywords (e.g. AWS, Blockchain, Senior). AI picks matching cards from your pool using keywords, the job, and each company's role context.",
-      modeAutoHint:
-        "AI maps experiences from your pool using the job and Verdict only.",
-      guidanceKeywords: "Guidance keywords",
-      guidanceKeywordsHint:
-        "Comma-separated words or phrases that steer which capabilities to emphasize for this run.",
-      guidanceKeywordsPlaceholder: "e.g. AWS, Blockchain, Senior, payments API",
+        "Link shared capability cards to each included company. Optional Keyword context on a company card steers which cards AI picks for that company; leave it empty for Auto (job/Verdict and role context only).",
+      keywordContext: "Keyword context",
+      keywordContextHint:
+        "Optional. Comma-separated words or phrases that steer which capability cards to link for this company (e.g. AWS, blockchain). Not your job title — use Role context for that.",
+      keywordContextPlaceholder: "e.g. AWS, Blockchain, Senior, payments API",
       suggestVerdictRequired:
         "Complete the Verdict step before suggesting experiences when Do Verdict is enabled.",
       suggestionDialogTitle: "Experience suggestions",
@@ -745,7 +738,6 @@ export const en = {
     graduationYearRequired: "Graduation year is required.",
     profileGraduationYearRequired:
       "The selected profile must have a graduation year before choosing companies.",
-    experienceGuidanceKeywordsRequired: "Guidance keywords are required.",
     combineCompaniesRequired: "Add at least one company entry.",
     companyRequired: "Select one company.",
     startDateRequired: "Start is required.",
