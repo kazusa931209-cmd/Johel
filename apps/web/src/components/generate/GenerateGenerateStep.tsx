@@ -6,7 +6,7 @@ import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
-import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
+import { useResumeDownload } from "@/components/generate/useResumeDownload";
 
 type GenerateGenerateStepProps = {
   resume: GeneratedResume | null;
@@ -26,7 +26,7 @@ export function GenerateGenerateStep({
   onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel, {
+  const { onDownload, downloading } = useResumeDownload(resume, runLabel, {
     onDownloaded,
   });
   const markdown = useMemo(

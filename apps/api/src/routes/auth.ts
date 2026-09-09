@@ -49,6 +49,7 @@ authRoutes.post("/register", async (c) => {
           doVerdict: DEFAULT_GENERATION_PROCESS.doVerdict,
           doEvaluate: DEFAULT_GENERATION_PROCESS.doEvaluate,
           resumeLanguage: DEFAULT_GENERATION_PROCESS.resumeLanguage,
+          downloadFormat: DEFAULT_GENERATION_PROCESS.downloadFormat,
           experienceAdvisePoolDepth:
             DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
         },

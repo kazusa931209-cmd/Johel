@@ -110,6 +110,17 @@ export const ko: MessageTree = {
           "생성된 이력서의 기본 출력 언어입니다. 실행 전에 설정에서 변경하세요.",
         label: "이력서 출력 언어",
       },
+      downloadFormat: {
+        title: "다운로드",
+        description:
+          "생성, 평가, 기록에서 이력서를 다운로드할 때 사용할 기본 파일 형식입니다.",
+        options: {
+          docx: "DOCX",
+          pdf: "PDF",
+        },
+        pdfEnglishOnly:
+          "PDF는 이력서 출력 언어가 영어일 때만 사용할 수 있습니다.",
+      },
       experienceAdvisePoolDepth: {
         title: "경험 제안 풀 깊이",
         description:

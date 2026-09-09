@@ -203,6 +203,7 @@ model GenerationProcess {
   doVerdict                 Boolean  @default(true)
   doEvaluate                Boolean  @default(true)
   resumeLanguage            String   @default("en")
+  downloadFormat            String   @default("docx")
   experienceAdvisePoolDepth String   @default("normal")
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt

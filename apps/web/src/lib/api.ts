@@ -137,11 +137,13 @@ export function saveSettings(apiKey: string) {
 }
 
 export type ResumeLanguage = "en" | "ja" | "zh-TW" | "zh-CN" | "ko";
+export type DownloadFormat = "docx" | "pdf";
 
 export type GenerationProcessSettings = {
   doVerdict: boolean;
   doEvaluate: boolean;
   resumeLanguage: ResumeLanguage;
+  downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
 };
 
@@ -153,6 +155,7 @@ export function saveGenerationProcess(payload: {
   doVerdict: boolean;
   doEvaluate: boolean;
   resumeLanguage: ResumeLanguage;
+  downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
 }) {
   return request<GenerationProcessSettings>("/settings/process", {
@@ -741,12 +744,31 @@ export function getAiUsage(id: string) {
   return request<AiUsageDetail>(`/ai-usage/${id}`);
 }
 
-export async function downloadResumeDocx(
+type ResumeDownloadResult = {
+  blob?: Blob;
+  fileName?: string;
+  error?: string;
+  status: number;
+};
+
+export function resolveDownloadFormat(
+  settings: GenerationProcessSettings,
+): DownloadFormat {
+  if (settings.resumeLanguage !== "en") {
+    return "docx";
+  }
+  return settings.downloadFormat;
+}
+
+async function downloadResumeExport(
+  path: "/backend/resume/docx" | "/backend/resume/pdf",
   resume: import("@johel/resume").GeneratedResume,
-  runLabel?: string,
-): Promise<{ blob?: Blob; fileName?: string; error?: string; status: number }> {
+  runLabel: string | undefined,
+  fallbackFileName: string,
+  failureLabel: string,
+): Promise<ResumeDownloadResult> {
   try {
-    const res = await fetch("/backend/resume/docx", {
+    const res = await fetch(path, {
       method: "POST",
       credentials: "include",
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
@@ -761,14 +783,14 @@ export async function downloadResumeDocx(
         error:
           body && typeof body === "object" && "error" in body && body.error
             ? String(body.error)
-            : "DOCX download failed.",
+            : failureLabel,
       };
     }
 
     const blob = await res.blob();
     const disposition = res.headers.get("Content-Disposition") ?? "";
     const match = disposition.match(/filename="([^"]+)"/);
-    const fileName = match?.[1] ?? "resume.docx";
+    const fileName = match?.[1] ?? fallbackFileName;
     return { status: res.status, blob, fileName };
   } catch (error) {
     const timedOut =
@@ -778,7 +800,33 @@ export async function downloadResumeDocx(
       status: timedOut ? 504 : 0,
       error: timedOut
         ? "Request timed out. Please try again."
-        : "DOCX download failed.",
+        : failureLabel,
     };
   }
+}
+
+export async function downloadResumeDocx(
+  resume: import("@johel/resume").GeneratedResume,
+  runLabel?: string,
+): Promise<ResumeDownloadResult> {
+  return downloadResumeExport(
+    "/backend/resume/docx",
+    resume,
+    runLabel,
+    "resume.docx",
+    "DOCX download failed.",
+  );
+}
+
+export async function downloadResumePdf(
+  resume: import("@johel/resume").GeneratedResume,
+  runLabel?: string,
+): Promise<ResumeDownloadResult> {
+  return downloadResumeExport(
+    "/backend/resume/pdf",
+    resume,
+    runLabel,
+    "resume.pdf",
+    "PDF download failed.",
+  );
 }

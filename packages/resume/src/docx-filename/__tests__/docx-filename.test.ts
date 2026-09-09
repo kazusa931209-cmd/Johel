@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { GeneratedResume } from "../../domain/generated-resume";
 import {
   buildResumeDocxFileName,
+  buildResumeExportFileName,
+  buildResumePdfFileName,
   formatLocalYmd,
   sanitizeFileNameSegment,
 } from "../../docx-filename";
@@ -50,5 +52,33 @@ describe("docx-filename", () => {
       new Date(2026, 8, 5),
     );
     expect(fileName).toBe("2026-09-05-resume-workflow.docx");
+  });
+
+  it("builds pdf export filename", () => {
+    const fileName = buildResumePdfFileName(
+      sampleResume,
+      "Senior Backend",
+      new Date(2026, 8, 5),
+    );
+    expect(fileName).toBe("2026-09-05-john-doe-senior-backend.pdf");
+  });
+
+  it("builds export filename for each format", () => {
+    expect(
+      buildResumeExportFileName(
+        sampleResume,
+        "Senior Backend",
+        "docx",
+        new Date(2026, 8, 5),
+      ),
+    ).toBe("2026-09-05-john-doe-senior-backend.docx");
+    expect(
+      buildResumeExportFileName(
+        sampleResume,
+        "Senior Backend",
+        "pdf",
+        new Date(2026, 8, 5),
+      ),
+    ).toBe("2026-09-05-john-doe-senior-backend.pdf");
   });
 });

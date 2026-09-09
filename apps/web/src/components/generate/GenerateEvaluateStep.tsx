@@ -4,7 +4,7 @@ import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
-import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
+import { useResumeDownload } from "@/components/generate/useResumeDownload";
 
 type GenerateEvaluateStepProps = {
   resume: GeneratedResume | null;
@@ -22,7 +22,7 @@ export function GenerateEvaluateStep({
   onDownloaded,
 }: GenerateEvaluateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel, {
+  const { onDownload, downloading } = useResumeDownload(resume, runLabel, {
     onDownloaded,
   });
 

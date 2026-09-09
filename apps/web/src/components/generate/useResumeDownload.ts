@@ -2,19 +2,24 @@
 
 import { useCallback, useState } from "react";
 import type { GeneratedResume } from "@johel/resume";
-import { buildResumeDocxFileName } from "@johel/resume";
-import { downloadResumeDocx } from "@/lib/api";
+import { buildResumeExportFileName } from "@johel/resume";
+import {
+  downloadResumeDocx,
+  downloadResumePdf,
+  resolveDownloadFormat,
+} from "@/lib/api";
+import { loadGenerationProcess } from "@/lib/cached-settings";
 import { useToast } from "@/components/app/ToastProvider";
 import { useT } from "@/components/app/LocaleProvider";
 
-type UseResumeDocxDownloadOptions = {
+type UseResumeDownloadOptions = {
   onDownloaded?: () => void | Promise<void>;
 };
 
-export function useResumeDocxDownload(
+export function useResumeDownload(
   resume: GeneratedResume | null,
   runLabel?: string,
-  options?: UseResumeDocxDownloadOptions,
+  options?: UseResumeDownloadOptions,
 ) {
   const { toast } = useToast();
   const t = useT();
@@ -24,7 +29,14 @@ export function useResumeDocxDownload(
     if (!resume || downloading) return;
     setDownloading(true);
     try {
-      const res = await downloadResumeDocx(resume, runLabel);
+      const settingsRes = await loadGenerationProcess();
+      const format =
+        settingsRes.data != null
+          ? resolveDownloadFormat(settingsRes.data)
+          : "docx";
+      const download =
+        format === "pdf" ? downloadResumePdf : downloadResumeDocx;
+      const res = await download(resume, runLabel);
       if (!res.blob) {
         toast(res.error ?? t("generate.download.failed"), "error");
         return;
@@ -33,7 +45,8 @@ export function useResumeDocxDownload(
       const url = URL.createObjectURL(res.blob);
       const anchor = document.createElement("a");
       const fileName =
-        res.fileName ?? buildResumeDocxFileName(resume, runLabel);
+        res.fileName ??
+        buildResumeExportFileName(resume, runLabel, format);
       anchor.href = url;
       anchor.download = fileName;
       anchor.click();

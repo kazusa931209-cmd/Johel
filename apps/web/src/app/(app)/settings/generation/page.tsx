@@ -9,6 +9,7 @@ import {
 } from "@/components/generate/combine-types";
 import {
   saveGenerationProcess,
+  type DownloadFormat,
   type ExperienceAdvisePoolDepth,
 } from "@/lib/api";
 import {
@@ -43,10 +44,13 @@ const POOL_DEPTH_OPTIONS: ExperienceAdvisePoolDepth[] = [
   "full",
 ];
 
+const DOWNLOAD_FORMAT_OPTIONS: DownloadFormat[] = ["docx", "pdf"];
+
 const DEFAULT_SETTINGS = {
   doVerdict: true,
   doEvaluate: true,
   resumeLanguage: "en" as ResumeLanguage,
+  downloadFormat: "docx" as DownloadFormat,
   experienceAdvisePoolDepth: "normal" as ExperienceAdvisePoolDepth,
 };
 
@@ -60,6 +64,9 @@ export default function GenerationSettingsPage() {
   const [resumeLanguage, setResumeLanguage] = useState<ResumeLanguage>(
     DEFAULT_SETTINGS.resumeLanguage,
   );
+  const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>(
+    DEFAULT_SETTINGS.downloadFormat,
+  );
   const [experienceAdvisePoolDepth, setExperienceAdvisePoolDepth] =
     useState<ExperienceAdvisePoolDepth>(
       DEFAULT_SETTINGS.experienceAdvisePoolDepth,
@@ -68,6 +75,9 @@ export default function GenerationSettingsPage() {
   const [savedDoEvaluate, setSavedDoEvaluate] = useState(DEFAULT_SETTINGS.doEvaluate);
   const [savedResumeLanguage, setSavedResumeLanguage] = useState<ResumeLanguage>(
     DEFAULT_SETTINGS.resumeLanguage,
+  );
+  const [savedDownloadFormat, setSavedDownloadFormat] = useState<DownloadFormat>(
+    DEFAULT_SETTINGS.downloadFormat,
   );
   const [savedExperienceAdvisePoolDepth, setSavedExperienceAdvisePoolDepth] =
     useState<ExperienceAdvisePoolDepth>(
@@ -83,10 +93,12 @@ export default function GenerationSettingsPage() {
         setDoVerdict(res.data.doVerdict);
         setDoEvaluate(res.data.doEvaluate);
         setResumeLanguage(res.data.resumeLanguage);
+        setDownloadFormat(res.data.downloadFormat);
         setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
         setSavedDoVerdict(res.data.doVerdict);
         setSavedDoEvaluate(res.data.doEvaluate);
         setSavedResumeLanguage(res.data.resumeLanguage);
+        setSavedDownloadFormat(res.data.downloadFormat);
         setSavedExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
       }
       setLoading(false);
@@ -108,6 +120,7 @@ export default function GenerationSettingsPage() {
       doVerdict,
       doEvaluate,
       resumeLanguage,
+      downloadFormat,
       experienceAdvisePoolDepth,
     });
     setSaving(false);
@@ -119,6 +132,7 @@ export default function GenerationSettingsPage() {
     setDoVerdict(res.data.doVerdict);
     setDoEvaluate(res.data.doEvaluate);
     setResumeLanguage(res.data.resumeLanguage);
+    setDownloadFormat(res.data.downloadFormat);
     setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
     const settingsChanged =
       res.data.doVerdict !== savedDoVerdict ||
@@ -131,6 +145,7 @@ export default function GenerationSettingsPage() {
     setSavedDoVerdict(res.data.doVerdict);
     setSavedDoEvaluate(res.data.doEvaluate);
     setSavedResumeLanguage(res.data.resumeLanguage);
+    setSavedDownloadFormat(res.data.downloadFormat);
     setSavedExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
     toast(t("toast.generationSaved"), "success");
   }
@@ -199,9 +214,13 @@ export default function GenerationSettingsPage() {
               <div className="relative">
                 <select
                   value={resumeLanguage}
-                  onChange={(e) =>
-                    setResumeLanguage(e.target.value as RunLanguage)
-                  }
+                  onChange={(e) => {
+                    const nextLanguage = e.target.value as RunLanguage;
+                    setResumeLanguage(nextLanguage);
+                    if (nextLanguage !== "en") {
+                      setDownloadFormat("docx");
+                    }
+                  }}
                   className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
                 >
                   {RUN_LANGUAGES.map((option) => (
@@ -213,6 +232,50 @@ export default function GenerationSettingsPage() {
                 <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
               </div>
             </label>
+          )}
+        </div>
+
+        <div className="space-y-3 border-t border-border pt-4">
+          <h2 className="text-sm font-medium">
+            {t("settings.generation.downloadFormat.title")}
+          </h2>
+          <p className="text-sm text-muted">
+            {t("settings.generation.downloadFormat.description")}
+          </p>
+          {loading ? (
+            <p className="text-sm text-muted">
+              {t("settings.generation.process.loading")}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {DOWNLOAD_FORMAT_OPTIONS.map((option) => {
+                const pdfDisabled = resumeLanguage !== "en" && option === "pdf";
+                return (
+                  <label
+                    key={option}
+                    className={`flex items-center gap-2 text-sm ${pdfDisabled ? "text-muted" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="downloadFormat"
+                      value={option}
+                      checked={downloadFormat === option}
+                      disabled={pdfDisabled}
+                      onChange={() => setDownloadFormat(option)}
+                      className="h-4 w-4 border-border"
+                    />
+                    <span>
+                      {t(`settings.generation.downloadFormat.options.${option}`)}
+                    </span>
+                  </label>
+                );
+              })}
+              {resumeLanguage !== "en" ? (
+                <p className="text-xs text-muted">
+                  {t("settings.generation.downloadFormat.pdfEnglishOnly")}
+                </p>
+              ) : null}
+            </div>
           )}
         </div>
 

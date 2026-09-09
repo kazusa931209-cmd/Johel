@@ -19,13 +19,32 @@ export function formatLocalYmd(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export type ResumeExportFormat = "docx" | "pdf";
+
+export function buildResumeExportFileName(
+  resume: GeneratedResume,
+  runLabel?: string,
+  format: ResumeExportFormat = "docx",
+  date?: Date,
+): string {
+  const datePart = formatLocalYmd(date ?? new Date());
+  const namePart = sanitizeFileNameSegment(resume.header.name, "resume");
+  const labelPart = sanitizeFileNameSegment(runLabel ?? "", "workflow");
+  return `${datePart}-${namePart}-${labelPart}.${format}`;
+}
+
 export function buildResumeDocxFileName(
   resume: GeneratedResume,
   workflowName?: string,
   date?: Date,
 ): string {
-  const datePart = formatLocalYmd(date ?? new Date());
-  const namePart = sanitizeFileNameSegment(resume.header.name, "resume");
-  const workflowPart = sanitizeFileNameSegment(workflowName ?? "", "workflow");
-  return `${datePart}-${namePart}-${workflowPart}.docx`;
+  return buildResumeExportFileName(resume, workflowName, "docx", date);
+}
+
+export function buildResumePdfFileName(
+  resume: GeneratedResume,
+  runLabel?: string,
+  date?: Date,
+): string {
+  return buildResumeExportFileName(resume, runLabel, "pdf", date);
 }

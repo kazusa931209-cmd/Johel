@@ -15,7 +15,7 @@ import {
   GenerateTimeline,
   type GenerateStep,
 } from "@/components/generate/GenerateTimeline";
-import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
+import { useResumeDownload } from "@/components/generate/useResumeDownload";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 import { Drawer } from "@/components/shared/drawer";
 import { DownloadIcon, PlayIcon } from "@/components/shared/icons";
@@ -232,7 +232,7 @@ export function GenerationHistoryDrawer({
     }
   }
 
-  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel, {
+  const { onDownload, downloading } = useResumeDownload(resume, runLabel, {
     onDownloaded: handleHistoryDownloaded,
   });
   const showDownload = resume != null;

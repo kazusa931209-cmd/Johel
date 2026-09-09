@@ -5,11 +5,13 @@ import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 
 const RESUME_LANGUAGES = ["en", "ja", "zh-TW", "zh-CN", "ko"] as const;
+const DOWNLOAD_FORMATS = ["docx", "pdf"] as const;
 
 const putSchema = z.object({
   doVerdict: z.boolean(),
   doEvaluate: z.boolean(),
   resumeLanguage: z.enum(RESUME_LANGUAGES),
+  downloadFormat: z.enum(DOWNLOAD_FORMATS),
   experienceAdvisePoolDepth: z.enum(EXPERIENCE_ADVISE_POOL_DEPTHS),
 });
 
@@ -17,29 +19,50 @@ export const DEFAULT_GENERATION_PROCESS = {
   doVerdict: true,
   doEvaluate: true,
   resumeLanguage: "en",
+  downloadFormat: "docx",
   experienceAdvisePoolDepth: "normal",
 } as const;
+
+export function normalizeDownloadFormat(
+  resumeLanguage: string,
+  downloadFormat: string | undefined,
+): (typeof DOWNLOAD_FORMATS)[number] {
+  if (resumeLanguage !== "en") {
+    return "docx";
+  }
+  return DOWNLOAD_FORMATS.includes(
+    downloadFormat as (typeof DOWNLOAD_FORMATS)[number],
+  )
+    ? (downloadFormat as (typeof DOWNLOAD_FORMATS)[number])
+    : DEFAULT_GENERATION_PROCESS.downloadFormat;
+}
 
 function toProcessResponse(
   process: {
     doVerdict: boolean;
     doEvaluate: boolean;
     resumeLanguage: string;
+    downloadFormat?: string;
     experienceAdvisePoolDepth: string;
   } | null,
 ) {
   const resumeLanguage = process?.resumeLanguage ?? DEFAULT_GENERATION_PROCESS.resumeLanguage;
+  const normalizedResumeLanguage = RESUME_LANGUAGES.includes(
+    resumeLanguage as (typeof RESUME_LANGUAGES)[number],
+  )
+    ? resumeLanguage
+    : DEFAULT_GENERATION_PROCESS.resumeLanguage;
   const experienceAdvisePoolDepth =
     process?.experienceAdvisePoolDepth ??
     DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth;
   return {
     doVerdict: process?.doVerdict ?? DEFAULT_GENERATION_PROCESS.doVerdict,
     doEvaluate: process?.doEvaluate ?? DEFAULT_GENERATION_PROCESS.doEvaluate,
-    resumeLanguage: RESUME_LANGUAGES.includes(
-      resumeLanguage as (typeof RESUME_LANGUAGES)[number],
-    )
-      ? resumeLanguage
-      : DEFAULT_GENERATION_PROCESS.resumeLanguage,
+    resumeLanguage: normalizedResumeLanguage,
+    downloadFormat: normalizeDownloadFormat(
+      normalizedResumeLanguage,
+      process?.downloadFormat,
+    ),
     experienceAdvisePoolDepth: EXPERIENCE_ADVISE_POOL_DEPTHS.includes(
       experienceAdvisePoolDepth as (typeof EXPERIENCE_ADVISE_POOL_DEPTHS)[number],
     )
@@ -75,6 +98,11 @@ settingsProcessRoutes.put("/", async (c) => {
     return c.json({ error: "Invalid process settings." }, 400);
   }
 
+  const downloadFormat = normalizeDownloadFormat(
+    parsed.data.resumeLanguage,
+    parsed.data.downloadFormat,
+  );
+
   const process = await prisma.generationProcess.upsert({
     where: { userId: user.id },
     create: {
@@ -82,12 +110,14 @@ settingsProcessRoutes.put("/", async (c) => {
       doVerdict: parsed.data.doVerdict,
       doEvaluate: parsed.data.doEvaluate,
       resumeLanguage: parsed.data.resumeLanguage,
+      downloadFormat,
       experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
     },
     update: {
       doVerdict: parsed.data.doVerdict,
       doEvaluate: parsed.data.doEvaluate,
       resumeLanguage: parsed.data.resumeLanguage,
+      downloadFormat,
       experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
     },
   });

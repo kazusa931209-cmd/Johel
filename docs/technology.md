@@ -22,7 +22,7 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | Secrets / API keys | Per-user **plaintext** `Setting.apiKey` (Phase 5) | Masked on read; encrypt later if needed |
 | LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `apps/api` | User-owned keys; Anthropic adapters later |
 | JD ingest (later) | Manual / URL (`fetch` + cheerio) / file (`pdf-parse`, `mammoth`) | No scraping or parse SaaS |
-| Resume export (later) | `docx`; `@react-pdf/renderer` or `pdf-lib` | Server-side generation on the API |
+| Resume export | `docx`; `pdf-lib` (PDF) | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
 | Package manager | pnpm workspaces | Monorepo (`apps/api`, `apps/web`) |
 | Testing | Vitest (+ Playwright later) | Unit tests for Noise Filter; e2e when that work begins |
@@ -43,7 +43,7 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `PUT /auth/password`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `PUT /auth/password`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `POST /resume/docx`, `POST /resume/pdf`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`
 - Prisma `User` → table `users`: `id`, `email` (login ID), `passwordHash`, `createdAt`, `updatedAt`
 - **Phase 76:** `PUT /auth/password` `{ currentPassword, newPassword }` (min 8); verifies current hash then updates `passwordHash` only; `changePassword` in `apps/web/src/lib/api.ts`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
@@ -56,7 +56,7 @@ User browser (:4041)
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `problem`, `actions`, `outcome`, `createdAt`, `updatedAt`
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
-- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `resumeLanguage`, `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `resumeLanguage` `en`
+- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `resumeLanguage`, `downloadFormat`, `experienceAdvisePoolDepth`, `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `resumeLanguage` `en`, `downloadFormat` `docx`, `experienceAdvisePoolDepth` `normal`
 - **Phase 36:** `PromptOptimization` / `promptOptimizations` and `usePromptOptimizationAi` removed; AI routes use deterministic `compileInstruction` only (see `apps/api/src/lib/prompt-optimize/compile.ts`)
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
@@ -92,7 +92,7 @@ User browser (:4041)
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
   - `/settings/environment` — Settings / Environment (theme, UI language, FAB & drawer position, AI Agent); `/settings` redirects here
-  - `/settings/generation` — Settings / Generation (Process, Resume Language)
+  - `/settings/generation` — Settings / Generation (Process, Resume Language, Download format, Experience advisor pool depth)
   - `/settings/prompts` — Settings / Prompts
   - `/prompts` — legacy redirect to `/settings/prompts`
   - `/account` — account page (login ID + reset password; distinct from Workspace Profiles)
@@ -112,11 +112,12 @@ User browser (:4041)
 - Full `apiKey` is stored plaintext in SQLite; never returned to the client
 - Web Settings: enabled provider dropdown; masked key shown only when the selected provider matches the saved provider; Save stays enabled with inline validation on submit; toast on API result
 
-## Process settings (Phase 26, 36)
+## Process settings (Phase 26, 36, 80)
 
-- `GET /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage }` (defaults: Verdict/Evaluate true, `resumeLanguage` `en`)
-- `PUT /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage }` where `resumeLanguage` is one of `en`, `ja`, `zh-TW`, `zh-CN`, `ko`; upsert by `userId`; returns saved values
-- Web Settings **Generation** page (`/settings/generation`): **Process** section (**Do Verdict**, **Do Evaluate** checkboxes) and **Resume Language** select; one **Save** persists both; toast on API result; saving changed Process flags or resume language clears in-progress Generate session
+- `GET /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage, downloadFormat, experienceAdvisePoolDepth }` (defaults: Verdict/Evaluate true, `resumeLanguage` `en`, `downloadFormat` `docx`, `experienceAdvisePoolDepth` `normal`)
+- `PUT /settings/process` → same fields; `resumeLanguage` is one of `en`, `ja`, `zh-TW`, `zh-CN`, `ko`; `downloadFormat` is `docx` or `pdf` (coerced to `docx` when `resumeLanguage` is not `en`); upsert by `userId`; returns saved values
+- Web Settings **Generation** page (`/settings/generation`): **Process**, **Resume Language**, **Download** (DOCX / PDF radios; PDF disabled unless Resume Language is `en`), and **Experience advisor pool depth**; one **Save** persists all; toast on API result; saving changed Process flags, resume language, or pool depth clears in-progress Generate session; changing download format alone does not
+- Generate / Evaluate / History **Download** reads saved `downloadFormat` via `useResumeDownload` and `resolveDownloadFormat` (English-only guard at download time)
 - Generate reads process settings on load; syncs `combine.language` from saved `resumeLanguage`; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
 - When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel; resume generation uses noise-filtered job description as `jobContext`
 - When `doVerdict` is true: Workflow shows AI Verdict result; resume generation and evaluation send that Markdown as `jobContext` instead of the raw job description (Verdict Prompt structure and extracted fields affect tailoring quality)
@@ -194,7 +195,7 @@ User browser (:4041)
 - Combine **Run**: validates snapshot; clears downstream resume/evaluation (confirm when stale); navigates to Generate and runs `POST /ai-resume` (reuses when `generationInputKey` matches)
 - Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Run** (when `doEvaluate`) navigates to Evaluate and runs `POST /ai-evaluate` (confirm when evaluation exists; reuses when `evaluationInputKey` matches); **Download** on this step when `doEvaluate` is false
 - Evaluate: `GenerateEvaluateStep` renders evaluation Markdown via `AiVerdictMarkdown`; **Download** calls `POST /resume/docx` with stored JSON
-- One Generate **process** spans Job through DOCX download; session persists after download until **New** or until Settings **Process** flags change (Do Verdict / Do Evaluate saved with different values)
+- One Generate **process** spans Job through resume download; session persists after download until **New** or until Settings **Process** flags change (Do Verdict / Do Evaluate saved with different values)
 - In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, Combine snapshot (including Run guidance / `emphasis`), `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + combine + server combine fingerprint), `evaluationMarkdown`, and `evaluationInputKey`; legacy `oneTimePrompt` session keys migrate into `combine.emphasis` on load; **editing Job/Combine or Quick Add Experience does not clear cached results until the user Run**s from an earlier step (confirm dialog when resume/evaluation would be discarded); `clearDownstreamFromVerdict` / `clearDownstreamFromGenerate` in `generate-session.ts`; no mount auto-run (`useStepMountAutoRun` removed from AI steps)
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` (delegates to `formatThousandsSeparated` in `apps/web/src/lib/helper.ts`); all user-visible numbers use thousand-separated formatting; header from `GET /ai-usage/summary`
@@ -265,9 +266,11 @@ User browser (:4041)
 - Workspace package: `packages/resume`
 - Canonical model: `GeneratedResume` (Zod schema in `domain/generated-resume.ts`)
 - `resumeToMarkdown(resume)` — deterministic Markdown for web display (main export); section order matches the default DOCX template: Header, Summary, Experience, Skills, Education, Certifications, Projects
-- `buildResumeDocxFileName(resume, workflowName?, date?)` — `YYYY-MM-DD-{name}-{workflow}.docx` using sanitized segments and local calendar date
+- `buildResumeExportFileName(resume, runLabel?, format, date?)` — `YYYY-MM-DD-{name}-{label}.{docx|pdf}` using sanitized segments and local calendar date; `buildResumeDocxFileName` / `buildResumePdfFileName` are format wrappers
 - `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts` (same section order as Markdown); shared `ResumeDocxStyle` in `docx-builder/styles.ts` (default font Arial)
-- `POST /resume/docx` — body `{ resume, workflowName? }` (validated `GeneratedResume`); returns `.docx` attachment named via `buildResumeDocxFileName`; used by Generate/Evaluate **Download**
+- `@johel/resume/pdf` — `buildResumePdfBuffer` / `buildResumePdfBlob` via `pdf-lib` (Helvetica; English-only product constraint; no CJK font embedding); same section order as DOCX under `pdf-builder/templates/default.ts`; `filterPdfText` drops characters outside Standard Font WinAnsi before layout so mixed Unicode in resume JSON does not fail generation
+- `POST /resume/docx` — body `{ resume, runLabel? }` (validated `GeneratedResume`); returns `.docx` attachment
+- `POST /resume/pdf` — same body; returns `.pdf` attachment; used by Generate/Evaluate/History **Download** when Settings **Download** is PDF and Resume Language is `en`
 - Consumed by API (validation), web (display + download), and Vitest unit tests
 - **DOCX template management** — architecture, default template, style tokens, and extension guide: [`docx-template-management.md`](./docx-template-management.md)
 - **Workspace authoring** — how Company / Experience / Workflow fields should be written so assembly and the Generate Prompt can multiply scene × capability × rubric: [`workspace-authoring.md`](./workspace-authoring.md). `assembleResumeGenerationInput` nests linked experiences under each workflow company; it does not de-duplicate stack variants. The default Generate Prompt treats `whatCompanyIs` / `domainAndStack` as scene, `roleContext` as title hint, and each linked card as 1–3 bullets (`actions` lead, `outcome` close).
@@ -370,7 +373,7 @@ User browser (:4041)
 
 ### Schema
 
-- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `finalized` (boolean; `true` when user downloaded the resume DOCX), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps.
+- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `finalized` (boolean; `true` when user downloaded the resume), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps.
 - `AiUsage.generationId` optional FK → `generations.id` (`onDelete: SetNull`); indexed
 - Migrations: `20260909100004_generations`, `20260910100007_generation_finalized` (replaces `status` with `finalized` boolean)
 

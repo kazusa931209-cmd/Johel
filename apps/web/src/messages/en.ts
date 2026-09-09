@@ -108,6 +108,17 @@ export const en = {
           "Default output language for generated resumes. Change in Settings before starting a run.",
         label: "Resume language",
       },
+      downloadFormat: {
+        title: "Download",
+        description:
+          "Default file format when downloading a generated resume from Generate, Evaluate, or History.",
+        options: {
+          docx: "DOCX",
+          pdf: "PDF",
+        },
+        pdfEnglishOnly:
+          "PDF is available only when Resume Language is English.",
+      },
       experienceAdvisePoolDepth: {
         title: "Experience advisor pool depth",
         description:
