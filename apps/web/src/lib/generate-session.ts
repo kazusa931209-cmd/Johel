@@ -20,7 +20,6 @@ export type GenerateSession = {
   activeStep: GenerateStep;
   job: GenerateJobState;
   combine: CombineSnapshot;
-  oneTimePrompt: string;
   verdictInputKey: string | null;
   resume: GeneratedResume | null;
   generationInputKey: string | null;
@@ -43,7 +42,6 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   activeStep: "Job",
   job: EMPTY_JOB_STATE,
   combine: EMPTY_COMBINE_SNAPSHOT,
-  oneTimePrompt: "",
   verdictInputKey: null,
   resume: null,
   generationInputKey: null,
@@ -174,7 +172,6 @@ function buildGenerationInputKeyParts(
   combine: CombineSnapshot,
   combineContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt">,
-  oneTimePrompt: string,
 ) {
   return {
     labeledUserMessageVersion: LABELED_USER_MESSAGE_VERSION,
@@ -183,7 +180,6 @@ function buildGenerationInputKeyParts(
     combine,
     combineContentFingerprint,
     generatePromptHash: hashPromptForCache(prompts.generatePrompt ?? ""),
-    oneTimePrompt: oneTimePrompt.trim(),
   };
 }
 
@@ -193,7 +189,6 @@ export function buildGenerationInputKey(
   combine: CombineSnapshot,
   combineContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt">,
-  oneTimePrompt = "",
 ): string {
   return JSON.stringify(
     buildGenerationInputKeyParts(
@@ -202,7 +197,6 @@ export function buildGenerationInputKey(
       combine,
       combineContentFingerprint,
       prompts,
-      oneTimePrompt,
     ),
   );
 }
@@ -213,7 +207,6 @@ export function buildEvaluationInputKey(
   combine: CombineSnapshot,
   combineContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt" | "evaluatePrompt">,
-  oneTimePrompt = "",
 ): string {
   return JSON.stringify({
     ...buildGenerationInputKeyParts(
@@ -222,7 +215,6 @@ export function buildEvaluationInputKey(
       combine,
       combineContentFingerprint,
       prompts,
-      oneTimePrompt,
     ),
     evaluatePromptHash: hashPromptForCache(prompts.evaluatePrompt ?? ""),
   });
@@ -253,10 +245,15 @@ export function canReuseStoredEvaluation(
 export function parseGenerateSession(value: unknown): GenerateSession | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
-  const combine =
+  let combine =
     raw.combine != null
       ? parseCombineSnapshot(raw.combine)
       : parseCombineSnapshot(raw.workflow ?? raw.pcew);
+  const legacyOneTimePrompt =
+    typeof raw.oneTimePrompt === "string" ? raw.oneTimePrompt.trim() : "";
+  if (legacyOneTimePrompt && !combine.emphasis.trim()) {
+    combine = { ...combine, emphasis: legacyOneTimePrompt };
+  }
   const job = parseJobState(raw.job);
   let verdictInputKey =
     typeof raw.verdictInputKey === "string" ? raw.verdictInputKey : null;
@@ -269,8 +266,6 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
     activeStep: normalizeActiveStep(raw.activeStep),
     job,
     combine,
-    oneTimePrompt:
-      typeof raw.oneTimePrompt === "string" ? raw.oneTimePrompt : "",
     verdictInputKey,
     resume: parseStoredResume(raw.resume),
     generationInputKey:

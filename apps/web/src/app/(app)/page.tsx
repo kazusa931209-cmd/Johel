@@ -77,8 +77,6 @@ export default function GeneratePage() {
     setJob,
     combine,
     setCombine,
-    oneTimePrompt,
-    setOneTimePrompt,
     verdictInputKey,
     setVerdictResult,
     resume,
@@ -262,7 +260,6 @@ export default function GeneratePage() {
       combine,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
-      oneTimePrompt,
     );
     if (
       canReuseStoredResume(
@@ -270,7 +267,6 @@ export default function GeneratePage() {
           activeStep: normalizedActiveStep,
           job,
           combine,
-          oneTimePrompt,
           verdictInputKey,
           resume,
           generationInputKey,
@@ -291,13 +287,9 @@ export default function GeneratePage() {
 
     setGeneratingResume(true);
     try {
-      const trimmedOneTimePrompt = oneTimePrompt.trim();
       const res = await runAiResume({
         jobContext,
         combine,
-        ...(trimmedOneTimePrompt
-          ? { oneTimePrompt: trimmedOneTimePrompt }
-          : {}),
       });
       if (!res.data) {
         toast(res.error ?? t("toast.resumeGenerateFailed"), "error");
@@ -321,7 +313,6 @@ export default function GeneratePage() {
     generationInputKey,
     job,
     normalizedActiveStep,
-    oneTimePrompt,
     processSettings.doVerdict,
     promptCacheContext,
     refreshTokenUsed,
@@ -364,7 +355,6 @@ export default function GeneratePage() {
       combine,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
-      oneTimePrompt,
     );
     if (currentInputKey !== generationInputKey) {
       toast(t("toast.combineContentChanged"), "error");
@@ -377,7 +367,6 @@ export default function GeneratePage() {
       combine,
       fingerprintRes.data.fingerprint,
       promptCacheContext,
-      oneTimePrompt,
     );
     if (
       canReuseStoredEvaluation(
@@ -385,7 +374,6 @@ export default function GeneratePage() {
           activeStep: normalizedActiveStep,
           job,
           combine,
-          oneTimePrompt,
           verdictInputKey,
           resume,
           generationInputKey,
@@ -424,7 +412,6 @@ export default function GeneratePage() {
     generationInputKey,
     job,
     normalizedActiveStep,
-    oneTimePrompt,
     processSettings.doVerdict,
     promptCacheContext,
     refreshTokenUsed,
@@ -443,7 +430,6 @@ export default function GeneratePage() {
     visibleSteps,
     job,
     combine,
-    oneTimePrompt,
     resume,
   });
 
@@ -516,12 +502,10 @@ export default function GeneratePage() {
             {normalizedActiveStep === "Combine" ? (
               <GenerateCombineStep
                 combine={combine}
-                oneTimePrompt={oneTimePrompt}
                 jobText={job.jobText}
                 acceptedMarkdown={job.acceptedMarkdown}
                 doVerdict={processSettings.doVerdict}
                 onCombineChange={setCombine}
-                onOneTimePromptChange={setOneTimePrompt}
                 onPrev={() => goToAdjacentStep("prev")}
                 onNext={onCombineNext}
               />

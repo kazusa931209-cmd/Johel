@@ -125,7 +125,7 @@ User browser (:4041)
 - Module: `apps/api/src/lib/prompt-optimize/` — `compileInstruction`, `PROMPT_SECTION_SEPARATOR`, `PROMPT_COMPILER_VERSION` (`2`); `extractMarkdownHeadings` / `formatJobContextBlock` in `job-context.ts`
 - **Deterministic compile (always):** trim, collapse extra blank lines, wrap stored prompt markdown under `# Instructions`, then append `PROMPT_SECTION_SEPARATOR` (`----------------------------------------`)
 - **Runtime system prompt:** compiled Instructions + `# Execution rules` (minimal provider-safe rules) + separator + provider notes; Verdict / Generate / Evaluate output structure and tailoring rules live in the user's stored prompt, not in fixed system sections
-- **One-time Generate prompt:** appended under `# One-time prompt` with the same separator before Execution rules
+- **Run guidance:** Combine `emphasis` is sent in the user message under `## Run intent` as `Run guidance:` (replaces the former separate One-time Prompt on the system prompt)
 - Generate cache keys (`buildVerdictInputKey`, `buildGenerationInputKey`, `buildEvaluationInputKey`, `buildWorkflowRecommendInputKey`) include prompt hashes via `apps/web/src/lib/prompt-hash.ts` (no optimization flag); Generate/Evaluate keys also include `labeledUserMessageVersion` so a user-message layout change invalidates stored AI results
 
 ## Workflows (Phase 6–7, 22, 30, 35)
@@ -189,7 +189,7 @@ User browser (:4041)
 - Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Previous** → Workflow; **Next** fetches workflow fingerprint and blocks with an error toast if PCE changed since resume generation; otherwise runs `POST /ai-evaluate` with the same `jobContext` as generation (Verdict Markdown when `doVerdict`) or reuses stored evaluation when `evaluationInputKey` matches; fullscreen loading while evaluating; **Download** on this step when `doEvaluate` is false
 - Evaluate: `GenerateEvaluateStep` renders evaluation Markdown via `AiVerdictMarkdown`; **Previous** → Generate; **Download** calls `POST /resume/docx` with stored JSON
 - One Generate **process** spans Job through DOCX download; session persists after download until **New** or until Settings **Process** flags/threshold change (Do Verdict / Do Evaluate / Do Workflow Recommendation / Recommendation threshold saved with different values)
-- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, `workflow: { workflowId, workflowName? }`, optional `oneTimePrompt`, `verdictInputKey`, `workflowRecommendInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + workflow id + server PCE fingerprint + one-time prompt), `evaluationMarkdown`, and `evaluationInputKey`; legacy `pcew` session keys are parsed for `workflowId`; changing Job text clears verdict, recommendation cache, resume, and evaluation; changing workflow or one-time prompt clears resume and evaluation; editing linked Profile / Companies / Experiences changes the server fingerprint so resume and evaluation are regenerated on next forward navigation
+- In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, Combine snapshot (including Run guidance / `emphasis`), `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + combine + server PCE fingerprint), `evaluationMarkdown`, and `evaluationInputKey`; legacy `oneTimePrompt` session keys migrate into `combine.emphasis` on load; changing Job text clears verdict, resume, and evaluation; changing Combine (including Run guidance) clears resume and evaluation; editing linked Profile / Companies / Experiences changes the server fingerprint so resume and evaluation are regenerated on next forward navigation
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowProfilePicker`, `WorkflowCompaniesEditor`, and `WorkflowCompanyDialog`
@@ -323,7 +323,7 @@ User browser (:4041)
 
 - `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); full experience pool; `generateType: experienceAdvise`
 - `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, mode: "guided"|"auto", profileId, companies[] }`; returns per-company `experienceIds` + `warnings`; `generateType: combineRecommend`
-- `POST /ai-resume` — body `{ jobContext, combine, oneTimePrompt? }` (replaces `workflowId`)
+- `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run
 - `POST /resume/combine-fingerprint` — fingerprint for Combine snapshot (replaces workflow fingerprint)
 - `GET /auth/me` includes `role` (`admin` | `user`)
 - `GET /prompts` returns `*Extension` fields; `PUT /prompts/{kind}/extension` for all users; full prompt `PUT` for admins only

@@ -124,15 +124,6 @@ export function useGenerateSession() {
     setSession((current) => withoutResume({ ...current, combine }));
   }, []);
 
-  const setOneTimePrompt = useCallback((oneTimePrompt: string) => {
-    setSession((current) => {
-      if (oneTimePrompt === current.oneTimePrompt) {
-        return current;
-      }
-      return withoutResume({ ...current, oneTimePrompt });
-    });
-  }, []);
-
   const setVerdictResult = useCallback(
     (acceptedMarkdown: string, verdictInputKey: string) => {
       setSession((current) =>
@@ -185,8 +176,6 @@ export function useGenerateSession() {
     patchJob,
     combine: session.combine,
     setCombine,
-    oneTimePrompt: session.oneTimePrompt,
-    setOneTimePrompt,
     verdictInputKey: session.verdictInputKey,
     setVerdictResult,
     resume: session.resume,

@@ -19,12 +19,10 @@ import { noiseFilter } from "@/lib/jobNoiseFilter";
 
 type GenerateCombineStepProps = {
   combine: CombineSnapshot;
-  oneTimePrompt: string;
   jobText: string;
   acceptedMarkdown: string | null;
   doVerdict: boolean;
   onCombineChange: (combine: CombineSnapshot) => void;
-  onOneTimePromptChange: (value: string) => void;
   onPrev: () => void;
   onNext: () => void | Promise<void>;
 };
@@ -48,12 +46,10 @@ function ChevronDownIcon({ className }: { className?: string }) {
 
 export function GenerateCombineStep({
   combine,
-  oneTimePrompt,
   jobText,
   acceptedMarkdown,
   doVerdict,
   onCombineChange,
-  onOneTimePromptChange,
   onPrev,
   onNext,
 }: GenerateCombineStepProps) {
@@ -195,18 +191,6 @@ export function GenerateCombineStep({
         </div>
       </label>
 
-      <label className="block space-y-1 text-sm">
-        <span>{t("generate.combine.emphasis")}</span>
-        <p className="text-xs text-muted">{t("generate.combine.emphasisHint")}</p>
-        <textarea
-          value={combine.emphasis}
-          onChange={(e) => patchCombine({ emphasis: e.target.value })}
-          rows={4}
-          placeholder={t("generate.combine.emphasisPlaceholder")}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
-        />
-      </label>
-
       <CombineCompaniesEditor
         companies={combine.companies}
         onChange={(companies) => patchCombine({ companies })}
@@ -251,26 +235,17 @@ export function GenerateCombineStep({
         </button>
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">
-          {t("generate.combine.oneTimePrompt.title")}
-        </h3>
-        <p className="text-sm text-muted">
-          {t("generate.combine.oneTimePrompt.description")}
-        </p>
-        <label className="block space-y-1 text-sm">
-          <span className="sr-only">
-            {t("generate.combine.oneTimePrompt.label")}
-          </span>
-          <textarea
-            value={oneTimePrompt}
-            onChange={(e) => onOneTimePromptChange(e.target.value)}
-            rows={8}
-            placeholder={t("generate.combine.oneTimePrompt.placeholder")}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
-          />
-        </label>
-      </div>
+      <label className="block space-y-1 text-sm">
+        <span>{t("generate.combine.emphasis")}</span>
+        <p className="text-xs text-muted">{t("generate.combine.emphasisHint")}</p>
+        <textarea
+          value={combine.emphasis}
+          onChange={(e) => patchCombine({ emphasis: e.target.value })}
+          rows={8}
+          placeholder={t("generate.combine.emphasisPlaceholder")}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
+        />
+      </label>
 
       {recommending ? (
         <div

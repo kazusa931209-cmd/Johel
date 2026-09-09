@@ -86,13 +86,16 @@ describe("generate-session resume cache", () => {
   };
 
   it("includes combine content fingerprint in generation input key", () => {
+    const combineWithGuidance = {
+      ...combine,
+      emphasis: "Emphasize leadership",
+    };
     const key = buildGenerationInputKey(
       job,
       true,
-      combine,
+      combineWithGuidance,
       "fp-v1",
       promptContext,
-      "Emphasize leadership",
     );
     expect(key).toContain("fp-v1");
     expect(key).toContain("profile-1");

@@ -214,12 +214,11 @@ A workflow is a preset: one profile, ordered company entries, language, and a de
 Good: ScalyX → Multi-tenant Retail APIs + AI-assisted Retail Workflows.  
 Bad: ScalyX → those two **plus** the AllWeb3 AWS card (PM2, Base chain, S3 Object Lock).
 
-### Description vs One-time Prompt
+### Run guidance (Combine emphasis)
 
-- **Workflow description** — stable persona and emphasis for this preset (“Go/blockchain engineer, lead with on-chain reliability”).
-- **One-time Prompt** (Generate step) — this run only (“Emphasize startup scene; keep Skills to backend”).
+- **Run guidance** (Combine step, `emphasis` field) — this run only (“Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups”).
 
-Neither is a place to dump metrics or to say “use the Startup Experience card”.
+Not a place to dump metrics or to say “use the Startup Experience card”.
 
 Good description:
 
@@ -263,8 +262,7 @@ Changing Prompts changes *how* materials are read. It does not add missing facts
 | Need | Where |
 | --- | --- |
 | Always-on writing rules | Generate Prompt |
-| This-preset emphasis | Workflow description |
-| This-run emphasis | One-time Prompt |
+| This-run emphasis / tailoring | Combine Run guidance (`emphasis`) |
 | Employer scene | Company |
 | What you did and what changed | Experience |
 

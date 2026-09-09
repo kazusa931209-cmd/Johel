@@ -31,7 +31,7 @@ Job Description → Filtering → Verdict? → Combine → Generate → Evaluate
 
 1. **Job Description** — Provide the JD (URL, file, or manual input) and filter it.
 2. **Verdict** (when **Do Verdict** is on) — Run AI Verdict on the filtered JD; the Markdown result is the scoring rubric for generation and evaluation.
-3. **Combine** — For this run only: choose one profile, résumé output language, optional emphasis, ordered company entries (period, role context), and linked experiences per company; optional **One-time Prompt**; optional AI **Suggest experiences** (guided or auto).
+3. **Combine** — For this run only: choose one profile, résumé output language, optional **Run guidance** (emphasis), ordered company entries (period, role context), and linked experiences per company; optional AI **Suggest experiences** (guided or auto).
 4. **Generate** — Generate the résumé from the job context and the Combine snapshot.
 5. **Evaluate** (when **Do Evaluate** is on) — Score the generated résumé against the same Verdict dimensions, then download the résumé.
 
@@ -42,7 +42,7 @@ Company and Experience fields are resume-generation prompts. Generation multipli
 * **Company** holds scene only (industry, product, customer, domain, stack, snapshot scale). Personal achievements and before→after metrics do not belong here.
 * **Experience** holds one capability (STAR). Category names the capability (stack suffix only when keeping intentional variants). Outcome numbers stay on the card that produced them. Do not store routing instructions (“use when the JD asks for X”) in Actions. Shared STAR fields must not name employers; employer context lives on the Combine company entry.
 * **Combine** (session-only, not saved as a workspace preset) chooses profile, résumé company order, which cards attach to which company, output language, and optional run emphasis. Linking a card to a company asserts that work happened there.
-* **Prompts** (Verdict / Generate / Evaluate) say how to read the JD and write/score the résumé. They do not add facts. Run-specific emphasis uses Combine **emphasis** and the Generate **One-time Prompt**.
+* **Prompts** (Verdict / Generate / Evaluate) say how to read the JD and write/score the résumé. They do not add facts. Run-specific tailoring uses Combine **Run guidance** (`emphasis` on the Combine snapshot).
 
 Authoring criteria, good/bad examples, stack-variant rules, and the mapping to user-defined prompts: [`docs/workspace-authoring.md`](./workspace-authoring.md).
 
@@ -193,8 +193,8 @@ Aligned with the product flow above:
   * Previous-step content by current step (respecting **Do Verdict** / **Do Evaluate** flags): **Verdict** ← noise-filtered Job Description; **Combine** ← AI Verdict Markdown when Do Verdict is on, otherwise noise-filtered Job Description; **Generate** ← read-only Combine summary (profile name, language, emphasis, ordered company entries with dates, role context, and linked experience names — not the Combine editors); **Evaluate** ← generated résumé Markdown preview
   * **Job** **Next**: validates the Job Description (inline error if empty); runs **Noise Filter** silently; advances to Verdict or Combine (does not run AI on this step)
   * **Verdict** (when enabled): auto-runs **AI Verdict** on entry with the noise-filtered JD and saved Verdict Prompt; shows result Markdown; **Next** advances to Combine when complete
-  * **Combine**: choose profile, résumé language, optional emphasis, ordered company entries (period, role context, experiences), optional **One-time Prompt**; optional **Suggest experiences** (guided or auto) using JD + Verdict; **Next** validates inline then advances to Generate (resume generation runs on the Generate step)
-  * Session remembers step, Job, Verdict, Combine, one-time prompt, resume JSON, and evaluation until **New** or Process settings change
+  * **Combine**: choose profile, résumé language, optional **Run guidance**, ordered company entries (period, role context, experiences); optional **Suggest experiences** (guided or auto) using JD + Verdict; **Next** validates inline then advances to Generate (resume generation runs on the Generate step)
+  * Session remembers step, Job, Verdict, Combine (including Run guidance), resume JSON, and evaluation until **New** or Process settings change
   * **Generate** and **Evaluate** steps: auto-run resume generation and evaluation respectively when needed; Markdown preview; DOCX download on Evaluate (or Generate when Do Evaluate is off)
 * **Settings**
   * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here

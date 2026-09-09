@@ -451,20 +451,14 @@ export const en = {
         "Choose a profile, résumé output language, emphasis, and ordered company entries with linked experiences for this run.",
       profile: "Profile",
       language: "Résumé language",
-      emphasis: "Emphasis",
+      emphasis: "Run guidance",
       emphasisHint:
-        "Persona and what to emphasize or omit for this run (used as a generation prompt).",
-      emphasisPlaceholder: "e.g. Lead with on-chain reliability; omit mobile work.",
+        "Optional persona, emphasis, and tailoring instructions for this run only (included in the generation request).",
+      emphasisPlaceholder:
+        "e.g. Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups.",
       companies: "Companies",
       companiesHint:
         "Add company entries in résumé order. Each entry needs a period, role context, and linked experiences.",
-      oneTimePrompt: {
-        title: "One-time Prompt",
-        description:
-          "Optional instructions for this run only. When filled in, they are appended to your saved Generate Prompt for resume generation.",
-        label: "One-time Prompt",
-        placeholder: "Add run-specific guidance for this resume…",
-      },
       generating: {
         title: "Generating Resume…",
         description: "Please wait while the AI tailors your resume to the job.",

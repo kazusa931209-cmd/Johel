@@ -451,19 +451,14 @@ export const ko: MessageTree = {
         "이번 실행에 사용할 개인정보, 리력서 출력 언어, 강조, 회사항목(기간·역할·경험)을 선택합니다.",
       profile: "개인정보",
       language: "리력서 언어",
-      emphasis: "강조",
-      emphasisHint: "이번 실행에만 적용되는 강조형 프롬프트(생성 프롬프트에 사용).",
-      emphasisPlaceholder: "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외.",
+      emphasis: "실행지침",
+      emphasisHint:
+        "이번 실행에만 적용되는 개인형, 강조, 맞춤지침(생성요청에 포함됩니다).",
+      emphasisPlaceholder:
+        "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외; Skills는 3개의 모임으로.",
       companies: "회사",
       companiesHint:
         "리력서순서대로 회사항목을 추가합니다. 각 항목에 기간, 역할, 경험이 필요합니다.",
-      oneTimePrompt: {
-        title: "일회성 프롬프트",
-        description:
-          "이번 실행에만 적용되는 선택 지침입니다. 입력 시 저장된 생성 프롬프트에 덧붙입니다.",
-        label: "일회성 프롬프트",
-        placeholder: "이번 리력서에만 적용할 지침…",
-      },
       generating: {
         title: "리력서 생성중…",
         description: "AI가 직업광고문에 맞춰 리력서를 작성하는중입니다.",

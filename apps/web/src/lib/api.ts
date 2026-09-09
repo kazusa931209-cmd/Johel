@@ -419,7 +419,6 @@ export function runAiVerdict(jobDescription: string) {
 export type AiResumeRequest = {
   jobContext: string;
   combine: CombineSnapshot;
-  oneTimePrompt?: string;
 };
 
 export type AiResumeResult = {

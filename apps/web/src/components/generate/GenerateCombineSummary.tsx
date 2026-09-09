@@ -12,7 +12,6 @@ import { fullName } from "@/lib/profile";
 
 type GenerateCombineSummaryProps = {
   combine: CombineSnapshot;
-  oneTimePrompt: string;
 };
 
 function languageLabel(language: string): string {
@@ -23,7 +22,6 @@ function languageLabel(language: string): string {
 
 export function GenerateCombineSummary({
   combine,
-  oneTimePrompt,
 }: GenerateCombineSummaryProps) {
   const t = useT();
   const [profileName, setProfileName] = useState<string | null>(null);
@@ -92,7 +90,9 @@ export function GenerateCombineSummary({
       {combine.emphasis.trim() ? (
         <div className="space-y-1">
           <dt className="font-medium">{t("generate.combine.emphasis")}</dt>
-          <dd className="whitespace-pre-wrap text-muted">{combine.emphasis}</dd>
+          <dd className="whitespace-pre-wrap font-mono text-muted">
+            {combine.emphasis}
+          </dd>
         </div>
       ) : null}
 
@@ -135,16 +135,6 @@ export function GenerateCombineSummary({
         </dd>
       </div>
 
-      {oneTimePrompt.trim() ? (
-        <div className="space-y-1">
-          <dt className="font-medium">
-            {t("generate.combine.oneTimePrompt.title")}
-          </dt>
-          <dd className="whitespace-pre-wrap font-mono text-muted">
-            {oneTimePrompt.trim()}
-          </dd>
-        </div>
-      ) : null}
     </dl>
   );
 }

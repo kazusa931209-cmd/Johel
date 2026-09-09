@@ -18,7 +18,6 @@ type GeneratePreviousStepPanelProps = {
   visibleSteps: readonly GenerateStep[];
   job: GenerateJobState;
   combine: CombineSnapshot;
-  oneTimePrompt: string;
   resume: GeneratedResume | null;
 };
 
@@ -35,7 +34,6 @@ export function useGeneratePreviousStepPanel({
   visibleSteps,
   job,
   combine,
-  oneTimePrompt,
   resume,
 }: GeneratePreviousStepPanelProps): {
   previousTitle?: string;
@@ -68,7 +66,7 @@ export function useGeneratePreviousStepPanel({
         );
       case "Combine":
         return (
-          <GenerateCombineSummary combine={combine} oneTimePrompt={oneTimePrompt} />
+          <GenerateCombineSummary combine={combine} />
         );
       case "Generate":
         return resume ? (
@@ -79,7 +77,7 @@ export function useGeneratePreviousStepPanel({
       default:
         return null;
     }
-  }, [combine, job.acceptedMarkdown, job.jobText, oneTimePrompt, previousStep, resume, t]);
+  }, [combine, job.acceptedMarkdown, job.jobText, previousStep, resume, t]);
 
   return { previousTitle, previousContent };
 }

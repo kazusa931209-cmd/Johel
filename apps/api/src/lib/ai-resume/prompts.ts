@@ -133,7 +133,7 @@ export function buildAiResumeUserPrompt(input: ResumeGenerationInput): string {
   const runIntent = [
     "## Run intent",
     `- Language: ${input.run.language}`,
-    emphasis ? `Emphasis:\n${emphasis}` : "Emphasis: (none)",
+    emphasis ? `Run guidance:\n${emphasis}` : "Run guidance: (none)",
   ].join("\n");
 
   return [

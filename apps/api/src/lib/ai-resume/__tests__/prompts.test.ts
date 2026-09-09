@@ -56,6 +56,8 @@ describe("buildAiResumeUserPrompt", () => {
     expect(prompt).toContain("- Technical Requirements");
     expect(prompt).toContain("## Run intent");
     expect(prompt).toContain("- Language: en");
+    expect(prompt).toContain("Run guidance:");
+    expect(prompt).toContain("Emphasize distributed systems");
     expect(prompt).toContain("## Profile");
     expect(prompt).toContain("- Name: Jane Doe");
     expect(prompt).toContain("## Companies (résumé order)");
