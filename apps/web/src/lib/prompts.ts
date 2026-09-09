@@ -1,7 +1,6 @@
 export {
   DEFAULT_EVALUATE_PROMPT,
   DEFAULT_GENERATE_PROMPT,
-  DEFAULT_PROMPTS,
   DEFAULT_VERDICT_PROMPT,
 } from "@johel/prompt-defaults";
 

@@ -12,8 +12,4 @@ export {
 
 export { resumeToMarkdown } from "./markdown/resume-to-markdown";
 
-export {
-  buildResumeDocxFileName,
-  formatLocalYmd,
-  sanitizeFileNameSegment,
-} from "./docx-filename";
+export { buildResumeDocxFileName } from "./docx-filename";

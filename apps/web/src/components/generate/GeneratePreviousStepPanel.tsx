@@ -71,8 +71,7 @@ export function useGeneratePreviousStepPanel({
         ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
         : undefined;
 
-  const previousHeaderRight =
-    isFilteredJobPanel && currentStep !== "Combine" ? (
+  const previousHeaderRight = isFilteredJobPanel ? (
       <span
         aria-label={t("generate.job.filteredCharCountAria", {
           count: filteredCharCount,
