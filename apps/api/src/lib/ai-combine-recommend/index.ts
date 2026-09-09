@@ -6,6 +6,10 @@ import {
 } from "./prompts.js";
 import { parseCombineRecommendResponse } from "./parse-response.js";
 import {
+  buildCombineRecommendRefMaps,
+  humanizeRefTokensInWarnings,
+} from "./refs.js";
+import {
   buildUsage,
   type CombineRecommendProviderResult,
   type CombineRecommendRequest,
@@ -29,14 +33,13 @@ export type CombineRecommendRunInput = Omit<
 export async function runCombineRecommend(
   input: CombineRecommendRunInput,
 ): Promise<CombineRecommendProviderResult> {
+  const refMaps = buildCombineRecommendRefMaps({
+    experienceIds: input.experienceIndex.map((item) => item.id),
+    companyIds: input.companies.map((item) => item.companyId),
+  });
+
   const instructions = getCombineRecommendSystemPrompt();
   const user = buildCombineRecommendUserPrompt(input);
-  const allowedExperienceIds = new Set(
-    input.experienceIndex.map((item) => item.id),
-  );
-  const allowedCompanyIds = new Set(
-    input.companies.map((item) => item.companyId),
-  );
 
   const response = await runOpenAiAuthorAdviseResponse(
     input.apiKey,
@@ -44,17 +47,28 @@ export async function runCombineRecommend(
     user,
   );
 
-  const parsed = parseCombineRecommendResponse(
-    response.outputText,
-    allowedExperienceIds,
-    allowedCompanyIds,
-  );
+  const parsed = parseCombineRecommendResponse(response.outputText, refMaps);
   if (!parsed.success) {
     throw new Error(parsed.error);
   }
 
+  const warnings = humanizeRefTokensInWarnings(parsed.result.warnings, refMaps, {
+    companyNameById: new Map(
+      input.companies.map((company) => [company.companyId, company.name]),
+    ),
+    experienceCategoryById: new Map(
+      input.experienceIndex.map((experience) => [
+        experience.id,
+        experience.category,
+      ]),
+    ),
+  });
+
   return {
-    result: parsed.result,
+    result: {
+      ...parsed.result,
+      warnings,
+    },
     usage: buildUsage(`${instructions}\n\n${user}`, response.outputText, {
       inputToken: response.inputToken,
       outputToken: response.outputToken,

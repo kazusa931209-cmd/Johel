@@ -1,10 +1,11 @@
 import type { CombineRecommendRunCompany } from "./types.js";
+import { buildCombineRecommendRefMaps } from "./refs.js";
 
 const JSON_SCHEMA = `{
   "companies": [
     {
-      "companyId": "string",
-      "experienceIds": ["string"],
+      "companyRef": "C01",
+      "experienceRefs": ["E01", "E03"],
       "rationale": "string"
     }
   ],
@@ -18,11 +19,10 @@ Given job context, a profile, company entries (with employment period, role cont
 Rules:
 - Pick 2–5 experience cards per company when possible; fewer only when the JD has little overlap.
 - Do not link stack variants of the same capability to the same company (e.g. NestJS and Go twins for the same story).
-- Only use experience ids from the index.
+- Only use companyRef and experienceRef tokens exactly as shown in the index (e.g. C01, E02). Do not invent refs.
 - Per company: if Keyword context is provided, prioritize experience cards that match those keywords (category and problem text) while still fitting the job context and that company's role context. Keywords steer emphasis; the JD still constrains relevance.
 - Per company: if Keyword context is empty or "(none)", choose the best set from the full index using job context and that company's role context only (Auto).
 - When Keyword context is provided but job overlap is thin (keywords match cards but the JD does not strongly support them), select only 1–2 cards for that company—not the usual 2–5—and add a warning about keyword/JD mismatch or thin overlap.
-- Do not invent experience ids.
 - warnings: note stack-variant conflicts, empty selections, keyword/JD mismatches, or thin overlap.
 
 Return ONLY valid JSON matching the schema. Do NOT wrap in a code fence.
@@ -56,6 +56,21 @@ export type CombineRecommendPromptInput = {
 export function buildCombineRecommendUserPrompt(
   input: CombineRecommendPromptInput,
 ): string {
+  const refMaps = buildCombineRecommendRefMaps({
+    experienceIds: input.experienceIndex.map((item) => item.id),
+    companyIds: input.companies.map((item) => item.companyId),
+  });
+
+  const experienceRefById = new Map<string, string>();
+  for (const [ref, id] of refMaps.experienceRefToId) {
+    experienceRefById.set(id, ref);
+  }
+
+  const companyRefById = new Map<string, string>();
+  for (const [ref, id] of refMaps.companyRefToId) {
+    companyRefById.set(id, ref);
+  }
+
   const jobBlock = input.acceptedMarkdown?.trim()
     ? `## Job context (Verdict)\n\n${input.acceptedMarkdown.trim()}`
     : `## Job context\n\n${input.jobDescription.trim()}`;
@@ -64,7 +79,7 @@ export function buildCombineRecommendUserPrompt(
     ? input.experienceIndex
         .map(
           (item) =>
-            `- ${item.id}: ${item.category} — ${item.problemSummary.slice(0, 200)}`,
+            `- [${experienceRefById.get(item.id)}] ${item.category} — ${item.problemSummary.slice(0, 200)}`,
         )
         .join("\n")
     : "(no experiences)";
@@ -72,7 +87,7 @@ export function buildCombineRecommendUserPrompt(
   const companiesBlock = input.companies
     .map(
       (company) =>
-        `### ${company.name} (${company.companyId})\nPeriod: ${company.startDate} – ${company.endDate}\nRole context: ${company.roleContext}\nKeyword context: ${formatKeywordContext(company.keywordContext)}`,
+        `### ${company.name} [${companyRefById.get(company.companyId)}]\nPeriod: ${company.startDate} – ${company.endDate}\nRole context: ${company.roleContext}\nKeyword context: ${formatKeywordContext(company.keywordContext)}`,
     )
     .join("\n\n");
 
@@ -81,10 +96,10 @@ export function buildCombineRecommendUserPrompt(
     "",
     jobBlock,
     "",
-    "## Experience index",
+    "## Experience index (use experienceRefs from this list)",
     indexBlock,
     "",
-    "## Company entries",
+    "## Company entries (use companyRef from this list)",
     companiesBlock,
     "",
     "Respond with a JSON object only (schema in instructions). Do not wrap in a code fence.",

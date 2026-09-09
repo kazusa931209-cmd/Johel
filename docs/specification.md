@@ -376,6 +376,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-10):** Drawer tabs; `GET /ai-usage/groups` is generation-only; All/Other use `GET /ai-usage` (optional `generationId=none`). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-75-ai-usage-history-tabs.md`](./plans/2026-09-10-phase-75-ai-usage-history-tabs.md).
 * [x] **Phase 76 — Account page and reset password** — Header user-menu **Profile** is renamed **Account**; route `/profile` moves to `/account`. The Account page shows Login ID and **Reset Password** (current password, new password, confirm).
   * **Outcome (2026-09-10):** `/account` page, `/profile` redirect, `PUT /auth/password`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-76-account-reset-password.md`](./plans/2026-09-10-phase-76-account-reset-password.md).
+* [x] **Phase 77 — Combine suggest ref tokens** — **Suggest experiences** must not require the AI to copy database identifiers. Each request assigns stable reference tokens to companies and experiences; the AI selects by ref; the server maps refs back to records before Apply.
+  * **Outcome (2026-09-10):** E01/C01 ref prompts and response parsing in `ai-combine-recommend`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-10-phase-77-combine-recommend-ref-tokens.md`](./plans/2026-09-10-phase-77-combine-recommend-ref-tokens.md).
 
 ## Cursor Rules (Documentation Governance)
 
