@@ -14,6 +14,7 @@ import {
   TABLE_ROW_HOVER_CLASS,
 } from "@/components/shared/detail-dialog";
 import { ProfileDetailDialog } from "@/components/ProfileDetailDialog";
+import { formatThousandsSeparated } from "@/lib/helper";
 import {
   deleteProfile,
   listProfiles,
@@ -184,7 +185,7 @@ function ProfilesPageContent() {
                   }}
                 >
                   <td className="px-3 py-2 text-muted">
-                    {(page - 1) * pageSize + index + 1}
+                    {formatThousandsSeparated((page - 1) * pageSize + index + 1)}
                   </td>
                   <td className="px-3 py-2 font-medium">
                     {fullName(row.firstName, row.lastName)}
@@ -223,7 +224,10 @@ function ProfilesPageContent() {
       </div>
       <div className="flex items-center justify-end gap-2 text-sm text-muted">
         <span>
-          {t("crud.common.pageOf", { page, totalPages })}
+          {t("crud.common.pageOf", {
+            page: formatThousandsSeparated(page),
+            totalPages: formatThousandsSeparated(totalPages),
+          })}
         </span>
         <button
           type="button"

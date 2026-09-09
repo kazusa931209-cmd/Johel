@@ -666,6 +666,9 @@ export const ko: MessageTree = {
     groups: {
       unassigned: "미할당",
       callCount: "{count}회",
+      inputTokenSum: "입력 {count}",
+      outputTokenSum: "출력 {count}",
+      totalTokenSum: "합계 {count}",
     },
     providers: {
       cursor: "Cursor AI Agent",

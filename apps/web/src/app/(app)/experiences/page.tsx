@@ -14,6 +14,7 @@ import {
   TABLE_ROW_HOVER_CLASS,
 } from "@/components/shared/detail-dialog";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
+import { formatThousandsSeparated } from "@/lib/helper";
 import {
   deleteExperience,
   listExperiences,
@@ -180,7 +181,7 @@ function ExperiencesPageContent() {
                   }}
                 >
                   <td className="w-16 px-3 py-2 text-muted">
-                    {(page - 1) * pageSize + index + 1}
+                    {formatThousandsSeparated((page - 1) * pageSize + index + 1)}
                   </td>
                   <td className="px-3 py-2 font-medium">{row.category}</td>
                   <td className="max-w-40 truncate px-3 py-2 text-muted">
@@ -214,7 +215,10 @@ function ExperiencesPageContent() {
       </div>
       <div className="flex items-center justify-end gap-2 text-sm text-muted">
         <span>
-          {t("crud.common.pageOf", { page, totalPages })}
+          {t("crud.common.pageOf", {
+            page: formatThousandsSeparated(page),
+            totalPages: formatThousandsSeparated(totalPages),
+          })}
         </span>
         <button
           type="button"

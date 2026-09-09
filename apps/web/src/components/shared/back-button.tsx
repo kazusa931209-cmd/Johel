@@ -52,7 +52,7 @@ export function BackButton({
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border hover:bg-surface-muted"
+      className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border hover:bg-surface-muted"
     >
       <ChevronLeftIcon className="h-4 w-4" />
     </button>

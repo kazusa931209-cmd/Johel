@@ -667,6 +667,9 @@ export const en = {
     groups: {
       unassigned: "Unassigned",
       callCount: "{count} calls",
+      inputTokenSum: "In {count}",
+      outputTokenSum: "Out {count}",
+      totalTokenSum: "Total {count}",
     },
     providers: {
       cursor: "Cursor AI Agent",

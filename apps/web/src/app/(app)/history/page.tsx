@@ -7,6 +7,7 @@ import { useToast } from "@/components/app/ToastProvider";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { listGenerations, type GenerationListItem } from "@/lib/api";
 import { useCrudListParams } from "@/lib/crud-list-params";
+import { formatThousandsSeparated } from "@/lib/helper";
 import { formatTokenUsed } from "@/lib/tokens";
 
 function HistoryPageFallback() {
@@ -168,7 +169,12 @@ function HistoryPageContent() {
         </table>
       </div>
       <div className="flex items-center justify-end gap-2 text-sm text-muted">
-        <span>{t("crud.common.pageOf", { page, totalPages })}</span>
+        <span>
+          {t("crud.common.pageOf", {
+            page: formatThousandsSeparated(page),
+            totalPages: formatThousandsSeparated(totalPages),
+          })}
+        </span>
         <button
           type="button"
           disabled={page <= 1}

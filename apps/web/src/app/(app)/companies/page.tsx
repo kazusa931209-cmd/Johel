@@ -14,6 +14,7 @@ import {
   TABLE_ROW_HOVER_CLASS,
 } from "@/components/shared/detail-dialog";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
+import { formatThousandsSeparated } from "@/lib/helper";
 import {
   deleteCompany,
   listCompanies,
@@ -183,10 +184,10 @@ function CompaniesPageContent() {
                   }}
                 >
                   <td className="w-16 px-3 py-2 text-muted">
-                    {(page - 1) * pageSize + index + 1}
+                    {formatThousandsSeparated((page - 1) * pageSize + index + 1)}
                   </td>
                   <td className="max-w-10 px-3 py-2 tabular-nums text-muted">
-                    {row.displayPriority}
+                    {formatThousandsSeparated(row.displayPriority)}
                   </td>
                   <td className="px-3 py-2 font-medium">{row.alias}</td>
                   <td className="px-3 py-2">{row.name}</td>
@@ -218,7 +219,10 @@ function CompaniesPageContent() {
       </div>
       <div className="flex items-center justify-end gap-2 text-sm text-muted">
         <span>
-          {t("crud.common.pageOf", { page, totalPages })}
+          {t("crud.common.pageOf", {
+            page: formatThousandsSeparated(page),
+            totalPages: formatThousandsSeparated(totalPages),
+          })}
         </span>
         <button
           type="button"

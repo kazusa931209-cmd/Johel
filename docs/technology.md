@@ -193,7 +193,7 @@ User browser (:4041)
 - One Generate **process** spans Job through DOCX download; session persists after download until **New** or until Settings **Process** flags/threshold change (Do Verdict / Do Evaluate / Do Workflow Recommendation / Recommendation threshold saved with different values)
 - In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, Combine snapshot (including Run guidance / `emphasis`), `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + combine + server PCE fingerprint), `evaluationMarkdown`, and `evaluationInputKey`; legacy `oneTimePrompt` session keys migrate into `combine.emphasis` on load; changing Job text clears verdict, resume, and evaluation; changing Combine (including Run guidance) clears resume and evaluation; editing linked Profile / Companies / Experiences changes the server fingerprint so resume and evaluation are regenerated on next forward navigation
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
-- Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts`; header from `GET /ai-usage/summary`
+- Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` (delegates to `formatThousandsSeparated` in `apps/web/src/lib/helper.ts`); all user-visible numbers use thousand-separated formatting; header from `GET /ai-usage/summary`
 - Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowProfilePicker`, `WorkflowCompaniesEditor`, and `WorkflowCompanyDialog`
 
 ## AI Verdict (Phase 13, 19, 40)

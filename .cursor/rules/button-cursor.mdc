@@ -1,0 +1,28 @@
+---
+description: All buttons use pointer cursor on hover
+alwaysApply: true
+---
+
+# Button Cursor
+
+Apply to every clickable **button** in the web UI (`<button>`, including icon-only and submit buttons).
+
+## Rules
+
+1. **Pointer cursor** — Buttons must show `cursor: pointer`. Global styles in `apps/web/src/app/globals.css` set this on all `button` elements.
+
+2. **Disabled state** — Disabled buttons use `cursor: not-allowed` (also set globally on `button:disabled`).
+
+3. **Do not override** — Do not add `cursor-default` (or other non-pointer cursors) to buttons. Table cells and other non-button wrappers may keep `cursor-default` when they only stop event propagation.
+
+4. **Shared button components** — Prefer shared controls under `components/shared/` (`action-icon-buttons`, `back-button`, etc.) so cursor behavior stays consistent.
+
+## Examples
+
+```tsx
+// ❌ BAD — overrides pointer on a button
+<button className="cursor-default ...">Edit</button>
+
+// ✅ GOOD — rely on global button cursor (optional explicit class is fine)
+<button type="button" className="rounded-md border ...">Edit</button>
+```

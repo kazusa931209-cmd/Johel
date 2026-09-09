@@ -22,7 +22,7 @@ import {
   type AiUsageListItem,
 } from "@/lib/api";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-import { formatTokenUsed } from "@/lib/tokens";
+import { formatThousandsSeparated } from "@/lib/helper";
 import { STUDIO_FAB_CLASS } from "@/components/app/studio-fab";
 
 type AiUsageHistoryProps = {
@@ -212,7 +212,9 @@ function AiUsageItemsTable({
               }
             }}
           >
-            <td className="px-3 py-2 text-muted">{index + 1}</td>
+            <td className="px-3 py-2 text-muted">
+              {formatThousandsSeparated(index + 1)}
+            </td>
             <td className="px-3 py-2 text-muted">
               {row.generationPublicId ?? unassignedLabel}
             </td>
@@ -223,8 +225,12 @@ function AiUsageItemsTable({
             <td className="px-3 py-2">
               {formatGenerateType(row.generateType, locale)}
             </td>
-            <td className="px-3 py-2 tabular-nums">{row.inputToken}</td>
-            <td className="px-3 py-2 tabular-nums">{row.outputToken}</td>
+            <td className="px-3 py-2 tabular-nums">
+              {formatThousandsSeparated(row.inputToken)}
+            </td>
+            <td className="px-3 py-2 tabular-nums">
+              {formatThousandsSeparated(row.outputToken)}
+            </td>
             <td className="px-3 py-2 text-muted">
               {formatAiUsageDate(row.createdAt, locale)}
             </td>
@@ -313,12 +319,26 @@ function AiUsageHistoryDrawer({
                       </span>
                       <span className="shrink-0 text-muted">
                         {t("aiUsage.groups.callCount", {
-                          count: group.callCount,
+                          count: formatThousandsSeparated(group.callCount),
                         })}
                       </span>
-                      <span className="ml-auto shrink-0 tabular-nums text-muted">
-                        {formatTokenUsed(group.tokenUsed)}
-                      </span>
+                      <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 tabular-nums text-muted">
+                        <span>
+                          {t("aiUsage.groups.inputTokenSum", {
+                            count: formatThousandsSeparated(group.inputToken),
+                          })}
+                        </span>
+                        <span>
+                          {t("aiUsage.groups.outputTokenSum", {
+                            count: formatThousandsSeparated(group.outputToken),
+                          })}
+                        </span>
+                        <span>
+                          {t("aiUsage.groups.totalTokenSum", {
+                            count: formatThousandsSeparated(group.tokenUsed),
+                          })}
+                        </span>
+                      </div>
                     </button>
                     {expanded ? (
                       <div className="overflow-x-auto border-t border-border bg-surface-muted/40 px-2 pb-3">
@@ -347,7 +367,10 @@ function AiUsageHistoryDrawer({
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-4 py-3 text-sm text-muted">
           <span>
-            {t("crud.common.pageOf", { page, totalPages })}
+            {t("crud.common.pageOf", {
+              page: formatThousandsSeparated(page),
+              totalPages: formatThousandsSeparated(totalPages),
+            })}
           </span>
           <button
             type="button"

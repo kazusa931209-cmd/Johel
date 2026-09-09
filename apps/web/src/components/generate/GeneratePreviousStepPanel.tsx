@@ -8,7 +8,9 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { GenerateCombineSummary } from "@/components/generate/GenerateCombineSummary";
+import { GenerateJobContextPanelContent } from "@/components/generate/GenerateJobContextPanelContent";
 import { GenerateJobDescriptionPreview } from "@/components/generate/GenerateJobDescriptionPreview";
+import { GenerateVerdictPanelContent } from "@/components/generate/GenerateVerdictPanelContent";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { formatThousandsSeparated } from "@/lib/helper";
 import type { GenerateJobState } from "@/lib/generate-session";
@@ -41,6 +43,7 @@ export function useGeneratePreviousStepPanel({
   previousTitle?: string;
   previousContent: ReactNode | null;
   previousHeaderRight?: ReactNode;
+  previousMatchCurrent?: boolean;
 } {
   const t = useT();
 
@@ -61,19 +64,23 @@ export function useGeneratePreviousStepPanel({
 
   const previousTitle = isFilteredJobPanel
     ? t("generate.job.filteredPreviewTitle")
-    : previousStep
-      ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
-      : undefined;
+    : currentStep === "Combine" &&
+        (previousStep === "Verdict" || previousStep === "Job")
+      ? undefined
+      : previousStep
+        ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
+        : undefined;
 
-  const previousHeaderRight = isFilteredJobPanel ? (
-    <span
-      aria-label={t("generate.job.filteredCharCountAria", {
-        count: filteredCharCount,
-      })}
-    >
-      {filteredCharCount}
-    </span>
-  ) : undefined;
+  const previousHeaderRight =
+    isFilteredJobPanel && currentStep !== "Combine" ? (
+      <span
+        aria-label={t("generate.job.filteredCharCountAria", {
+          count: filteredCharCount,
+        })}
+      >
+        {filteredCharCount}
+      </span>
+    ) : undefined;
 
   const previousContent = useMemo(() => {
     if (currentStep === "Job") {
@@ -93,9 +100,15 @@ export function useGeneratePreviousStepPanel({
 
     switch (previousStep) {
       case "Job":
-        return <GenerateJobDescriptionPreview jobText={job.jobText} />;
+        return currentStep === "Combine" ? (
+          <GenerateJobContextPanelContent job={job} />
+        ) : (
+          <GenerateJobDescriptionPreview jobText={job.jobText} />
+        );
       case "Verdict":
-        return job.acceptedMarkdown ? (
+        return currentStep === "Combine" ? (
+          <GenerateVerdictPanelContent job={job} />
+        ) : job.acceptedMarkdown ? (
           <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
         ) : (
           <p className="text-sm text-muted">{t("generate.previous.verdictEmpty")}</p>
@@ -113,7 +126,16 @@ export function useGeneratePreviousStepPanel({
       default:
         return null;
     }
-  }, [combine, currentStep, job.acceptedMarkdown, job.jobText, previousStep, resume, t]);
+  }, [combine, currentStep, job, previousStep, resume, t]);
 
-  return { previousTitle, previousContent, previousHeaderRight };
+  const previousMatchCurrent =
+    currentStep === "Combine" &&
+    (previousStep === "Verdict" || previousStep === "Job");
+
+  return {
+    previousTitle,
+    previousContent,
+    previousHeaderRight,
+    previousMatchCurrent,
+  };
 }

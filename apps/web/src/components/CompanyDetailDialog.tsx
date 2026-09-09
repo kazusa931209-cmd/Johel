@@ -4,6 +4,7 @@ import { useT } from "@/components/app/LocaleProvider";
 import { DetailDialog, DetailField } from "@/components/shared/detail-dialog";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import type { CompanyDetail } from "@/lib/api";
+import { formatThousandsSeparated } from "@/lib/helper";
 
 type CompanyDetailDialogProps = {
   company: CompanyDetail;
@@ -24,7 +25,7 @@ export function CompanyDetailDialog({
       <DetailField label={t("crud.companies.columns.alias")} value={company.alias} />
       <DetailField
         label={t("crud.companies.columns.displayPriority")}
-        value={company.displayPriority}
+        value={formatThousandsSeparated(company.displayPriority)}
       />
       <DetailField
         label={t("crud.companies.columns.companyName")}

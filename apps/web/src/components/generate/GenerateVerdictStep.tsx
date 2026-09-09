@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
+import { GenerateVerdictPanelContent } from "@/components/generate/GenerateVerdictPanelContent";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { useStepMountAutoRun } from "@/components/generate/useStepMountAutoRun";
 import {
@@ -116,29 +116,8 @@ export function GenerateVerdictStep({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">
-          {t("generate.verdict.title")}
-        </h2>
-        <p className="text-sm text-muted">{t("generate.verdict.description")}</p>
-      </div>
-
-      {job.acceptedMarkdown ? (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium">
-            {t("generate.verdict.result.title")}
-          </h3>
-          <p className="text-xs text-muted">
-            {t("generate.verdict.result.description")}
-          </p>
-          <div className="rounded-md border border-border bg-background px-3 py-3">
-            <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
-          </div>
-        </div>
-      ) : (
-        <p className="text-sm text-muted">{t("generate.verdict.pending")}</p>
-      )}
+    <>
+      <GenerateVerdictPanelContent job={job} />
 
       {running ? (
         <div
@@ -157,6 +136,6 @@ export function GenerateVerdictStep({
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }

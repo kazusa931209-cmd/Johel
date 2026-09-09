@@ -157,7 +157,7 @@ export default function HistoryDetailPage() {
   const showDownload =
     detail?.status === "completed" && resume != null;
 
-  const { previousTitle, previousContent, previousHeaderRight } =
+  const { previousTitle, previousContent, previousHeaderRight, previousMatchCurrent } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
@@ -226,6 +226,7 @@ export default function HistoryDetailPage() {
           previousTitle={previousTitle}
           previous={previousContent}
           previousHeaderRight={previousHeaderRight}
+          previousMatchCurrent={previousMatchCurrent}
           swapColumns={normalizedActiveStep === "Job"}
           currentFill={normalizedActiveStep === "Job"}
         >

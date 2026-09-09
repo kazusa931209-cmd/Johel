@@ -1,6 +1,7 @@
 "use client";
 
 import { useT } from "@/components/app/LocaleProvider";
+import { formatThousandsSeparated } from "@/lib/helper";
 
 export const GENERATE_STEPS = [
   "Job",
@@ -50,7 +51,7 @@ export function GenerateTimeline({
                     : "border-border"
                 }`}
               >
-                {index + 1}
+                {formatThousandsSeparated(index + 1)}
               </span>
               <span>{t(STEP_LABEL_KEYS[step])}</span>
             </>

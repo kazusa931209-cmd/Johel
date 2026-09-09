@@ -523,7 +523,7 @@ export default function GeneratePage() {
     setNewConfirmOpen(false);
   }
 
-  const { previousTitle, previousContent, previousHeaderRight } =
+  const { previousTitle, previousContent, previousHeaderRight, previousMatchCurrent } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
@@ -579,6 +579,7 @@ export default function GeneratePage() {
             previousTitle={previousTitle}
             previous={previousContent}
             previousHeaderRight={previousHeaderRight}
+            previousMatchCurrent={previousMatchCurrent}
             swapColumns={normalizedActiveStep === "Job"}
             currentFill={normalizedActiveStep === "Job"}
           >

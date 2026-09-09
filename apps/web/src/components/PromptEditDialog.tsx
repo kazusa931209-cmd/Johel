@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DetailDialog } from "@/components/shared/detail-dialog";
+import { formatThousandsSeparated } from "@/lib/helper";
 
 const PROMPT_MAX = 10_000;
 
@@ -60,7 +61,8 @@ export function PromptEditDialog({
             overLimit ? "text-danger" : "text-muted",
           ].join(" ")}
         >
-          {length.toLocaleString()} / {PROMPT_MAX.toLocaleString()} characters
+          {formatThousandsSeparated(length)} /{" "}
+          {formatThousandsSeparated(PROMPT_MAX)} characters
         </p>
       </label>
       <div className="flex justify-end">

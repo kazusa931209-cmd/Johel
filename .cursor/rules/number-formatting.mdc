@@ -1,0 +1,38 @@
+---
+description: Display numbers with thousand separators in the web UI
+alwaysApply: true
+---
+
+# Number Formatting
+
+Apply to every **user-visible numeric value** in the web UI (tables, headers, counters, pagination labels, toasts with counts, etc.).
+
+## Rules
+
+1. **Use the shared formatter** — Format display numbers with `formatThousandsSeparated` from `@/lib/helper` (or `formatTokenUsed` from `@/lib/tokens` for token counts, which delegates to the same helper). Do not render raw integers for display when the value is shown to the user.
+
+2. **Format before i18n interpolation** — When a translation string embeds a number (`{count}`, `{page}`, `{score}`, etc.), pass the already-formatted string (or number only when the formatter is applied at render time in JSX).
+
+3. **Do not compact large numbers** — Do not use K/M/G/T suffixes for display. Use full thousand-separated values (e.g. `12,450` not `12.5K`).
+
+4. **Exceptions** — Form `<input type="number">` values, API payloads, and internal logic may stay unformatted. Dates/times use locale date formatting, not this rule.
+
+## Examples
+
+```tsx
+// ❌ BAD — raw number in UI
+<td>{row.inputToken}</td>
+{t("nav.header.tokenUsed", { count: tokenUsage })}
+
+// ✅ GOOD
+<td>{formatThousandsSeparated(row.inputToken)}</td>
+{t("nav.header.tokenUsed", { count: formatTokenUsed(tokenUsage) })}
+```
+
+```tsx
+// ✅ Pagination labels
+{t("crud.common.pageOf", {
+  page: formatThousandsSeparated(page),
+  totalPages: formatThousandsSeparated(totalPages),
+})}
+```
