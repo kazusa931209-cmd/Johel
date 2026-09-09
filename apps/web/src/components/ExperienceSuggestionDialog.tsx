@@ -32,7 +32,7 @@ export function ExperienceSuggestionDialog({
       title={t("crud.experiences.advisor.suggestionTitle")}
       onClose={onClose}
       mode="view"
-      panelClassName="max-w-3xl"
+      panelClassName="max-w-[96rem]"
     >
       <ExperienceSuggestionContent
         result={result}

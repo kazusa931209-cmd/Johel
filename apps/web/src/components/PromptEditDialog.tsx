@@ -37,7 +37,7 @@ export function PromptEditDialog({
       mode="form"
       title={title}
       onClose={onClose}
-      panelClassName="max-w-3xl"
+      panelClassName="max-w-[96rem]"
       onKeyDown={(e) => {
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();

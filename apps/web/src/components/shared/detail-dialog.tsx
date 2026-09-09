@@ -59,7 +59,7 @@ export function DetailDialog({
         aria-label={title}
         className={[
           "max-h-[85vh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-4 shadow-lg",
-          panelClassName ?? "max-w-lg",
+          panelClassName ?? "max-w-5xl",
         ].join(" ")}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
