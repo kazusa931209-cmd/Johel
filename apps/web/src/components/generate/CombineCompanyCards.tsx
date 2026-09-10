@@ -9,6 +9,12 @@ import {
   COMBINE_SECTION_CLASS,
   COMBINE_SECTION_TITLE_CLASS,
 } from "@/components/generate/combine-section-styles";
+import type {
+  CombineCompanyEntry,
+  CombineSnapshot,
+} from "@/components/generate/combine-types";
+import { useCombineExperienceSuggest } from "@/components/generate/useCombineExperienceSuggest";
+import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import {
   buildPeriodWindow,
   clampPeriodToWindow,
@@ -17,13 +23,20 @@ import {
   indicesToPeriod,
   labelsToMonthIndices,
 } from "@/lib/combine-period";
-import type { CombineCompanyEntry } from "@/components/generate/combine-types";
 import type { CompanyDetail } from "@/lib/api";
 import { orderCompaniesForCombineDisplay } from "@/lib/company";
+import type { GenerateJobState } from "@/lib/generate-session";
 import { usePce } from "@/lib/pce";
 import type { ProfileGraduation } from "@/lib/profile";
 
 type CombineCompanyCardsProps = {
+  combine: CombineSnapshot;
+  resolveCombineSnapshot?: () => CombineSnapshot;
+  onCombineChange: (combine: CombineSnapshot) => void;
+  job: GenerateJobState;
+  doVerdict: boolean;
+  generationId?: string | null;
+  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
   companies: CombineCompanyEntry[];
   onChange: (companies: CombineCompanyEntry[]) => void;
   disabled?: boolean;
@@ -41,6 +54,13 @@ function normalizeIncludedEntries(
 }
 
 export function CombineCompanyCards({
+  combine,
+  resolveCombineSnapshot,
+  onCombineChange,
+  job,
+  doVerdict,
+  generationId,
+  onSaveBeforeSuggest,
   companies,
   onChange,
   disabled = false,
@@ -59,6 +79,25 @@ export function CombineCompanyCards({
 
   const companiesRef = useRef(companies);
   companiesRef.current = companies;
+
+  const {
+    runSuggest,
+    suggesting,
+    suggestError,
+    fieldErrors: suggestFieldErrors,
+    suggestSucceeded,
+    rationaleByCompanyId,
+    warnings,
+  } = useCombineExperienceSuggest({
+    combine,
+    resolveCombineSnapshot,
+    onCombineChange,
+    job,
+    doVerdict,
+    profileGraduation,
+    generationId,
+    onSaveBeforeSuggest,
+  });
 
   const cardsDisabled = disabled || profileGraduation == null;
   const periodWindow =
@@ -127,6 +166,13 @@ export function CombineCompanyCards({
       period: { startDate: string; endDate: string },
     ) => {
       patchEntry(companyId, period);
+    },
+    [patchEntry],
+  );
+
+  const onExperienceIdsChange = useCallback(
+    (companyId: string, experienceIds: string[]) => {
+      patchEntry(companyId, { experienceIds });
     },
     [patchEntry],
   );
@@ -236,6 +282,8 @@ export function CombineCompanyCards({
     updateIncluded([]);
   }, [updateIncluded]);
 
+  const companiesError = error ?? suggestFieldErrors.companies;
+
   if (loading) {
     return <p className="text-sm text-muted">{t("shared.detail.loading")}</p>;
   }
@@ -253,58 +301,98 @@ export function CombineCompanyCards({
       : null;
 
   return (
-    <section className={COMBINE_SECTION_CLASS}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-1">
-          <h3 className={COMBINE_SECTION_TITLE_CLASS}>
-            {t("generate.combine.companies")}
-          </h3>
-          <p className="text-xs text-muted">{t("generate.combine.companiesHint")}</p>
-          {disabledMessage ? (
-            <p className="text-sm text-muted">{disabledMessage}</p>
-          ) : null}
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
+    <>
+      <section className={COMBINE_SECTION_CLASS}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className={COMBINE_SECTION_TITLE_CLASS}>
+              {t("generate.combine.companiesAndExperiences")}
+            </h3>
+            <p className="text-xs text-muted">
+              {t("generate.combine.companiesAndExperiencesHint")}
+            </p>
+            {disabledMessage ? (
+              <p className="text-sm text-muted">{disabledMessage}</p>
+            ) : null}
+            {companiesError ? (
+              <p className="text-sm text-danger">{companiesError}</p>
+            ) : null}
+            {suggestError ? (
+              <p className="text-sm text-danger">{suggestError}</p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={resetCompanies}
+              disabled={companies.length === 0}
+              aria-label={t("generate.combine.resetCompaniesAria")}
+              className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
+            >
+              {t("generate.combine.resetCompanies")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void runSuggest()}
+              disabled={suggesting || cardsDisabled}
+              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+            >
+              {suggesting
+                ? t("generate.combine.suggesting")
+                : t("generate.combine.suggestExperiences")}
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={resetCompanies}
-          disabled={companies.length === 0}
-          aria-label={t("generate.combine.resetCompaniesAria")}
-          className="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
+
+        {warnings.length > 0 ? (
+          <ul className="list-disc space-y-1 pl-5 text-sm text-toast-warning-fg">
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        ) : null}
+
+        <div
+          className={`flex flex-col gap-4 ${cardsDisabled ? "pointer-events-none opacity-60" : ""}`}
         >
-          {t("generate.combine.resetCompanies")}
-        </button>
-      </div>
+          {displayCompanies.map((company) => {
+            const included = includedById.has(company.id);
+            const entry = includedById.get(company.id);
 
-      <div
-        className={`flex flex-col gap-4 ${cardsDisabled ? "pointer-events-none opacity-60" : ""}`}
-      >
-        {displayCompanies.map((company) => {
-          const included = includedById.has(company.id);
-          const entry = includedById.get(company.id);
+            return (
+              <CombineCompanyCard
+                key={company.id}
+                company={company}
+                included={included}
+                entry={entry}
+                priorStartIndex={
+                  included
+                    ? (priorStartIndexByCompanyId.get(company.id) ?? null)
+                    : null
+                }
+                profileGraduation={profileGraduation}
+                cardsDisabled={cardsDisabled}
+                onToggleInclude={toggleInclude}
+                onPatchEntry={patchEntry}
+                onPeriodChange={onPeriodChange}
+                onRegisterFlush={registerContextFlush}
+                onView={setViewCompany}
+                rationale={rationaleByCompanyId.get(company.id)}
+                onExperienceIdsChange={onExperienceIdsChange}
+              />
+            );
+          })}
+        </div>
 
-          return (
-            <CombineCompanyCard
-              key={company.id}
-              company={company}
-              included={included}
-              entry={entry}
-              priorStartIndex={
-                included
-                  ? (priorStartIndexByCompanyId.get(company.id) ?? null)
-                  : null
-              }
-              profileGraduation={profileGraduation}
-              cardsDisabled={cardsDisabled}
-              onToggleInclude={toggleInclude}
-              onPatchEntry={patchEntry}
-              onPeriodChange={onPeriodChange}
-              onRegisterFlush={registerContextFlush}
-              onView={setViewCompany}
-            />
-          );
-        })}
-      </div>
+        {suggestSucceeded ? (
+          <div
+            role="alert"
+            className="rounded-md border border-border bg-toast-success-bg px-3 py-3 text-sm text-toast-success-fg"
+          >
+            {t("generate.combine.suggestRunGuidance")}
+          </div>
+        ) : null}
+      </section>
 
       {viewCompany ? (
         <CompanyDetailDialog
@@ -312,6 +400,13 @@ export function CombineCompanyCards({
           onClose={() => setViewCompany(null)}
         />
       ) : null}
-    </section>
+
+      {suggesting ? (
+        <BusyOverlay
+          title={t("generate.combine.suggestingOverlay.title")}
+          description={t("generate.combine.suggestingOverlay.description")}
+        />
+      ) : null}
+    </>
   );
 }

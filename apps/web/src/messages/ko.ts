@@ -485,7 +485,7 @@ export const ko: MessageTree = {
     combine: {
       title: "조합",
       description:
-        "이번 생성에 사용할 프로필, 경험 연결, 포함할 회사, 실행 안내를 선택합니다.",
+        "이번 생성에 사용할 프로필, 포함할 회사와 경험, 선택적 실행 안내를 선택합니다.",
       profile: "프로필",
       language: "이력서 출력 언어",
       emphasis: "실행 안내",
@@ -496,6 +496,9 @@ export const ko: MessageTree = {
       companies: "회사",
       companiesHint:
         "포함할 회사를 선택하세요. 기간은 졸업 월부터 현재까지입니다.",
+      companiesAndExperiences: "회사 및 경험",
+      companiesAndExperiencesHint:
+        "포함할 회사를 선택하고 기간·맥락을 설정한 뒤, 회사별로 역량 카드를 연결하거나 경험 제안을 사용하세요.",
       resetCompanies: "초기화",
       resetCompaniesAria: "선택한 회사 모두 해제",
       selectProfileFirst: "회사를 선택하기 전에 프로필을 선택해 주세요.",
@@ -522,7 +525,6 @@ export const ko: MessageTree = {
         description: "AI가 채용 공고에 맞춰 이력서를 작성하는 중입니다.",
       },
       suggestExperiences: "경험 제안",
-      suggestAgain: "다시 제안",
       suggestRunGuidance:
         "준비되면 단계 표시줄의 실행 버튼을 눌러 이력서를 생성하세요.",
       suggesting: "경험 제안 중…",
@@ -530,9 +532,6 @@ export const ko: MessageTree = {
         title: "경험 제안 중…",
         description: "AI가 회사별로 역량 카드를 매핑하는 중입니다.",
       },
-      experiencesSection: "경험",
-      experiencesSectionHint:
-        "포함된 회사마다 경험 카드를 연결합니다. 키워드 맥락으로 AI 선택을 안내하고, 비우면 자동입니다.",
       keywordContext: "키워드 맥락",
       keywordContextHint:
         "선택. 쉼표로 구분한 키워드(예: AWS, blockchain). 직함은 역할 설명에 입력하세요.",
@@ -541,16 +540,16 @@ export const ko: MessageTree = {
         "판정을 실행하는 경우, 경험 제안 전에 판정 단계를 완료해 주세요.",
       suggestGenerationRequired:
         "생성 세션이 시작될 때까지 기다린 후 다시 시도하세요.",
-      suggestionDialogTitle: "경험 제안",
-      suggestionProfile: "프로필",
-      suggestionProfileMissing: "알 수 없는 프로필",
-      suggestionNotProvided: "입력 없음",
-      suggestionKeywordContextAuto: "자동",
-      suggestionExperiences: "제안된 카드",
       suggestionExperienceMissing: "알 수 없는 경험",
-      suggestionNoExperiences: "이 회사에 제안된 경험이 없습니다.",
       suggestionRationale: "근거",
       linkedExperiences: "연결된 경험",
+      experiencesEmpty:
+        "연결된 경험이 없습니다. 수동으로 추가하거나 경험 제안을 사용하세요.",
+      linkExperienceAria: "경험 연결",
+      pickerTitle: "경험 연결",
+      pickerSearchPlaceholder: "카테고리, 문제, 행동, 결과로 검색…",
+      reorderExperienceAria: "연결된 경험 순서 변경",
+      alreadyLinked: "연결됨",
     },
     generateStep: {
       noResume:

@@ -3,6 +3,7 @@
 import { memo } from "react";
 import { CombineCompanyContextFields } from "@/components/generate/CombineCompanyContextFields";
 import type { CombineCompanyContextFlushResult } from "@/components/generate/CombineCompanyContextFields";
+import { CombineCompanyExperienceList } from "@/components/generate/CombineCompanyExperienceList";
 import { CombineCompanyPeriodBlock } from "@/components/generate/CombineCompanyPeriodBlock";
 import type { CombineCompanyEntry } from "@/components/generate/combine-types";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
@@ -29,6 +30,8 @@ type CombineCompanyCardProps = {
     flusher: () => CombineCompanyContextFlushResult | null,
   ) => () => void;
   onView: (company: CompanyDetail) => void;
+  rationale?: string;
+  onExperienceIdsChange: (companyId: string, experienceIds: string[]) => void;
 };
 
 export const CombineCompanyCard = memo(function CombineCompanyCard({
@@ -43,6 +46,8 @@ export const CombineCompanyCard = memo(function CombineCompanyCard({
   onPeriodChange,
   onRegisterFlush,
   onView,
+  rationale,
+  onExperienceIdsChange,
 }: CombineCompanyCardProps) {
   return (
     <article className="overflow-hidden rounded-md border border-border bg-background">
@@ -88,6 +93,15 @@ export const CombineCompanyCard = memo(function CombineCompanyCard({
             cardsDisabled={cardsDisabled}
             onPatchEntry={onPatchEntry}
             onRegisterFlush={onRegisterFlush}
+          />
+
+          <CombineCompanyExperienceList
+            experienceIds={entry.experienceIds}
+            rationale={rationale}
+            disabled={cardsDisabled}
+            onChange={(experienceIds) =>
+              onExperienceIdsChange(company.id, experienceIds)
+            }
           />
         </div>
       ) : null}

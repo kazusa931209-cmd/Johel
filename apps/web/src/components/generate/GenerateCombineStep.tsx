@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
-import { CombineExperienceSuggest } from "@/components/generate/CombineExperienceSuggest";
+import type { CombineEmphasisFlushResult } from "@/components/generate/CombineEmphasisField";
+import { CombineEmphasisField } from "@/components/generate/CombineEmphasisField";
 import { CombineProfilePicker } from "@/components/generate/CombineProfilePicker";
 import {
   type CombineCompanyEntry,
@@ -69,15 +70,27 @@ export function GenerateCombineStep({
   }, [combine.profileId, profiles]);
 
   const flushCompanyContextRef = useRef<() => void>(() => {});
+  const flushEmphasisRef = useRef<() => CombineEmphasisFlushResult | null>(
+    () => null,
+  );
 
-  const flushPendingCompanyContext = useCallback(() => {
+  const flushPendingFields = useCallback(() => {
     flushCompanyContextRef.current();
-  }, []);
+    const emphasisResult = flushEmphasisRef.current();
+    if (emphasisResult) {
+      const next = {
+        ...combineRef.current,
+        emphasis: emphasisResult.emphasis,
+      };
+      combineRef.current = next;
+      onCombineChange(next);
+    }
+  }, [onCombineChange]);
 
   const resolveCombineSnapshot = useCallback(() => {
-    flushPendingCompanyContext();
+    flushPendingFields();
     return combineRef.current;
-  }, [flushPendingCompanyContext]);
+  }, [flushPendingFields]);
 
   const handleRun = useCallback(() => {
     const snapshot = resolveCombineSnapshot();
@@ -91,9 +104,6 @@ export function GenerateCombineStep({
   }, [profileGraduation, onRunFromCombine, resolveCombineSnapshot, t]);
 
   const runReady = isCombineRunReady(combine, profileGraduation);
-  const showRunGuidance = combine.companies.some(
-    (entry) => entry.experienceIds.length > 0,
-  );
 
   useRegisterGenerateStepNav({
     onRun: handleRun,
@@ -127,6 +137,13 @@ export function GenerateCombineStep({
     flushCompanyContextRef.current = flush;
   }, []);
 
+  const registerEmphasisFlush = useCallback(
+    (flush: () => CombineEmphasisFlushResult | null) => {
+      flushEmphasisRef.current = flush;
+    },
+    [],
+  );
+
   const handleCompaniesChange = useCallback(
     (companies: CombineCompanyEntry[]) => {
       patchCombine({ companies });
@@ -154,6 +171,13 @@ export function GenerateCombineStep({
       />
 
       <CombineCompanyCards
+        combine={combine}
+        resolveCombineSnapshot={resolveCombineSnapshot}
+        onCombineChange={onCombineChange}
+        job={job}
+        doVerdict={doVerdict}
+        generationId={generationId}
+        onSaveBeforeSuggest={onSaveBeforeSuggest}
         companies={combine.companies}
         onChange={handleCompaniesChange}
         disabled={!combine.profileId}
@@ -163,37 +187,11 @@ export function GenerateCombineStep({
         onRegisterContextFlush={registerContextFlush}
       />
 
-      <CombineExperienceSuggest
-        combine={combine}
-        resolveCombineSnapshot={resolveCombineSnapshot}
-        onCombineChange={onCombineChange}
-        job={job}
-        doVerdict={doVerdict}
-        profileGraduation={profileGraduation}
-        generationId={generationId}
-        onSaveBeforeSuggest={onSaveBeforeSuggest}
+      <CombineEmphasisField
+        emphasis={combine.emphasis}
+        onEmphasisChange={(emphasis) => patchCombine({ emphasis })}
+        onRegisterFlush={registerEmphasisFlush}
       />
-
-      <label className="block space-y-1 text-sm">
-        <span>{t("generate.combine.emphasis")}</span>
-        <p className="text-xs text-muted">{t("generate.combine.emphasisHint")}</p>
-        <textarea
-          value={combine.emphasis}
-          onChange={(e) => patchCombine({ emphasis: e.target.value })}
-          rows={4}
-          placeholder={t("generate.combine.emphasisPlaceholder")}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
-        />
-      </label>
-
-      {showRunGuidance ? (
-        <div
-          role="alert"
-          className="rounded-md border border-border bg-toast-success-bg px-3 py-3 text-sm text-toast-success-fg"
-        >
-          {t("generate.combine.suggestRunGuidance")}
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -483,7 +483,7 @@ export const en = {
     combine: {
       title: "Combine",
       description:
-        "Choose a profile, link experiences, run guidance, and included companies for this run.",
+        "Choose a profile, included companies and experiences, and optional run guidance for this run.",
       profile: "Profile",
       language: "Resume language",
       emphasis: "Run guidance",
@@ -494,6 +494,9 @@ export const en = {
       companies: "Companies",
       companiesHint:
         "Toggle companies to include. Periods from graduation through present.",
+      companiesAndExperiences: "Companies & Experiences",
+      companiesAndExperiencesHint:
+        "Toggle companies to include, set periods and context, link capability cards per company, or use Suggest experiences.",
       resetCompanies: "Reset",
       resetCompaniesAria: "Deselect all companies",
       selectProfileFirst: "Select a profile before choosing companies.",
@@ -520,7 +523,6 @@ export const en = {
         description: "Please wait while the AI tailors your resume to the job.",
       },
       suggestExperiences: "Suggest experiences",
-      suggestAgain: "Suggest Again",
       suggestRunGuidance:
         "When you're ready please click Run button on the Step Bar to generate the resume.",
       suggesting: "Suggesting…",
@@ -529,9 +531,6 @@ export const en = {
         description:
           "Please wait while the AI maps capability cards to your companies.",
       },
-      experiencesSection: "Experiences",
-      experiencesSectionHint:
-        "Link capability cards to each included company. Keyword context steers AI picks; leave empty for Auto.",
       keywordContext: "Keyword context",
       keywordContextHint:
         "Optional. Comma-separated hints (e.g. AWS, blockchain). Use Role context for job titles.",
@@ -540,16 +539,15 @@ export const en = {
         "Complete the Verdict step before suggesting experiences when Do Verdict is enabled.",
       suggestGenerationRequired:
         "Wait for the generation session to start, then try again.",
-      suggestionDialogTitle: "Experience suggestions",
-      suggestionProfile: "Profile",
-      suggestionProfileMissing: "Unknown profile",
-      suggestionNotProvided: "Not provided",
-      suggestionKeywordContextAuto: "Auto",
-      suggestionExperiences: "Suggested cards",
       suggestionExperienceMissing: "Unknown experience",
-      suggestionNoExperiences: "No experiences suggested for this company.",
       suggestionRationale: "Rationale",
       linkedExperiences: "Linked experiences",
+      experiencesEmpty: "No experiences linked yet. Add manually or use Suggest experiences.",
+      linkExperienceAria: "Link experience",
+      pickerTitle: "Link experience",
+      pickerSearchPlaceholder: "Search category, problem, actions, outcome…",
+      reorderExperienceAria: "Reorder linked experience",
+      alreadyLinked: "Linked",
     },
     generateStep: {
       noResume:

@@ -69,7 +69,9 @@ export function GenerateCombineSummary({
       ) : null}
 
       <div className="space-y-2">
-        <dt className="font-medium">{t("generate.combine.companies")}</dt>
+        <dt className="font-medium">
+          {t("generate.combine.companiesAndExperiences")}
+        </dt>
         <dd className="space-y-3">
           {combine.companies.length < 1 ? (
             <p className="text-muted">{t("generate.previous.combineEmpty")}</p>
