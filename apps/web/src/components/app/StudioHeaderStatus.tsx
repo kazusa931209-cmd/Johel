@@ -68,20 +68,20 @@ export function StudioHeaderStatus() {
       </div>
       {status.processedStep != null ? (
         <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <HistoryStepsCell
-            processedStep={status.processedStep}
-            doVerdict={status.doVerdict}
-            doEvaluate={status.doEvaluate}
-            finalized={status.finalized}
-          />
           <span
-            className="shrink-0 text-sm text-muted pt-1"
+            className="shrink-0 pt-1 text-sm text-muted"
             title={t("nav.header.generationTokenUsedTitle")}
           >
             {t("nav.header.generationTokenUsed", {
               count: formatTokenUsed(generationTokenUsed),
             })}
           </span>
+          <HistoryStepsCell
+            processedStep={status.processedStep}
+            doVerdict={status.doVerdict}
+            doEvaluate={status.doEvaluate}
+            finalized={status.finalized}
+          />
         </div>
       ) : null}
     </div>

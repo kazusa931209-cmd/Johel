@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useGenerateStatus } from "@/components/app/GenerateStatusProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { GenerationHistoryDrawer } from "@/components/generate/GenerationHistoryDrawer";
@@ -43,6 +44,7 @@ function HistoryPageContent() {
   const searchParams = useSearchParams();
   const t = useT();
   const { toast } = useToast();
+  const { status: generateStatus } = useGenerateStatus();
   const { page, q, setPage, applySearch } = useCrudListParams();
   const [qInput, setQInput] = useState(q);
   const [items, setItems] = useState<GenerationListItem[]>([]);
@@ -136,6 +138,9 @@ function HistoryPageContent() {
           <thead className="border-b border-border bg-surface-muted text-muted">
             <tr>
               <th className="px-3 py-2 font-medium">
+                {t("history.list.columns.current")}
+              </th>
+              <th className="px-3 py-2 font-medium">
                 {t("history.list.columns.generationId")}
               </th>
               <th className="px-3 py-2 font-medium">
@@ -152,13 +157,13 @@ function HistoryPageContent() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-muted">
+                <td colSpan={5} className="px-3 py-8 text-center text-muted">
                   {t("crud.common.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-muted">
+                <td colSpan={5} className="px-3 py-8 text-center text-muted">
                   {t("history.list.empty")}
                 </td>
               </tr>
@@ -176,6 +181,16 @@ function HistoryPageContent() {
                     }
                   }}
                 >
+                  <td className="px-3 py-2">
+                    {row.publicId === generateStatus.generationPublicId ? (
+                      <span
+                        className="inline-flex rounded-full border border-foreground px-2 py-0.5 text-xs font-medium"
+                        title={t("history.list.currentMark")}
+                      >
+                        {t("history.list.currentMark")}
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="px-3 py-2 font-medium">{row.publicId}</td>
                   <td className="px-3 py-2 text-muted">
                     {formatTokenUsed(row.tokenUsed)}

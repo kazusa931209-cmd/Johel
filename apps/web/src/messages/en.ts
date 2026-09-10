@@ -514,13 +514,16 @@ export const en = {
         description: "Please wait while the AI tailors your resume to the job.",
       },
       suggestExperiences: "Suggest experiences",
+      suggestAgain: "Suggest Again",
+      suggestRunGuidance:
+        "When you're ready please click Run button on the Step Bar to generate the resume.",
       suggesting: "Suggesting…",
       suggestingOverlay: {
         title: "Suggesting experiences…",
         description:
           "Please wait while the AI maps capability cards to your companies.",
       },
-      experiencesSection: "Experiences",
+      experiencesSection: "Add Experiences",
       experiencesSectionHint:
         "Link capability cards to each included company. Keyword context steers AI picks; leave empty for Auto.",
       keywordContext: "Keyword context",
@@ -532,13 +535,14 @@ export const en = {
       suggestGenerationRequired:
         "Wait for the generation session to start, then try again.",
       suggestionDialogTitle: "Experience suggestions",
+      suggestionProfile: "Profile",
+      suggestionProfileMissing: "Unknown profile",
+      suggestionNotProvided: "Not provided",
+      suggestionKeywordContextAuto: "Auto",
       suggestionExperiences: "Suggested cards",
       suggestionExperienceMissing: "Unknown experience",
       suggestionNoExperiences: "No experiences suggested for this company.",
       suggestionRationale: "Rationale",
-      suggestionCancel: "Cancel",
-      suggestionRetry: "Retry",
-      suggestionApply: "Apply",
       linkedExperiences: "Linked experiences",
     },
     generateStep: {
@@ -579,7 +583,9 @@ export const en = {
       searchPlaceholder: "Search job description or prompts…",
       empty: "No generation history yet.",
       stepsAria: "Generation steps progress",
+      currentMark: "Current",
       columns: {
+        current: "Current",
         generationId: "Generation ID",
         tokenUsed: "Token Used",
         step: "Steps",
@@ -721,7 +727,7 @@ export const en = {
     experienceAdvisorFailed: "Experience advisor failed.",
     experienceSuggestionReady: "Experience suggestion ready.",
     combineRecommendFailed: "Experience suggestion for Combine failed.",
-    combineRecommendReady: "Experience suggestions applied.",
+    combineRecommendReady: "Experience suggestions ready.",
     applyFailed: "Could not apply suggestion.",
     historyLoadFailed: "Failed to load AI usage history",
     detailLoadFailed: "Failed to load AI usage detail",

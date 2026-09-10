@@ -13,10 +13,12 @@ import { formatThousandsSeparated } from "@/lib/helper";
 export function AiUsageItemsTable({
   items,
   startNo = 0,
+  showGenerationIdColumn = true,
   onRowClick,
 }: {
   items: AiUsageListItem[];
   startNo?: number;
+  showGenerationIdColumn?: boolean;
   onRowClick: (id: string) => void;
 }) {
   const t = useT();
@@ -27,9 +29,11 @@ export function AiUsageItemsTable({
       <thead className="border-b border-border bg-background text-muted">
         <tr>
           <th className="px-3 py-2 font-medium">{t("aiUsage.columns.no")}</th>
-          <th className="px-3 py-2 font-medium">
-            {t("aiUsage.columns.generationId")}
-          </th>
+          {showGenerationIdColumn ? (
+            <th className="px-3 py-2 font-medium">
+              {t("aiUsage.columns.generationId")}
+            </th>
+          ) : null}
           <th className="px-3 py-2 font-medium">{t("aiUsage.columns.ai")}</th>
           <th className="px-3 py-2 font-medium">{t("aiUsage.columns.model")}</th>
           <th className="px-3 py-2 font-medium">
@@ -63,9 +67,11 @@ export function AiUsageItemsTable({
             <td className="px-3 py-2 text-muted">
               {formatThousandsSeparated(startNo + index + 1)}
             </td>
-            <td className="px-3 py-2 text-muted">
-              {row.generationPublicId ?? ""}
-            </td>
+            {showGenerationIdColumn ? (
+              <td className="px-3 py-2 text-muted">
+                {row.generationPublicId ?? ""}
+              </td>
+            ) : null}
             <td className="px-3 py-2">
               {formatAiProvider(row.aiProvider, locale)}
             </td>

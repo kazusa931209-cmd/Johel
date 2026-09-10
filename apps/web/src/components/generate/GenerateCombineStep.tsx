@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
 import { CombineExperienceSuggest } from "@/components/generate/CombineExperienceSuggest";
@@ -8,11 +8,13 @@ import { CombineProfilePicker } from "@/components/generate/CombineProfilePicker
 import {
   type CombineFieldErrors,
   type CombineSnapshot,
+  isCombineRunReady,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { usePce } from "@/lib/pce";
+import { sanitizeCombineSelection } from "@/lib/combine-defaults";
 import { resolveProfileGraduation } from "@/lib/profile";
 
 type GenerateCombineStepProps = {
@@ -35,8 +37,27 @@ export function GenerateCombineStep({
   onRunFromCombine,
 }: GenerateCombineStepProps) {
   const t = useT();
-  const { profiles } = usePce();
+  const { profiles, companies: workspaceCompanies, loading: pceLoading } =
+    usePce();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
+
+  useEffect(() => {
+    if (pceLoading) return;
+    const sanitized = sanitizeCombineSelection(
+      combine,
+      new Set(profiles.map((profile) => profile.id)),
+      new Set(workspaceCompanies.map((company) => company.id)),
+    );
+    if (sanitized) {
+      onCombineChange(sanitized);
+    }
+  }, [
+    combine,
+    onCombineChange,
+    pceLoading,
+    profiles,
+    workspaceCompanies,
+  ]);
 
   const profileGraduation = useMemo(() => {
     if (!combine.profileId) return null;
@@ -54,8 +75,11 @@ export function GenerateCombineStep({
     void onRunFromCombine();
   }, [combine, profileGraduation, onRunFromCombine, t]);
 
+  const runReady = isCombineRunReady(combine, profileGraduation);
+
   useRegisterGenerateStepNav({
     onRun: handleRun,
+    runDisabled: !runReady,
   });
 
   function patchCombine(patch: Partial<CombineSnapshot>) {

@@ -70,3 +70,14 @@ export function validateCombineSnapshot(
   }
   return errors;
 }
+
+export function isCombineRunReady(
+  snapshot: CombineSnapshot,
+  graduation?: { year: number; month: number } | null,
+): boolean {
+  const errors = validateCombineSnapshot(snapshot, () => "", graduation);
+  if (Object.keys(errors).length > 0) {
+    return false;
+  }
+  return snapshot.companies.some((entry) => entry.experienceIds.length > 0);
+}

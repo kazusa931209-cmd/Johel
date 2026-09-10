@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
-import type { CombineSnapshot } from "@/components/generate/combine-types";
+import {
+  EMPTY_COMBINE_SNAPSHOT,
+  type CombineSnapshot,
+} from "@/components/generate/combine-types";
 import { loadMe } from "@/lib/cached-settings";
 import {
   clearDownstreamFromGenerate,
@@ -16,6 +19,10 @@ import {
   loadGenerateSession,
   saveGenerateSession,
 } from "@/lib/generate-session";
+import {
+  persistCombineDefaultsFromSnapshot,
+  seedCombineFromDefaults,
+} from "@/lib/combine-defaults";
 import {
   allocateNewGeneration,
   fetchCurrentGenerationSession,
@@ -71,7 +78,10 @@ export function useGenerateSession() {
 
       const stored = loadGenerateSession(id);
       if (stored?.generationId) {
-        setSession(stored);
+        setSession({
+          ...stored,
+          combine: seedCombineFromDefaults(stored.combine, id),
+        });
         setReady(true);
         return;
       }
@@ -79,7 +89,10 @@ export function useGenerateSession() {
       const restored = await fetchCurrentGenerationSession();
       if (cancelled) return;
       if (restored?.generationId) {
-        setSession(restored);
+        setSession({
+          ...restored,
+          combine: seedCombineFromDefaults(restored.combine, id),
+        });
       }
 
       setReady(true);
@@ -114,6 +127,7 @@ export function useGenerateSession() {
         ...current,
         generationId: started.id,
         generationPublicId: started.publicId,
+        combine: seedCombineFromDefaults(current.combine, userId),
       }));
     });
     return () => {
@@ -167,9 +181,15 @@ export function useGenerateSession() {
     });
   }, []);
 
-  const setCombine = useCallback((combine: CombineSnapshot) => {
-    setSession((current) => ({ ...current, combine }));
-  }, []);
+  const setCombine = useCallback(
+    (combine: CombineSnapshot) => {
+      setSession((current) => ({ ...current, combine }));
+      if (userId) {
+        persistCombineDefaultsFromSnapshot(userId, combine);
+      }
+    },
+    [userId],
+  );
 
   const clearDownstreamFromVerdictSession = useCallback(() => {
     setSession((current) => clearDownstreamFromVerdict(current));
@@ -222,10 +242,12 @@ export function useGenerateSession() {
       clearGenerateSession(userId);
     }
     const started = await ensureGenerationStarted();
+    const combine = seedCombineFromDefaults(EMPTY_COMBINE_SNAPSHOT, userId);
     setSession({
       ...EMPTY_GENERATE_SESSION,
       generationId: started?.id ?? null,
       generationPublicId: started?.publicId ?? null,
+      combine,
     });
   }, [ensureGenerationStarted, saveSnapshot, userId]);
 

@@ -18,6 +18,7 @@ export type GenerateStepNavState = {
   onDownload?: () => void;
   runBusy?: boolean;
   downloadBusy?: boolean;
+  runDisabled?: boolean;
 };
 
 type GenerateStepNavMeta = {
@@ -25,6 +26,7 @@ type GenerateStepNavMeta = {
   showDownload: boolean;
   runBusy: boolean;
   downloadBusy: boolean;
+  runDisabled: boolean;
 };
 
 const emptyMeta: GenerateStepNavMeta = {
@@ -32,6 +34,7 @@ const emptyMeta: GenerateStepNavMeta = {
   showDownload: false,
   runBusy: false,
   downloadBusy: false,
+  runDisabled: false,
 };
 
 type GenerateStepNavContextValue = {
@@ -96,7 +99,8 @@ export function GenerateStepNavProvider({ children }: { children: ReactNode }) {
         prev.showRun === next.showRun &&
         prev.showDownload === next.showDownload &&
         prev.runBusy === next.runBusy &&
-        prev.downloadBusy === next.downloadBusy
+        prev.downloadBusy === next.downloadBusy &&
+        prev.runDisabled === next.runDisabled
       ) {
         return prev;
       }
@@ -128,11 +132,19 @@ export function useRegisterGenerateStepNav(nav: GenerateStepNavState) {
   const showDownload = Boolean(nav.onDownload);
   const runBusy = nav.runBusy ?? false;
   const downloadBusy = nav.downloadBusy ?? false;
+  const runDisabled = nav.runDisabled ?? false;
 
   useEffect(() => {
     if (!ctx) return;
-    ctx.setMeta({ showRun, showDownload, runBusy, downloadBusy });
-  }, [ctx?.setMeta, showRun, showDownload, runBusy, downloadBusy]);
+    ctx.setMeta({ showRun, showDownload, runBusy, downloadBusy, runDisabled });
+  }, [
+    ctx?.setMeta,
+    showRun,
+    showDownload,
+    runBusy,
+    downloadBusy,
+    runDisabled,
+  ]);
 
   useEffect(() => {
     if (!ctx) return;
@@ -187,7 +199,7 @@ export function GenerateStepNavRunButton() {
         }
         onRunRef.current?.();
       }}
-      disabled={meta.runBusy || meta.downloadBusy}
+      disabled={meta.runBusy || meta.downloadBusy || meta.runDisabled}
       busy={meta.runBusy || meta.downloadBusy}
       ariaLabel={
         meta.showDownload ? t("generate.nav.download") : t("generate.nav.run")

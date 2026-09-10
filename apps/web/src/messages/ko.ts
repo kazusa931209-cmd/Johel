@@ -516,12 +516,15 @@ export const ko: MessageTree = {
         description: "AI가 채용 공고에 맞춰 이력서를 작성하는 중입니다.",
       },
       suggestExperiences: "경험 제안",
+      suggestAgain: "다시 제안",
+      suggestRunGuidance:
+        "준비되면 단계 표시줄의 실행 버튼을 눌러 이력서를 생성하세요.",
       suggesting: "경험 제안 중…",
       suggestingOverlay: {
         title: "경험 제안 중…",
         description: "AI가 회사별로 역량 카드를 매핑하는 중입니다.",
       },
-      experiencesSection: "경험",
+      experiencesSection: "경험 추가",
       experiencesSectionHint:
         "포함된 회사마다 경험 카드를 연결합니다. 키워드 맥락으로 AI 선택을 안내하고, 비우면 자동입니다.",
       keywordContext: "키워드 맥락",
@@ -533,13 +536,14 @@ export const ko: MessageTree = {
       suggestGenerationRequired:
         "생성 세션이 시작될 때까지 기다린 후 다시 시도하세요.",
       suggestionDialogTitle: "경험 제안",
+      suggestionProfile: "프로필",
+      suggestionProfileMissing: "알 수 없는 프로필",
+      suggestionNotProvided: "입력 없음",
+      suggestionKeywordContextAuto: "자동",
       suggestionExperiences: "제안된 카드",
       suggestionExperienceMissing: "알 수 없는 경험",
       suggestionNoExperiences: "이 회사에 제안된 경험이 없습니다.",
       suggestionRationale: "근거",
-      suggestionCancel: "취소",
-      suggestionRetry: "다시 시도",
-      suggestionApply: "적용",
       linkedExperiences: "연결된 경험",
     },
     generateStep: {
@@ -580,7 +584,9 @@ export const ko: MessageTree = {
       searchPlaceholder: "채용 공고 또는 프롬프트 검색…",
       empty: "생성 기록이 없습니다.",
       stepsAria: "생성 단계 진행",
+      currentMark: "현재",
       columns: {
+        current: "현재",
         generationId: "생성 ID",
         tokenUsed: "사용 토큰",
         step: "단계",
@@ -723,7 +729,7 @@ export const ko: MessageTree = {
     experienceAdvisorFailed: "경험 어드바이저에 실패했습니다.",
     experienceSuggestionReady: "경험 제안이 준비되었습니다.",
     combineRecommendFailed: "조합 경험 제안에 실패했습니다.",
-    combineRecommendReady: "경험 제안을 적용했습니다.",
+    combineRecommendReady: "경험 제안이 준비되었습니다.",
     applyFailed: "제안을 적용하지 못했습니다.",
     historyLoadFailed: "AI 사용 기록을 불러오지 못했습니다.",
     detailLoadFailed: "AI 사용 상세를 불러오지 못했습니다.",

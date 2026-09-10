@@ -175,6 +175,7 @@ function AiUsageHistoryDrawer({
               <AiUsageItemsTable
                 items={items}
                 startNo={(page - 1) * pageSize}
+                showGenerationIdColumn={tab !== "other"}
                 onRowClick={onRowClick}
               />
             </div>
