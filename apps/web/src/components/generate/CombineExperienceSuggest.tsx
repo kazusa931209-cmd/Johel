@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  FormEvent,
+  memo,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -29,6 +36,7 @@ import { fullName, type ProfileGraduation } from "@/lib/profile";
 
 type CombineExperienceSuggestProps = {
   combine: CombineSnapshot;
+  resolveCombineSnapshot?: () => CombineSnapshot;
   onCombineChange: (combine: CombineSnapshot) => void;
   job: GenerateJobState;
   doVerdict: boolean;
@@ -36,6 +44,78 @@ type CombineExperienceSuggestProps = {
   generationId?: string | null;
   onSaveBeforeSuggest: () => Promise<{ error?: string }>;
 };
+
+function companyEntriesEqualForSuggest(
+  prevCompanies: CombineSnapshot["companies"],
+  nextCompanies: CombineSnapshot["companies"],
+  includeContextFields: boolean,
+): boolean {
+  if (prevCompanies.length !== nextCompanies.length) {
+    return false;
+  }
+
+  for (let index = 0; index < prevCompanies.length; index += 1) {
+    const prevEntry = prevCompanies[index];
+    const nextEntry = nextCompanies[index];
+    if (
+      prevEntry.companyId !== nextEntry.companyId ||
+      prevEntry.startDate !== nextEntry.startDate ||
+      prevEntry.endDate !== nextEntry.endDate ||
+      prevEntry.experienceIds.length !== nextEntry.experienceIds.length ||
+      prevEntry.experienceIds.some(
+        (id, experienceIndex) => id !== nextEntry.experienceIds[experienceIndex],
+      )
+    ) {
+      return false;
+    }
+    if (
+      includeContextFields &&
+      (prevEntry.roleContext !== nextEntry.roleContext ||
+        prevEntry.keywordContext !== nextEntry.keywordContext)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function areCombineExperienceSuggestPropsEqual(
+  prev: CombineExperienceSuggestProps,
+  next: CombineExperienceSuggestProps,
+): boolean {
+  if (
+    prev.job !== next.job ||
+    prev.doVerdict !== next.doVerdict ||
+    prev.profileGraduation !== next.profileGraduation ||
+    prev.generationId !== next.generationId ||
+    prev.resolveCombineSnapshot !== next.resolveCombineSnapshot ||
+    prev.onCombineChange !== next.onCombineChange ||
+    prev.onSaveBeforeSuggest !== next.onSaveBeforeSuggest
+  ) {
+    return false;
+  }
+
+  const prevCombine = prev.combine;
+  const nextCombine = next.combine;
+  if (
+    prevCombine.profileId !== nextCombine.profileId ||
+    prevCombine.emphasis !== nextCombine.emphasis ||
+    prevCombine.language !== nextCombine.language
+  ) {
+    return false;
+  }
+
+  const includeContextFields = nextCombine.companies.some(
+    (entry) => entry.experienceIds.length > 0,
+  );
+
+  return companyEntriesEqualForSuggest(
+    prevCombine.companies,
+    nextCombine.companies,
+    includeContextFields,
+  );
+}
 
 function CombineSuggestionFieldRow({
   label,
@@ -252,8 +332,9 @@ function CombineSuggestionPreview({
   );
 }
 
-export function CombineExperienceSuggest({
+function CombineExperienceSuggestInner({
   combine,
+  resolveCombineSnapshot,
   onCombineChange,
   job,
   doVerdict,
@@ -287,7 +368,8 @@ export function CombineExperienceSuggest({
     if (suggesting) return false;
 
     setSuggestError(null);
-    const errors = validateCombineSnapshot(combine, t, profileGraduation);
+    const snapshot = resolveCombineSnapshot?.() ?? combine;
+    const errors = validateCombineSnapshot(snapshot, t, profileGraduation);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       return false;
@@ -330,8 +412,8 @@ export function CombineExperienceSuggest({
     }
 
     onCombineChange({
-      ...combine,
-      companies: mergeExperienceSuggestions(combine, res.data),
+      ...snapshot,
+      companies: mergeExperienceSuggestions(snapshot, res.data),
     });
     setAppliedResult(res.data);
     toast(t("toast.combineRecommendReady"), "success");
@@ -407,3 +489,8 @@ export function CombineExperienceSuggest({
     </>
   );
 }
+
+export const CombineExperienceSuggest = memo(
+  CombineExperienceSuggestInner,
+  areCombineExperienceSuggestPropsEqual,
+);

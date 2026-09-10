@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
+import { CombineCompanyCard } from "@/components/generate/CombineCompanyCard";
+import type { CombineCompanyContextFlushResult } from "@/components/generate/CombineCompanyContextFields";
 import {
   COMBINE_SECTION_CLASS,
   COMBINE_SECTION_TITLE_CLASS,
 } from "@/components/generate/combine-section-styles";
-import { CombinePeriodDisplay } from "@/components/generate/CombinePeriodDisplay";
-import { CombinePeriodSlider } from "@/components/generate/CombinePeriodSlider";
 import {
   buildPeriodWindow,
   clampPeriodToWindow,
@@ -18,7 +18,6 @@ import {
   labelsToMonthIndices,
 } from "@/lib/combine-period";
 import type { CombineCompanyEntry } from "@/components/generate/combine-types";
-import { ViewButton } from "@/components/shared/action-icon-buttons";
 import type { CompanyDetail } from "@/lib/api";
 import { orderCompaniesForCombineDisplay } from "@/lib/company";
 import { usePce } from "@/lib/pce";
@@ -31,6 +30,7 @@ type CombineCompanyCardsProps = {
   profileGraduation?: ProfileGraduation | null;
   error?: string;
   onClearError?: () => void;
+  onRegisterContextFlush?: (flush: () => void) => void;
 };
 
 function normalizeIncludedEntries(
@@ -47,11 +47,18 @@ export function CombineCompanyCards({
   profileGraduation = null,
   error,
   onClearError,
+  onRegisterContextFlush,
 }: CombineCompanyCardsProps) {
   const t = useT();
   const { locale } = useLocale();
   const { companies: workspaceCompanies, loading } = usePce();
   const [viewCompany, setViewCompany] = useState<CompanyDetail | null>(null);
+  const contextFlushersRef = useRef(
+    new Set<() => CombineCompanyContextFlushResult | null>(),
+  );
+
+  const companiesRef = useRef(companies);
+  companiesRef.current = companies;
 
   const cardsDisabled = disabled || profileGraduation == null;
   const periodWindow =
@@ -67,87 +74,167 @@ export function CombineCompanyCards({
     () => orderCompaniesForCombineDisplay(workspaceCompanies, companies),
     [workspaceCompanies, companies],
   );
-  const includedById = new Map(
-    companies.map((entry) => [entry.companyId, entry]),
+  const includedById = useMemo(
+    () => new Map(companies.map((entry) => [entry.companyId, entry])),
+    [companies],
+  );
+  const priorStartIndexByCompanyId = useMemo(() => {
+    const indices = new Map<string, number | null>();
+    if (!periodWindow) return indices;
+
+    for (let index = 0; index < companies.length; index += 1) {
+      const entry = companies[index];
+      const priorEntry = index > 0 ? companies[index - 1] : null;
+      indices.set(
+        entry.companyId,
+        priorEntry
+          ? labelsToMonthIndices(
+              periodWindow,
+              priorEntry.startDate,
+              priorEntry.endDate,
+              locale,
+            ).startIndex
+          : null,
+      );
+    }
+    return indices;
+  }, [companies, locale, periodWindow]);
+
+  const updateIncluded = useCallback(
+    (nextEntries: CombineCompanyEntry[]) => {
+      const normalized = normalizeIncludedEntries(workspaceIdSet, nextEntries);
+      companiesRef.current = normalized;
+      onClearError?.();
+      onChange(normalized);
+    },
+    [onChange, onClearError, workspaceIdSet],
   );
 
-  function updateIncluded(nextEntries: CombineCompanyEntry[]) {
-    onClearError?.();
-    onChange(normalizeIncludedEntries(workspaceIdSet, nextEntries));
-  }
+  const patchEntry = useCallback(
+    (companyId: string, patch: Partial<CombineCompanyEntry>) => {
+      updateIncluded(
+        companiesRef.current.map((entry) =>
+          entry.companyId === companyId ? { ...entry, ...patch } : entry,
+        ),
+      );
+    },
+    [updateIncluded],
+  );
 
-  function toggleInclude(companyId: string, included: boolean) {
-    if (cardsDisabled || !periodWindow) return;
+  const onPeriodChange = useCallback(
+    (
+      companyId: string,
+      period: { startDate: string; endDate: string },
+    ) => {
+      patchEntry(companyId, period);
+    },
+    [patchEntry],
+  );
 
-    if (!included) {
-      updateIncluded(companies.filter((entry) => entry.companyId !== companyId));
+  const registerContextFlush = useCallback(
+    (flusher: () => CombineCompanyContextFlushResult | null) => {
+      contextFlushersRef.current.add(flusher);
+      return () => {
+        contextFlushersRef.current.delete(flusher);
+      };
+    },
+    [],
+  );
+
+  const flushPendingContext = useCallback(() => {
+    const patches = [...contextFlushersRef.current]
+      .map((flusher) => flusher())
+      .filter((result): result is CombineCompanyContextFlushResult => result != null);
+    if (patches.length === 0) {
       return;
     }
 
-    const existing = includedById.get(companyId);
-    const defaults = defaultPeriodIndices(periodWindow);
-    const defaultPeriod = indicesToPeriod(
-      periodWindow,
-      defaults.startIndex,
-      defaults.endIndex,
-      locale,
+    const patchByCompanyId = new Map(
+      patches.map((result) => [result.companyId, result.patch]),
     );
-    let restoredPeriod = defaultPeriod;
-    if (existing != null) {
-      restoredPeriod = clampPeriodToWindow(
-        periodWindow,
-        existing.startDate,
-        existing.endDate,
-        locale,
-      );
-    } else if (companies.length > 0) {
-      const priorEntry = companies[companies.length - 1];
-      const priorStartIndex = labelsToMonthIndices(
-        periodWindow,
-        priorEntry.startDate,
-        priorEntry.endDate,
-        locale,
-      ).startIndex;
-      const chained = defaultChainedPeriodIndices(
-        periodWindow,
-        priorStartIndex,
-      );
-      restoredPeriod = indicesToPeriod(
-        periodWindow,
-        chained.startIndex,
-        chained.endIndex,
-        locale,
-      );
-    }
-
-    updateIncluded([
-      ...companies.filter((entry) => entry.companyId !== companyId),
-      {
-        companyId,
-        startDate: restoredPeriod.startDate,
-        endDate: restoredPeriod.endDate,
-        roleContext: existing?.roleContext ?? "",
-        keywordContext: existing?.keywordContext ?? "",
-        experienceIds: existing?.experienceIds ?? [],
-      },
-    ]);
-  }
-
-  function patchEntry(
-    companyId: string,
-    patch: Partial<CombineCompanyEntry>,
-  ) {
     updateIncluded(
-      companies.map((entry) =>
-        entry.companyId === companyId ? { ...entry, ...patch } : entry,
-      ),
+      companiesRef.current.map((entry) => {
+        const patch = patchByCompanyId.get(entry.companyId);
+        return patch ? { ...entry, ...patch } : entry;
+      }),
     );
-  }
+  }, [updateIncluded]);
 
-  function resetCompanies() {
-    if (companies.length === 0) return;
+  useEffect(() => {
+    onRegisterContextFlush?.(flushPendingContext);
+  }, [flushPendingContext, onRegisterContextFlush]);
+
+  const toggleInclude = useCallback(
+    (companyId: string, included: boolean) => {
+      if (cardsDisabled || !periodWindow) return;
+
+      const currentCompanies = companiesRef.current;
+
+      if (!included) {
+        updateIncluded(
+          currentCompanies.filter((entry) => entry.companyId !== companyId),
+        );
+        return;
+      }
+
+      const includedByIdLocal = new Map(
+        currentCompanies.map((entry) => [entry.companyId, entry]),
+      );
+      const existing = includedByIdLocal.get(companyId);
+      const defaults = defaultPeriodIndices(periodWindow);
+      const defaultPeriod = indicesToPeriod(
+        periodWindow,
+        defaults.startIndex,
+        defaults.endIndex,
+        locale,
+      );
+      let restoredPeriod = defaultPeriod;
+      if (existing != null) {
+        restoredPeriod = clampPeriodToWindow(
+          periodWindow,
+          existing.startDate,
+          existing.endDate,
+          locale,
+        );
+      } else if (currentCompanies.length > 0) {
+        const priorEntry = currentCompanies[currentCompanies.length - 1];
+        const priorStartIndex = labelsToMonthIndices(
+          periodWindow,
+          priorEntry.startDate,
+          priorEntry.endDate,
+          locale,
+        ).startIndex;
+        const chained = defaultChainedPeriodIndices(
+          periodWindow,
+          priorStartIndex,
+        );
+        restoredPeriod = indicesToPeriod(
+          periodWindow,
+          chained.startIndex,
+          chained.endIndex,
+          locale,
+        );
+      }
+
+      updateIncluded([
+        ...currentCompanies.filter((entry) => entry.companyId !== companyId),
+        {
+          companyId,
+          startDate: restoredPeriod.startDate,
+          endDate: restoredPeriod.endDate,
+          roleContext: existing?.roleContext ?? "",
+          keywordContext: existing?.keywordContext ?? "",
+          experienceIds: existing?.experienceIds ?? [],
+        },
+      ]);
+    },
+    [cardsDisabled, locale, periodWindow, updateIncluded],
+  );
+
+  const resetCompanies = useCallback(() => {
+    if (companiesRef.current.length === 0) return;
     updateIncluded([]);
-  }
+  }, [updateIncluded]);
 
   if (loading) {
     return <p className="text-sm text-muted">{t("shared.detail.loading")}</p>;
@@ -195,123 +282,26 @@ export function CombineCompanyCards({
         {displayCompanies.map((company) => {
           const included = includedById.has(company.id);
           const entry = includedById.get(company.id);
-          const selectionIndex = companies.findIndex(
-            (item) => item.companyId === company.id,
-          );
-          const priorEntry =
-            selectionIndex > 0 ? companies[selectionIndex - 1] : null;
-          const priorStartIndex =
-            priorEntry && periodWindow
-              ? labelsToMonthIndices(
-                  periodWindow,
-                  priorEntry.startDate,
-                  priorEntry.endDate,
-                  locale,
-                ).startIndex
-              : null;
 
           return (
-            <article
+            <CombineCompanyCard
               key={company.id}
-              className="overflow-hidden rounded-md border border-border bg-background"
-            >
-              <div className="flex items-stretch">
-                <label
-                  className={`flex min-h-12 min-w-0 flex-1 items-center gap-3 px-4 py-3 ${
-                    cardsDisabled
-                      ? "cursor-not-allowed"
-                      : "cursor-pointer hover:bg-surface-muted/60"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={included}
-                    disabled={cardsDisabled}
-                    onChange={(event) =>
-                      toggleInclude(company.id, event.target.checked)
-                    }
-                    className="h-4 w-4 shrink-0 rounded border-border disabled:cursor-not-allowed"
-                  />
-                  <span className="min-w-0 flex-1 font-medium">{company.name}</span>
-                </label>
-                <div className="pointer-events-auto flex items-center px-3">
-                  <ViewButton onClick={() => setViewCompany(company)} />
-                </div>
-              </div>
-
-              {included && entry && profileGraduation != null ? (
-                <div className="space-y-4 border-t border-border p-4">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-                      <span className="text-sm">
-                        {t("generate.combine.period")}
-                        <span className="ml-0.5 text-danger" aria-hidden>
-                        *
-                      </span>
-                      </span>
-                      <CombinePeriodDisplay
-                        startDate={entry.startDate}
-                        endDate={entry.endDate}
-                        profileGraduation={profileGraduation}
-                        className="text-sm font-medium"
-                      />
-                    </div>
-                    <CombinePeriodSlider
-                      graduationYear={profileGraduation.year}
-                      graduationMonth={profileGraduation.month}
-                      startDate={entry.startDate}
-                      endDate={entry.endDate}
-                      priorStartIndex={priorStartIndex}
-                      onChange={(period) =>
-                        patchEntry(company.id, period)
-                      }
-                    />
-                  </div>
-
-                  <label className="flex items-center gap-3 text-sm">
-                    <span className="w-36 shrink-0">
-                      {t("generate.combine.roleContext")}
-                      <span className="ml-0.5 text-danger" aria-hidden>
-                        *
-                      </span>
-                    </span>
-                    <input
-                      type="text"
-                      value={entry.roleContext}
-                      disabled={cardsDisabled}
-                      onChange={(event) =>
-                        patchEntry(company.id, {
-                          roleContext: event.target.value,
-                        })
-                      }
-                      placeholder={t("generate.combine.roleContextPlaceholder")}
-                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
-                    />
-                  </label>
-
-                  <label className="flex items-center gap-3 text-sm">
-                    <span className="w-36 shrink-0">
-                      {t("generate.combine.keywordContext")}
-                    </span>
-                    <input
-                      type="text"
-                      value={entry.keywordContext}
-                      disabled={cardsDisabled}
-                      onChange={(event) =>
-                        patchEntry(company.id, {
-                          keywordContext: event.target.value,
-                        })
-                      }
-                      placeholder={t(
-                        "generate.combine.keywordContextPlaceholder",
-                      )}
-                      title={t("generate.combine.keywordContextHint")}
-                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
-                    />
-                  </label>
-                </div>
-              ) : null}
-            </article>
+              company={company}
+              included={included}
+              entry={entry}
+              priorStartIndex={
+                included
+                  ? (priorStartIndexByCompanyId.get(company.id) ?? null)
+                  : null
+              }
+              profileGraduation={profileGraduation}
+              cardsDisabled={cardsDisabled}
+              onToggleInclude={toggleInclude}
+              onPatchEntry={patchEntry}
+              onPeriodChange={onPeriodChange}
+              onRegisterFlush={registerContextFlush}
+              onView={setViewCompany}
+            />
           );
         })}
       </div>

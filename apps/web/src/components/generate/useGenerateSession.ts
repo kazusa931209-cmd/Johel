@@ -60,6 +60,8 @@ export function useGenerateSession() {
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<GenerateSession>(EMPTY_GENERATE_SESSION);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
   const startingRef = useRef(false);
 
   useEffect(() => {
@@ -140,16 +142,13 @@ export function useGenerateSession() {
     saveGenerateSession(userId, session);
   }, [ready, session, userId]);
 
-  const saveSnapshot = useCallback(
-    async (finalized?: boolean) => {
-      const snapshot = toGenerationSnapshot(session, finalized);
-      if (!snapshot) {
-        return { error: "Generation session is not ready." };
-      }
-      return persistGenerationSnapshot(snapshot);
-    },
-    [session],
-  );
+  const saveSnapshot = useCallback(async (finalized?: boolean) => {
+    const snapshot = toGenerationSnapshot(sessionRef.current, finalized);
+    if (!snapshot) {
+      return { error: "Generation session is not ready." };
+    }
+    return persistGenerationSnapshot(snapshot);
+  }, []);
 
   const setActiveStep = useCallback((activeStep: GenerateStep) => {
     setSession((current) => ({ ...current, activeStep }));
@@ -181,14 +180,43 @@ export function useGenerateSession() {
     });
   }, []);
 
+  const combineDefaultsPersistTimerRef = useRef<number | null>(null);
+  const latestCombineForPersistRef = useRef<CombineSnapshot>(
+    EMPTY_COMBINE_SNAPSHOT,
+  );
+
   const setCombine = useCallback(
     (combine: CombineSnapshot) => {
-      setSession((current) => ({ ...current, combine }));
-      if (userId) {
-        persistCombineDefaultsFromSnapshot(userId, combine);
+      latestCombineForPersistRef.current = combine;
+      setSession((current) => {
+        const next = { ...current, combine };
+        sessionRef.current = next;
+        return next;
+      });
+      if (!userId) {
+        return;
       }
+      if (combineDefaultsPersistTimerRef.current != null) {
+        window.clearTimeout(combineDefaultsPersistTimerRef.current);
+      }
+      combineDefaultsPersistTimerRef.current = window.setTimeout(() => {
+        combineDefaultsPersistTimerRef.current = null;
+        persistCombineDefaultsFromSnapshot(
+          userId,
+          latestCombineForPersistRef.current,
+        );
+      }, 300);
     },
     [userId],
+  );
+
+  useEffect(
+    () => () => {
+      if (combineDefaultsPersistTimerRef.current != null) {
+        window.clearTimeout(combineDefaultsPersistTimerRef.current);
+      }
+    },
+    [],
   );
 
   const clearDownstreamFromVerdictSession = useCallback(() => {

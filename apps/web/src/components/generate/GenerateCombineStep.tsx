@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
 import { CombineExperienceSuggest } from "@/components/generate/CombineExperienceSuggest";
 import { CombineProfilePicker } from "@/components/generate/CombineProfilePicker";
 import {
+  type CombineCompanyEntry,
   type CombineFieldErrors,
   type CombineSnapshot,
   isCombineRunReady,
@@ -40,6 +41,8 @@ export function GenerateCombineStep({
   const { profiles, companies: workspaceCompanies, loading: pceLoading } =
     usePce();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
+  const combineRef = useRef(combine);
+  combineRef.current = combine;
 
   useEffect(() => {
     if (pceLoading) return;
@@ -65,15 +68,27 @@ export function GenerateCombineStep({
     return resolveProfileGraduation(profile);
   }, [combine.profileId, profiles]);
 
+  const flushCompanyContextRef = useRef<() => void>(() => {});
+
+  const flushPendingCompanyContext = useCallback(() => {
+    flushCompanyContextRef.current();
+  }, []);
+
+  const resolveCombineSnapshot = useCallback(() => {
+    flushPendingCompanyContext();
+    return combineRef.current;
+  }, [flushPendingCompanyContext]);
+
   const handleRun = useCallback(() => {
-    const errors = validateCombineSnapshot(combine, t, profileGraduation);
+    const snapshot = resolveCombineSnapshot();
+    const errors = validateCombineSnapshot(snapshot, t, profileGraduation);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
     setFieldErrors({});
     void onRunFromCombine();
-  }, [combine, profileGraduation, onRunFromCombine, t]);
+  }, [profileGraduation, onRunFromCombine, resolveCombineSnapshot, t]);
 
   const runReady = isCombineRunReady(combine, profileGraduation);
   const showRunGuidance = combine.companies.some(
@@ -85,17 +100,47 @@ export function GenerateCombineStep({
     runDisabled: !runReady,
   });
 
-  function patchCombine(patch: Partial<CombineSnapshot>) {
-    onCombineChange({ ...combine, ...patch });
-  }
+  const patchCombine = useCallback(
+    (patch: Partial<CombineSnapshot>) => {
+      const next = { ...combineRef.current, ...patch };
+      combineRef.current = next;
+      onCombineChange(next);
+    },
+    [onCombineChange],
+  );
 
-  function handleProfileIdChange(profileId: string) {
-    onCombineChange({
-      ...combine,
-      profileId,
-      companies: profileId === combine.profileId ? combine.companies : [],
-    });
-  }
+  const handleProfileIdChange = useCallback(
+    (profileId: string) => {
+      const current = combineRef.current;
+      const next = {
+        ...current,
+        profileId,
+        companies: profileId === current.profileId ? current.companies : [],
+      };
+      combineRef.current = next;
+      onCombineChange(next);
+    },
+    [onCombineChange],
+  );
+
+  const registerContextFlush = useCallback((flush: () => void) => {
+    flushCompanyContextRef.current = flush;
+  }, []);
+
+  const handleCompaniesChange = useCallback(
+    (companies: CombineCompanyEntry[]) => {
+      patchCombine({ companies });
+    },
+    [patchCombine],
+  );
+
+  const clearProfileError = useCallback(() => {
+    setFieldErrors((errors) => ({ ...errors, profileId: undefined }));
+  }, []);
+
+  const clearCompaniesError = useCallback(() => {
+    setFieldErrors((errors) => ({ ...errors, companies: undefined }));
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -105,24 +150,22 @@ export function GenerateCombineStep({
         profileId={combine.profileId}
         onProfileIdChange={handleProfileIdChange}
         fieldErrors={fieldErrors}
-        onClearError={() =>
-          setFieldErrors((errors) => ({ ...errors, profileId: undefined }))
-        }
+        onClearError={clearProfileError}
       />
 
       <CombineCompanyCards
         companies={combine.companies}
-        onChange={(companies) => patchCombine({ companies })}
+        onChange={handleCompaniesChange}
         disabled={!combine.profileId}
         profileGraduation={profileGraduation}
         error={fieldErrors.companies}
-        onClearError={() =>
-          setFieldErrors((errors) => ({ ...errors, companies: undefined }))
-        }
+        onClearError={clearCompaniesError}
+        onRegisterContextFlush={registerContextFlush}
       />
 
       <CombineExperienceSuggest
         combine={combine}
+        resolveCombineSnapshot={resolveCombineSnapshot}
         onCombineChange={onCombineChange}
         job={job}
         doVerdict={doVerdict}
@@ -137,7 +180,7 @@ export function GenerateCombineStep({
         <textarea
           value={combine.emphasis}
           onChange={(e) => patchCombine({ emphasis: e.target.value })}
-          rows={8}
+          rows={4}
           placeholder={t("generate.combine.emphasisPlaceholder")}
           className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
         />

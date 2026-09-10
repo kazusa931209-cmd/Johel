@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { PceSection } from "@/components/generate/PceSection";
@@ -17,7 +17,7 @@ type CombineProfilePickerProps = {
   onClearError?: () => void;
 };
 
-export function CombineProfilePicker({
+export const CombineProfilePicker = memo(function CombineProfilePicker({
   profileId,
   onProfileIdChange,
   fieldErrors = {},
@@ -95,4 +95,4 @@ export function CombineProfilePicker({
       )}
     />
   );
-}
+});
