@@ -19,7 +19,8 @@ type ExperienceFactFormFieldsProps = {
   onSuggest: () => void;
   advising: boolean;
   editingCategory?: string;
-  referencePanel?: ReactNode;
+  /** Rendered below the facts field (e.g. advisor suggestions). */
+  suggestionPanel?: ReactNode;
   /** When false, parent renders Suggest in a drawer footer. Default true. */
   showSuggestButton?: boolean;
 };
@@ -31,7 +32,7 @@ export function ExperienceFactFormFields({
   onSuggest,
   advising,
   editingCategory,
-  referencePanel,
+  suggestionPanel,
   showSuggestButton = true,
 }: ExperienceFactFormFieldsProps) {
   const t = useT();
@@ -49,8 +50,6 @@ export function ExperienceFactFormFields({
       <p className="text-sm text-muted">
         {t("crud.experiences.advisor.description")}
       </p>
-
-      {referencePanel}
 
       <label className="block space-y-1 text-sm">
         <span>
@@ -70,6 +69,8 @@ export function ExperienceFactFormFields({
           <p className="text-sm text-danger">{factsError}</p>
         ) : null}
       </label>
+
+      {suggestionPanel}
 
       {showSuggestButton ? (
         <div className="flex justify-end">

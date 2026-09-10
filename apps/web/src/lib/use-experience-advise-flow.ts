@@ -15,7 +15,6 @@ import {
   toExperienceAdviseApplyOperations,
   type ExperienceAdviseDisplayOperation,
 } from "@/lib/build-experience-advise-display-operations";
-import { isExperienceSuggestionActionable } from "@/lib/experience-advise-suggestion-state";
 import { invalidateWorkspaceCrudCaches } from "@/lib/cached-crud-list";
 import { dispatchWorkspaceUpdated } from "@/lib/workspace-updated";
 
@@ -39,7 +38,6 @@ export function useExperienceAdviseFlow({
   const [factsError, setFactsError] = useState<string | undefined>();
   const [advising, setAdvising] = useState(false);
   const [applying, setApplying] = useState(false);
-  const [suggestionOpen, setSuggestionOpen] = useState(false);
   const [result, setResult] = useState<ExperienceAdviseResult | null>(null);
   const [displayOperations, setDisplayOperations] = useState<
     ExperienceAdviseDisplayOperation[]
@@ -51,7 +49,6 @@ export function useExperienceAdviseFlow({
   const resetFlow = useCallback(() => {
     setUserFacts("");
     setFactsError(undefined);
-    setSuggestionOpen(false);
     setResult(null);
     setDisplayOperations([]);
     setWorkspaceFingerprint(null);
@@ -95,7 +92,6 @@ export function useExperienceAdviseFlow({
     setWorkspaceFingerprint(res.data.workspaceFingerprint);
     setTokenUsed(res.data.tokenUsed);
     void refreshTokenUsed();
-    setSuggestionOpen(isExperienceSuggestionActionable(display));
     toast(t("toast.experienceSuggestionReady"), "success");
   }
 
@@ -140,8 +136,6 @@ export function useExperienceAdviseFlow({
     setFactsError,
     advising,
     applying,
-    suggestionOpen,
-    setSuggestionOpen,
     result,
     displayOperations,
     handleSuggest,

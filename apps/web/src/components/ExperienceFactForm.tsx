@@ -2,9 +2,7 @@
 
 import { useT } from "@/components/app/LocaleProvider";
 import { ExperienceFactFormFields } from "@/components/ExperienceFactFormFields";
-import { ExperienceSuggestionDialog } from "@/components/ExperienceSuggestionDialog";
-import { ExperienceSuggestionReferencePanel } from "@/components/ExperienceSuggestionReferencePanel";
-import { shouldShowInlineExperienceSuggestionReference } from "@/lib/experience-advise-suggestion-state";
+import { ExperienceSuggestionContent } from "@/components/ExperienceSuggestionContent";
 import { BackButton } from "@/components/shared/back-button";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { useCrudFormNavigation } from "@/lib/crud-form-navigation";
@@ -31,8 +29,6 @@ export function ExperienceFactForm({
     setFactsError,
     advising,
     applying,
-    suggestionOpen,
-    setSuggestionOpen,
     result,
     displayOperations,
     handleSuggest,
@@ -71,25 +67,18 @@ export function ExperienceFactForm({
           editingCategory={
             mode === "edit" ? initialCategory : undefined
           }
-          referencePanel={
-            shouldShowInlineExperienceSuggestionReference(
-              result,
-              displayOperations,
-            ) ? (
-              <ExperienceSuggestionReferencePanel result={result} />
+          suggestionPanel={
+            result ? (
+              <ExperienceSuggestionContent
+                result={result}
+                displayOperations={displayOperations}
+                onApply={() => void handleApply()}
+                applying={applying}
+              />
             ) : undefined
           }
         />
       </section>
-
-      <ExperienceSuggestionDialog
-        open={suggestionOpen}
-        onClose={() => setSuggestionOpen(false)}
-        result={result}
-        displayOperations={displayOperations}
-        onApply={() => void handleApply()}
-        applying={applying}
-      />
 
       {advising ? (
         <BusyOverlay

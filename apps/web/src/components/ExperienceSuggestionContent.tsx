@@ -1,14 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
 import { useT } from "@/components/app/LocaleProvider";
-import { useToast } from "@/components/app/ToastProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
-import { CopyButton } from "@/components/shared/action-icon-buttons";
 import type { ExperienceAdviseResult } from "@/lib/api";
 import type { ExperienceAdviseDisplayOperation } from "@/lib/build-experience-advise-display-operations";
-import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-import { formatExperienceSuggestionCopyText } from "@/lib/format-experience-suggestion-copy";
 
 type ExperienceSuggestionContentProps = {
   result: ExperienceAdviseResult;
@@ -27,32 +22,6 @@ export function ExperienceSuggestionContent({
   showApplyButton = true,
 }: ExperienceSuggestionContentProps) {
   const t = useT();
-  const { toast } = useToast();
-
-  const copyText = useMemo(
-    () =>
-      formatExperienceSuggestionCopyText(result, displayOperations, {
-        rationale: t("crud.experiences.advisor.rationale"),
-        questions: t("crud.experiences.advisor.questions"),
-        create: t("crud.experiences.advisor.placements.create"),
-        update: t("crud.experiences.advisor.placements.update"),
-        category: t("crud.experiences.form.category"),
-        problem: t("crud.experiences.form.problem"),
-        actions: t("crud.experiences.form.actions"),
-        outcome: t("crud.experiences.form.outcome"),
-        warnings: t("crud.experiences.advisor.warnings"),
-      }),
-    [displayOperations, result, t],
-  );
-
-  async function handleCopy() {
-    const ok = await copyTextToClipboard(copyText);
-    if (ok) {
-      toast(t("toast.copied"), "success");
-    } else {
-      toast(t("toast.copyFailed"), "error");
-    }
-  }
 
   const actionable = displayOperations.length > 0;
   const needMoreFacts =
@@ -62,12 +31,6 @@ export function ExperienceSuggestionContent({
 
   return (
     <>
-      <div className="mb-4 flex justify-end border-b border-border pb-3">
-        <CopyButton
-          disabled={!copyText.trim()}
-          onClick={() => void handleCopy()}
-        />
-      </div>
       <div className="select-text space-y-4 text-sm">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted">

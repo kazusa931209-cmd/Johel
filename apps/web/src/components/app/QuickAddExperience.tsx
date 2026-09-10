@@ -3,9 +3,8 @@
 import { useEffect } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { ExperienceFactFormFields } from "@/components/ExperienceFactFormFields";
-import { ExperienceSuggestionDrawer } from "@/components/ExperienceSuggestionDrawer";
-import { ExperienceSuggestionReferencePanel } from "@/components/ExperienceSuggestionReferencePanel";
-import { shouldShowInlineExperienceSuggestionReference } from "@/lib/experience-advise-suggestion-state";
+import { ExperienceSuggestionContent } from "@/components/ExperienceSuggestionContent";
+import { isExperienceSuggestionActionable } from "@/lib/experience-advise-suggestion-state";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { Drawer } from "@/components/shared/drawer";
 import { useExperienceAdviseFlow } from "@/lib/use-experience-advise-flow";
@@ -28,8 +27,6 @@ export function QuickAddExperience({
     setFactsError,
     advising,
     applying,
-    suggestionOpen,
-    setSuggestionOpen,
     result,
     displayOperations,
     handleSuggest,
@@ -46,6 +43,8 @@ export function QuickAddExperience({
     }
   }, [open, resetFlow]);
 
+  const actionable = isExperienceSuggestionActionable(displayOperations);
+
   function closeMainDrawer() {
     onOpenChange(false);
   }
@@ -56,17 +55,29 @@ export function QuickAddExperience({
         title={t("quickAddExperience.drawerTitle")}
         open={open}
         onClose={closeMainDrawer}
-        closeOnEscape={!suggestionOpen}
         footer={
-          <button
-            type="button"
-            onClick={() => void handleSuggest()}
-            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
-          >
-            {advising
-              ? t("crud.experiences.advisor.running")
-              : t("crud.experiences.advisor.suggest")}
-          </button>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => void handleSuggest()}
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+            >
+              {advising
+                ? t("crud.experiences.advisor.running")
+                : t("crud.experiences.advisor.suggest")}
+            </button>
+            {actionable ? (
+              <button
+                type="button"
+                onClick={() => void handleApply()}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted/40 disabled:opacity-60"
+              >
+                {applying
+                  ? t("crud.experiences.advisor.applying")
+                  : t("crud.experiences.advisor.apply")}
+              </button>
+            ) : null}
+          </div>
         }
       >
         <div className="p-4">
@@ -80,26 +91,20 @@ export function QuickAddExperience({
             onSuggest={() => void handleSuggest()}
             advising={advising}
             showSuggestButton={false}
-            referencePanel={
-              shouldShowInlineExperienceSuggestionReference(
-                result,
-                displayOperations,
-              ) ? (
-                <ExperienceSuggestionReferencePanel result={result} />
+            suggestionPanel={
+              result ? (
+                <ExperienceSuggestionContent
+                  result={result}
+                  displayOperations={displayOperations}
+                  onApply={() => void handleApply()}
+                  applying={applying}
+                  showApplyButton={false}
+                />
               ) : undefined
             }
           />
         </div>
       </Drawer>
-
-      <ExperienceSuggestionDrawer
-        open={suggestionOpen}
-        onClose={() => setSuggestionOpen(false)}
-        result={result}
-        displayOperations={displayOperations}
-        onApply={() => void handleApply()}
-        applying={applying}
-      />
 
       {advising ? (
         <BusyOverlay
