@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  type KeyboardEventHandler,
+  type ReactNode,
+} from "react";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 
 /** Half the default DetailDialog width (`max-w-5xl` → `max-w-lg`). */
@@ -17,6 +22,13 @@ type ConfirmDialogProps = {
   variant?: "default" | "danger";
 };
 
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
+
 export function ConfirmDialog({
   title,
   onClose,
@@ -27,24 +39,53 @@ export function ConfirmDialog({
   closeDisabled = false,
   variant = "default",
 }: ConfirmDialogProps) {
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape") return;
-      if (closeDisabled) return;
+    const frame = window.requestAnimationFrame(() => {
+      confirmButtonRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    function swallowDialogKeys(event: KeyboardEvent) {
+      if (event.key !== "Enter" && event.key !== "Escape") {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        if (closeDisabled) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return;
+        }
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        onClose();
+        return;
+      }
+
+      if (isTextEntryTarget(event.target)) {
+        return;
+      }
+
       event.preventDefault();
-      event.stopPropagation();
-      onClose();
+      event.stopImmediatePropagation();
+      if (!confirmDisabled) {
+        onConfirm();
+      }
     }
 
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [closeDisabled, onClose]);
+    document.addEventListener("keydown", swallowDialogKeys, true);
+    return () => document.removeEventListener("keydown", swallowDialogKeys, true);
+  }, [closeDisabled, confirmDisabled, onClose, onConfirm]);
 
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (confirmDisabled) return;
-    onConfirm();
-  }
+  const handlePanelKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
+    if (event.key === "Enter" || event.key === "Escape") {
+      event.stopPropagation();
+    }
+  };
 
   const confirmButtonClass =
     variant === "danger"
@@ -58,19 +99,25 @@ export function ConfirmDialog({
       onClose={onClose}
       closeDisabled={closeDisabled}
       panelClassName={CONFIRM_DIALOG_PANEL_CLASS}
+      onKeyDown={handlePanelKeyDown}
     >
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="space-y-3">
         {children}
         <div className="flex justify-end">
           <button
-            type="submit"
+            ref={confirmButtonRef}
+            type="button"
             disabled={confirmDisabled}
+            onClick={() => {
+              if (confirmDisabled) return;
+              onConfirm();
+            }}
             className={confirmButtonClass}
           >
             {confirmLabel}
           </button>
         </div>
-      </form>
+      </div>
     </DetailDialog>
   );
 }
