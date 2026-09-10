@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -10,6 +10,10 @@ import {
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
+import {
+  COMBINE_SECTION_CLASS,
+  COMBINE_SECTION_TITLE_CLASS,
+} from "@/components/generate/combine-section-styles";
 import { CombinePeriodDisplay } from "@/components/generate/CombinePeriodDisplay";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
@@ -32,6 +36,27 @@ type CombineExperienceSuggestProps = {
   generationId?: string | null;
   onSaveBeforeSuggest: () => Promise<{ error?: string }>;
 };
+
+function CombineSuggestionFieldRow({
+  label,
+  children,
+  align = "center",
+}: {
+  label: string;
+  children: ReactNode;
+  align?: "center" | "start";
+}) {
+  return (
+    <div
+      className={`flex gap-3 text-sm ${align === "start" ? "items-start" : "items-center"}`}
+    >
+      <span className="w-36 shrink-0 text-xs font-medium uppercase tracking-wide text-muted">
+        {label}
+      </span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
 
 function mergeExperienceSuggestions(
   combine: CombineSnapshot,
@@ -63,15 +88,13 @@ function CombineSuggestedExperienceList({
 
   if (experienceIds.length === 0) {
     return (
-      <p className="mt-1 text-muted">
-        {t("generate.combine.suggestionNoExperiences")}
-      </p>
+      <p className="text-muted">{t("generate.combine.suggestionNoExperiences")}</p>
     );
   }
 
   return (
     <>
-      <ul className="mt-1 space-y-1">
+      <ul className="space-y-1">
         {experienceIds.map((id) => {
           const experience = experienceById.get(id);
           const label =
@@ -175,45 +198,41 @@ function CombineSuggestionPreview({
                 {companyNameById.get(entry.companyId) ?? entry.companyId}
               </p>
 
-              <dl className="mt-3 space-y-2 text-sm">
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                    {t("generate.combine.period")}
-                  </dt>
-                  <dd className="mt-1">
-                    <CombinePeriodDisplay
-                      startDate={entry.startDate}
-                      endDate={entry.endDate}
-                      profileGraduation={profileGraduation}
-                    />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                    {t("generate.combine.roleContext")}
-                  </dt>
-                  <dd className="mt-1 whitespace-pre-wrap">
+              <div className="mt-3 space-y-2">
+                <CombineSuggestionFieldRow label={t("generate.combine.period")}>
+                  <CombinePeriodDisplay
+                    startDate={entry.startDate}
+                    endDate={entry.endDate}
+                    profileGraduation={profileGraduation}
+                  />
+                </CombineSuggestionFieldRow>
+                <CombineSuggestionFieldRow
+                  label={t("generate.combine.roleContext")}
+                  align="start"
+                >
+                  <span className="whitespace-pre-wrap">
                     {entry.roleContext.trim() ||
                       t("generate.combine.suggestionNotProvided")}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted">
-                    {t("generate.combine.keywordContext")}
-                  </dt>
-                  <dd className="mt-1 whitespace-pre-wrap">
+                  </span>
+                </CombineSuggestionFieldRow>
+                <CombineSuggestionFieldRow
+                  label={t("generate.combine.keywordContext")}
+                  align="start"
+                >
+                  <span className="whitespace-pre-wrap">
                     {entry.keywordContext.trim() ||
                       t("generate.combine.suggestionKeywordContextAuto")}
-                  </dd>
-                </div>
-              </dl>
-
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted">
-                {t("generate.combine.suggestionExperiences")}
-              </p>
-              <CombineSuggestedExperienceList
-                experienceIds={entry.experienceIds}
-              />
+                  </span>
+                </CombineSuggestionFieldRow>
+                <CombineSuggestionFieldRow
+                  label={t("generate.combine.suggestionExperiences")}
+                  align="start"
+                >
+                  <CombineSuggestedExperienceList
+                    experienceIds={entry.experienceIds}
+                  />
+                </CombineSuggestionFieldRow>
+              </div>
 
               {rationale ? (
                 <>
@@ -229,10 +248,6 @@ function CombineSuggestionPreview({
           );
         })}
       </div>
-
-      <p className="text-sm text-muted">
-        {t("generate.combine.suggestRunGuidance")}
-      </p>
     </div>
   );
 }
@@ -330,12 +345,9 @@ export function CombineExperienceSuggest({
 
   return (
     <>
-      <form
-        onSubmit={onSuggest}
-        className="space-y-4 rounded-lg border border-border bg-surface p-4"
-      >
+      <form onSubmit={onSuggest} className={COMBINE_SECTION_CLASS}>
         <div className="space-y-1">
-          <h3 className="text-sm font-medium">
+          <h3 className={COMBINE_SECTION_TITLE_CLASS}>
             {t("generate.combine.experiencesSection")}
           </h3>
           <p className="text-xs text-muted">

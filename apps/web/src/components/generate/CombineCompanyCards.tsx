@@ -3,6 +3,10 @@
 import { useMemo, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
+import {
+  COMBINE_SECTION_CLASS,
+  COMBINE_SECTION_TITLE_CLASS,
+} from "@/components/generate/combine-section-styles";
 import { CombinePeriodDisplay } from "@/components/generate/CombinePeriodDisplay";
 import { CombinePeriodSlider } from "@/components/generate/CombinePeriodSlider";
 import {
@@ -162,10 +166,12 @@ export function CombineCompanyCards({
       : null;
 
   return (
-    <section className="space-y-3">
+    <section className={COMBINE_SECTION_CLASS}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
-          <h3 className="text-sm font-medium">{t("generate.combine.companies")}</h3>
+          <h3 className={COMBINE_SECTION_TITLE_CLASS}>
+            {t("generate.combine.companies")}
+          </h3>
           <p className="text-xs text-muted">{t("generate.combine.companiesHint")}</p>
           {disabledMessage ? (
             <p className="text-sm text-muted">{disabledMessage}</p>

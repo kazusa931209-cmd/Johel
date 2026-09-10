@@ -76,6 +76,9 @@ export function GenerateCombineStep({
   }, [combine, profileGraduation, onRunFromCombine, t]);
 
   const runReady = isCombineRunReady(combine, profileGraduation);
+  const showRunGuidance = combine.companies.some(
+    (entry) => entry.experienceIds.length > 0,
+  );
 
   useRegisterGenerateStepNav({
     onRun: handleRun,
@@ -139,6 +142,15 @@ export function GenerateCombineStep({
           className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
         />
       </label>
+
+      {showRunGuidance ? (
+        <div
+          role="alert"
+          className="rounded-md border border-border bg-toast-success-bg px-3 py-3 text-sm text-toast-success-fg"
+        >
+          {t("generate.combine.suggestRunGuidance")}
+        </div>
+      ) : null}
     </div>
   );
 }

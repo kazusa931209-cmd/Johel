@@ -495,7 +495,7 @@ export const ko: MessageTree = {
         "예: 온체인 신뢰성을 앞에; 모바일 경험은 제외; Skills는 3개 그룹으로.",
       companies: "회사",
       companiesHint:
-        "프로필 선택 후 회사를 포함합니다. 선택한 회사는 선택 순으로 상단, 미선택은 표시 순서입니다. 근무 기간은 프로필 졸업 월~현재입니다.",
+        "포함할 회사를 선택하세요. 기간은 졸업 월부터 현재까지입니다.",
       resetCompanies: "초기화",
       resetCompaniesAria: "선택한 회사 모두 해제",
       selectProfileFirst: "회사를 선택하기 전에 프로필을 선택해 주세요.",
@@ -530,7 +530,7 @@ export const ko: MessageTree = {
         title: "경험 제안 중…",
         description: "AI가 회사별로 역량 카드를 매핑하는 중입니다.",
       },
-      experiencesSection: "경험 추가",
+      experiencesSection: "경험",
       experiencesSectionHint:
         "포함된 회사마다 경험 카드를 연결합니다. 키워드 맥락으로 AI 선택을 안내하고, 비우면 자동입니다.",
       keywordContext: "키워드 맥락",

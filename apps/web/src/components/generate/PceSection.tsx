@@ -3,6 +3,10 @@
 import { ReactNode } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { ViewButton } from "@/components/shared/action-icon-buttons";
+import {
+  COMBINE_SECTION_CLASS,
+  COMBINE_SECTION_TITLE_CLASS,
+} from "@/components/generate/combine-section-styles";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 
 type Column<T> = {
@@ -48,9 +52,9 @@ export function PceSection<T extends { id: string }>({
   const colSpan = columns.length + 2;
 
   return (
-    <section className="space-y-3 rounded-lg border border-border p-4">
+    <section className={COMBINE_SECTION_CLASS}>
       <div className="space-y-1">
-        <h3 className="text-base font-semibold tracking-tight">{title}</h3>
+        <h3 className={COMBINE_SECTION_TITLE_CLASS}>{title}</h3>
         {selectionMode === "single" ? (
           <p className="text-xs text-muted">{t("generate.pceSection.selectSingle")}</p>
         ) : (

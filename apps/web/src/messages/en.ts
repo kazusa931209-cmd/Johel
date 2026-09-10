@@ -493,7 +493,7 @@ export const en = {
         "e.g. Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups.",
       companies: "Companies",
       companiesHint:
-        "Select a profile, then toggle companies. Selected move to the top in selection order; unselected follow display order. Periods: profile graduation month through present.",
+        "Toggle companies to include. Periods from graduation through present.",
       resetCompanies: "Reset",
       resetCompaniesAria: "Deselect all companies",
       selectProfileFirst: "Select a profile before choosing companies.",
@@ -529,7 +529,7 @@ export const en = {
         description:
           "Please wait while the AI maps capability cards to your companies.",
       },
-      experiencesSection: "Add Experiences",
+      experiencesSection: "Experiences",
       experiencesSectionHint:
         "Link capability cards to each included company. Keyword context steers AI picks; leave empty for Auto.",
       keywordContext: "Keyword context",
