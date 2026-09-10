@@ -4,13 +4,14 @@ import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
-import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
+import { useResumeDownload } from "@/components/generate/useResumeDownload";
 
 type GenerateEvaluateStepProps = {
   resume: GeneratedResume | null;
   runLabel?: string;
   evaluationMarkdown: string | null;
   evaluating: boolean;
+  onDownloaded?: () => void | Promise<void>;
 };
 
 export function GenerateEvaluateStep({
@@ -18,9 +19,12 @@ export function GenerateEvaluateStep({
   runLabel,
   evaluationMarkdown,
   evaluating,
+  onDownloaded,
 }: GenerateEvaluateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
+  const { onDownload, downloading } = useResumeDownload(resume, runLabel, {
+    onDownloaded,
+  });
 
   useRegisterGenerateStepNav({
     onDownload: resume ? () => void onDownload() : undefined,
@@ -29,10 +33,7 @@ export function GenerateEvaluateStep({
 
   if (!evaluationMarkdown) {
     return (
-      <div className="space-y-2">
-        <h2 className="text-center text-lg font-semibold tracking-tight">
-          {t("generate.evaluateStep.title")}
-        </h2>
+      <>
         <div className="rounded-md border border-border bg-background px-4 py-6 text-sm text-muted">
           {evaluating
             ? t("generate.evaluateStep.pending")
@@ -56,18 +57,11 @@ export function GenerateEvaluateStep({
             </div>
           </div>
         ) : null}
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <h2 className="text-center text-lg font-semibold tracking-tight">
-        {t("generate.evaluateStep.title")}
-      </h2>
-      <div className="rounded-md border border-border bg-background px-4 py-4">
-        <AiVerdictMarkdown markdown={evaluationMarkdown} />
-      </div>
-    </div>
+    <AiVerdictMarkdown markdown={evaluationMarkdown} />
   );
 }

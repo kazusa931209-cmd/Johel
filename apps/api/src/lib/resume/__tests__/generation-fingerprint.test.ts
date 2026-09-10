@@ -12,6 +12,7 @@ const baseInput = {
     residence: null,
     university: null,
     graduationYear: 2018,
+    graduationMonth: 6,
     degree: null,
     links: [{ key: "LinkedIn", link: "https://linkedin.com/in/jane" }],
   },

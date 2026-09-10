@@ -6,6 +6,7 @@ import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { useToast } from "@/components/app/ToastProvider";
+import { invalidateWorkspaceCrudCaches } from "@/lib/cached-crud-list";
 import {
   createCompany,
   updateCompany,
@@ -160,6 +161,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
       return;
     }
     await refreshTokenUsed();
+    invalidateWorkspaceCrudCaches("companies");
     toast(
       mode === "edit" ? t("toast.companyUpdated") : t("toast.companyCreated"),
       "success",

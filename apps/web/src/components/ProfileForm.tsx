@@ -1,10 +1,11 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useT } from "@/components/app/LocaleProvider";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { BackButton } from "@/components/shared/back-button";
 import { ProfileLinksEditor } from "@/components/ProfileLinksEditor";
 import { useToast } from "@/components/app/ToastProvider";
+import { invalidateWorkspaceCrudCaches } from "@/lib/cached-crud-list";
 import {
   createProfile,
   updateProfile,
@@ -24,6 +25,7 @@ type FieldErrors = {
   firstName?: string;
   lastName?: string;
   graduationYear?: string;
+  graduationMonth?: string;
 };
 
 function RequiredMark() {
@@ -39,8 +41,15 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-sm text-danger">{message}</p>;
 }
 
+function monthLabel(month: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { month: "long" }).format(
+    new Date(2020, month - 1, 1),
+  );
+}
+
 export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
   const t = useT();
+  const { locale } = useLocale();
   const { toast } = useToast();
   const { goBack } = useCrudFormNavigation("/profiles");
   const [firstName, setFirstName] = useState(initial?.firstName ?? "");
@@ -52,6 +61,9 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
   const [university, setUniversity] = useState(initial?.university ?? "");
   const [graduationYear, setGraduationYear] = useState(
     initial?.graduationYear != null ? String(initial.graduationYear) : "",
+  );
+  const [graduationMonth, setGraduationMonth] = useState(
+    initial?.graduationMonth != null ? String(initial.graduationMonth) : "",
   );
   const [degree, setDegree] = useState(initial?.degree ?? "");
   const [links, setLinks] = useState<ProfileLinkItem[]>(initial?.links ?? []);
@@ -71,6 +83,15 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
     if (!graduationYear.trim() || Number.isNaN(parsedGraduationYear)) {
       nextErrors.graduationYear = t("validation.graduationYearRequired");
     }
+    const parsedGraduationMonth = Number.parseInt(graduationMonth.trim(), 10);
+    if (
+      !graduationMonth.trim() ||
+      Number.isNaN(parsedGraduationMonth) ||
+      parsedGraduationMonth < 1 ||
+      parsedGraduationMonth > 12
+    ) {
+      nextErrors.graduationMonth = t("validation.graduationMonthRequired");
+    }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -85,6 +106,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       residence: residence.trim() || null,
       university: university.trim() || null,
       graduationYear: parsedGraduationYear,
+      graduationMonth: parsedGraduationMonth,
       degree: degree.trim() || null,
       links,
     };
@@ -98,6 +120,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       toast(res.error ?? t("toast.profileSaveFailed"), "error");
       return;
     }
+    invalidateWorkspaceCrudCaches("profiles");
     toast(
       mode === "edit" ? t("toast.profileUpdated") : t("toast.profileCreated"),
       "success",
@@ -212,7 +235,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
         />
       </label>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <label className="block space-y-1 text-sm">
           <span>{t("crud.profiles.form.university")}</span>
           <input
@@ -245,6 +268,36 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
             className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
           />
           <FieldError message={fieldErrors.graduationYear} />
+        </label>
+        <label className="block space-y-1 text-sm">
+          <span>
+            {t("crud.profiles.form.graduationMonth")}
+            <RequiredMark />
+          </span>
+          <select
+            value={graduationMonth}
+            onChange={(e) => {
+              setGraduationMonth(e.target.value);
+              if (fieldErrors.graduationMonth) {
+                setFieldErrors((errors) => ({
+                  ...errors,
+                  graduationMonth: undefined,
+                }));
+              }
+            }}
+            aria-invalid={Boolean(fieldErrors.graduationMonth)}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
+          >
+            <option value="">{t("crud.profiles.form.graduationMonthPlaceholder")}</option>
+            {Array.from({ length: 12 }, (_, index) => index + 1).map(
+              (month) => (
+                <option key={month} value={month}>
+                  {monthLabel(month, locale)}
+                </option>
+              ),
+            )}
+          </select>
+          <FieldError message={fieldErrors.graduationMonth} />
         </label>
       </div>
 

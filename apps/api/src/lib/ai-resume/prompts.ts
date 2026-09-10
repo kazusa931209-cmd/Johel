@@ -55,22 +55,16 @@ const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation s
 Required JSON schema:
 ${JSON_SCHEMA_DESCRIPTION}`;
 
-const CURSOR_PROVIDER_NOTES = `Provider notes (Cursor AI Agent):
-- experiences must contain at least one item with at least one bullet each.
-- header.name is required.`;
-
 const OPENAI_PROVIDER_NOTES = `Provider notes (OpenAI):
 - experiences must contain at least one item with at least one bullet each.
 - header.name is required.
 - Return ONLY valid JSON. Do NOT wrap the answer in a code fence.`;
 
 export function getAiResumeSystemPrompt(
-  provider: AiProviderId,
+  _provider: AiProviderId,
   generatePrompt: string,
 ): string {
-  const notes =
-    provider === "cursor" ? CURSOR_PROVIDER_NOTES : OPENAI_PROVIDER_NOTES;
-  return `${generatePrompt.trim()}\n# Execution rules\n\n${EXECUTION_RULES}\n\n${PROMPT_SECTION_SEPARATOR}\n\n${notes}`;
+  return `${generatePrompt.trim()}\n# Execution rules\n\n${EXECUTION_RULES}\n\n${PROMPT_SECTION_SEPARATOR}\n\n${OPENAI_PROVIDER_NOTES}`;
 }
 
 function optionalLine(label: string, value: string | null | undefined): string | null {
@@ -91,9 +85,11 @@ function formatProfileSection(input: ResumeGenerationInput): string {
 
   const educationLines = [
     optionalLine("University", profile.university),
-    profile.graduationYear != null
-      ? `- Graduation year: ${profile.graduationYear}`
-      : null,
+    profile.graduationYear != null && profile.graduationMonth != null
+      ? `- Graduation: ${profile.graduationYear}-${String(profile.graduationMonth).padStart(2, "0")}`
+      : profile.graduationYear != null
+        ? `- Graduation year: ${profile.graduationYear}`
+        : null,
     optionalLine("Degree", profile.degree),
   ].filter((line): line is string => Boolean(line));
   const linkLines = profile.links

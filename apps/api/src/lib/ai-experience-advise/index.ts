@@ -1,12 +1,9 @@
-import type { AiProviderId } from "../ai-provider.js";
-import {
-  cursorExperienceAdviseProvider,
-  openAiExperienceAdviseProvider,
-} from "./providers.js";
+import { openAiExperienceAdviseProvider } from "./providers.js";
 import type {
   ExperienceAdviseProviderResult,
   ExperienceAdviseRequest,
 } from "./types.js";
+import type { AiProviderId } from "../ai-provider.js";
 
 export type {
   ExperienceAdviseApplyInput,
@@ -20,6 +17,10 @@ export type {
 } from "./types.js";
 
 export { loadExperienceAdviseGraph } from "./load-graph.js";
+export {
+  loadExperienceAdviseContext,
+  buildExperienceAdviseFingerprintFromGraph,
+} from "./load-context.js";
 export { buildExperienceAdviseFingerprint } from "./fingerprint.js";
 export {
   parseExperienceAdviseResponse,
@@ -27,18 +28,9 @@ export {
 } from "./parse-response.js";
 export { applyExperienceAdviseOperations } from "./apply.js";
 
-const providers = {
-  cursor: cursorExperienceAdviseProvider,
-  openai: openAiExperienceAdviseProvider,
-} as const;
-
 export async function runExperienceAdvise(
-  provider: AiProviderId,
+  _provider: AiProviderId,
   input: ExperienceAdviseRequest,
 ): Promise<ExperienceAdviseProviderResult> {
-  const adapter = providers[provider];
-  if (!adapter) {
-    throw new Error(`Unsupported AI provider: ${provider}`);
-  }
-  return adapter.run(input);
+  return openAiExperienceAdviseProvider.run(input);
 }

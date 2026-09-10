@@ -21,6 +21,7 @@ export type ResumeGenerationProfile = {
   residence: string | null;
   university: string | null;
   graduationYear: number | null;
+  graduationMonth: number | null;
   degree: string | null;
   links: { key: string; link: string | null }[];
 };

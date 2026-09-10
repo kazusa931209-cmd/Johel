@@ -3,6 +3,11 @@ export type ProfileLinkItem = {
   link: string | null;
 };
 
+export type ProfileGraduation = {
+  year: number;
+  month: number;
+};
+
 export type ProfileDetail = {
   id: string;
   firstName: string;
@@ -13,6 +18,7 @@ export type ProfileDetail = {
   residence: string | null;
   university: string | null;
   graduationYear: number | null;
+  graduationMonth: number | null;
   degree: string | null;
   links: ProfileLinkItem[];
   createdAt: string;
@@ -28,9 +34,31 @@ export type ProfileWritePayload = {
   residence?: string | null;
   university?: string | null;
   graduationYear: number;
+  graduationMonth: number;
   degree?: string | null;
   links: ProfileLinkItem[];
 };
+
+export function resolveProfileGraduation(
+  profile:
+    | {
+        graduationYear: number | null;
+        graduationMonth: number | null;
+      }
+    | undefined
+    | null,
+): ProfileGraduation | null {
+  if (
+    profile?.graduationYear == null ||
+    profile?.graduationMonth == null
+  ) {
+    return null;
+  }
+  return {
+    year: profile.graduationYear,
+    month: profile.graduationMonth,
+  };
+}
 
 export function fullName(firstName: string, lastName: string) {
   return `${firstName} ${lastName}`.trim();
@@ -41,14 +69,40 @@ export function formatLinksCell(links: ProfileLinkItem[]) {
   return links.map((item) => item.key).join(", ");
 }
 
-export function formatEducationCell(profile: {
-  university: string | null;
-  graduationYear: number | null;
-  degree: string | null;
-}) {
+export function formatGraduationLabel(
+  profile: {
+    graduationYear: number | null;
+    graduationMonth: number | null;
+  },
+  locale = "en",
+  month: "short" | "long" = "long",
+) {
+  if (profile.graduationYear == null) return null;
+  if (profile.graduationMonth == null) {
+    return String(profile.graduationYear);
+  }
+  return new Intl.DateTimeFormat(locale, {
+    month,
+    year: "numeric",
+  }).format(
+    new Date(profile.graduationYear, profile.graduationMonth - 1, 1),
+  );
+}
+
+export function formatEducationCell(
+  profile: {
+    university: string | null;
+    graduationYear: number | null;
+    graduationMonth: number | null;
+    degree: string | null;
+  },
+  locale = "en",
+) {
+  const graduationLabel = formatGraduationLabel(profile, locale, "short");
+
   const parts = [
     profile.university?.trim(),
-    profile.graduationYear != null ? String(profile.graduationYear) : null,
+    graduationLabel,
     profile.degree?.trim(),
   ].filter(Boolean);
   return parts.join(" · ");

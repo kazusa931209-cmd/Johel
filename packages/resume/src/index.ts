@@ -12,4 +12,9 @@ export {
 
 export { resumeToMarkdown } from "./markdown/resume-to-markdown";
 
-export { buildResumeDocxFileName } from "./docx-filename";
+export {
+  buildResumeDocxFileName,
+  buildResumeExportFileName,
+  buildResumePdfFileName,
+  type ResumeExportFormat,
+} from "./docx-filename";

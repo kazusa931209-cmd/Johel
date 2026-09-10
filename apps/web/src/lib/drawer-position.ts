@@ -24,5 +24,5 @@ export function persistDrawerPosition(position: DrawerPosition) {
 
 export function studioFabClusterClass(position: DrawerPosition): string {
   const horizontal = position === "left" ? "left-8" : "right-8";
-  return `fixed bottom-12 ${horizontal} z-40 flex flex-col gap-6`;
+  return `fixed bottom-12 ${horizontal} z-40 flex flex-col gap-4`;
 }

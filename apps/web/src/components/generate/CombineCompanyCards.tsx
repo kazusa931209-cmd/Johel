@@ -1,9 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
-import { CombinePeriodSlider } from "@/components/generate/CombinePeriodSlider";
+import { CombineCompanyCard } from "@/components/generate/CombineCompanyCard";
+import type { CombineCompanyContextFlushResult } from "@/components/generate/CombineCompanyContextFields";
+import {
+  COMBINE_SECTION_CLASS,
+  COMBINE_SECTION_TITLE_CLASS,
+} from "@/components/generate/combine-section-styles";
+import type {
+  CombineCompanyEntry,
+  CombineSnapshot,
+} from "@/components/generate/combine-types";
+import { useCombineExperienceSuggest } from "@/components/generate/useCombineExperienceSuggest";
+import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import {
   buildPeriodWindow,
   clampPeriodToWindow,
@@ -12,18 +23,27 @@ import {
   indicesToPeriod,
   labelsToMonthIndices,
 } from "@/lib/combine-period";
-import type { CombineCompanyEntry } from "@/components/generate/combine-types";
-import { ViewButton } from "@/components/shared/action-icon-buttons";
-import { listCompanies, listExperiences, type CompanyDetail } from "@/lib/api";
+import type { CompanyDetail } from "@/lib/api";
 import { orderCompaniesForCombineDisplay } from "@/lib/company";
+import type { GenerateJobState } from "@/lib/generate-session";
+import { usePce } from "@/lib/pce";
+import type { ProfileGraduation } from "@/lib/profile";
 
 type CombineCompanyCardsProps = {
+  combine: CombineSnapshot;
+  resolveCombineSnapshot?: () => CombineSnapshot;
+  onCombineChange: (combine: CombineSnapshot) => void;
+  job: GenerateJobState;
+  doVerdict: boolean;
+  generationId?: string | null;
+  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
   companies: CombineCompanyEntry[];
   onChange: (companies: CombineCompanyEntry[]) => void;
   disabled?: boolean;
-  graduationYear?: number | null;
+  profileGraduation?: ProfileGraduation | null;
   error?: string;
   onClearError?: () => void;
+  onRegisterContextFlush?: (flush: () => void) => void;
 };
 
 function normalizeIncludedEntries(
@@ -34,49 +54,56 @@ function normalizeIncludedEntries(
 }
 
 export function CombineCompanyCards({
+  combine,
+  resolveCombineSnapshot,
+  onCombineChange,
+  job,
+  doVerdict,
+  generationId,
+  onSaveBeforeSuggest,
   companies,
   onChange,
   disabled = false,
-  graduationYear = null,
+  profileGraduation = null,
   error,
   onClearError,
+  onRegisterContextFlush,
 }: CombineCompanyCardsProps) {
   const t = useT();
   const { locale } = useLocale();
-  const [workspaceCompanies, setWorkspaceCompanies] = useState<CompanyDetail[]>(
-    [],
-  );
-  const [loading, setLoading] = useState(true);
+  const { companies: workspaceCompanies, loading } = usePce();
   const [viewCompany, setViewCompany] = useState<CompanyDetail | null>(null);
-  const [categoryById, setCategoryById] = useState<Map<string, string>>(
-    new Map(),
+  const contextFlushersRef = useRef(
+    new Set<() => CombineCompanyContextFlushResult | null>(),
   );
 
-  const cardsDisabled = disabled || graduationYear == null;
-  const periodWindow =
-    graduationYear != null ? buildPeriodWindow(graduationYear) : null;
+  const companiesRef = useRef(companies);
+  companiesRef.current = companies;
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([listCompanies("", null), listExperiences("", null)]).then(
-      ([companiesRes, experiencesRes]) => {
-        if (cancelled) return;
-        setWorkspaceCompanies(companiesRes.data?.items ?? []);
-        setCategoryById(
-          new Map(
-            (experiencesRes.data?.items ?? []).map((item) => [
-              item.id,
-              item.category,
-            ]),
-          ),
-        );
-        setLoading(false);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const {
+    runSuggest,
+    suggesting,
+    suggestError,
+    fieldErrors: suggestFieldErrors,
+    suggestSucceeded,
+    rationaleByCompanyId,
+    warnings,
+  } = useCombineExperienceSuggest({
+    combine,
+    resolveCombineSnapshot,
+    onCombineChange,
+    job,
+    doVerdict,
+    profileGraduation,
+    generationId,
+    onSaveBeforeSuggest,
+  });
+
+  const cardsDisabled = disabled || profileGraduation == null;
+  const periodWindow =
+    profileGraduation != null
+      ? buildPeriodWindow(profileGraduation.year, profileGraduation.month)
+      : null;
 
   const workspaceIdSet = useMemo(
     () => new Set(workspaceCompanies.map((company) => company.id)),
@@ -86,87 +113,176 @@ export function CombineCompanyCards({
     () => orderCompaniesForCombineDisplay(workspaceCompanies, companies),
     [workspaceCompanies, companies],
   );
-  const includedById = new Map(
-    companies.map((entry) => [entry.companyId, entry]),
+  const includedById = useMemo(
+    () => new Map(companies.map((entry) => [entry.companyId, entry])),
+    [companies],
+  );
+  const priorStartIndexByCompanyId = useMemo(() => {
+    const indices = new Map<string, number | null>();
+    if (!periodWindow) return indices;
+
+    for (let index = 0; index < companies.length; index += 1) {
+      const entry = companies[index];
+      const priorEntry = index > 0 ? companies[index - 1] : null;
+      indices.set(
+        entry.companyId,
+        priorEntry
+          ? labelsToMonthIndices(
+              periodWindow,
+              priorEntry.startDate,
+              priorEntry.endDate,
+              locale,
+            ).startIndex
+          : null,
+      );
+    }
+    return indices;
+  }, [companies, locale, periodWindow]);
+
+  const updateIncluded = useCallback(
+    (nextEntries: CombineCompanyEntry[]) => {
+      const normalized = normalizeIncludedEntries(workspaceIdSet, nextEntries);
+      companiesRef.current = normalized;
+      onClearError?.();
+      onChange(normalized);
+    },
+    [onChange, onClearError, workspaceIdSet],
   );
 
-  function updateIncluded(nextEntries: CombineCompanyEntry[]) {
-    onClearError?.();
-    onChange(normalizeIncludedEntries(workspaceIdSet, nextEntries));
-  }
+  const patchEntry = useCallback(
+    (companyId: string, patch: Partial<CombineCompanyEntry>) => {
+      updateIncluded(
+        companiesRef.current.map((entry) =>
+          entry.companyId === companyId ? { ...entry, ...patch } : entry,
+        ),
+      );
+    },
+    [updateIncluded],
+  );
 
-  function toggleInclude(companyId: string, included: boolean) {
-    if (cardsDisabled || !periodWindow) return;
+  const onPeriodChange = useCallback(
+    (
+      companyId: string,
+      period: { startDate: string; endDate: string },
+    ) => {
+      patchEntry(companyId, period);
+    },
+    [patchEntry],
+  );
 
-    if (!included) {
-      updateIncluded(companies.filter((entry) => entry.companyId !== companyId));
+  const onExperienceIdsChange = useCallback(
+    (companyId: string, experienceIds: string[]) => {
+      patchEntry(companyId, { experienceIds });
+    },
+    [patchEntry],
+  );
+
+  const registerContextFlush = useCallback(
+    (flusher: () => CombineCompanyContextFlushResult | null) => {
+      contextFlushersRef.current.add(flusher);
+      return () => {
+        contextFlushersRef.current.delete(flusher);
+      };
+    },
+    [],
+  );
+
+  const flushPendingContext = useCallback(() => {
+    const patches = [...contextFlushersRef.current]
+      .map((flusher) => flusher())
+      .filter((result): result is CombineCompanyContextFlushResult => result != null);
+    if (patches.length === 0) {
       return;
     }
 
-    const existing = includedById.get(companyId);
-    const defaults = defaultPeriodIndices(periodWindow);
-    const defaultPeriod = indicesToPeriod(
-      periodWindow,
-      defaults.startIndex,
-      defaults.endIndex,
-      locale,
+    const patchByCompanyId = new Map(
+      patches.map((result) => [result.companyId, result.patch]),
     );
-    let restoredPeriod = defaultPeriod;
-    if (existing != null) {
-      restoredPeriod = clampPeriodToWindow(
-        periodWindow,
-        existing.startDate,
-        existing.endDate,
-        locale,
-      );
-    } else if (companies.length > 0) {
-      const priorEntry = companies[companies.length - 1];
-      const priorStartIndex = labelsToMonthIndices(
-        periodWindow,
-        priorEntry.startDate,
-        priorEntry.endDate,
-        locale,
-      ).startIndex;
-      const chained = defaultChainedPeriodIndices(
-        periodWindow,
-        priorStartIndex,
-      );
-      restoredPeriod = indicesToPeriod(
-        periodWindow,
-        chained.startIndex,
-        chained.endIndex,
-        locale,
-      );
-    }
-
-    updateIncluded([
-      ...companies.filter((entry) => entry.companyId !== companyId),
-      {
-        companyId,
-        startDate: restoredPeriod.startDate,
-        endDate: restoredPeriod.endDate,
-        roleContext: existing?.roleContext ?? "",
-        keywordContext: existing?.keywordContext ?? "",
-        experienceIds: existing?.experienceIds ?? [],
-      },
-    ]);
-  }
-
-  function patchEntry(
-    companyId: string,
-    patch: Partial<CombineCompanyEntry>,
-  ) {
     updateIncluded(
-      companies.map((entry) =>
-        entry.companyId === companyId ? { ...entry, ...patch } : entry,
-      ),
+      companiesRef.current.map((entry) => {
+        const patch = patchByCompanyId.get(entry.companyId);
+        return patch ? { ...entry, ...patch } : entry;
+      }),
     );
-  }
+  }, [updateIncluded]);
 
-  function resetCompanies() {
-    if (companies.length === 0) return;
+  useEffect(() => {
+    onRegisterContextFlush?.(flushPendingContext);
+  }, [flushPendingContext, onRegisterContextFlush]);
+
+  const toggleInclude = useCallback(
+    (companyId: string, included: boolean) => {
+      if (cardsDisabled || !periodWindow) return;
+
+      const currentCompanies = companiesRef.current;
+
+      if (!included) {
+        updateIncluded(
+          currentCompanies.filter((entry) => entry.companyId !== companyId),
+        );
+        return;
+      }
+
+      const includedByIdLocal = new Map(
+        currentCompanies.map((entry) => [entry.companyId, entry]),
+      );
+      const existing = includedByIdLocal.get(companyId);
+      const defaults = defaultPeriodIndices(periodWindow);
+      const defaultPeriod = indicesToPeriod(
+        periodWindow,
+        defaults.startIndex,
+        defaults.endIndex,
+        locale,
+      );
+      let restoredPeriod = defaultPeriod;
+      if (existing != null) {
+        restoredPeriod = clampPeriodToWindow(
+          periodWindow,
+          existing.startDate,
+          existing.endDate,
+          locale,
+        );
+      } else if (currentCompanies.length > 0) {
+        const priorEntry = currentCompanies[currentCompanies.length - 1];
+        const priorStartIndex = labelsToMonthIndices(
+          periodWindow,
+          priorEntry.startDate,
+          priorEntry.endDate,
+          locale,
+        ).startIndex;
+        const chained = defaultChainedPeriodIndices(
+          periodWindow,
+          priorStartIndex,
+        );
+        restoredPeriod = indicesToPeriod(
+          periodWindow,
+          chained.startIndex,
+          chained.endIndex,
+          locale,
+        );
+      }
+
+      updateIncluded([
+        ...currentCompanies.filter((entry) => entry.companyId !== companyId),
+        {
+          companyId,
+          startDate: restoredPeriod.startDate,
+          endDate: restoredPeriod.endDate,
+          roleContext: existing?.roleContext ?? "",
+          keywordContext: existing?.keywordContext ?? "",
+          experienceIds: existing?.experienceIds ?? [],
+        },
+      ]);
+    },
+    [cardsDisabled, locale, periodWindow, updateIncluded],
+  );
+
+  const resetCompanies = useCallback(() => {
+    if (companiesRef.current.length === 0) return;
     updateIncluded([]);
-  }
+  }, [updateIncluded]);
+
+  const companiesError = error ?? suggestFieldErrors.companies;
 
   if (loading) {
     return <p className="text-sm text-muted">{t("shared.detail.loading")}</p>;
@@ -180,170 +296,103 @@ export function CombineCompanyCards({
 
   const disabledMessage = disabled
     ? t("generate.combine.selectProfileFirst")
-    : graduationYear == null
-      ? t("generate.combine.profileGraduationYearMissing")
+    : profileGraduation == null
+      ? t("generate.combine.profileGraduationMissing")
       : null;
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-1">
-          <h3 className="text-sm font-medium">{t("generate.combine.companies")}</h3>
-          <p className="text-xs text-muted">{t("generate.combine.companiesHint")}</p>
-          {disabledMessage ? (
-            <p className="text-sm text-muted">{disabledMessage}</p>
-          ) : null}
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
-        </div>
-        <button
-          type="button"
-          onClick={resetCompanies}
-          disabled={companies.length === 0}
-          aria-label={t("generate.combine.resetCompaniesAria")}
-          className="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
-        >
-          {t("generate.combine.resetCompanies")}
-        </button>
-      </div>
-
-      <div
-        className={`flex flex-col gap-4 ${cardsDisabled ? "pointer-events-none opacity-60" : ""}`}
-      >
-        {displayCompanies.map((company) => {
-          const included = includedById.has(company.id);
-          const entry = includedById.get(company.id);
-          const selectionIndex = companies.findIndex(
-            (item) => item.companyId === company.id,
-          );
-          const priorEntry =
-            selectionIndex > 0 ? companies[selectionIndex - 1] : null;
-          const priorStartIndex =
-            priorEntry && periodWindow
-              ? labelsToMonthIndices(
-                  periodWindow,
-                  priorEntry.startDate,
-                  priorEntry.endDate,
-                  locale,
-                ).startIndex
-              : null;
-
-          return (
-            <article
-              key={company.id}
-              className="overflow-hidden rounded-md border border-border bg-background"
+    <>
+      <section className={COMBINE_SECTION_CLASS}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className={COMBINE_SECTION_TITLE_CLASS}>
+              {t("generate.combine.companiesAndExperiences")}
+            </h3>
+            <p className="text-xs text-muted">
+              {t("generate.combine.companiesAndExperiencesHint")}
+            </p>
+            {disabledMessage ? (
+              <p className="text-sm text-muted">{disabledMessage}</p>
+            ) : null}
+            {companiesError ? (
+              <p className="text-sm text-danger">{companiesError}</p>
+            ) : null}
+            {suggestError ? (
+              <p className="text-sm text-danger">{suggestError}</p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={resetCompanies}
+              disabled={companies.length === 0}
+              aria-label={t("generate.combine.resetCompaniesAria")}
+              className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
             >
-              <div className="flex items-stretch">
-                <label
-                  className={`flex min-h-12 min-w-0 flex-1 items-center gap-3 px-4 py-3 ${
-                    cardsDisabled
-                      ? "cursor-not-allowed"
-                      : "cursor-pointer hover:bg-surface-muted/60"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={included}
-                    disabled={cardsDisabled}
-                    onChange={(event) =>
-                      toggleInclude(company.id, event.target.checked)
-                    }
-                    className="h-4 w-4 shrink-0 rounded border-border disabled:cursor-not-allowed"
-                  />
-                  <span className="min-w-0 flex-1 font-medium">{company.name}</span>
-                </label>
-                <div className="pointer-events-auto flex items-center px-3">
-                  <ViewButton onClick={() => setViewCompany(company)} />
-                </div>
-              </div>
+              {t("generate.combine.resetCompanies")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void runSuggest()}
+              disabled={suggesting || cardsDisabled}
+              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+            >
+              {suggesting
+                ? t("generate.combine.suggesting")
+                : t("generate.combine.suggestExperiences")}
+            </button>
+          </div>
+        </div>
 
-              {included && entry && graduationYear != null ? (
-                <div className="space-y-4 border-t border-border p-4">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-                      <span className="text-sm">
-                        {t("generate.combine.period")}
-                        <span className="ml-0.5 text-danger" aria-hidden>
-                        *
-                      </span>
-                      </span>
-                      <span className="text-sm font-medium">
-                        {entry.startDate} – {entry.endDate}
-                      </span>
-                    </div>
-                    <CombinePeriodSlider
-                      graduationYear={graduationYear}
-                      startDate={entry.startDate}
-                      endDate={entry.endDate}
-                      priorStartIndex={priorStartIndex}
-                      onChange={(period) =>
-                        patchEntry(company.id, period)
-                      }
-                    />
-                  </div>
+        {warnings.length > 0 ? (
+          <ul className="list-disc space-y-1 pl-5 text-sm text-toast-warning-fg">
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        ) : null}
 
-                  <label className="block space-y-1 text-sm">
-                    <span>
-                      {t("generate.combine.roleContext")}
-                      <span className="ml-0.5 text-danger" aria-hidden>
-                        *
-                      </span>
-                    </span>
-                    <input
-                      type="text"
-                      value={entry.roleContext}
-                      disabled={cardsDisabled}
-                      onChange={(event) =>
-                        patchEntry(company.id, {
-                          roleContext: event.target.value,
-                        })
-                      }
-                      placeholder={t("generate.combine.roleContextPlaceholder")}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
-                    />
-                  </label>
+        <div
+          className={`flex flex-col gap-4 ${cardsDisabled ? "pointer-events-none opacity-60" : ""}`}
+        >
+          {displayCompanies.map((company) => {
+            const included = includedById.has(company.id);
+            const entry = includedById.get(company.id);
 
-                  <label className="block space-y-1 text-sm">
-                    <span>{t("generate.combine.keywordContext")}</span>
-                    <p className="text-xs text-muted">
-                      {t("generate.combine.keywordContextHint")}
-                    </p>
-                    <input
-                      type="text"
-                      value={entry.keywordContext}
-                      disabled={cardsDisabled}
-                      onChange={(event) =>
-                        patchEntry(company.id, {
-                          keywordContext: event.target.value,
-                        })
-                      }
-                      placeholder={t(
-                        "generate.combine.keywordContextPlaceholder",
-                      )}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
-                    />
-                  </label>
+            return (
+              <CombineCompanyCard
+                key={company.id}
+                company={company}
+                included={included}
+                entry={entry}
+                priorStartIndex={
+                  included
+                    ? (priorStartIndexByCompanyId.get(company.id) ?? null)
+                    : null
+                }
+                profileGraduation={profileGraduation}
+                cardsDisabled={cardsDisabled}
+                onToggleInclude={toggleInclude}
+                onPatchEntry={patchEntry}
+                onPeriodChange={onPeriodChange}
+                onRegisterFlush={registerContextFlush}
+                onView={setViewCompany}
+                rationale={rationaleByCompanyId.get(company.id)}
+                onExperienceIdsChange={onExperienceIdsChange}
+              />
+            );
+          })}
+        </div>
 
-                  {entry.experienceIds.length > 0 ? (
-                    <div>
-                      <p className="text-xs font-medium text-muted">
-                        {t("generate.combine.linkedExperiences")}
-                      </p>
-                      <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
-                        {entry.experienceIds.map((id) => (
-                          <li key={id}>
-                            {categoryById.get(id) ??
-                              t("generate.combine.suggestionExperienceMissing")}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </article>
-          );
-        })}
-      </div>
+        {suggestSucceeded ? (
+          <div
+            role="alert"
+            className="rounded-md border border-border bg-toast-success-bg px-3 py-3 text-sm text-toast-success-fg"
+          >
+            {t("generate.combine.suggestRunGuidance")}
+          </div>
+        ) : null}
+      </section>
 
       {viewCompany ? (
         <CompanyDetailDialog
@@ -351,6 +400,13 @@ export function CombineCompanyCards({
           onClose={() => setViewCompany(null)}
         />
       ) : null}
-    </section>
+
+      {suggesting ? (
+        <BusyOverlay
+          title={t("generate.combine.suggestingOverlay.title")}
+          description={t("generate.combine.suggestingOverlay.description")}
+        />
+      ) : null}
+    </>
   );
 }

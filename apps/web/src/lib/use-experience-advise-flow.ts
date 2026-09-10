@@ -16,6 +16,7 @@ import {
   type ExperienceAdviseDisplayOperation,
 } from "@/lib/build-experience-advise-display-operations";
 import { isExperienceSuggestionActionable } from "@/lib/experience-advise-suggestion-state";
+import { invalidateWorkspaceCrudCaches } from "@/lib/cached-crud-list";
 import { dispatchWorkspaceUpdated } from "@/lib/workspace-updated";
 
 export const EXPERIENCE_FACTS_MAX = 10_000;
@@ -86,6 +87,7 @@ export function useExperienceAdviseFlow({
 
     const display = await buildExperienceAdviseDisplayOperations(
       res.data.result.operations,
+      res.data.experiencesById ?? {},
     );
 
     setResult(res.data.result);
@@ -116,6 +118,7 @@ export function useExperienceAdviseFlow({
       toast(warning, "warning");
     }
 
+    invalidateWorkspaceCrudCaches("experiences");
     dispatchWorkspaceUpdated({
       experienceId: res.data.experienceIds[0] ?? experienceId ?? null,
     });

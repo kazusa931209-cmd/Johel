@@ -6,6 +6,7 @@ import {
   type CombineSnapshot,
 } from "@/components/generate/combine-types";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
+import { notifyGenerateSessionChanged } from "@/lib/generate-session-events";
 import { hashPromptForCache } from "@/lib/prompt-hash";
 
 export type GenerateJobInputMethod = "url" | "file" | "manual";
@@ -14,6 +15,8 @@ export type GenerateJobState = {
   method: GenerateJobInputMethod;
   jobText: string;
   acceptedMarkdown: string | null;
+  /** Persisted on generation save for server-side AI calls. */
+  filteredJobText?: string;
 };
 
 export type GenerateSession = {
@@ -27,6 +30,9 @@ export type GenerateSession = {
   generationInputKey: string | null;
   evaluationMarkdown: string | null;
   evaluationInputKey: string | null;
+  finalized: boolean;
+  /** Filtered JD hash; duplicate dialog skipped until Job text changes. */
+  jobDuplicateDismissedHash: string | null;
 };
 
 const STORAGE_KEY_PREFIX = "johel:generate-session:";
@@ -51,7 +57,14 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   generationInputKey: null,
   evaluationMarkdown: null,
   evaluationInputKey: null,
+  finalized: false,
+  jobDuplicateDismissedHash: null,
 };
+
+export function buildJobDuplicateCheckHash(jobText: string): string {
+  const filtered = noiseFilter(jobText.trim()).text;
+  return hashPromptForCache(filtered);
+}
 
 function storageKey(userId: string) {
   return `${STORAGE_KEY_PREFIX}${userId}`;
@@ -327,6 +340,11 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
       typeof raw.evaluationInputKey === "string"
         ? raw.evaluationInputKey
         : null,
+    finalized: raw.finalized === true,
+    jobDuplicateDismissedHash:
+      typeof raw.jobDuplicateDismissedHash === "string"
+        ? raw.jobDuplicateDismissedHash
+        : null,
   };
 }
 
@@ -359,9 +377,11 @@ export function saveGenerateSession(userId: string, session: GenerateSession) {
   try {
     if (!isGenerateInProgress(session)) {
       sessionStorage.removeItem(storageKey(userId));
+      notifyGenerateSessionChanged(userId);
       return;
     }
     sessionStorage.setItem(storageKey(userId), JSON.stringify(session));
+    notifyGenerateSessionChanged(userId);
   } catch {
     // Ignore quota / private-mode errors.
   }
@@ -371,6 +391,7 @@ export function clearGenerateSession(userId: string) {
   if (typeof window === "undefined") return;
   try {
     sessionStorage.removeItem(storageKey(userId));
+    notifyGenerateSessionChanged(userId);
   } catch {
     // Ignore storage errors.
   }

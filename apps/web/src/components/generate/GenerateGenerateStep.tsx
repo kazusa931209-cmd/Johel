@@ -6,7 +6,7 @@ import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
-import { useResumeDocxDownload } from "@/components/generate/useResumeDocxDownload";
+import { useResumeDownload } from "@/components/generate/useResumeDownload";
 
 type GenerateGenerateStepProps = {
   resume: GeneratedResume | null;
@@ -14,6 +14,7 @@ type GenerateGenerateStepProps = {
   doEvaluate: boolean;
   generating: boolean;
   onRun: () => void;
+  onDownloaded?: () => void | Promise<void>;
 };
 
 export function GenerateGenerateStep({
@@ -22,9 +23,12 @@ export function GenerateGenerateStep({
   doEvaluate,
   generating,
   onRun,
+  onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDocxDownload(resume, runLabel);
+  const { onDownload, downloading } = useResumeDownload(resume, runLabel, {
+    onDownloaded,
+  });
   const markdown = useMemo(
     () => (resume ? resumeToMarkdown(resume) : ""),
     [resume],
@@ -46,10 +50,7 @@ export function GenerateGenerateStep({
 
   if (!resume) {
     return (
-      <div className="space-y-2">
-        <h2 className="text-center text-lg font-semibold tracking-tight">
-          {t("generate.generateStep.title")}
-        </h2>
+      <>
         <div className="rounded-md border border-border bg-background px-4 py-6 text-sm text-muted">
           {generating
             ? t("generate.generateStep.pending")
@@ -73,18 +74,11 @@ export function GenerateGenerateStep({
             </div>
           </div>
         ) : null}
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <h2 className="text-center text-lg font-semibold tracking-tight">
-        {t("generate.generateStep.title")}
-      </h2>
-      <div className="rounded-md border border-border bg-background px-4 py-4">
-        <ResumeMarkdown markdown={markdown} />
-      </div>
-    </div>
+    <ResumeMarkdown markdown={markdown} />
   );
 }

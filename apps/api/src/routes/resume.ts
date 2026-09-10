@@ -1,12 +1,19 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { buildResumeDocxBuffer } from "@johel/resume/docx";
-import { buildResumeDocxFileName, generatedResumeSchema, isNonEmptyResume } from "@johel/resume";
+import { buildResumePdfBuffer } from "@johel/resume/pdf";
+import {
+  buildResumeDocxFileName,
+  buildResumePdfFileName,
+  generatedResumeSchema,
+  isNonEmptyResume,
+} from "@johel/resume";
 import { buildCombineGenerationFingerprint } from "../lib/resume/generation-fingerprint.js";
 import { requireUser } from "../lib/session.js";
 
 const DOCX_MEDIA_TYPE =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const PDF_MEDIA_TYPE = "application/pdf";
 
 const combineCompanySchema = z.object({
   companyId: z.string().trim().min(1),
@@ -23,7 +30,7 @@ const combineSchema = z.object({
   companies: z.array(combineCompanySchema).min(1),
 });
 
-const docxPostSchema = z.object({
+const exportPostSchema = z.object({
   resume: generatedResumeSchema,
   runLabel: z.string().trim().max(200).optional(),
 });
@@ -68,7 +75,7 @@ resumeRoutes.post("/docx", async (c) => {
   }
 
   const body = await c.req.json().catch(() => null);
-  const parsed = docxPostSchema.safeParse(body);
+  const parsed = exportPostSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: "Invalid resume data." }, 400);
   }
@@ -90,5 +97,34 @@ resumeRoutes.post("/docx", async (c) => {
     });
   } catch {
     return c.json({ error: "DOCX generation failed." }, 500);
+  }
+});
+
+resumeRoutes.post("/pdf", async (c) => {
+  const user = await requireUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const body = await c.req.json().catch(() => null);
+  const parsed = exportPostSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid resume data." }, 400);
+  }
+
+  const resume = parsed.data.resume;
+  if (!isNonEmptyResume(resume)) {
+    return c.json({ error: "Generated resume is empty." }, 400);
+  }
+
+  try {
+    const buffer = await buildResumePdfBuffer(resume);
+    const fileName = buildResumePdfFileName(resume, parsed.data.runLabel);
+    return c.body(buffer, 200, {
+      "Content-Type": PDF_MEDIA_TYPE,
+      "Content-Disposition": `attachment; filename="${fileName}"`,
+    });
+  } catch {
+    return c.json({ error: "PDF generation failed." }, 500);
   }
 });

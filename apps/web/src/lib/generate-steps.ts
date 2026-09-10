@@ -55,3 +55,18 @@ export function normalizeGenerateActiveStep(
   }
   return steps.includes(activeStep) ? activeStep : "Job";
 }
+
+const CURRENT_PANEL_TITLE_KEYS: Record<GenerateStep, string> = {
+  Job: "generate.job.title",
+  Verdict: "generate.verdict.title",
+  Combine: "generate.combine.title",
+  Generate: "generate.generateStep.title",
+  Evaluate: "generate.evaluateStep.title",
+};
+
+export function getGenerateCurrentPanelTitle(
+  step: GenerateStep,
+  t: (key: string) => string,
+): string {
+  return t(CURRENT_PANEL_TITLE_KEYS[step]);
+}

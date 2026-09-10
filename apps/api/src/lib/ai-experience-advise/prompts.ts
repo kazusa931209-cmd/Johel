@@ -1,4 +1,3 @@
-import type { AiProviderId } from "../ai-provider.js";
 import { summarizeExperienceProblem } from "../experience-problem-summary.js";
 import type {
   ExperienceAdviseGraph,
@@ -29,7 +28,7 @@ const SHARED_RULES = `You are an AI Experience authoring advisor for JoHEL, a re
 
 Your job: given the user's Experience pool and what they actually did, produce one or more operations that create or update STAR capability cards.
 
-When an edit target is set, that card is shown with full STAR text; other cards appear as a compact index (id, category, problem summary) for duplicate detection and choosing a different update target only.
+Pool layout: every card appears in the compact index (id, category, problem summary). Selected cards also show full STAR (problem, actions, outcome) for duplicate detection and update decisions.
 
 Authoring rules (must follow):
 - Experience holds one capability unit (STAR): category, problem, actions, outcome. One card = one capability (one problem solved), not one technology.
@@ -53,12 +52,8 @@ Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT
 Required JSON schema:
 ${JSON_SCHEMA}`;
 
-export function getExperienceAdviseSystemPrompt(provider: AiProviderId): string {
-  const notes =
-    provider === "cursor"
-      ? "Provider notes (Cursor AI Agent): Return ONLY valid JSON."
-      : "Provider notes (OpenAI): Return ONLY valid JSON. Do NOT wrap the answer in a code fence.";
-  return `${SHARED_RULES}\n\n${notes}`;
+export function getExperienceAdviseSystemPrompt(): string {
+  return `${SHARED_RULES}\n\nProvider notes (OpenAI): Return ONLY valid JSON. Do NOT wrap the answer in a code fence.`;
 }
 
 function formatExperienceFullBlock(
@@ -72,61 +67,46 @@ function formatExperienceFullBlock(
   ].join("\n\n");
 }
 
-function formatExperienceFullPool(
-  experiences: ExperienceAdviseGraphExperience[],
+function formatExperienceIndexLine(
+  experience: ExperienceAdviseGraphExperience,
 ): string {
-  if (experiences.length === 0) {
-    return "## Experience pool\n\n(none)";
-  }
-
-  const blocks = experiences.map((experience) =>
-    formatExperienceFullBlock(experience),
-  );
-
-  return `## Experience pool\n\n${blocks.join("\n\n")}`;
-}
-
-function formatExperienceTieredPool(graph: ExperienceAdviseGraph): string {
-  const { experiences, targetExperienceId } = graph;
-  if (experiences.length === 0) {
-    return "## Experience pool\n\n(none)";
-  }
-
-  const target = experiences.find(
-    (experience) => experience.id === targetExperienceId,
-  );
-  const others = experiences.filter(
-    (experience) => experience.id !== targetExperienceId,
-  );
-
-  const sections: string[] = ["## Experience pool", ""];
-
-  if (target) {
-    sections.push("### Edit target (full STAR)", "", formatExperienceFullBlock(target));
-  }
-
-  if (others.length > 0) {
-    sections.push(
-      "",
-      "### Other experiences (index — id, category, problem summary only)",
-      "",
-      ...others.map(
-        (experience) =>
-          `- ${experience.id}: ${experience.category} — ${summarizeExperienceProblem(experience.problem)}`,
-      ),
-    );
-  }
-
-  return sections.join("\n").trimEnd();
+  return `- ${experience.id}: ${experience.category} — ${summarizeExperienceProblem(experience.problem)}`;
 }
 
 export function formatExperiencePoolForAdvise(
   graph: ExperienceAdviseGraph,
+  expandedIds: Set<string>,
 ): string {
-  if (graph.targetExperienceId) {
-    return formatExperienceTieredPool(graph);
+  const { experiences } = graph;
+  if (experiences.length === 0) {
+    return "## Experience pool\n\n(none)";
   }
-  return formatExperienceFullPool(graph.experiences);
+
+  const expanded = experiences.filter((experience) =>
+    expandedIds.has(experience.id),
+  );
+
+  const sections: string[] = ["## Experience pool", ""];
+
+  if (expanded.length > 0) {
+    const heading = graph.targetExperienceId
+      ? "### Edit target and expanded candidates (full STAR)"
+      : "### Expanded candidates (full STAR)";
+    sections.push(
+      heading,
+      "",
+      ...expanded.map((experience) => formatExperienceFullBlock(experience)),
+    );
+  }
+
+  sections.push(
+    "",
+    "### Experience index (all cards — id, category, problem summary only)",
+    "",
+    ...experiences.map((experience) => formatExperienceIndexLine(experience)),
+  );
+
+  return sections.join("\n").trimEnd();
 }
 
 export function buildExperienceAdviseUserPrompt(
@@ -140,7 +120,7 @@ export function buildExperienceAdviseUserPrompt(
     "Draft Experience STAR cards from the user's facts.",
     targetLine,
     "",
-    formatExperiencePoolForAdvise(input.graph),
+    formatExperiencePoolForAdvise(input.graph, input.expandedIds),
     "",
     "## User facts",
     "",

@@ -1,35 +1,19 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { loadCombineRecommendInputFromGeneration } from "../lib/ai-combine-recommend/load-generation-input.js";
 import {
   loadExperienceIndex,
-  runCombineRecommendCursor,
-  runCombineRecommendOpenAi,
+  runCombineRecommend,
 } from "../lib/ai-combine-recommend/index.js";
+import { withTokenUsed } from "../lib/ai-token-used-response.js";
 import { isAiProviderId, type AiProviderId } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
-import { resolveOwnedGenerationId } from "../lib/resolve-generation-id.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
-const JOB_MAX = 10_000;
-const KEYWORD_CONTEXT_MAX = 500;
-
-const companySchema = z.object({
-  companyId: z.string().trim().min(1),
-  startDate: z.string().trim().min(1),
-  endDate: z.string().trim().min(1),
-  roleContext: z.string().trim().min(1),
-  keywordContext: z.string().trim().max(KEYWORD_CONTEXT_MAX).optional(),
-  experienceIds: z.array(z.string().trim().min(1)).default([]),
-});
-
 const postSchema = z.object({
-  jobDescription: z.string().trim().min(1).max(JOB_MAX),
-  acceptedMarkdown: z.string().trim().max(JOB_MAX).optional(),
-  profileId: z.string().trim().min(1),
-  companies: z.array(companySchema).min(1),
-  generationId: z.string().trim().min(1).optional(),
+  generationId: z.string().trim().min(1),
 });
 
 export const aiCombineRecommendRoutes = new Hono();
@@ -43,7 +27,26 @@ aiCombineRecommendRoutes.post("/", async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = postSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: "Invalid Combine recommend payload." }, 400);
+    return c.json({ error: "Generation ID is required." }, 400);
+  }
+
+  const generation = await prisma.generation.findFirst({
+    where: { id: parsed.data.generationId, userId: user.id },
+    select: {
+      id: true,
+      doVerdict: true,
+      jobJson: true,
+      combineJson: true,
+      verdictMarkdown: true,
+    },
+  });
+  if (!generation) {
+    return c.json({ error: "Generation was not found." }, 404);
+  }
+
+  const loaded = loadCombineRecommendInputFromGeneration(generation);
+  if (!loaded.success) {
+    return c.json({ error: loaded.error }, 400);
   }
 
   const setting = await prisma.setting.findUnique({
@@ -69,13 +72,13 @@ aiCombineRecommendRoutes.post("/", async (c) => {
   const provider: AiProviderId = setting.provider;
 
   const profile = await prisma.profile.findFirst({
-    where: { id: parsed.data.profileId, userId: user.id },
+    where: { id: loaded.input.profileId, userId: user.id },
   });
   if (!profile) {
     return c.json({ error: "Selected profile was not found." }, 400);
   }
 
-  const companyIds = parsed.data.companies.map((item) => item.companyId);
+  const companyIds = loaded.input.companies.map((item) => item.companyId);
   const companies = await prisma.company.findMany({
     where: { userId: user.id, id: { in: companyIds } },
   });
@@ -95,10 +98,10 @@ aiCombineRecommendRoutes.post("/", async (c) => {
 
   const runInput = {
     apiKey: setting.apiKey,
-    jobDescription: parsed.data.jobDescription,
-    acceptedMarkdown: parsed.data.acceptedMarkdown,
-    profileId: parsed.data.profileId,
-    companies: parsed.data.companies.map((entry) => {
+    jobDescription: loaded.input.jobDescription,
+    acceptedMarkdown: loaded.input.acceptedMarkdown,
+    profileId: loaded.input.profileId,
+    companies: loaded.input.companies.map((entry) => {
       const company = companyById.get(entry.companyId);
       if (!company) {
         throw new Error("Company was not found.");
@@ -109,38 +112,26 @@ aiCombineRecommendRoutes.post("/", async (c) => {
         startDate: entry.startDate,
         endDate: entry.endDate,
         roleContext: entry.roleContext,
-        keywordContext: entry.keywordContext?.trim(),
+        keywordContext: entry.keywordContext,
       };
     }),
     experienceIndex,
   };
 
   try {
-    const result =
-      provider === "openai"
-        ? await runCombineRecommendOpenAi(runInput)
-        : await runCombineRecommendCursor(runInput);
-
-    const generationId = await resolveOwnedGenerationId(
-      user.id,
-      parsed.data.generationId,
-    );
+    const result = await runCombineRecommend(runInput);
 
     await recordAiUsage({
       userId: user.id,
       aiProvider: provider,
       generateType: "combineRecommend",
-      generationId,
+      generationId: generation.id,
       usage: result.usage,
     });
 
     const tokenUsed = await sumTokenUsed(user.id);
 
-    return c.json({
-      ...result.result,
-      usage: result.usage,
-      tokenUsed,
-    });
+    return c.json(withTokenUsed(result.result, tokenUsed));
   } catch (err) {
     const message =
       err instanceof Error && err.message

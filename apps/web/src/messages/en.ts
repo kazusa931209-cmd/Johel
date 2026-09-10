@@ -4,9 +4,15 @@ export const en = {
     header: {
       collapseSidebar: "Collapse sidebar",
       openSidebar: "Open sidebar",
-      tokenUsageTitle: "Token usage",
-      tokenUsed: "Token Used: {count}",
-      profile: "Profile",
+      tokenUsageTitle: "Total token usage across all generations",
+      tokenUsed: "Total Token Used: {count}",
+      generationTokenUsed: "Token Used: {count}",
+      generationTokenUsedTitle: "Tokens used for this generation",
+      statusIdle: "No active generation",
+      statusCurrent: "Current",
+      statusTitle: "Generation {id} · {step}",
+      statusStepUnknown: "Unknown step",
+      account: "Account",
       signOut: "Sign out",
     },
     sidebar: {
@@ -25,11 +31,12 @@ export const en = {
   },
   auth: {
     checkingSession: "Checking session…",
-    email: "Email",
+    loginId: "Login ID",
     password: "Password",
+    confirmPassword: "Confirm password",
     login: {
       title: "Log in",
-      subtitle: "Sign in with your email",
+      subtitle: "Sign in with your login ID",
       submit: "Sign in",
       submitting: "Signing in…",
       failed: "Login failed",
@@ -38,7 +45,7 @@ export const en = {
     },
     register: {
       title: "Register",
-      subtitle: "Create an account with email",
+      subtitle: "Create an account with a login ID",
       submit: "Create account",
       submitting: "Creating…",
       failed: "Registration failed",
@@ -68,11 +75,13 @@ export const en = {
       aiAgent: {
         title: "AI Agent",
         provider: "Provider",
-        apiKey: "API Key",
+        apiKey: "OpenAI API Key",
+        openAiDescription:
+          "JoHEL uses OpenAI for AI features and experience embedding retrieval.",
         loading: "Loading…",
-        noKeySaved: "No key saved yet for this provider.",
+        noKeySaved: "No API key saved yet.",
         placeholderNewKey: "Enter a new key to replace",
-        placeholderEnterKey: "Enter API key",
+        placeholderEnterKey: "Enter OpenAI API key",
         showApiKey: "Show API key",
         hideApiKey: "Hide API key",
         save: "Save",
@@ -98,6 +107,29 @@ export const en = {
         description:
           "Default output language for generated resumes. Change in Settings before starting a run.",
         label: "Resume language",
+      },
+      downloadFormat: {
+        title: "Download",
+        description:
+          "Default file format when downloading a generated resume from Generate, Evaluate, or History.",
+        options: {
+          docx: "DOCX",
+          pdf: "PDF",
+        },
+        pdfEnglishOnly:
+          "PDF is available only when Resume Language is English.",
+      },
+      experienceAdvisePoolDepth: {
+        title: "Experience advisor pool depth",
+        description:
+          "How many experience cards receive full STAR text in Suggest prompts. All cards always appear in the compact index; higher depth improves duplicate detection at higher token cost.",
+        label: "Pool depth",
+        options: {
+          compact: "Compact (5 full STAR cards)",
+          normal: "Normal (10 full STAR cards)",
+          thorough: "Thorough (25 full STAR cards)",
+          full: "Full pool (all cards full STAR)",
+        },
       },
     },
     prompts: {
@@ -202,6 +234,9 @@ export const en = {
         residence: "Residence",
         university: "University",
         graduationYear: "Graduation year",
+        graduationMonth: "Graduation month",
+        graduationMonthPlaceholder: "Select month",
+        graduation: "Graduation",
         degree: "Degree",
       },
       links: {
@@ -312,11 +347,18 @@ export const en = {
     },
   },
   account: {
-    profile: {
-      title: "Profile",
-      description: "Your account details.",
-      email: "Email",
-      loadingPlaceholder: "…",
+    title: "Account",
+    description: "Your account details.",
+    loginId: "Login ID",
+    loadingPlaceholder: "…",
+    resetPassword: {
+      title: "Reset Password",
+      description: "Enter your current password, then choose a new one.",
+      currentPassword: "Current password",
+      newPassword: "New password",
+      confirmPassword: "Confirm new password",
+      submit: "Reset Password",
+      submitting: "Resetting…",
     },
   },
   generate: {
@@ -403,6 +445,30 @@ export const en = {
         description: "Please wait. Noise filter and AI analysis are in progress.",
       },
     },
+    jobDuplicate: {
+      checking: {
+        title: "Checking for similar job descriptions…",
+        description:
+          "Please wait while JoHEL compares this job description to your prior runs.",
+      },
+      newJd: "New job description",
+      newJdMeta: "New Job Description",
+      matchedJd: "Matched job description",
+      matchedMetaFinalized: "Generation {publicId} · Finalized",
+      matchedMetaUnfinished: "Generation {publicId} · In progress",
+      cancel: "Cancel",
+      continue: "Continue",
+      continueWithNew: "Continue with new JD",
+      switchToExisting: "Switch to existing",
+      finalized: {
+        title: "Similar job description already completed",
+        body: "This job description closely matches a generation you already finalized. You can continue with a new run or cancel and clear the Job input.",
+      },
+      unfinished: {
+        title: "Similar job description already in progress",
+        body: "This job description closely matches a generation that was started but not finalized. Switch to that run to continue, start a new run, or cancel and clear the Job input.",
+      },
+    },
     verdict: {
       title: "Verdict",
       description:
@@ -417,7 +483,7 @@ export const en = {
     combine: {
       title: "Combine",
       description:
-        "Choose a profile, link experiences, run guidance, and included companies for this run.",
+        "Choose a profile, included companies and experiences, and optional run guidance for this run.",
       profile: "Profile",
       language: "Resume language",
       emphasis: "Run guidance",
@@ -427,17 +493,26 @@ export const en = {
         "e.g. Lead with on-chain reliability; omit mobile work; keep Skills to 3 groups.",
       companies: "Companies",
       companiesHint:
-        "Select a profile, then toggle companies. Selected move to the top in selection order; unselected follow display order. Periods: Jan of graduation year through present.",
+        "Toggle companies to include. Periods from graduation through present.",
+      companiesAndExperiences: "Companies & Experiences",
+      companiesAndExperiencesHint:
+        "Toggle companies to include, set periods and context, link capability cards per company, or use Suggest experiences.",
       resetCompanies: "Reset",
       resetCompaniesAria: "Deselect all companies",
       selectProfileFirst: "Select a profile before choosing companies.",
-      profileGraduationYearMissing:
-        "This profile has no graduation year. Edit the profile and add a graduation year before choosing companies.",
+      profileGraduationMissing:
+        "This profile has no graduation year and month. Edit the profile and add graduation details before choosing companies.",
       periodGraduationHint:
-        "Work period can be selected from January {year} through the present.",
+        "Work period can be selected from {month} {year} through the present.",
       includeCompany: "Include",
       noCompanies: "Add companies in the workspace before combining.",
       period: "Period",
+      periodDurationOneYear: "1 year",
+      periodDurationYears: "{count} years",
+      periodDurationOneMonth: "1 month",
+      periodDurationMonths: "{count} months",
+      periodDurationShortYears: "{count}y",
+      periodDurationShortMonths: "{count}m",
       periodStartAria: "Start month for {label}",
       periodEndAria: "End month for {label}",
       roleContext: "Role context",
@@ -448,30 +523,31 @@ export const en = {
         description: "Please wait while the AI tailors your resume to the job.",
       },
       suggestExperiences: "Suggest experiences",
+      suggestRunGuidance:
+        "When you're ready please click Run button on the Step Bar to generate the resume.",
       suggesting: "Suggesting…",
       suggestingOverlay: {
         title: "Suggesting experiences…",
         description:
           "Please wait while the AI maps capability cards to your companies.",
       },
-      experiencesSection: "Experiences",
-      experiencesSectionHint:
-        "Link capability cards to each included company. Keyword context steers AI picks; leave empty for Auto.",
       keywordContext: "Keyword context",
       keywordContextHint:
         "Optional. Comma-separated hints (e.g. AWS, blockchain). Use Role context for job titles.",
       keywordContextPlaceholder: "e.g. AWS, Blockchain, Senior, payments API",
       suggestVerdictRequired:
         "Complete the Verdict step before suggesting experiences when Do Verdict is enabled.",
-      suggestionDialogTitle: "Experience suggestions",
-      suggestionExperiences: "Suggested cards",
+      suggestGenerationRequired:
+        "Wait for the generation session to start, then try again.",
       suggestionExperienceMissing: "Unknown experience",
-      suggestionNoExperiences: "No experiences suggested for this company.",
       suggestionRationale: "Rationale",
-      suggestionCancel: "Cancel",
-      suggestionRetry: "Retry",
-      suggestionApply: "Apply",
       linkedExperiences: "Linked experiences",
+      experiencesEmpty: "No experiences linked yet. Add manually or use Suggest experiences.",
+      linkExperienceAria: "Link experience",
+      pickerTitle: "Link experience",
+      pickerSearchPlaceholder: "Search category, problem, actions, outcome…",
+      reorderExperienceAria: "Reorder linked experience",
+      alreadyLinked: "Linked",
     },
     generateStep: {
       noResume:
@@ -493,7 +569,7 @@ export const en = {
         description: "Please wait while the AI scores your resume against the job.",
       },
     },
-    pcewSection: {
+    pceSection: {
       selectSingle: "Click a row to select one.",
       selectMultiple: "Click rows to select or deselect multiple.",
       selectColumn: "Select",
@@ -510,12 +586,23 @@ export const en = {
       title: "History",
       searchPlaceholder: "Search job description or prompts…",
       empty: "No generation history yet.",
+      stepsAria: "Generation steps progress",
+      currentMark: "Current",
       columns: {
+        current: "Current",
         generationId: "Generation ID",
         tokenUsed: "Token Used",
-        createdAt: "Created At",
-        status: "Status",
+        step: "Steps",
+        updatedAt: "Updated At",
       },
+    },
+    resumeConfirm: {
+      title: "Resume this generation?",
+      body: "Your current generation ({currentId}) will be saved to History. {targetId} will become the active Generate session.",
+      bodyNoCurrent:
+        "{targetId} will become the active Generate session.",
+      confirm: "Resume",
+      confirming: "Resuming…",
     },
     detail: {
       title: "Generation",
@@ -525,6 +612,7 @@ export const en = {
     status: {
       inProgress: "In progress",
       completed: "Completed",
+      finalized: "Finalized",
     },
   },
   quickAddExperience: {
@@ -537,6 +625,12 @@ export const en = {
     detailTitle: "AI Usage Detail",
     detailContentAria: "AI usage detail content",
     tabsAria: "Input and output",
+    historyTabsAria: "AI usage history views",
+    historyTabs: {
+      all: "All",
+      generation: "Generation",
+      other: "Other",
+    },
     input: "Input",
     output: "Output",
     loading: "Loading…",
@@ -557,7 +651,6 @@ export const en = {
       inputTokenSum: "In {count}",
       outputTokenSum: "Out {count}",
       totalTokenSum: "Total {count}",
-      columnGroup: "Group",
       columnCalls: "Calls",
       columnInput: "Input",
       columnOutput: "Output",
@@ -571,6 +664,7 @@ export const en = {
       verdict: "Verdict",
       generate: "Generate",
       evaluate: "Evaluate",
+      embedding: "Embedding",
       workflowRecommend: "Workflow Recommend",
       authorAdvise: "Quick Experience",
       experienceAdvise: "Experience advisor",
@@ -585,6 +679,7 @@ export const en = {
       edit: "Edit",
       delete: "Delete",
       view: "View",
+      resume: "Resume",
       copy: "Copy",
       close: "Close",
     },
@@ -636,18 +731,30 @@ export const en = {
     experienceAdvisorFailed: "Experience advisor failed.",
     experienceSuggestionReady: "Experience suggestion ready.",
     combineRecommendFailed: "Experience suggestion for Combine failed.",
-    combineRecommendReady: "Experience suggestions applied.",
+    combineRecommendReady: "Experience suggestions ready.",
     applyFailed: "Could not apply suggestion.",
     historyLoadFailed: "Failed to load AI usage history",
     detailLoadFailed: "Failed to load AI usage detail",
     generationHistoryLoadFailed: "Failed to load generation history",
     historyDetailLoadFailed: "Failed to load generation detail",
+    generationResumeFailed: "Failed to resume generation.",
+    generationResumed: "Generation resumed.",
+    jobDuplicateCheckFailed: "Job duplicate check failed.",
     copied: "Copied to clipboard.",
     copyFailed: "Could not copy to clipboard.",
+    passwordResetSuccess: "Password updated.",
+    passwordResetFailed: "Could not update password.",
+    passwordResetCurrentIncorrect: "Current password is incorrect.",
   },
   validation: {
     loginFailed: "Login failed",
     registrationFailed: "Registration failed",
+    loginIdRequired: "Login ID is required.",
+    passwordRequired: "Password is required.",
+    passwordMinLength: "Password must be at least 8 characters.",
+    confirmPasswordRequired: "Confirm password is required.",
+    passwordMismatch: "Passwords do not match.",
+    currentPasswordRequired: "Current password is required.",
     providerRequired: "Provider is required.",
     apiKeyMinLength: "API key must be at least 8 characters.",
     promptRequired: "{label} is required.",
@@ -661,8 +768,9 @@ export const en = {
     domainAndStackRequired: "Domain & Stack is required.",
     profileRequired: "Select one profile.",
     graduationYearRequired: "Graduation year is required.",
-    profileGraduationYearRequired:
-      "The selected profile must have a graduation year before choosing companies.",
+    graduationMonthRequired: "Graduation month is required.",
+    profileGraduationRequired:
+      "The selected profile must have a graduation year and month before choosing companies.",
     companiesMinOne: "Add at least one company entry.",
     companyEntryIncomplete:
       "Each included company needs a period and role context.",

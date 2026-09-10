@@ -3,12 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
-import type { CombineSnapshot } from "@/components/generate/combine-types";
-import { getMe } from "@/lib/api";
+import {
+  EMPTY_COMBINE_SNAPSHOT,
+  type CombineSnapshot,
+} from "@/components/generate/combine-types";
+import { loadMe } from "@/lib/cached-settings";
 import {
   clearDownstreamFromGenerate,
   clearDownstreamFromVerdict,
   EMPTY_GENERATE_SESSION,
+  EMPTY_JOB_STATE,
   type GenerateJobState,
   type GenerateSession,
   clearGenerateSession,
@@ -16,7 +20,12 @@ import {
   saveGenerateSession,
 } from "@/lib/generate-session";
 import {
+  persistCombineDefaultsFromSnapshot,
+  seedCombineFromDefaults,
+} from "@/lib/combine-defaults";
+import {
   allocateNewGeneration,
+  fetchCurrentGenerationSession,
   persistGenerationSnapshot,
   type GenerationSnapshot,
 } from "@/lib/generation-persistence";
@@ -33,7 +42,7 @@ function withoutResume(session: GenerateSession): GenerateSession {
 
 function toGenerationSnapshot(
   session: GenerateSession,
-  status?: GenerationSnapshot["status"],
+  finalized?: boolean,
 ): GenerationSnapshot | null {
   if (!session.generationId) return null;
   return {
@@ -43,7 +52,7 @@ function toGenerationSnapshot(
     combine: session.combine,
     resume: session.resume,
     evaluationMarkdown: session.evaluationMarkdown,
-    status,
+    ...(finalized === true ? { finalized: true } : {}),
   };
 }
 
@@ -51,20 +60,47 @@ export function useGenerateSession() {
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<GenerateSession>(EMPTY_GENERATE_SESSION);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
   const startingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
-    getMe().then((res) => {
+
+    async function bootstrap() {
+      const meRes = await loadMe();
       if (cancelled) return;
-      const id = res.data?.id ?? null;
+
+      const id = meRes.data?.id ?? null;
       setUserId(id);
-      if (id) {
-        const loaded = loadGenerateSession(id);
-        if (loaded) setSession(loaded);
+      if (!id) {
+        setReady(true);
+        return;
       }
+
+      const stored = loadGenerateSession(id);
+      if (stored?.generationId) {
+        setSession({
+          ...stored,
+          combine: seedCombineFromDefaults(stored.combine, id),
+        });
+        setReady(true);
+        return;
+      }
+
+      const restored = await fetchCurrentGenerationSession();
+      if (cancelled) return;
+      if (restored?.generationId) {
+        setSession({
+          ...restored,
+          combine: seedCombineFromDefaults(restored.combine, id),
+        });
+      }
+
       setReady(true);
-    });
+    }
+
+    void bootstrap();
     return () => {
       cancelled = true;
     };
@@ -93,6 +129,7 @@ export function useGenerateSession() {
         ...current,
         generationId: started.id,
         generationPublicId: started.publicId,
+        combine: seedCombineFromDefaults(current.combine, userId),
       }));
     });
     return () => {
@@ -105,33 +142,82 @@ export function useGenerateSession() {
     saveGenerateSession(userId, session);
   }, [ready, session, userId]);
 
-  const saveSnapshot = useCallback(
-    async (status?: GenerationSnapshot["status"]) => {
-      const snapshot = toGenerationSnapshot(session, status);
-      if (!snapshot) return;
-      await persistGenerationSnapshot(snapshot);
-    },
-    [session],
-  );
+  const saveSnapshot = useCallback(async (finalized?: boolean) => {
+    const snapshot = toGenerationSnapshot(sessionRef.current, finalized);
+    if (!snapshot) {
+      return { error: "Generation session is not ready." };
+    }
+    return persistGenerationSnapshot(snapshot);
+  }, []);
 
   const setActiveStep = useCallback((activeStep: GenerateStep) => {
     setSession((current) => ({ ...current, activeStep }));
   }, []);
 
   const setJob = useCallback((job: GenerateJobState) => {
-    setSession((current) => ({ ...current, job }));
-  }, []);
-
-  const patchJob = useCallback((patch: Partial<GenerateJobState>) => {
     setSession((current) => ({
       ...current,
-      job: { ...current.job, ...patch },
+      job,
+      jobDuplicateDismissedHash:
+        job.jobText.trim() === current.job.jobText.trim()
+          ? current.jobDuplicateDismissedHash
+          : null,
     }));
   }, []);
 
-  const setCombine = useCallback((combine: CombineSnapshot) => {
-    setSession((current) => ({ ...current, combine }));
+  const patchJob = useCallback((patch: Partial<GenerateJobState>) => {
+    setSession((current) => {
+      const nextJob = { ...current.job, ...patch };
+      return {
+        ...current,
+        job: nextJob,
+        jobDuplicateDismissedHash:
+          typeof patch.jobText === "string" &&
+          patch.jobText.trim() !== current.job.jobText.trim()
+            ? null
+            : current.jobDuplicateDismissedHash,
+      };
+    });
   }, []);
+
+  const combineDefaultsPersistTimerRef = useRef<number | null>(null);
+  const latestCombineForPersistRef = useRef<CombineSnapshot>(
+    EMPTY_COMBINE_SNAPSHOT,
+  );
+
+  const setCombine = useCallback(
+    (combine: CombineSnapshot) => {
+      latestCombineForPersistRef.current = combine;
+      setSession((current) => {
+        const next = { ...current, combine };
+        sessionRef.current = next;
+        return next;
+      });
+      if (!userId) {
+        return;
+      }
+      if (combineDefaultsPersistTimerRef.current != null) {
+        window.clearTimeout(combineDefaultsPersistTimerRef.current);
+      }
+      combineDefaultsPersistTimerRef.current = window.setTimeout(() => {
+        combineDefaultsPersistTimerRef.current = null;
+        persistCombineDefaultsFromSnapshot(
+          userId,
+          latestCombineForPersistRef.current,
+        );
+      }, 300);
+    },
+    [userId],
+  );
+
+  useEffect(
+    () => () => {
+      if (combineDefaultsPersistTimerRef.current != null) {
+        window.clearTimeout(combineDefaultsPersistTimerRef.current);
+      }
+    },
+    [],
+  );
 
   const clearDownstreamFromVerdictSession = useCallback(() => {
     setSession((current) => clearDownstreamFromVerdict(current));
@@ -184,12 +270,55 @@ export function useGenerateSession() {
       clearGenerateSession(userId);
     }
     const started = await ensureGenerationStarted();
+    const combine = seedCombineFromDefaults(EMPTY_COMBINE_SNAPSHOT, userId);
     setSession({
       ...EMPTY_GENERATE_SESSION,
       generationId: started?.id ?? null,
       generationPublicId: started?.publicId ?? null,
+      combine,
     });
   }, [ensureGenerationStarted, saveSnapshot, userId]);
+
+  const markFinalized = useCallback(() => {
+    setSession((current) => {
+      const next = { ...current, finalized: true };
+      if (userId) {
+        saveGenerateSession(userId, next);
+      }
+      return next;
+    });
+  }, [userId]);
+
+  const dismissJobDuplicateCheck = useCallback((hash: string) => {
+    setSession((current) => ({
+      ...current,
+      jobDuplicateDismissedHash: hash,
+    }));
+  }, []);
+
+  const restoreSession = useCallback((next: GenerateSession) => {
+    setSession(next);
+  }, []);
+
+  const clearJobAndPersist = useCallback(async () => {
+    const snapshot = toGenerationSnapshot(session);
+    if (!snapshot) {
+      return { error: "Generation session is not ready." };
+    }
+
+    const nextSession = withoutResume({
+      ...session,
+      job: EMPTY_JOB_STATE,
+      jobDuplicateDismissedHash: null,
+      verdictInputKey: null,
+    });
+    setSession(nextSession);
+
+    return persistGenerationSnapshot({
+      ...snapshot,
+      job: EMPTY_JOB_STATE,
+    });
+  }, [session]);
 
   return {
     ready,
@@ -215,5 +344,11 @@ export function useGenerateSession() {
     clearDownstreamFromGenerateSession,
     saveSnapshot,
     resetSession,
+    markFinalized,
+    finalized: session.finalized,
+    jobDuplicateDismissedHash: session.jobDuplicateDismissedHash,
+    dismissJobDuplicateCheck,
+    restoreSession,
+    clearJobAndPersist,
   };
 }

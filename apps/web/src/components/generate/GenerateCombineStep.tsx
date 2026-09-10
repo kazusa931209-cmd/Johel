@@ -1,18 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
-import { CombineExperienceSuggest } from "@/components/generate/CombineExperienceSuggest";
+import type { CombineEmphasisFlushResult } from "@/components/generate/CombineEmphasisField";
+import { CombineEmphasisField } from "@/components/generate/CombineEmphasisField";
 import { CombineProfilePicker } from "@/components/generate/CombineProfilePicker";
 import {
+  type CombineCompanyEntry,
   type CombineFieldErrors,
   type CombineSnapshot,
+  isCombineRunReady,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
-import { getProfile } from "@/lib/api";
 import type { GenerateJobState } from "@/lib/generate-session";
+import { usePce } from "@/lib/pce";
+import { sanitizeCombineSelection } from "@/lib/combine-defaults";
+import { resolveProfileGraduation } from "@/lib/profile";
 
 type GenerateCombineStepProps = {
   combine: CombineSnapshot;
@@ -20,6 +25,7 @@ type GenerateCombineStepProps = {
   job: GenerateJobState;
   doVerdict: boolean;
   generationId?: string | null;
+  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
   onRunFromCombine: () => void | Promise<void>;
 };
 
@@ -29,104 +35,163 @@ export function GenerateCombineStep({
   job,
   doVerdict,
   generationId,
+  onSaveBeforeSuggest,
   onRunFromCombine,
 }: GenerateCombineStepProps) {
   const t = useT();
+  const { profiles, companies: workspaceCompanies, loading: pceLoading } =
+    usePce();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
-  const [graduationYear, setGraduationYear] = useState<number | null>(null);
+  const combineRef = useRef(combine);
+  combineRef.current = combine;
 
   useEffect(() => {
-    if (!combine.profileId) {
-      setGraduationYear(null);
-      return;
+    if (pceLoading) return;
+    const sanitized = sanitizeCombineSelection(
+      combine,
+      new Set(profiles.map((profile) => profile.id)),
+      new Set(workspaceCompanies.map((company) => company.id)),
+    );
+    if (sanitized) {
+      onCombineChange(sanitized);
     }
+  }, [
+    combine,
+    onCombineChange,
+    pceLoading,
+    profiles,
+    workspaceCompanies,
+  ]);
 
-    let cancelled = false;
-    getProfile(combine.profileId).then((res) => {
-      if (cancelled) return;
-      setGraduationYear(res.data?.graduationYear ?? null);
-    });
+  const profileGraduation = useMemo(() => {
+    if (!combine.profileId) return null;
+    const profile = profiles.find((item) => item.id === combine.profileId);
+    return resolveProfileGraduation(profile);
+  }, [combine.profileId, profiles]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [combine.profileId]);
+  const flushCompanyContextRef = useRef<() => void>(() => {});
+  const flushEmphasisRef = useRef<() => CombineEmphasisFlushResult | null>(
+    () => null,
+  );
+
+  const flushPendingFields = useCallback(() => {
+    flushCompanyContextRef.current();
+    const emphasisResult = flushEmphasisRef.current();
+    if (emphasisResult) {
+      const next = {
+        ...combineRef.current,
+        emphasis: emphasisResult.emphasis,
+      };
+      combineRef.current = next;
+      onCombineChange(next);
+    }
+  }, [onCombineChange]);
+
+  const resolveCombineSnapshot = useCallback(() => {
+    flushPendingFields();
+    return combineRef.current;
+  }, [flushPendingFields]);
 
   const handleRun = useCallback(() => {
-    const errors = validateCombineSnapshot(combine, t, graduationYear);
+    const snapshot = resolveCombineSnapshot();
+    const errors = validateCombineSnapshot(snapshot, t, profileGraduation);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
     setFieldErrors({});
     void onRunFromCombine();
-  }, [combine, graduationYear, onRunFromCombine, t]);
+  }, [profileGraduation, onRunFromCombine, resolveCombineSnapshot, t]);
+
+  const runReady = isCombineRunReady(combine, profileGraduation);
 
   useRegisterGenerateStepNav({
     onRun: handleRun,
+    runDisabled: !runReady,
   });
 
-  function patchCombine(patch: Partial<CombineSnapshot>) {
-    onCombineChange({ ...combine, ...patch });
-  }
+  const patchCombine = useCallback(
+    (patch: Partial<CombineSnapshot>) => {
+      const next = { ...combineRef.current, ...patch };
+      combineRef.current = next;
+      onCombineChange(next);
+    },
+    [onCombineChange],
+  );
 
-  function handleProfileIdChange(profileId: string) {
-    onCombineChange({
-      ...combine,
-      profileId,
-      companies: profileId === combine.profileId ? combine.companies : [],
-    });
-  }
+  const handleProfileIdChange = useCallback(
+    (profileId: string) => {
+      const current = combineRef.current;
+      const next = {
+        ...current,
+        profileId,
+        companies: profileId === current.profileId ? current.companies : [],
+      };
+      combineRef.current = next;
+      onCombineChange(next);
+    },
+    [onCombineChange],
+  );
+
+  const registerContextFlush = useCallback((flush: () => void) => {
+    flushCompanyContextRef.current = flush;
+  }, []);
+
+  const registerEmphasisFlush = useCallback(
+    (flush: () => CombineEmphasisFlushResult | null) => {
+      flushEmphasisRef.current = flush;
+    },
+    [],
+  );
+
+  const handleCompaniesChange = useCallback(
+    (companies: CombineCompanyEntry[]) => {
+      patchCombine({ companies });
+    },
+    [patchCombine],
+  );
+
+  const clearProfileError = useCallback(() => {
+    setFieldErrors((errors) => ({ ...errors, profileId: undefined }));
+  }, []);
+
+  const clearCompaniesError = useCallback(() => {
+    setFieldErrors((errors) => ({ ...errors, companies: undefined }));
+  }, []);
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">
-          {t("generate.combine.title")}
-        </h2>
-        <p className="text-sm text-muted">{t("generate.combine.description")}</p>
-      </div>
+      <p className="text-sm text-muted">{t("generate.combine.description")}</p>
 
       <CombineProfilePicker
         profileId={combine.profileId}
         onProfileIdChange={handleProfileIdChange}
         fieldErrors={fieldErrors}
-        onClearError={() =>
-          setFieldErrors((errors) => ({ ...errors, profileId: undefined }))
-        }
+        onClearError={clearProfileError}
       />
 
       <CombineCompanyCards
-        companies={combine.companies}
-        onChange={(companies) => patchCombine({ companies })}
-        disabled={!combine.profileId}
-        graduationYear={graduationYear}
-        error={fieldErrors.companies}
-        onClearError={() =>
-          setFieldErrors((errors) => ({ ...errors, companies: undefined }))
-        }
-      />
-
-      <CombineExperienceSuggest
         combine={combine}
+        resolveCombineSnapshot={resolveCombineSnapshot}
         onCombineChange={onCombineChange}
         job={job}
         doVerdict={doVerdict}
-        graduationYear={graduationYear}
         generationId={generationId}
+        onSaveBeforeSuggest={onSaveBeforeSuggest}
+        companies={combine.companies}
+        onChange={handleCompaniesChange}
+        disabled={!combine.profileId}
+        profileGraduation={profileGraduation}
+        error={fieldErrors.companies}
+        onClearError={clearCompaniesError}
+        onRegisterContextFlush={registerContextFlush}
       />
 
-      <label className="block space-y-1 text-sm">
-        <span>{t("generate.combine.emphasis")}</span>
-        <p className="text-xs text-muted">{t("generate.combine.emphasisHint")}</p>
-        <textarea
-          value={combine.emphasis}
-          onChange={(e) => patchCombine({ emphasis: e.target.value })}
-          rows={8}
-          placeholder={t("generate.combine.emphasisPlaceholder")}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
-        />
-      </label>
+      <CombineEmphasisField
+        emphasis={combine.emphasis}
+        onEmphasisChange={(emphasis) => patchCombine({ emphasis })}
+        onRegisterFlush={registerEmphasisFlush}
+      />
     </div>
   );
 }

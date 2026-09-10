@@ -6,7 +6,7 @@ import { maskApiKey, requireUser } from "../lib/session.js";
 import { settingsProcessRoutes } from "./settings-process.js";
 
 const putSchema = z.object({
-  provider: z.enum(AI_PROVIDER_IDS),
+  provider: z.enum(AI_PROVIDER_IDS).optional(),
   apiKey: z.string().min(8).max(4096),
 });
 
@@ -54,11 +54,11 @@ settingsRoutes.put("/", async (c) => {
     where: { userId: user.id },
     create: {
       userId: user.id,
-      provider: parsed.data.provider,
+      provider: parsed.data.provider ?? "openai",
       apiKey,
     },
     update: {
-      provider: parsed.data.provider,
+      provider: parsed.data.provider ?? "openai",
       apiKey,
     },
   });

@@ -8,9 +8,7 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { GenerateCombineSummary } from "@/components/generate/GenerateCombineSummary";
-import { GenerateJobContextPanelContent } from "@/components/generate/GenerateJobContextPanelContent";
 import { GenerateJobDescriptionPreview } from "@/components/generate/GenerateJobDescriptionPreview";
-import { GenerateVerdictPanelContent } from "@/components/generate/GenerateVerdictPanelContent";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { formatThousandsSeparated } from "@/lib/helper";
 import type { GenerateJobState } from "@/lib/generate-session";
@@ -43,7 +41,6 @@ export function useGeneratePreviousStepPanel({
   previousTitle?: string;
   previousContent: ReactNode | null;
   previousHeaderRight?: ReactNode;
-  previousMatchCurrent?: boolean;
 } {
   const t = useT();
 
@@ -59,17 +56,13 @@ export function useGeneratePreviousStepPanel({
   const filteredCharCount = formatThousandsSeparated(filteredJobText.length);
 
   const isFilteredJobPanel =
-    currentStep === "Job" ||
-    (currentStep === "Verdict" && previousStep === "Job");
+    currentStep === "Job" || previousStep === "Job";
 
   const previousTitle = isFilteredJobPanel
     ? t("generate.job.filteredPreviewTitle")
-    : currentStep === "Combine" &&
-        (previousStep === "Verdict" || previousStep === "Job")
-      ? undefined
-      : previousStep
-        ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
-        : undefined;
+    : previousStep
+      ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
+      : undefined;
 
   const previousHeaderRight = isFilteredJobPanel ? (
       <span
@@ -99,15 +92,11 @@ export function useGeneratePreviousStepPanel({
 
     switch (previousStep) {
       case "Job":
-        return currentStep === "Combine" ? (
-          <GenerateJobContextPanelContent job={job} />
-        ) : (
+        return (
           <GenerateJobDescriptionPreview jobText={job.jobText} />
         );
       case "Verdict":
-        return currentStep === "Combine" ? (
-          <GenerateVerdictPanelContent job={job} />
-        ) : job.acceptedMarkdown ? (
+        return job.acceptedMarkdown ? (
           <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
         ) : (
           <p className="text-sm text-muted">{t("generate.previous.verdictEmpty")}</p>
@@ -127,14 +116,9 @@ export function useGeneratePreviousStepPanel({
     }
   }, [combine, currentStep, job, previousStep, resume, t]);
 
-  const previousMatchCurrent =
-    currentStep === "Combine" &&
-    (previousStep === "Verdict" || previousStep === "Job");
-
   return {
     previousTitle,
     previousContent,
     previousHeaderRight,
-    previousMatchCurrent,
   };
 }

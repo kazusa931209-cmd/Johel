@@ -12,6 +12,7 @@ import {
 
 type CombinePeriodSliderProps = {
   graduationYear: number;
+  graduationMonth: number;
   startDate: string;
   endDate: string;
   onChange: (period: { startDate: string; endDate: string }) => void;
@@ -21,6 +22,7 @@ type CombinePeriodSliderProps = {
 
 export function CombinePeriodSlider({
   graduationYear,
+  graduationMonth,
   startDate,
   endDate,
   onChange,
@@ -29,8 +31,8 @@ export function CombinePeriodSlider({
   const t = useT();
   const { locale } = useLocale();
   const window = useMemo(
-    () => buildPeriodWindow(graduationYear),
-    [graduationYear],
+    () => buildPeriodWindow(graduationYear, graduationMonth),
+    [graduationMonth, graduationYear],
   );
   const parsedIndices = useMemo(
     () => labelsToMonthIndices(window, startDate, endDate, locale),

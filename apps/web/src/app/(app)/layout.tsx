@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiUsageProvider, useAiUsage } from "@/components/app/AiUsageProvider";
+import { GenerateStatusProvider } from "@/components/app/GenerateStatusProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { StudioBottomFabCluster } from "@/components/app/StudioBottomFabCluster";
 import { StudioHeader } from "@/components/app/StudioHeader";
 import { StudioSidebar } from "@/components/app/StudioSidebar";
-import { getMe, type User } from "@/lib/api";
+import type { User } from "@/lib/api";
+import { loadMe } from "@/lib/cached-settings";
 import { getStoredSidebar, persistSidebar } from "@/lib/sidebar";
 
 function AppShell({
@@ -19,9 +21,12 @@ function AppShell({
 }) {
   const { tokenUsed } = useAiUsage();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarMotion, setSidebarMotion] = useState(false);
 
   useEffect(() => {
     setSidebarOpen(getStoredSidebar() === "open");
+    const frame = window.requestAnimationFrame(() => setSidebarMotion(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   function onToggleSidebar() {
@@ -35,13 +40,13 @@ function AppShell({
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
       <StudioHeader
-        userName={user.email}
+        userName={user.loginId}
         tokenUsage={tokenUsed}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={onToggleSidebar}
       />
       <div className="flex min-h-0 flex-1">
-        <StudioSidebar open={sidebarOpen} />
+        <StudioSidebar open={sidebarOpen} motion={sidebarMotion} />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
       </div>
       <StudioBottomFabCluster />
@@ -61,7 +66,7 @@ export default function AppLayout({
 
   useEffect(() => {
     let cancelled = false;
-    getMe().then((res) => {
+    loadMe().then((res) => {
       if (cancelled) return;
       if (!res.data) {
         router.replace("/login");
@@ -85,7 +90,9 @@ export default function AppLayout({
 
   return (
     <AiUsageProvider>
-      <AppShell user={user}>{children}</AppShell>
+      <GenerateStatusProvider userId={user.id}>
+        <AppShell user={user}>{children}</AppShell>
+      </GenerateStatusProvider>
     </AiUsageProvider>
   );
 }

@@ -8,22 +8,14 @@ const EXECUTION_RULES = `- You are an AI Verdict assistant for a resume-generati
 - Do not invent data; write "Not found" when information is missing.
 - Preserve technical terms exactly as written.`;
 
-const CURSOR_PROVIDER_NOTES = `Provider notes (Cursor AI Agent):
-- Follow the Instructions section above for section layout and answer style.`;
-
 const OPENAI_PROVIDER_NOTES = `Provider notes (OpenAI):
 - Follow the Instructions section above for section layout and answer style.`;
 
-const PROMPTS: Record<AiProviderId, string> = {
-  cursor: CURSOR_PROVIDER_NOTES,
-  openai: OPENAI_PROVIDER_NOTES,
-};
-
 export function getAiVerdictSystemPrompt(
-  provider: AiProviderId,
+  _provider: AiProviderId,
   verdictPrompt: string,
 ): string {
-  return `${verdictPrompt.trim()}\n# Execution rules\n\n${EXECUTION_RULES}\n\n${PROMPT_SECTION_SEPARATOR}\n\n${PROMPTS[provider]}`;
+  return `${verdictPrompt.trim()}\n# Execution rules\n\n${EXECUTION_RULES}\n\n${PROMPT_SECTION_SEPARATOR}\n\n${OPENAI_PROVIDER_NOTES}`;
 }
 
 export function buildAiVerdictUserPrompt(jobDescription: string): string {

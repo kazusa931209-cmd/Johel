@@ -16,7 +16,13 @@ function navLinkClass(active: boolean) {
   }`;
 }
 
-export function StudioSidebar({ open }: { open: boolean }) {
+export function StudioSidebar({
+  open,
+  motion = true,
+}: {
+  open: boolean;
+  motion?: boolean;
+}) {
   const t = useT();
   const pathname = usePathname();
   const profilesActive =
@@ -47,50 +53,57 @@ export function StudioSidebar({ open }: { open: boolean }) {
     <aside
       id="studio-sidebar"
       aria-hidden={!open}
-      className={
-        open
-          ? "flex h-full w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar"
-          : "hidden"
-      }
+      inert={!open ? true : undefined}
+      className={[
+        "studio-sidebar h-full shrink-0 overflow-hidden",
+        open ? "studio-sidebar-open" : "",
+        motion ? "studio-sidebar-motion" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
-      <nav className="flex flex-col gap-1 p-3">
-        <div className={sectionLabelClass()}>{t("nav.sidebar.workspace")}</div>
-        <Link href="/profiles" className={navLinkClass(profilesActive)}>
-          {t("nav.sidebar.profiles")}
-        </Link>
-        <Link href="/companies" className={navLinkClass(companiesActive)}>
-          {t("nav.sidebar.companies")}
-        </Link>
-        <Link href="/experiences" className={navLinkClass(experiencesActive)}>
-          {t("nav.sidebar.experiences")}
-        </Link>
+      <nav className="studio-sidebar-inner flex h-full flex-col overflow-y-auto border-r border-border bg-sidebar">
+        <div className="flex flex-col gap-1 p-3">
+          <div className={sectionLabelClass()}>{t("nav.sidebar.workspace")}</div>
+          <Link href="/profiles" className={navLinkClass(profilesActive)}>
+            {t("nav.sidebar.profiles")}
+          </Link>
+          <Link href="/companies" className={navLinkClass(companiesActive)}>
+            {t("nav.sidebar.companies")}
+          </Link>
+          <Link href="/experiences" className={navLinkClass(experiencesActive)}>
+            {t("nav.sidebar.experiences")}
+          </Link>
 
-        <div className={`${sectionLabelClass()} mt-2`}>{t("nav.sidebar.run")}</div>
-        <Link href="/" className={navLinkClass(generateActive)}>
-          {t("nav.sidebar.generate")}
-        </Link>
-        <Link href="/history" className={navLinkClass(historyActive)}>
-          {t("nav.sidebar.history")}
-        </Link>
+          <div className={`${sectionLabelClass()} mt-2`}>
+            {t("nav.sidebar.run")}
+          </div>
+          <Link href="/" className={navLinkClass(generateActive)}>
+            {t("nav.sidebar.generate")}
+          </Link>
+          <Link href="/history" className={navLinkClass(historyActive)}>
+            {t("nav.sidebar.history")}
+          </Link>
 
-        <div className={`${sectionLabelClass()} mt-2`}>
-          {t("nav.sidebar.settings")}
+          <div className={`${sectionLabelClass()} mt-2`}>
+            {t("nav.sidebar.settings")}
+          </div>
+          <Link
+            href="/settings/environment"
+            className={navLinkClass(environmentActive)}
+          >
+            {t("nav.sidebar.environment")}
+          </Link>
+          <Link
+            href="/settings/generation"
+            className={navLinkClass(generationActive)}
+          >
+            {t("nav.sidebar.generation")}
+          </Link>
+          <Link href="/settings/prompts" className={navLinkClass(promptsActive)}>
+            {t("nav.sidebar.prompts")}
+          </Link>
         </div>
-        <Link
-          href="/settings/environment"
-          className={navLinkClass(environmentActive)}
-        >
-          {t("nav.sidebar.environment")}
-        </Link>
-        <Link
-          href="/settings/generation"
-          className={navLinkClass(generationActive)}
-        >
-          {t("nav.sidebar.generation")}
-        </Link>
-        <Link href="/settings/prompts" className={navLinkClass(promptsActive)}>
-          {t("nav.sidebar.prompts")}
-        </Link>
       </nav>
     </aside>
   );

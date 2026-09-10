@@ -1,12 +1,18 @@
 import { z } from "zod";
+import {
+  dedupePreservingOrder,
+  resolveCompanyRef,
+  resolveExperienceRef,
+  type RefMaps,
+} from "./refs.js";
 import type { CombineRecommendResult } from "./types.js";
 
 const responseSchema = z.object({
   companies: z
     .array(
       z.object({
-        companyId: z.string().trim().min(1),
-        experienceIds: z.array(z.string().trim().min(1)),
+        companyRef: z.string().trim().min(1),
+        experienceRefs: z.array(z.string().trim().min(1)),
         rationale: z.string().trim().min(1),
       }),
     )
@@ -16,8 +22,7 @@ const responseSchema = z.object({
 
 export function parseCombineRecommendResponse(
   raw: string,
-  allowedExperienceIds: Set<string>,
-  allowedCompanyIds: Set<string>,
+  refMaps: RefMaps,
 ):
   | { success: true; result: CombineRecommendResult }
   | { success: false; error: string } {
@@ -44,27 +49,48 @@ export function parseCombineRecommendResponse(
     };
   }
 
+  const companies: CombineRecommendResult["companies"] = [];
+
   for (const company of parsed.data.companies) {
-    if (!allowedCompanyIds.has(company.companyId)) {
+    const companyId = resolveCompanyRef(
+      company.companyRef,
+      refMaps.companyRefToId,
+      refMaps.companyRefWidth,
+    );
+    if (!companyId) {
       return {
         success: false,
-        error: `Unknown companyId in response: ${company.companyId}`,
+        error: `Unknown companyRef in response: ${company.companyRef}`,
       };
     }
-    for (const experienceId of company.experienceIds) {
-      if (!allowedExperienceIds.has(experienceId)) {
+
+    const experienceIds: string[] = [];
+    for (const experienceRef of company.experienceRefs) {
+      const experienceId = resolveExperienceRef(
+        experienceRef,
+        refMaps.experienceRefToId,
+        refMaps.experienceRefWidth,
+      );
+      if (!experienceId) {
         return {
           success: false,
-          error: `Unknown experienceId in response: ${experienceId}`,
+          error: `Unknown experienceRef in response: ${experienceRef}`,
         };
       }
+      experienceIds.push(experienceId);
     }
+
+    companies.push({
+      companyId,
+      experienceIds: dedupePreservingOrder(experienceIds),
+      rationale: company.rationale,
+    });
   }
 
   return {
     success: true,
     result: {
-      companies: parsed.data.companies,
+      companies,
       warnings: parsed.data.warnings,
     },
   };

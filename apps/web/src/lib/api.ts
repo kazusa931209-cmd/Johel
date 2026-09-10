@@ -22,7 +22,7 @@ export type {
 
 export type User = {
   id: string;
-  email: string;
+  loginId: string;
   role: string;
 };
 
@@ -87,17 +87,17 @@ export function getMe() {
   return request<User>("/auth/me");
 }
 
-export function register(email: string, password: string) {
+export function register(loginId: string, password: string) {
   return request<User>("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ loginId, password }),
   });
 }
 
-export function login(email: string, password: string) {
+export function login(loginId: string, password: string) {
   return request<User>("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ loginId, password }),
   });
 }
 
@@ -105,7 +105,20 @@ export function logout() {
   return request<{ ok: boolean }>("/auth/logout", { method: "POST" });
 }
 
-export type AiProviderId = "cursor" | "openai";
+export function changePassword(currentPassword: string, newPassword: string) {
+  return request<{ ok: boolean }>("/auth/password", {
+    method: "PUT",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+export type AiProviderId = "openai";
+
+export type ExperienceAdvisePoolDepth =
+  | "compact"
+  | "normal"
+  | "thorough"
+  | "full";
 
 export type AiSettings = {
   provider: AiProviderId | null;
@@ -116,19 +129,22 @@ export function getSettings() {
   return request<AiSettings>("/settings");
 }
 
-export function saveSettings(provider: AiProviderId, apiKey: string) {
+export function saveSettings(apiKey: string) {
   return request<AiSettings>("/settings", {
     method: "PUT",
-    body: JSON.stringify({ provider, apiKey }),
+    body: JSON.stringify({ provider: "openai", apiKey }),
   });
 }
 
 export type ResumeLanguage = "en" | "ja" | "zh-TW" | "zh-CN" | "ko";
+export type DownloadFormat = "docx" | "pdf";
 
 export type GenerationProcessSettings = {
   doVerdict: boolean;
   doEvaluate: boolean;
   resumeLanguage: ResumeLanguage;
+  downloadFormat: DownloadFormat;
+  experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
 };
 
 export function getGenerationProcess() {
@@ -139,6 +155,8 @@ export function saveGenerationProcess(payload: {
   doVerdict: boolean;
   doEvaluate: boolean;
   resumeLanguage: ResumeLanguage;
+  downloadFormat: DownloadFormat;
+  experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
 }) {
   return request<GenerationProcessSettings>("/settings/process", {
     method: "PUT",
@@ -208,10 +226,7 @@ export function getCombineGenerationFingerprint(combine: CombineSnapshot) {
 }
 
 export type CombineRecommendRequest = {
-  jobDescription: string;
-  acceptedMarkdown?: string;
-  profileId: string;
-  companies: CombineSnapshot["companies"];
+  generationId: string;
 };
 
 export type CombineRecommendCompanyResult = {
@@ -223,7 +238,6 @@ export type CombineRecommendCompanyResult = {
 export type CombineRecommendResult = {
   companies: CombineRecommendCompanyResult[];
   warnings: string[];
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -231,9 +245,7 @@ export type GenerationScopedRequest = {
   generationId?: string | null;
 };
 
-export function runAiCombineRecommend(
-  payload: CombineRecommendRequest & GenerationScopedRequest,
-) {
+export function runAiCombineRecommend(payload: CombineRecommendRequest) {
   return request<CombineRecommendResult>("/ai-combine-recommend", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -266,6 +278,16 @@ export type ProfileList = {
   page: number;
   pageSize: number;
 };
+
+export type PceBundle = {
+  profiles: ProfileDetail[];
+  companies: CompanyDetail[];
+  experiences: ExperienceDetail[];
+};
+
+export function getPce() {
+  return request<PceBundle>("/pce");
+}
 
 export function listProfiles(
   q: string,
@@ -377,16 +399,8 @@ export function deleteExperience(id: string) {
   return request<{ ok: boolean }>(`/experiences/${id}`, { method: "DELETE" });
 }
 
-export type AiVerdictUsage = {
-  inputToken: number;
-  outputToken: number;
-  input: string;
-  output: string;
-};
-
 export type AiVerdictResult = {
   markdown: string;
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -414,11 +428,8 @@ export type AiUsageList = {
 };
 
 export type AiUsageGroupItem = {
-  kind: "generation" | "standalone";
-  generationId: string | null;
+  generationId: string;
   generationPublicId: string | null;
-  standaloneDate: string | null;
-  generateType: string | null;
   callCount: number;
   inputToken: number;
   outputToken: number;
@@ -459,7 +470,6 @@ export type AiResumeRequest = {
 
 export type AiResumeResult = {
   resume: import("@johel/resume").GeneratedResume;
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -480,7 +490,6 @@ export type AiEvaluateRequest = {
 
 export type AiEvaluateResult = {
   markdown: string;
-  usage: AiVerdictUsage;
   tokenUsed: number;
 };
 
@@ -494,8 +503,6 @@ export function runAiEvaluate(
   });
 }
 
-export type GenerationStatus = "in_progress" | "completed";
-
 export type GenerationStartResult = {
   id: string;
   publicId: string;
@@ -504,11 +511,14 @@ export type GenerationStartResult = {
 export type GenerationListItem = {
   id: string;
   publicId: string;
-  status: GenerationStatus;
+  finalized: boolean;
+  processedStep: string;
+  doVerdict: boolean;
+  doEvaluate: boolean;
   inputToken: number;
   outputToken: number;
   tokenUsed: number;
-  createdAt: string;
+  updatedAt: string;
 };
 
 export type GenerationList = {
@@ -521,7 +531,7 @@ export type GenerationList = {
 export type GenerationDetail = {
   id: string;
   publicId: string;
-  status: GenerationStatus;
+  finalized: boolean;
   inputToken: number;
   outputToken: number;
   tokenUsed: number;
@@ -548,7 +558,7 @@ export type GenerationUpdatePayload = {
   verdictMarkdown?: string | null;
   resume?: import("@johel/resume").GeneratedResume | null;
   evaluationMarkdown?: string | null;
-  status?: GenerationStatus;
+  finalized?: boolean;
 };
 
 export function startGeneration() {
@@ -564,6 +574,27 @@ export function updateGeneration(id: string, payload: GenerationUpdatePayload) {
   });
 }
 
+export type JobDuplicateMatch = {
+  generationId: string;
+  publicId: string;
+  filteredJobText: string;
+  finalized: boolean;
+  score: number;
+};
+
+export type JobDuplicateCheckResult = {
+  match: JobDuplicateMatch | null;
+};
+
+export function checkJobDuplicate(generationId: string) {
+  return request<JobDuplicateCheckResult>(
+    `/generations/${generationId}/job-duplicate-check`,
+    {
+      method: "POST",
+    },
+  );
+}
+
 export function listGenerations(q: string, page: number | null = 1) {
   const params = new URLSearchParams();
   appendListParams(params, q, page);
@@ -572,6 +603,24 @@ export function listGenerations(q: string, page: number | null = 1) {
 
 export function getGeneration(publicId: string) {
   return request<GenerationDetail>(`/generations/${publicId}`);
+}
+
+export function getCurrentGeneration() {
+  return request<GenerationDetail | null>("/generations/current");
+}
+
+export type GenerationResumePayload = {
+  archive?: GenerationUpdatePayload & { generationId: string };
+};
+
+export function resumeGeneration(
+  publicId: string,
+  payload: GenerationResumePayload = {},
+) {
+  return request<GenerationDetail>(`/generations/${publicId}/resume`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export type ExperienceAdvisePlacement =
@@ -605,10 +654,17 @@ export type ExperienceAdviseRequest = {
   userFacts: string;
 };
 
+export type ExperienceAdviseExperienceSnapshot = {
+  category: string;
+  problem: string;
+  actions: string;
+  outcome: string;
+};
+
 export type ExperienceAdviseApiResult = {
   result: ExperienceAdviseResult;
   workspaceFingerprint: string;
-  usage: AiVerdictUsage;
+  experiencesById: Record<string, ExperienceAdviseExperienceSnapshot>;
   tokenUsed: number;
 };
 
@@ -645,8 +701,15 @@ export function applyExperienceAdvise(payload: ExperienceAdviseApplyRequest) {
   });
 }
 
-export function getAiUsageSummary() {
-  return request<AiUsageSummary>("/ai-usage/summary");
+export function getAiUsageSummary(generationId?: string | null) {
+  const params = new URLSearchParams();
+  if (generationId?.trim()) {
+    params.set("generationId", generationId.trim());
+  }
+  const query = params.toString();
+  return request<AiUsageSummary>(
+    query ? `/ai-usage/summary?${query}` : "/ai-usage/summary",
+  );
 }
 
 export function listAiUsageGroups(page = 1) {
@@ -659,8 +722,6 @@ export function listAiUsage(
   page = 1,
   options?: {
     generationId?: string | null;
-    standaloneDate?: string | null;
-    generateType?: string | null;
     limit?: number | null;
   },
 ) {
@@ -670,12 +731,6 @@ export function listAiUsage(
     params.set("generationId", "none");
   } else if (options?.generationId) {
     params.set("generationId", options.generationId);
-  }
-  if (options?.standaloneDate) {
-    params.set("standaloneDate", options.standaloneDate);
-  }
-  if (options?.generateType) {
-    params.set("generateType", options.generateType);
   }
   if (options?.limit === null) {
     params.set("limit", "null");
@@ -689,12 +744,31 @@ export function getAiUsage(id: string) {
   return request<AiUsageDetail>(`/ai-usage/${id}`);
 }
 
-export async function downloadResumeDocx(
+type ResumeDownloadResult = {
+  blob?: Blob;
+  fileName?: string;
+  error?: string;
+  status: number;
+};
+
+export function resolveDownloadFormat(
+  settings: GenerationProcessSettings,
+): DownloadFormat {
+  if (settings.resumeLanguage !== "en") {
+    return "docx";
+  }
+  return settings.downloadFormat;
+}
+
+async function downloadResumeExport(
+  path: "/backend/resume/docx" | "/backend/resume/pdf",
   resume: import("@johel/resume").GeneratedResume,
-  runLabel?: string,
-): Promise<{ blob?: Blob; fileName?: string; error?: string; status: number }> {
+  runLabel: string | undefined,
+  fallbackFileName: string,
+  failureLabel: string,
+): Promise<ResumeDownloadResult> {
   try {
-    const res = await fetch("/backend/resume/docx", {
+    const res = await fetch(path, {
       method: "POST",
       credentials: "include",
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
@@ -709,14 +783,14 @@ export async function downloadResumeDocx(
         error:
           body && typeof body === "object" && "error" in body && body.error
             ? String(body.error)
-            : "DOCX download failed.",
+            : failureLabel,
       };
     }
 
     const blob = await res.blob();
     const disposition = res.headers.get("Content-Disposition") ?? "";
     const match = disposition.match(/filename="([^"]+)"/);
-    const fileName = match?.[1] ?? "resume.docx";
+    const fileName = match?.[1] ?? fallbackFileName;
     return { status: res.status, blob, fileName };
   } catch (error) {
     const timedOut =
@@ -726,7 +800,33 @@ export async function downloadResumeDocx(
       status: timedOut ? 504 : 0,
       error: timedOut
         ? "Request timed out. Please try again."
-        : "DOCX download failed.",
+        : failureLabel,
     };
   }
+}
+
+export async function downloadResumeDocx(
+  resume: import("@johel/resume").GeneratedResume,
+  runLabel?: string,
+): Promise<ResumeDownloadResult> {
+  return downloadResumeExport(
+    "/backend/resume/docx",
+    resume,
+    runLabel,
+    "resume.docx",
+    "DOCX download failed.",
+  );
+}
+
+export async function downloadResumePdf(
+  resume: import("@johel/resume").GeneratedResume,
+  runLabel?: string,
+): Promise<ResumeDownloadResult> {
+  return downloadResumeExport(
+    "/backend/resume/pdf",
+    resume,
+    runLabel,
+    "resume.pdf",
+    "PDF download failed.",
+  );
 }

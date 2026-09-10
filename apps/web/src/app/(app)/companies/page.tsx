@@ -9,17 +9,15 @@ import {
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
-import {
-  DetailDialog,
-  TABLE_ROW_HOVER_CLASS,
-} from "@/components/shared/detail-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
+import { deleteCompany, type CompanyDetail } from "@/lib/api";
 import {
-  deleteCompany,
-  listCompanies,
-  type CompanyDetail,
-} from "@/lib/api";
+  invalidateWorkspaceCrudCaches,
+  loadCompanyList,
+} from "@/lib/cached-crud-list";
 import { useCrudListParams } from "@/lib/crud-list-params";
 
 function CompaniesPageFallback() {
@@ -65,7 +63,7 @@ function CompaniesPageContent() {
   const load = useCallback(
     async (nextQ: string, nextPage: number) => {
       setLoading(true);
-      const res = await listCompanies(nextQ, nextPage);
+      const res = await loadCompanyList(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
         toast(res.error ?? t("toast.companiesLoadFailed"), "error");
@@ -83,7 +81,8 @@ function CompaniesPageContent() {
 
   useEffect(() => {
     void load(q, page);
-  }, [load, q, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change; cached loader dedupes Strict Mode
+  }, [q, page]);
 
   async function onConfirmDelete() {
     if (!deleting) return;
@@ -95,6 +94,7 @@ function CompaniesPageContent() {
       return;
     }
     setDeleting(null);
+    invalidateWorkspaceCrudCaches("companies");
     toast(t("toast.companyDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     if (nextPage !== page) {
@@ -250,28 +250,21 @@ function CompaniesPageContent() {
       ) : null}
 
       {deleting ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("crud.companies.delete.title")}
-          role="alertdialog"
+          variant="danger"
           closeDisabled={deletingBusy}
+          confirmDisabled={deletingBusy}
           onClose={() => setDeleting(null)}
+          onConfirm={() => void onConfirmDelete()}
+          confirmLabel={
+            deletingBusy ? t("crud.common.deleting") : t("crud.common.delete")
+          }
         >
           <p className="text-muted">
             {t("crud.companies.delete.body", { name: deleting.name })}
           </p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={deletingBusy}
-              onClick={() => void onConfirmDelete()}
-              className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg disabled:opacity-60"
-            >
-              {deletingBusy
-                ? t("crud.common.deleting")
-                : t("crud.common.delete")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
     </section>
   );

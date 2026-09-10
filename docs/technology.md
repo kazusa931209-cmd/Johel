@@ -18,11 +18,11 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | API | **Hono** (standalone process) | Local API separate from UI; lightweight TypeScript server |
 | UI | Next.js (App Router) + Tailwind CSS | Frontend only; no paid UI SaaS |
 | Database | SQLite via Prisma | On-disk multi-user data; no hosted DB cost |
-| Auth | Email + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP |
+| Auth | Login ID + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP. API field `loginId`; DB column `users.email` stores the login ID (no email-format validation). |
 | Secrets / API keys | Per-user **plaintext** `Setting.apiKey` (Phase 5) | Masked on read; encrypt later if needed |
 | LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `apps/api` | User-owned keys; Anthropic adapters later |
 | JD ingest (later) | Manual / URL (`fetch` + cheerio) / file (`pdf-parse`, `mammoth`) | No scraping or parse SaaS |
-| Resume export (later) | `docx`; `@react-pdf/renderer` or `pdf-lib` | Server-side generation on the API |
+| Resume export | `docx`; `pdf-lib` (PDF) | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
 | Package manager | pnpm workspaces | Monorepo (`apps/api`, `apps/web`) |
 | Testing | Vitest (+ Playwright later) | Unit tests for Noise Filter; e2e when that work begins |
@@ -43,19 +43,20 @@ User browser (:4041)
 - Package: `apps/api`
 - Listen: `http://127.0.0.1:4042`
 - Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
-- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `POST /resume/docx`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`
-- Prisma `User` → table `users`: `id`, `email`, `passwordHash`, `createdAt`, `updatedAt`
+- Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `PUT /auth/password`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `POST /resume/docx`, `POST /resume/pdf`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`
+- Prisma `User` → table `users`: `id`, `email` (login ID), `passwordHash`, `createdAt`, `updatedAt`
+- **Phase 76:** `PUT /auth/password` `{ currentPassword, newPassword }` (min 8); verifies current hash then updates `passwordHash` only; `changePassword` in `apps/web/src/lib/api.ts`
 - Prisma `Setting` → table `settings` (one per user): `id`, `userId`, `provider`, `apiKey`, `createdAt`, `updatedAt`
 - Prisma `Workflow` → table `workflows` (per user): `id`, `userId`, `profileId?` (FK → `profiles`), `name`, `description?`, `language`, `createdAt`, `updatedAt` (no `usedCount`, no `metadataJson`, no `verdictPrompt`)
 - Prisma `WorkflowCompany` → table `workflowCompanies`: `id`, `workflowId`, `companyId`, `startDate`, `endDate`, `roleContext`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowId, companyId)`; cascade delete with workflow
 - Prisma `WorkflowCompanyExperience` → table `workflowCompanyExperiences`: `id`, `workflowCompanyId`, `experienceId`, `sortOrder`, `createdAt`, `updatedAt`; unique `(workflowCompanyId, experienceId)`; cascade delete with workflow company row
-- Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `university?`, `graduationYear` (required on write), `degree?`, `createdAt`, `updatedAt`
+- Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `university?`, `graduationYear` (required on write), `graduationMonth` (required on write, 1–12), `degree?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
 - Prisma `Company` → table `companies` (per user): `id`, `userId`, `displayPriority`, `alias`, `name`, `whatCompanyIs`, `domainAndStack`, `createdAt`, `updatedAt`
 - Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `problem`, `actions`, `outcome`, `createdAt`, `updatedAt`
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
-- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `resumeLanguage`, `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `resumeLanguage` `en`
+- Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `resumeLanguage`, `downloadFormat`, `experienceAdvisePoolDepth`, `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `resumeLanguage` `en`, `downloadFormat` `docx`, `experienceAdvisePoolDepth` `normal`
 - **Phase 36:** `PromptOptimization` / `promptOptimizations` and `usePromptOptimizationAi` removed; AI routes use deterministic `compileInstruction` only (see `apps/api/src/lib/prompt-optimize/compile.ts`)
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
@@ -79,7 +80,7 @@ User browser (:4041)
 ## Studio shell (Phase 4)
 
 - Layout: top bar + left sidebar + main content (full-height studio chrome)
-- Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`; UI locale via `LocaleProvider` + `johel-locale` in `localStorage` (`en` default, `ko`); FAB & drawer side via `DrawerPositionProvider` + `johel-drawer-position` in `localStorage` (`right` default, `left`); bootstrap script in root layout sets `document.documentElement.lang` before paint; message catalogs in `apps/web/src/messages/` (`en.ts`, `ko.ts`, `translate.ts`); components use `useT()` / `useLocale()` from `LocaleProvider`; sidebar open/collapsed via `johel-sidebar` in `localStorage` (`open` default, `collapsed`). Hamburger in the header toggles `StudioSidebar` (`hidden` when collapsed; `aria-controls="studio-sidebar"`).
+- Components: `components/app/StudioHeader`, `components/app/StudioSidebar`; theme via `ThemeProvider` + `johel-theme` in `localStorage`; UI locale via `LocaleProvider` + `johel-locale` in `localStorage` (`en` default, `ko`); FAB & drawer side via `DrawerPositionProvider` + `johel-drawer-position` in `localStorage` (`right` default, `left`); bootstrap script in root layout sets `document.documentElement.lang` before paint; message catalogs in `apps/web/src/messages/` (`en.ts`, `ko.ts`, `translate.ts`); components use `useT()` / `useLocale()` from `LocaleProvider`; sidebar open/collapsed via `johel-sidebar` in `localStorage` (`open` default, `collapsed`). Hamburger in the header toggles `StudioSidebar` with a slide (`transform` + width, same `--drawer-duration` / `--drawer-ease` as drawers; first paint skips motion so stored collapsed state does not animate). `aria-controls="studio-sidebar"`.
 - Theme: default `dark` on `<html class="dark">`; Settings page toggles Dark / Light. Tailwind `dark:` uses the `.dark` class (`@custom-variant dark` in `globals.css`), not `prefers-color-scheme`.
 - Prompts (`/settings/prompts`), Environment (`/settings/environment`), and Generation (`/settings/generation`) content is centered at `max-w-3xl`, matching other form pages.
 - `react-markdown` preview (`AiVerdictMarkdown`, `ResumeMarkdown`) uses `@tailwindcss/typography` `prose` with `--tw-prose-*` mapped to theme tokens (`--foreground`, `--muted`, `--border`) so body text stays readable in Light and Dark. Do not use `dark:prose-invert` (it follows OS color-scheme unless the class variant is set, and it ignores app tokens).
@@ -91,13 +92,14 @@ User browser (:4041)
   - `/experiences` — Workspace / Experiences
   - `/workflows` — Workspace / Workflows
   - `/settings/environment` — Settings / Environment (theme, UI language, FAB & drawer position, AI Agent); `/settings` redirects here
-  - `/settings/generation` — Settings / Generation (Process, Resume Language)
+  - `/settings/generation` — Settings / Generation (Process, Resume Language, Download format, Experience advisor pool depth)
   - `/settings/prompts` — Settings / Prompts
   - `/prompts` — legacy redirect to `/settings/prompts`
-  - `/profile` — account Profile (email display; distinct from Workspace Profiles)
-- User menu: Profile, Sign out
+  - `/account` — account page (login ID + reset password; distinct from Workspace Profiles)
+  - `/profile` — legacy redirect to `/account`
+- User menu: Account, Sign out
 - Header also shows `Token Used: {formatTokenUsed(n)}` beside the email; raw count is the user’s aggregated `aiUsage` total (`inputToken + outputToken`)
-- **Global FAB cluster (Phase 32, 41, 63):** fixed bottom-right vertical stack (`StudioBottomFabCluster`): **Quick Add Experience** plus FAB (above) opens `QuickAddExperience` drawer; history (clock) FAB opens AI Usage History `Drawer`; suggestion preview uses nested `ExperienceSuggestionDrawer` (z-index 60). AI Usage History row click opens nested detail `Drawer` with **Input** / **Output** tabs; `listAiUsage` / `getAiUsage` in `apps/web/src/lib/api.ts`
+- **Global FAB cluster (Phase 32, 41, 63, 75):** fixed bottom-right vertical stack (`StudioBottomFabCluster`): **Quick Add Experience** plus FAB (above) opens `QuickAddExperience` drawer; history (clock) FAB opens AI Usage History `Drawer` with **All** / **Generation** / **Other** tabs; suggestion preview uses nested `ExperienceSuggestionDrawer` (z-index 60). AI Usage History row click opens nested detail `Drawer` with **Input** / **Output** tabs; `listAiUsage` / `listAiUsageGroups` / `getAiUsage` in `apps/web/src/lib/api.ts`
 - Sidebar: **Workspace** (Profiles, Companies, Experiences, Workflows — always open), **Run** (Generate — always open), **Settings** (Environment, Generation, Prompts — always open); section labels use normal title case (not all caps)
 
 ## AI Agent settings (Phase 5, 21)
@@ -110,11 +112,12 @@ User browser (:4041)
 - Full `apiKey` is stored plaintext in SQLite; never returned to the client
 - Web Settings: enabled provider dropdown; masked key shown only when the selected provider matches the saved provider; Save stays enabled with inline validation on submit; toast on API result
 
-## Process settings (Phase 26, 36)
+## Process settings (Phase 26, 36, 80)
 
-- `GET /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage }` (defaults: Verdict/Evaluate true, `resumeLanguage` `en`)
-- `PUT /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage }` where `resumeLanguage` is one of `en`, `ja`, `zh-TW`, `zh-CN`, `ko`; upsert by `userId`; returns saved values
-- Web Settings **Generation** page (`/settings/generation`): **Process** section (**Do Verdict**, **Do Evaluate** checkboxes) and **Resume Language** select; one **Save** persists both; toast on API result; saving changed Process flags or resume language clears in-progress Generate session
+- `GET /settings/process` → `{ doVerdict, doEvaluate, resumeLanguage, downloadFormat, experienceAdvisePoolDepth }` (defaults: Verdict/Evaluate true, `resumeLanguage` `en`, `downloadFormat` `docx`, `experienceAdvisePoolDepth` `normal`)
+- `PUT /settings/process` → same fields; `resumeLanguage` is one of `en`, `ja`, `zh-TW`, `zh-CN`, `ko`; `downloadFormat` is `docx` or `pdf` (coerced to `docx` when `resumeLanguage` is not `en`); upsert by `userId`; returns saved values
+- Web Settings **Generation** page (`/settings/generation`): **Process**, **Resume Language**, **Download** (DOCX / PDF radios; PDF disabled unless Resume Language is `en`), and **Experience advisor pool depth**; one **Save** persists all; toast on API result; saving changed Process flags, resume language, or pool depth clears in-progress Generate session; changing download format alone does not
+- Generate / Evaluate / History **Download** reads saved `downloadFormat` via `useResumeDownload` and `resolveDownloadFormat` (English-only guard at download time)
 - Generate reads process settings on load; syncs `combine.language` from saved `resumeLanguage`; Verdict Prompt prerequisite only when `doVerdict`; Evaluate Prompt only when `doEvaluate`
 - When `doVerdict` is false: Job **Next** skips `POST /ai-verdict`; Workflow hides verdict panel; resume generation uses noise-filtered job description as `jobContext`
 - When `doVerdict` is true: Workflow shows AI Verdict result; resume generation and evaluation send that Markdown as `jobContext` instead of the raw job description (Verdict Prompt structure and extracted fields affect tailoring quality)
@@ -145,7 +148,7 @@ User browser (:4041)
 
 - `GET /profiles?q=&page=` — page size 10; list includes `links` for the Links column
 - `GET /profiles/:id` — full detail for the editor (owner only)
-- `POST /profiles` / `PUT /profiles/:id` — `{ firstName, lastName, birthDate?, email?, pn?, residence?, university?, graduationYear, degree?, links }`; on write, delete existing `profileLinks` and insert the submitted list
+- `POST /profiles` / `PUT /profiles/:id` — `{ firstName, lastName, birthDate?, email?, pn?, residence?, university?, graduationYear, graduationMonth, degree?, links }`; on write, delete existing `profileLinks` and insert the submitted list
 - Search `q` across firstName, lastName, email, pn, residence, education
 - Links: `{ key, link | null }`; keys unique per profile
 - Web routes: `/profiles` list; `/profiles/new` add; `/profiles/[id]/edit` edit; Links UX mirrors workflow Metadata
@@ -183,7 +186,7 @@ User browser (:4041)
 - Route `/` gates on at least one Profile, Company, and Experience plus saved Generate Prompt; Verdict Prompt required only when `doVerdict`; Evaluate Prompt required only when `doEvaluate`; otherwise a centered alert with links (not a toast)
 - Timeline steps: Job → **Verdict** (when `doVerdict`) → **Combine** → Generate, plus **Evaluate** when `doEvaluate` is true
 - Page layout: full main content width (`-m-6` on the page section to cancel main padding; no `max-w-4xl`); section height `calc(100dvh - 3.5rem)` (app header) with `overflow-hidden` so step columns scroll independently
-- Two-column step body via `GenerateStepLayout`: left panel = read-only previous-step preview (`useGeneratePreviousStepPanel` + `GenerateJobDescriptionPreview`, `AiVerdictMarkdown`, `GenerateCombineSummary`, or `ResumeMarkdown`); right panel = current step; both panel cards `h-full` so they stretch to the row height; each column `overflow-y-auto` with fixed panel header; stacked on narrow viewports (`max-h-[50vh]` per section). **Job** step sets `swapColumns` + `currentFill`: Job input on the left (textarea fills remaining panel height), filtered preview on the right with filtered character count in the panel header (`previousHeaderRight`)
+- Two-column step body via `GenerateStepLayout`: left panel = read-only previous-step preview (`useGeneratePreviousStepPanel` + `GenerateJobDescriptionPreview`, `AiVerdictMarkdown`, `GenerateCombineSummary`, or `ResumeMarkdown`); right panel = current step; both panel cards share the same header chrome (`text-sm` title, optional `headerRight`, `border-b`) and `bg-surface`; both cards `h-full` so they stretch to the row height; each column `overflow-y-auto` with fixed panel header; stacked on narrow viewports (`max-h-[50vh]` per section). **Job** step sets `swapColumns` + `currentFill`: Job input on the left (textarea fills remaining panel height), filtered preview on the right with filtered character count in the panel header (`previousHeaderRight`). Current-step titles come from `getGenerateCurrentPanelTitle`.
 - Sticky header: page title row includes **New** (plus icon + label) to reset the in-progress Generate session to a blank Job step; step row (`GenerateTimeline` + `GenerateStepNavRunButton`) uses `sticky top-0`; `bg-background` and bottom border
 - Step navigation (Phase 64): timeline steps are **clickable** for browse-only navigation (`onStepSelect` → `setActiveStep`); **Run** (play icon, right gutter) advances to the next step and executes AI when applicable; **Previous** removed — use timeline to go back; steps register handlers via `useRegisterGenerateStepNav` (`onRun`, `onDownload`)
 - Job UI (Manual): Job text max 10,000 chars + right **Run** only; URL and File tabs show an info alert (“not implemented yet / coming soon”)
@@ -192,16 +195,17 @@ User browser (:4041)
 - Combine **Run**: validates snapshot; clears downstream resume/evaluation (confirm when stale); navigates to Generate and runs `POST /ai-resume` (reuses when `generationInputKey` matches)
 - Generate: `GenerateGenerateStep` renders `resumeToMarkdown(resume)` via `ResumeMarkdown`; **Run** (when `doEvaluate`) navigates to Evaluate and runs `POST /ai-evaluate` (confirm when evaluation exists; reuses when `evaluationInputKey` matches); **Download** on this step when `doEvaluate` is false
 - Evaluate: `GenerateEvaluateStep` renders evaluation Markdown via `AiVerdictMarkdown`; **Download** calls `POST /resume/docx` with stored JSON
-- One Generate **process** spans Job through DOCX download; session persists after download until **New** or until Settings **Process** flags change (Do Verdict / Do Evaluate saved with different values)
+- One Generate **process** spans Job through resume download; session persists after download until **New** or until Settings **Process** flags change (Do Verdict / Do Evaluate saved with different values)
 - In-progress Generate run persisted in `sessionStorage` per user (`johel:generate-session:{userId}`): active timeline step, Job state, Combine snapshot (including Run guidance / `emphasis`), `verdictInputKey`, `resume` JSON, `generationInputKey` fingerprint (job + combine + server combine fingerprint), `evaluationMarkdown`, and `evaluationInputKey`; legacy `oneTimePrompt` session keys migrate into `combine.emphasis` on load; **editing Job/Combine or Quick Add Experience does not clear cached results until the user Run**s from an earlier step (confirm dialog when resume/evaluation would be discarded); `clearDownstreamFromVerdict` / `clearDownstreamFromGenerate` in `generate-session.ts`; no mount auto-run (`useStepMountAutoRun` removed from AI steps)
+- Last Combine **profile** and included **companies** (period, role context, keyword context) remembered per user in `localStorage` (`johel:combine-defaults:{userId}`) via `apps/web/src/lib/combine-defaults.ts`; updated on every `setCombine`; seeded when **+ New** allocates a generation or when the current generation has an empty Combine selection; deleted profile/company ids stripped in `GenerateCombineStep`; **Run guidance** and `experienceIds` are not remembered
 - List APIs (`GET /workflows`, etc.): `page=null` or `limit=null` returns all matching items
 - Token display: `formatTokenUsed` in `apps/web/src/lib/tokens.ts` (delegates to `formatThousandsSeparated` in `apps/web/src/lib/helper.ts`); all user-visible numbers use thousand-separated formatting; header from `GET /ai-usage/summary`
-- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PcewSection`, `pcew-types`); workflow editor uses `WorkflowProfilePicker`, `WorkflowCompaniesEditor`, and `WorkflowCompanyDialog`
+- Components under `apps/web/src/components/generate/` (`GenerateJobStep`, `GenerateWorkflowStep`, `GenerateGenerateStep`, `GenerateEvaluateStep`, `GenerateStepNav`, `PceSection`); workflow editor uses `WorkflowProfilePicker`, `WorkflowCompaniesEditor`, and `WorkflowCompanyDialog`
 
 ## AI Verdict (Phase 13, 19, 40)
 
 - `POST /ai-verdict` — body `{ jobDescription }` (1–10,000 chars; client sends noise-filtered text); requires saved Settings provider/apiKey and non-empty `prompts.verdictPrompt`; system prompt = compiled `# Instructions` (user Verdict Prompt) + `# Execution rules` (Markdown-only, follow Instructions, Not found); returns `{ markdown, usage, tokenUsed }`
-- `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
+- `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; optional `generationId` query returns tokens for that generation only (from `generations.inputToken` + `outputToken`); `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - `GET /ai-usage?page=` — owner-only paginated list; page size **100**; `orderBy: { createdAt: "desc" }`; returns `{ items, total, page, pageSize }` where each item has `id`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `createdAt` (omits `input` / `output`)
 - `GET /ai-usage/:id` — owner-only detail including `input` and `output`; 404 when missing or not owned
 - Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): active `generateType` values are `verdict`, `generate`, `evaluate`, `workflowRecommend`, `markdownFormat`, and `authorAdvise` (UI label **Quick Experience**); historical rows may still have `promptHelper` (label **Prompt Helper** in AI Usage History); `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/evaluate/workflow-recommend/author-advise, `gpt-5.6-sol` for OpenAI markdown-format, `gpt-5.6-terra` for OpenAI resume generation
@@ -263,9 +267,11 @@ User browser (:4041)
 - Workspace package: `packages/resume`
 - Canonical model: `GeneratedResume` (Zod schema in `domain/generated-resume.ts`)
 - `resumeToMarkdown(resume)` — deterministic Markdown for web display (main export); section order matches the default DOCX template: Header, Summary, Experience, Skills, Education, Certifications, Projects
-- `buildResumeDocxFileName(resume, workflowName?, date?)` — `YYYY-MM-DD-{name}-{workflow}.docx` using sanitized segments and local calendar date
+- `buildResumeExportFileName(resume, runLabel?, format, date?)` — `YYYY-MM-DD-{name}-{label}.{docx|pdf}` using sanitized segments and local calendar date; `buildResumeDocxFileName` / `buildResumePdfFileName` are format wrappers
 - `@johel/resume/docx` — `buildResumeDocxBuffer` / `buildResumeDocxBlob` (server/Node); section builders under `docx-builder/sections/` and `docx-builder/templates/default.ts` (same section order as Markdown); shared `ResumeDocxStyle` in `docx-builder/styles.ts` (default font Arial)
-- `POST /resume/docx` — body `{ resume, workflowName? }` (validated `GeneratedResume`); returns `.docx` attachment named via `buildResumeDocxFileName`; used by Generate/Evaluate **Download**
+- `@johel/resume/pdf` — `buildResumePdfBuffer` / `buildResumePdfBlob` via `pdf-lib` (Helvetica; English-only product constraint; no CJK font embedding); same section order as DOCX under `pdf-builder/templates/default.ts`; `filterPdfText` drops characters outside Standard Font WinAnsi before layout so mixed Unicode in resume JSON does not fail generation
+- `POST /resume/docx` — body `{ resume, runLabel? }` (validated `GeneratedResume`); returns `.docx` attachment
+- `POST /resume/pdf` — same body; returns `.pdf` attachment; used by Generate/Evaluate/History **Download** when Settings **Download** is PDF and Resume Language is `en`
 - Consumed by API (validation), web (display + download), and Vitest unit tests
 - **DOCX template management** — architecture, default template, style tokens, and extension guide: [`docx-template-management.md`](./docx-template-management.md)
 - **Workspace authoring** — how Company / Experience / Workflow fields should be written so assembly and the Generate Prompt can multiply scene × capability × rubric: [`workspace-authoring.md`](./workspace-authoring.md). `assembleResumeGenerationInput` nests linked experiences under each workflow company; it does not de-duplicate stack variants. The default Generate Prompt treats `whatCompanyIs` / `domainAndStack` as scene, `roleContext` as title hint, and each linked card as 1–3 bullets (`actions` lead, `outcome` close).
@@ -325,9 +331,11 @@ User browser (:4041)
 
 ### API additions / changes
 
-- `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); **create** mode (no `targetExperienceId`) sends full STAR for every pool card; **edit** mode sends full STAR for the target card only and an index (`id`, category, problem summary via `summarizeExperienceProblem`) for the rest (Phase 66); `generateType: experienceAdvise`
+- `POST /ai-experience-advise` — fact input → multi-op advisor (`create_experience` | `update_experience` | `need_more_facts`); Suggest embeds user facts, ranks pool by in-memory cosine against stored experience embeddings, and builds a tiered prompt (full STAR for expanded ids + compact index for **all** cards); pool depth from `generationProcess.experienceAdvisePoolDepth`; response includes `experiencesById`; `generateType: experienceAdvise` (+ `embedding` for query/backfill vectors)
 - `POST /ai-experience-advise/apply` — body `{ workspaceFingerprint, operations[] }`; fingerprint stale → 409; persists create/update with deterministic STAR finalize (no `markdownFormat` AI)
-- `POST /ai-combine-recommend` — body `{ jobDescription, acceptedMarkdown?, profileId, companies[] }` where each company may include optional `keywordContext` (comma-separated steering text, max 500 chars); empty `keywordContext` → Auto for that company (job/Verdict + role context); filled → keyword-guided mapping for that company; when keywords match but JD overlap is thin, AI selects fewer cards and returns warnings; returns per-company `experienceIds`, `rationale`, and `warnings`; `generateType: combineRecommend`
+- `POST /ai-combine-recommend` — body `{ generationId }` only; client **explicitly saves** the generation snapshot (`PUT /generations/:id`) immediately before Suggest; server loads `jobJson` (`filteredJobText` preferred), `verdictMarkdown`, and `combineJson` from `generations`; per-company optional `keywordContext` (comma-separated, max 500 chars); empty → Auto; filled → keyword-guided; thin JD overlap → fewer cards + warnings; **AI I/O uses per-request ref tokens** (`C01`, `E01`, …); server maps refs to ids; `warnings` humanize `Cxx`/`Exx`; HTTP response returns `companies`, `warnings`, and `tokenUsed` only (no `usage.input`/`usage.output`); audit text stored via `recordAiUsage`; `generateType: combineRecommend`
+- **AI POST response slimming (Phase 78)** — `POST /ai-verdict`, `/ai-resume`, `/ai-evaluate`, `/ai-experience-advise`, and `/ai-combine-recommend` return business fields + `tokenUsed` only; prompt input/output strings are persisted on `aiUsage` for History detail, not echoed in the POST response
+- **Generation save (`filteredJobText`)** — `buildGenerationUpdatePayload` stores `job.filteredJobText` from client noise filter so server-side AI routes can use the same JD text without re-uploading job body
 - `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run
 - `POST /resume/combine-fingerprint` — fingerprint for Combine snapshot (replaces workflow fingerprint)
 - `GET /auth/me` includes `role` (`admin` | `user`)
@@ -338,14 +346,20 @@ User browser (:4041)
 
 - Dropped: `workflows`, `workflowCompanies`, `workflowCompanyExperiences`; `generationProcess.doWorkflowRecommendation`, `workflowRecommendationThreshold`, `lastSelectedWorkflowId`
 - Added: `generationProcess.resumeLanguage` (per-user default resume output language; migration `20260909100003_generation_resume_language`)
+- Added: `experienceEmbeddings` table + `generationProcess.experienceAdvisePoolDepth` (migration `20260909100006_experience_embedding_pool_depth`)
 - Added: `users.role` (default `user`); `prompts.verdictExtension`, `generateExtension`, `evaluateExtension`
 - Migrations: `20260909100000_remove_workflows`, `20260909100001_user_role_prompt_extensions`
 
 ### Web
 
 - `GenerateVerdictStep`, `GenerateCombineStep`, `combine-types.ts`, `CombineProfilePicker`, `CombineCompanyCards`, `CombinePeriodSlider`, `combine-period.ts`
-- Combine step: all workspace companies as a single-column card list (`listCompanies("", null)`); when no companies are included, cards sort by **displayPriority** (1-based); when at least one is included, included cards follow **selection order** (`combine.companies` array order) and unselected cards follow **displayPriority** via `orderCompaniesForCombineDisplay`; company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (January of profile `graduationYear` through current month; end at max = `Present`), inline role context and optional **Keyword context**; linked experience categories shown on each included card after **Apply**; **Suggest experiences** (`CombineExperienceSuggest`) calls `POST /ai-combine-recommend` per-company hybrid (keyword context or Auto); fullscreen `BusyOverlay` while suggesting; suggestion dialog shows per-company rationale and warnings with **Cancel** / **Retry** / **Apply**; `experienceIds` on each company entry after apply
-- Combine validation (`validateCombineSnapshot`): profile required with graduation year, ≥1 included company, each with period + role context; no experience requirement
+- **PCE bundle (Phase 71, renamed Phase 72):** `GET /pce` returns `{ profiles, companies, experiences }` (unpaginated, same detail shapes as CRUD list items). Web `loadPce` / `usePce` cache one in-flight request and reuse data across Generate prerequisites, `CombineProfilePicker`, `CombineCompanyCards`, `GenerateCombineSummary`, and `CombineExperiencePickerDrawer`. **PCE** = Profile, Company, Experience (legacy **PCEW** / “workspace” naming removed). `usePce` subscribes to PCE invalidation and refetches when `invalidateWorkspaceCrudCaches` / `clearPceCache` runs (including cross-tab via `localStorage` signal).
+- **Settings read cache (Phase 73):** `apps/web/src/lib/cached-settings.ts` dedupes `GET /settings`, `GET /settings/process`, `GET /prompts`, and `GET /auth/me` across Settings pages, app layout, `GenerateStatusProvider`, and Generate bootstrap; caches update on save and clear on sign-out.
+- **Workspace CRUD list cache (Phase 74):** `apps/web/src/lib/cached-crud-list.ts` dedupes paginated `GET /profiles`, `GET /companies`, and `GET /experiences` by search + page; list effects depend on `[q, page]` only; `invalidateWorkspaceCrudCaches` clears list + PCE cache on profile/company/experience CRUD (including experience advise apply).
+- Combine linked experiences: `experienceIds` array order is user-controlled (drag-and-drop on Combine step) and preserved through `assembleFromCombineSnapshot` into each company's `experiences[]` and the Generate prompt (`formatCompaniesSection` linked-experience block order)
+- Combine step (Phase 81): all workspace companies as a single-column card list inside **Companies & Experiences**; when no companies are included, cards sort by **displayPriority** (1-based); when at least one is included, included cards follow **selection order** (`combine.companies` array order) and unselected cards follow **displayPriority** via `orderCompaniesForCombineDisplay`; company selection disabled until a profile is selected; per-card include toggle (only included entries in `combine.companies`), `ViewButton` → `CompanyDetailDialog`, dual-thumb `CombinePeriodSlider` (profile `graduationYear` + `graduationMonth` through current month; end at max = `Present`), inline role context, optional **Keyword context**, and linked experiences (`CombineCompanyExperienceList`: view/delete/manual add via `CombineExperiencePickerDrawer` drawer); **Suggest experiences** and **Reset** in the section title row; `useCombineExperienceSuggest` calls `POST /ai-combine-recommend` (per-company hybrid keyword context or Auto); fullscreen `BusyOverlay` while suggesting; AI warnings once above cards; per-company rationale under experience list (session UI state from last suggest, not persisted in combine snapshot); Run notification below section after successful suggest in this session (cleared when profile or included-company set changes); Combine **Profile** and **Companies & Experiences** share `COMBINE_SECTION_CLASS` bordered panels; period labels use `CombinePeriodDisplay` (`combine-period-display.ts`) — range in `text-foreground`, short inclusive duration in `text-muted` (e.g. `Jan 2025 – Present` `(1y 9m)`); step-bar **Run** uses `isCombineRunReady` (`runDisabled` on `GenerateStepNav`) until profile, companies, required fields, and at least one linked experience are ready
+- Combine validation (`validateCombineSnapshot`): profile required with graduation year and month, ≥1 included company, each with period + role context; `isCombineRunReady` also requires ≥1 linked `experienceId` across included companies for step-bar **Run**
+- **Combine context input performance:** Role context / Keyword context use local state in `CombineCompanyContextFields`; Run guidance uses local state in `CombineEmphasisField`; both debounce (~250ms) syncing into the session snapshot so keystrokes do not write session/local storage or re-render the Generate page on every character. Pending context and emphasis are flushed on blur and before Suggest / Run. Combine defaults (`localStorage`) persistence is debounced (~300ms).
 - Migration `20260909100002_profile_education_split`: legacy `education` text copied to `university`; column dropped
 - `POST /ai-resume` and `POST /resume/combine-fingerprint` accept `experienceIds: []` per company; `assembleFromCombineSnapshot` allows empty experiences per company
 - Session: `combine: CombineSnapshot` instead of `workflow`
@@ -362,9 +376,9 @@ User browser (:4041)
 
 ### Schema
 
-- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `status` (`in_progress` | `completed`), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps
+- Prisma `Generation` → table `generations` (per user): `id`, `publicId`, `userId`, `finalized` (boolean; `true` when user downloaded the resume), denormalized `inputToken` / `outputToken`, snapshot fields (`activeStep`, `jobJson`, `combineJson`, `verdictMarkdown`, `resumeJson`, `evaluationMarkdown`, `doVerdict`, `doEvaluate`, `resumeLanguage`, snapshotted `verdictPrompt` / `generatePrompt` / `evaluatePrompt`), timestamps.
 - `AiUsage.generationId` optional FK → `generations.id` (`onDelete: SetNull`); indexed
-- Migration: `20260909100004_generations`
+- Migrations: `20260909100004_generations`, `20260910100007_generation_finalized` (replaces `status` with `finalized` boolean)
 
 ### Public ID
 
@@ -372,37 +386,54 @@ User browser (:4041)
 
 ### API
 
-- `POST /generations/start` — allocate `publicId`, snapshot current prompts + process flags, create `in_progress` row
-- `PUT /generations/:id` — upsert session snapshot (internal cuid)
+- `POST /generations/start` — allocate `publicId`, snapshot current prompts + process flags, create row (`finalized: false`)
+- `PUT /generations/:id` — upsert session snapshot (internal cuid); optional `finalized: true` (sticky once set); syncs `generationJobEmbeddings` when job text changes (Phase 79)
+- `POST /generations/:id/job-duplicate-check` — embed current filtered JD, cosine-compare to other generations; threshold `0.90` (Phase 79)
+- `POST /generations/:publicId/resume` — optional `archive` snapshot for the current run; sets target generation `finalized` to `false`; returns full detail for client session hydrate
+- `GET /generations/current` — latest non-finalized run for the user (newest `updatedAt`); used to restore Generate session after logout/login
 - `GET /generations` — paginated list (`page`, `q`, pageSize 10); search `jobJson` + snapshotted prompt fields; newest first
 - `GET /generations/:publicId` — full snapshot for detail page
 - Generation-scoped AI routes accept optional `generationId`; `recordAiUsage` links rows and increments generation token totals
 
 ### Persistence triggers
 
-- **Start:** first Generate visit (or after **+ New**) calls `POST /generations/start`
-- **Snapshot:** debounced `PUT` on session changes; status `completed` when user reaches the last timeline step
+- **Start:** first Generate visit (or after **+ New**) calls `POST /generations/start` when neither `sessionStorage` nor `GET /generations/current` has a restorable run
+- **Snapshot:** debounced `PUT` on session changes (job, combine, active step, resume, evaluation); `finalized: true` when user downloads resume DOCX
 - **+ New:** `PUT` current run, clear session, `POST /generations/start` for fresh ID
 
 ### Web
 
 - Generate page: Generation ID subtitle under title; session stores `generationId` / `generationPublicId`
-- `/history` list (CRUD list pattern); `/history/[publicId]` read-only detail reusing `GenerateTimeline`, `GenerateStepLayout`, preview panels, and `GenerateHistoryStepView`
+- **Session restore:** `sessionStorage` (`johel:generate-session:{userId}`) is the fast path for same-tab refresh; on login with empty storage, `GET /generations/current` hydrates the in-progress run (including AI cache keys from snapshotted prompts)
+- **Resume from History:** `GenerationHistoryDrawer` header uses round icon buttons (same chrome as Generate Run); Resume (play icon) opens confirm dialog; on confirm, archives current session via `POST /generations/:publicId/resume` (`archive` body when another run is active), hydrates target into `sessionStorage`, navigates to Generate
+- `/history` list (CRUD list pattern); columns include **Updated At**; row click opens wide drawer (`80vw`) with read-only detail reusing `GenerateTimeline`, `GenerateStepLayout`, preview panels, and `GenerateHistoryStepView`; drawer `publicId` is local state (row click does not touch the URL — avoids `useSearchParams` / list reload); header deep links use `?publicId=` on first load; legacy `/history/[publicId]` redirects to query form
+- Studio header center: **Current** label, active generation public ID (links to Generate `/`), plus `HistoryStepsCell` step pills (same styling as History list **Steps** column); logo-only brand link (no wordmark text)
 - Sidebar **Run** → **History** after **Generate**
 
 ### AI Usage History grouping
 
-- `GET /ai-usage/groups` — paginated summaries (50 groups/page): rows with `generationId` group by generation (`generationPublicId`, token sums, `latestCreatedAt`); rows without `generationId` group by UTC `{YYYYMMDD}-{generateType}` (`kind: "standalone"`, `standaloneDate`, `generateType`)
-- `GET /ai-usage?generationId=` — filter call rows (`none` for unlinked rows); optional `standaloneDate` + `generateType` narrow a standalone group; list items include `generationId` and `generationPublicId`
-- Drawer UI expands a group to load and show nested call rows
+- Drawer tabs (Phase 75): **All** (`GET /ai-usage`, ungrouped, newest first, 100/page); **Generation** (`GET /ai-usage/groups`, grouped by `generationId`, newest groups first, 50/page); **Other** (`GET /ai-usage?generationId=none`, unlinked rows only, ungrouped, newest first, 100/page)
+- `GET /ai-usage/groups` — paginated generation-linked summaries only: `generationId`, `generationPublicId`, call count, token sums, `latestCreatedAt`
+- `GET /ai-usage?generationId=` — filter call rows (`none` for unlinked / Other rows); omit `generationId` for All; list items include `generationId` and `generationPublicId`
+- Generation tab expands a group to load nested call rows via `GET /ai-usage?generationId={id}&limit=null`
 
 ## AI prompt optimization (Phase 65+)
 
 Tiered strategy to reduce redundant AI calls and prompt size (see Embedding + RAG review, 2026-09-09):
 
 - **Tier 1 (Phase 65):** Experience advisor **Apply** skips `markdownFormat` — Suggest→Apply is one LLM call (`experienceAdvise`) plus deterministic STAR finalize on persist; direct `POST/PUT /experiences` still uses AI markdown format when fields change
-- **Tier 2 (Phase 66):** Edit-mode tiered pool on Suggest — target card full STAR + compact index for other cards; create / Quick Add still use full pool (`formatExperiencePoolForAdvise` in `apps/api/src/lib/ai-experience-advise/prompts.ts`; shared `summarizeExperienceProblem` in `apps/api/src/lib/experience-problem-summary.ts`)
-- **Tier 3 (future):** Optional embedding hybrid retrieval when pool size and Suggest frequency warrant it
+- **Tier 2 (Phase 66):** Edit-mode tiered pool on Suggest — target card full STAR + compact index for other cards
+- **Tier 2.5 (Phase 67):** Generalized tiered pool — index for **all** cards + full STAR for expanded set; `loadExperienceAdviseContext` (single query + SHA-256 fingerprint); Suggest returns `experiencesById`; company save one batched markdown call; direct experience CRUD uses deterministic finalize; modules under `apps/api/src/lib/experience-pool-rank/` (keyword rank superseded by Phase 68 on Suggest)
+- **Tier 3 (Phase 68):** Embedding retrieval — `text-embedding-3-small` in `experienceEmbeddings`; in-memory cosine top-K from `generationProcess.experienceAdvisePoolDepth` (`compact` 5 / `normal` 10 / `thorough` 25 / `full` all); edit target + recent N=3 always expanded; embedding upsert on experience save/apply; `generateType: embedding` in AI usage; **OpenAI-only** provider (Cursor removed)
+- **Tier 4 (Phase 79):** JD duplicate check before Verdict — `text-embedding-3-small` in `generationJobEmbeddings` (one row per generation with non-empty filtered JD); input prefers `filteredJobText` from `jobJson` (fallback `jobText`, max 10,000 chars); `sourceHash` (FNV-1a of trimmed text) skips re-embed when unchanged; in-memory cosine vs peer generations; threshold `0.90` (`JOB_DUPLICATE_SIMILARITY_THRESHOLD`); lazy backfill on check; sync on `PUT /generations/:id`; delete row when job text cleared; `generateType: embedding` with `generationId` for token roll-up
+
+### JD duplicate check (Phase 79)
+
+- **When:** Generate Job **Run** with **Do Verdict** on — after snapshot save, before Verdict navigation / `POST /ai-verdict`
+- **API:** `POST /generations/:id/job-duplicate-check` (internal cuid) — returns `{ match: null }` or `{ match: { generationId, publicId, filteredJobText, finalized, score } }`; requires OpenAI API key; on failure client toasts and proceeds (advisory)
+- **Module:** `apps/api/src/lib/job-embedding/` (`build-input`, `upsert`, `sync-after-save`, `ensure-embeddings`, `duplicate-check`, `source-hash`, `constants`)
+- **Web:** `useJobDuplicateFlow`, `GenerateJobDuplicateDialog`; session `jobDuplicateDismissedHash` (filtered JD hash) suppresses repeat dialog until Job text changes; **Cancel** / **Switch** call `clearJobAndPersist` (empty job + embedding delete via PUT sync)
+- **Migration:** `20260910100008_generation_job_embeddings`
 
 ## Plans
 

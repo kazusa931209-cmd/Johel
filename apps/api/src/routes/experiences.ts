@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { formatExperienceFieldsOnSave } from "../lib/ai-markdown-format/format-on-save.js";
+import { finalizeExperienceFieldsForAdvisorApply } from "../lib/ai-experience-advise/apply.js";
+import { syncExperienceEmbeddingAfterSave } from "../lib/experience-embedding/sync-after-save.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 import {
@@ -116,16 +117,10 @@ experiencesRoutes.post("/", async (c) => {
   }
 
   try {
-    const formatted = await formatExperienceFieldsOnSave({
-      userId: user.id,
+    const formatted = finalizeExperienceFieldsForAdvisorApply({
       problem: parsed.data.problem,
       actions: parsed.data.actions,
       outcome: parsed.data.outcome,
-      stored: {
-        problem: "",
-        actions: "",
-        outcome: "",
-      },
     });
 
     const row = await prisma.experience.create({
@@ -136,6 +131,15 @@ experiencesRoutes.post("/", async (c) => {
         actions: formatted.actions,
         outcome: formatted.outcome,
       },
+    });
+
+    await syncExperienceEmbeddingAfterSave({
+      userId: user.id,
+      experienceId: row.id,
+      category: row.category,
+      problem: row.problem,
+      actions: row.actions,
+      outcome: row.outcome,
     });
 
     return c.json(toDetail(row), 201);
@@ -169,16 +173,10 @@ experiencesRoutes.put("/:id", async (c) => {
   }
 
   try {
-    const formatted = await formatExperienceFieldsOnSave({
-      userId: user.id,
+    const formatted = finalizeExperienceFieldsForAdvisorApply({
       problem: parsed.data.problem,
       actions: parsed.data.actions,
       outcome: parsed.data.outcome,
-      stored: {
-        problem: existing.problem,
-        actions: existing.actions,
-        outcome: existing.outcome,
-      },
     });
 
     const row = await prisma.experience.update({
@@ -189,6 +187,15 @@ experiencesRoutes.put("/:id", async (c) => {
         actions: formatted.actions,
         outcome: formatted.outcome,
       },
+    });
+
+    await syncExperienceEmbeddingAfterSave({
+      userId: user.id,
+      experienceId: row.id,
+      category: row.category,
+      problem: row.problem,
+      actions: row.actions,
+      outcome: row.outcome,
     });
 
     return c.json(toDetail(row));

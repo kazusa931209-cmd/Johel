@@ -9,17 +9,15 @@ import {
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
-import {
-  DetailDialog,
-  TABLE_ROW_HOVER_CLASS,
-} from "@/components/shared/detail-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
+import { deleteExperience, type ExperienceDetail } from "@/lib/api";
 import {
-  deleteExperience,
-  listExperiences,
-  type ExperienceDetail,
-} from "@/lib/api";
+  invalidateWorkspaceCrudCaches,
+  loadExperienceList,
+} from "@/lib/cached-crud-list";
 import { useCrudListParams } from "@/lib/crud-list-params";
 
 function ExperiencesPageFallback() {
@@ -65,7 +63,7 @@ function ExperiencesPageContent() {
   const load = useCallback(
     async (nextQ: string, nextPage: number) => {
       setLoading(true);
-      const res = await listExperiences(nextQ, nextPage);
+      const res = await loadExperienceList(nextQ, nextPage);
       setLoading(false);
       if (res.error || !res.data) {
         toast(res.error ?? t("toast.experiencesLoadFailed"), "error");
@@ -83,7 +81,8 @@ function ExperiencesPageContent() {
 
   useEffect(() => {
     void load(q, page);
-  }, [load, q, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change; cached loader dedupes Strict Mode
+  }, [q, page]);
 
   async function onConfirmDelete() {
     if (!deleting) return;
@@ -95,6 +94,7 @@ function ExperiencesPageContent() {
       return;
     }
     setDeleting(null);
+    invalidateWorkspaceCrudCaches("experiences");
     toast(t("toast.experienceDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     if (nextPage !== page) {
@@ -246,28 +246,21 @@ function ExperiencesPageContent() {
       ) : null}
 
       {deleting ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("crud.experiences.delete.title")}
-          role="alertdialog"
+          variant="danger"
           closeDisabled={deletingBusy}
+          confirmDisabled={deletingBusy}
           onClose={() => setDeleting(null)}
+          onConfirm={() => void onConfirmDelete()}
+          confirmLabel={
+            deletingBusy ? t("crud.common.deleting") : t("crud.common.delete")
+          }
         >
           <p className="text-muted">
             {t("crud.experiences.delete.body", { name: deleting.category })}
           </p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={deletingBusy}
-              onClick={() => void onConfirmDelete()}
-              className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg disabled:opacity-60"
-            >
-              {deletingBusy
-                ? t("crud.common.deleting")
-                : t("crud.common.delete")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
     </section>
   );

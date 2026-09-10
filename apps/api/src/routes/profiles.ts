@@ -38,6 +38,11 @@ const writeSchema = z.object({
     .int()
     .min(1950, "Graduation year is required")
     .max(CURRENT_YEAR, "Graduation year cannot be in the future"),
+  graduationMonth: z
+    .number()
+    .int()
+    .min(1, "Graduation month is required")
+    .max(12, "Graduation month must be between 1 and 12"),
   degree: z.string().trim().max(500).optional().nullable(),
   links: z.array(linkItemSchema).max(100),
 });
@@ -57,6 +62,7 @@ type ProfileWithLinks = {
   residence: string | null;
   university: string | null;
   graduationYear: number | null;
+  graduationMonth: number | null;
   degree: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -117,6 +123,7 @@ function toDetail(row: ProfileWithLinks) {
     residence: row.residence,
     university: row.university,
     graduationYear: row.graduationYear,
+    graduationMonth: row.graduationMonth,
     degree: row.degree,
     links: mapLinks(row.links),
     createdAt: row.createdAt.toISOString(),
@@ -240,6 +247,7 @@ profilesRoutes.post("/", async (c) => {
         residence: emptyToNull(parsed.data.residence),
         university: emptyToNull(parsed.data.university),
         graduationYear: parsed.data.graduationYear,
+        graduationMonth: parsed.data.graduationMonth,
         degree: emptyToNull(parsed.data.degree),
       },
     });
@@ -290,6 +298,7 @@ profilesRoutes.put("/:id", async (c) => {
         residence: emptyToNull(parsed.data.residence),
         university: emptyToNull(parsed.data.university),
         graduationYear: parsed.data.graduationYear,
+        graduationMonth: parsed.data.graduationMonth,
         degree: emptyToNull(parsed.data.degree),
       },
     });

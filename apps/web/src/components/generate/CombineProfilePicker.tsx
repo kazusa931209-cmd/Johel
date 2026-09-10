@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { useT } from "@/components/app/LocaleProvider";
-import { PcewSection } from "@/components/generate/PcewSection";
+import { memo, useEffect, useState } from "react";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
+import { useToast } from "@/components/app/ToastProvider";
+import { PceSection } from "@/components/generate/PceSection";
 import type { CombineFieldErrors } from "@/components/generate/combine-types";
 import { ProfileDetailDialog } from "@/components/ProfileDetailDialog";
-import { listProfiles, type ProfileDetail } from "@/lib/api";
+import type { ProfileDetail } from "@/lib/api";
 import { fullName } from "@/lib/profile";
+import { usePce } from "@/lib/pce";
 
 type CombineProfilePickerProps = {
   profileId: string;
@@ -15,21 +17,28 @@ type CombineProfilePickerProps = {
   onClearError?: () => void;
 };
 
-export function CombineProfilePicker({
+export const CombineProfilePicker = memo(function CombineProfilePicker({
   profileId,
   onProfileIdChange,
   fieldErrors = {},
   onClearError,
 }: CombineProfilePickerProps) {
   const t = useT();
+  const { locale } = useLocale();
+  const { toast } = useToast();
+  const { profiles, loading, error } = usePce();
   const [viewingProfile, setViewingProfile] = useState<ProfileDetail | null>(
     null,
   );
 
-  const fetchProfiles = useCallback(() => listProfiles("", null), []);
+  useEffect(() => {
+    if (error) {
+      toast(error ?? t("toast.profilesLoadFailed"), "error");
+    }
+  }, [error, t, toast]);
 
   return (
-    <PcewSection<ProfileDetail>
+    <PceSection<ProfileDetail>
       title={t("generate.combine.profile")}
       emptyLabel={t("crud.profiles.notFound")}
       error={fieldErrors.profileId}
@@ -39,8 +48,8 @@ export function CombineProfilePicker({
         onProfileIdChange(id);
         onClearError?.();
       }}
-      fetchAll={fetchProfiles}
-      loadErrorLabel={t("toast.profilesLoadFailed")}
+      items={profiles}
+      loading={loading}
       viewing={viewingProfile}
       onView={setViewingProfile}
       columns={[
@@ -63,10 +72,19 @@ export function CombineProfilePicker({
           cell: (row) => row.university ?? "",
         },
         {
-          header: t("crud.profiles.form.graduationYear"),
+          header: t("crud.profiles.form.graduation"),
           className: "whitespace-nowrap text-muted",
-          cell: (row) =>
-            row.graduationYear != null ? String(row.graduationYear) : "",
+          cell: (row) => {
+            if (row.graduationYear == null || row.graduationMonth == null) {
+              return row.graduationYear != null ? String(row.graduationYear) : "";
+            }
+            return new Intl.DateTimeFormat(locale, {
+              month: "short",
+              year: "numeric",
+            }).format(
+              new Date(row.graduationYear, row.graduationMonth - 1, 1),
+            );
+          },
         },
       ]}
       renderDetailDialog={(row) => (
@@ -77,4 +95,4 @@ export function CombineProfilePicker({
       )}
     />
   );
-}
+});

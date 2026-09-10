@@ -26,6 +26,14 @@ export type ExperienceAdviseGraphExperience = {
   problem: string;
   actions: string;
   outcome: string;
+  updatedAt: Date;
+};
+
+export type ExperienceAdviseExperienceSnapshot = {
+  category: string;
+  problem: string;
+  actions: string;
+  outcome: string;
 };
 
 export type ExperienceAdviseGraph = {
@@ -43,6 +51,7 @@ export type ExperienceAdviseRequest = {
   apiKey: string;
   graph: ExperienceAdviseGraph;
   userFacts: string;
+  expandedIds: Set<string>;
 };
 
 export type ExperienceAdviseUsage = {

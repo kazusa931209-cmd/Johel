@@ -58,6 +58,11 @@ export function sessionCookieOptions(maxAgeSeconds = 60 * 60 * 24 * 7) {
 
 export { COOKIE_NAME };
 
+export function normalizeLoginId(loginId: string): string {
+  return loginId.trim().toLowerCase();
+}
+
+/** @deprecated Use normalizeLoginId — DB column is still `email`. */
 export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
+  return normalizeLoginId(email);
 }

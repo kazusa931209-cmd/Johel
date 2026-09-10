@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
-import { DetailDialog } from "@/components/shared/detail-dialog";
+import { BusyOverlay } from "@/components/shared/BusyOverlay";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
@@ -13,7 +14,9 @@ import {
   type MissingPrerequisite,
 } from "@/components/generate/GeneratePrerequisites";
 import { GenerateTimeline } from "@/components/generate/GenerateTimeline";
+import { GenerateJobDuplicateDialog } from "@/components/generate/GenerateJobDuplicateDialog";
 import { GenerateJobStep } from "@/components/generate/GenerateJobStep";
+import { useJobDuplicateFlow } from "@/components/generate/useJobDuplicateFlow";
 import { useGeneratePreviousStepPanel } from "@/components/generate/GeneratePreviousStepPanel";
 import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
 import { GenerateVerdictStep } from "@/components/generate/GenerateVerdictStep";
@@ -24,6 +27,7 @@ import {
 } from "@/components/generate/GenerateStepNav";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { useGenerateSession } from "@/components/generate/useGenerateSession";
+import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
 import {
   buildEvaluationInputKey,
   buildGenerationInputKey,
@@ -36,6 +40,7 @@ import {
   type GenerateSession,
 } from "@/lib/generate-session";
 import {
+  getGenerateCurrentPanelTitle,
   getGenerateSteps,
   needsNewGenerationConfirm,
   normalizeGenerateActiveStep,
@@ -48,16 +53,13 @@ import {
 } from "@/lib/generate-auto-run";
 import {
   getCombineGenerationFingerprint,
-  getGenerationProcess,
-  getPrompts,
-  listCompanies,
-  listExperiences,
-  listProfiles,
   runAiEvaluate,
   runAiResume,
   runAiVerdict,
   type ResumeLanguage,
 } from "@/lib/api";
+import { loadGenerationProcess, loadPrompts } from "@/lib/cached-settings";
+import { loadPce } from "@/lib/pce";
 
 const DEFAULT_PROCESS = {
   doVerdict: true,
@@ -90,6 +92,7 @@ export default function GeneratePage() {
   const pendingRunRef = useRef<(() => void) | null>(null);
   const {
     ready: sessionReady,
+    userId,
     generationId,
     generationPublicId,
     activeStep,
@@ -110,10 +113,13 @@ export default function GeneratePage() {
     clearDownstreamFromGenerateSession,
     saveSnapshot,
     resetSession,
+    markFinalized,
+    finalized,
+    jobDuplicateDismissedHash,
+    dismissJobDuplicateCheck,
+    restoreSession,
+    clearJobAndPersist,
   } = useGenerateSession();
-
-  const processBusy =
-    verdictRunning || generatingResume || evaluating;
 
   const visibleSteps = useMemo(
     () =>
@@ -144,17 +150,13 @@ export default function GeneratePage() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      listProfiles("", null),
-      listCompanies("", null),
-      listExperiences("", null),
-      getPrompts(),
-      getGenerationProcess(),
-    ]).then(([profilesRes, companiesRes, experiencesRes, prompts, process]) => {
+      loadPce(),
+      loadPrompts(),
+      loadGenerationProcess(),
+    ]).then(([pceRes, prompts, process]) => {
       if (cancelled) return;
       const errors = [
-        profilesRes.error,
-        companiesRes.error,
-        experiencesRes.error,
+        pceRes.error,
         prompts.error,
         process.error,
       ].filter(Boolean);
@@ -187,20 +189,21 @@ export default function GeneratePage() {
         evaluatePrompt: prompts.data?.evaluatePrompt ?? "",
       });
 
+      const pce = pceRes.data;
       const nextMissing: MissingPrerequisite[] = [];
-      if ((profilesRes.data?.total ?? 0) < 1) {
+      if ((pce?.profiles.length ?? 0) < 1) {
         nextMissing.push({
           label: t("generate.prerequisites.labels.profiles"),
           href: "/profiles",
         });
       }
-      if ((companiesRes.data?.total ?? 0) < 1) {
+      if ((pce?.companies.length ?? 0) < 1) {
         nextMissing.push({
           label: t("generate.prerequisites.labels.companies"),
           href: "/companies",
         });
       }
-      if ((experiencesRes.data?.total ?? 0) < 1) {
+      if ((pce?.experiences.length ?? 0) < 1) {
         nextMissing.push({
           label: t("generate.prerequisites.labels.experiences"),
           href: "/experiences",
@@ -247,17 +250,14 @@ export default function GeneratePage() {
 
   useEffect(() => {
     if (!sessionReady || loading || !generationId) return;
-    const lastStep = visibleSteps[visibleSteps.length - 1];
-    const status =
-      normalizedActiveStep === lastStep ? ("completed" as const) : undefined;
     const timer = window.setTimeout(() => {
-      void saveSnapshot(status);
+      void saveSnapshot(finalized ? true : undefined);
     }, 500);
     return () => window.clearTimeout(timer);
   }, [
-    activeStep,
     combine,
     evaluationMarkdown,
+    finalized,
     generationId,
     job,
     loading,
@@ -265,8 +265,15 @@ export default function GeneratePage() {
     resume,
     saveSnapshot,
     sessionReady,
-    visibleSteps,
   ]);
+
+  const handleResumeDownloaded = useCallback(async () => {
+    markFinalized();
+    await saveSnapshot(true);
+    if (generationPublicId) {
+      notifyGenerationFinalized(generationPublicId);
+    }
+  }, [generationPublicId, markFinalized, saveSnapshot]);
 
   const sessionSnapshot = useMemo<GenerateSession>(
     () => ({
@@ -280,15 +287,19 @@ export default function GeneratePage() {
       generationInputKey,
       evaluationMarkdown,
       evaluationInputKey,
+      finalized,
+      jobDuplicateDismissedHash,
     }),
     [
       combine,
       evaluationInputKey,
       evaluationMarkdown,
+      finalized,
       generationId,
       generationPublicId,
       generationInputKey,
       job,
+      jobDuplicateDismissedHash,
       normalizedActiveStep,
       resume,
       verdictInputKey,
@@ -317,6 +328,14 @@ export default function GeneratePage() {
     }),
     [promptSettings],
   );
+
+  const onSaveBeforeSuggest = useCallback(async () => {
+    const res = await saveSnapshot();
+    if (res?.error) {
+      return { error: res.error ?? t("toast.generationSaveFailed") };
+    }
+    return {};
+  }, [saveSnapshot, t]);
 
   const runVerdict = useCallback(async () => {
     const filtered = noiseFilter(job.jobText.trim()).text;
@@ -363,23 +382,64 @@ export default function GeneratePage() {
     verdictInputKey,
   ]);
 
+  const proceedToVerdict = useCallback(async () => {
+    setActiveStep("Verdict");
+    await runVerdict();
+  }, [runVerdict, setActiveStep]);
+
+  const {
+    checking: jobDuplicateChecking,
+    dialogBusy: jobDuplicateDialogBusy,
+    dialogOpen: jobDuplicateDialogOpen,
+    match: jobDuplicateMatch,
+    newFilteredJobText: jobDuplicateNewFilteredJobText,
+    checkBeforeVerdict,
+    closeDialog: closeJobDuplicateDialog,
+    handleCancel: handleJobDuplicateCancel,
+    handleContinue: handleJobDuplicateContinue,
+    handleSwitch: handleJobDuplicateSwitch,
+  } = useJobDuplicateFlow({
+    generationId,
+    userId,
+    job,
+    jobDuplicateDismissedHash,
+    dismissJobDuplicateCheck,
+    restoreSession,
+    setActiveStep,
+    saveSnapshot,
+    clearJobAndPersist,
+    proceedToVerdict,
+    toast,
+    t,
+  });
+
+  const processBusy =
+    verdictRunning ||
+    generatingResume ||
+    evaluating ||
+    jobDuplicateChecking ||
+    jobDuplicateDialogBusy;
+
   const runFromJob = useCallback(() => {
     requestRun("Job", async () => {
       clearDownstreamFromVerdictSession();
       if (processSettings.doVerdict) {
-        setActiveStep("Verdict");
-        await runVerdict();
+        const shouldProceed = await checkBeforeVerdict();
+        if (shouldProceed) {
+          await proceedToVerdict();
+        }
         return;
       }
       setJob({ ...job, acceptedMarkdown: null });
       setActiveStep("Combine");
     });
   }, [
+    checkBeforeVerdict,
     clearDownstreamFromVerdictSession,
     job,
+    proceedToVerdict,
     processSettings.doVerdict,
     requestRun,
-    runVerdict,
     setActiveStep,
     setJob,
   ]);
@@ -413,18 +473,7 @@ export default function GeneratePage() {
       if (
         !options?.force &&
         canReuseStoredResume(
-          {
-            generationId,
-            generationPublicId,
-            activeStep: normalizedActiveStep,
-            job,
-            combine,
-            verdictInputKey,
-            resume,
-            generationInputKey,
-            evaluationMarkdown,
-            evaluationInputKey,
-          },
+          sessionSnapshot,
           inputKey,
         )
       ) {
@@ -540,18 +589,7 @@ export default function GeneratePage() {
       );
       if (
         canReuseStoredEvaluation(
-          {
-            generationId,
-            generationPublicId,
-            activeStep: normalizedActiveStep,
-            job,
-            combine,
-            verdictInputKey,
-            resume,
-            generationInputKey,
-            evaluationMarkdown,
-            evaluationInputKey,
-          },
+          sessionSnapshot,
           nextEvaluationInputKey,
         )
       ) {
@@ -644,7 +682,7 @@ export default function GeneratePage() {
     action?.();
   }
 
-  const { previousTitle, previousContent, previousHeaderRight, previousMatchCurrent } =
+  const { previousTitle, previousContent, previousHeaderRight } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
@@ -675,14 +713,9 @@ export default function GeneratePage() {
                 onClick={requestNewGeneration}
                 disabled={processBusy || resetting}
               />
-              <div className="space-y-1">
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  {t("generate.title")}
-                </h1>
-                {generationPublicId ? (
-                  <p className="text-sm text-muted">{generationPublicId}</p>
-                ) : null}
-              </div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {t("generate.title")}
+              </h1>
             </div>
             <div className="grid min-w-0 flex-1 grid-cols-[1fr_3.5rem] items-center gap-3">
               <GenerateTimeline
@@ -700,7 +733,7 @@ export default function GeneratePage() {
             previousTitle={previousTitle}
             previous={previousContent}
             previousHeaderRight={previousHeaderRight}
-            previousMatchCurrent={previousMatchCurrent}
+            currentTitle={getGenerateCurrentPanelTitle(normalizedActiveStep, t)}
             swapColumns={normalizedActiveStep === "Job"}
             currentFill={normalizedActiveStep === "Job"}
           >
@@ -725,6 +758,7 @@ export default function GeneratePage() {
                 job={job}
                 doVerdict={processSettings.doVerdict}
                 generationId={generationId}
+                onSaveBeforeSuggest={onSaveBeforeSuggest}
                 onRunFromCombine={runFromCombine}
               />
             ) : null}
@@ -735,6 +769,7 @@ export default function GeneratePage() {
                 doEvaluate={processSettings.doEvaluate}
                 generating={generatingResume}
                 onRun={runFromGenerate}
+                onDownloaded={handleResumeDownloaded}
               />
             ) : null}
             {processSettings.doEvaluate &&
@@ -744,6 +779,7 @@ export default function GeneratePage() {
                 runLabel={runLabel}
                 evaluationMarkdown={evaluationMarkdown}
                 evaluating={evaluating}
+                onDownloaded={handleResumeDownloaded}
               />
             ) : null}
           </GenerateStepLayout>
@@ -751,48 +787,58 @@ export default function GeneratePage() {
       </section>
 
       {newConfirmOpen ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("generate.newConfirm.title")}
-          role="alertdialog"
           closeDisabled={resetting}
+          confirmDisabled={resetting}
           onClose={() => setNewConfirmOpen(false)}
+          onConfirm={() => void confirmNewGeneration()}
+          confirmLabel={
+            resetting ? t("generate.newConfirm.confirming") : t("generate.new")
+          }
         >
           <p className="text-muted">{t("generate.newConfirm.body")}</p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={resetting}
-              onClick={() => void confirmNewGeneration()}
-              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
-            >
-              {resetting ? t("generate.newConfirm.confirming") : t("generate.new")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
 
       {runConfirmOpen ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("generate.runConfirm.title")}
-          role="alertdialog"
           closeDisabled={processBusy}
+          confirmDisabled={processBusy}
           onClose={() => {
             pendingRunRef.current = null;
             setRunConfirmOpen(false);
           }}
+          onConfirm={confirmRunWithStaleDownstream}
+          confirmLabel={t("generate.runConfirm.confirm")}
         >
           <p className="text-muted">{t("generate.runConfirm.body")}</p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={processBusy}
-              onClick={confirmRunWithStaleDownstream}
-              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
-            >
-              {t("generate.runConfirm.confirm")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
+      ) : null}
+
+      {jobDuplicateChecking ? (
+        <BusyOverlay
+          title={t("generate.jobDuplicate.checking.title")}
+          description={t("generate.jobDuplicate.checking.description")}
+        />
+      ) : null}
+
+      {jobDuplicateDialogOpen && jobDuplicateMatch ? (
+        <GenerateJobDuplicateDialog
+          open
+          newFilteredJobText={jobDuplicateNewFilteredJobText}
+          match={jobDuplicateMatch}
+          busy={jobDuplicateDialogBusy}
+          onClose={closeJobDuplicateDialog}
+          onCancel={() => void handleJobDuplicateCancel()}
+          onContinue={() => void handleJobDuplicateContinue()}
+          onSwitch={
+            jobDuplicateMatch.finalized
+              ? undefined
+              : () => void handleJobDuplicateSwitch()
+          }
+        />
       ) : null}
     </GenerateStepNavProvider>
   );

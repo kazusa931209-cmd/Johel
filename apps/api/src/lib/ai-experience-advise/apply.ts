@@ -2,6 +2,7 @@ import {
   finalizeExperienceFieldsOnSave,
   validateFormattedMarkdown,
 } from "../ai-markdown-format/prompts.js";
+import { syncExperienceEmbeddingAfterSave } from "../experience-embedding/sync-after-save.js";
 import { prisma } from "../prisma.js";
 import { buildExperienceAdviseFingerprint } from "./fingerprint.js";
 import type {
@@ -102,6 +103,14 @@ export async function applyExperienceAdviseOperations(
           outcome: formatted.outcome,
         },
       });
+      await syncExperienceEmbeddingAfterSave({
+        userId: input.userId,
+        experienceId: experience.id,
+        category: formatted.category,
+        problem: formatted.problem,
+        actions: formatted.actions,
+        outcome: formatted.outcome,
+      });
       experienceIds.push(experience.id);
       continue;
     }
@@ -137,6 +146,15 @@ export async function applyExperienceAdviseOperations(
           actions: formatted.actions,
           outcome: formatted.outcome,
         },
+      });
+
+      await syncExperienceEmbeddingAfterSave({
+        userId: input.userId,
+        experienceId,
+        category: operation.draft.category ?? existing.category,
+        problem: formatted.problem,
+        actions: formatted.actions,
+        outcome: formatted.outcome,
       });
 
       experienceIds.push(experienceId);

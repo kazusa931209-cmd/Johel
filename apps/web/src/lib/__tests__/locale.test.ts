@@ -69,7 +69,7 @@ describe("translate", () => {
 
   it("interpolates parameters", () => {
     expect(translate("en", "nav.header.tokenUsed", { count: "1,234" })).toBe(
-      "Token Used: 1,234",
+      "Total Token Used: 1,234",
     );
   });
 

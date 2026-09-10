@@ -5,7 +5,7 @@ import { DEFAULT_PROMPTS } from "@johel/prompt-defaults";
 import {
   COOKIE_NAME,
   hashPassword,
-  normalizeEmail,
+  normalizeLoginId,
   sessionCookieOptions,
   signSessionToken,
   verifyPassword,
@@ -15,8 +15,13 @@ import { requireUser } from "../lib/session.js";
 import { DEFAULT_GENERATION_PROCESS } from "./settings-process.js";
 
 const credentialsSchema = z.object({
-  email: z.string().email().max(320),
+  loginId: z.string().trim().min(1).max(64),
   password: z.string().min(8).max(128),
+});
+
+const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z.string().min(8).max(128),
 });
 
 export const authRoutes = new Hono();
@@ -25,25 +30,28 @@ authRoutes.post("/register", async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = credentialsSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: "Invalid email or password" }, 400);
+    return c.json({ error: "Invalid login ID or password" }, 400);
   }
 
-  const email = normalizeEmail(parsed.data.email);
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const loginId = normalizeLoginId(parsed.data.loginId);
+  const existing = await prisma.user.findUnique({ where: { email: loginId } });
   if (existing) {
-    return c.json({ error: "Email already registered" }, 409);
+    return c.json({ error: "Login ID already registered" }, 409);
   }
 
   const passwordHash = await hashPassword(parsed.data.password);
   const user = await prisma.user.create({
     data: {
-      email,
+      email: loginId,
       passwordHash,
       generationProcess: {
         create: {
           doVerdict: DEFAULT_GENERATION_PROCESS.doVerdict,
           doEvaluate: DEFAULT_GENERATION_PROCESS.doEvaluate,
           resumeLanguage: DEFAULT_GENERATION_PROCESS.resumeLanguage,
+          downloadFormat: DEFAULT_GENERATION_PROCESS.downloadFormat,
+          experienceAdvisePoolDepth:
+            DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
         },
       },
       prompt: {
@@ -59,26 +67,66 @@ authRoutes.post("/register", async (c) => {
   const token = await signSessionToken(user.id, user.email);
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
 
-  return c.json({ id: user.id, email: user.email, role: user.role }, 201);
+  return c.json(
+    { id: user.id, loginId: user.email, role: user.role },
+    201,
+  );
 });
 
 authRoutes.post("/login", async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = credentialsSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: "Invalid email or password" }, 400);
+    return c.json({ error: "Invalid login ID or password" }, 400);
   }
 
-  const email = normalizeEmail(parsed.data.email);
-  const user = await prisma.user.findUnique({ where: { email } });
+  const loginId = normalizeLoginId(parsed.data.loginId);
+  const user = await prisma.user.findUnique({ where: { email: loginId } });
   if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
-    return c.json({ error: "Invalid email or password" }, 401);
+    return c.json({ error: "Invalid login ID or password" }, 401);
   }
 
   const token = await signSessionToken(user.id, user.email);
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
 
-  return c.json({ id: user.id, email: user.email, role: user.role });
+  return c.json({ id: user.id, loginId: user.email, role: user.role });
+});
+
+authRoutes.put("/password", async (c) => {
+  const sessionUser = await requireUser(c);
+  if (!sessionUser) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const body = await c.req.json().catch(() => null);
+  const parsed = passwordChangeSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid password" }, 400);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: sessionUser.id },
+    select: { id: true, passwordHash: true },
+  });
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const currentOk = await verifyPassword(
+    parsed.data.currentPassword,
+    user.passwordHash,
+  );
+  if (!currentOk) {
+    return c.json({ error: "Current password is incorrect" }, 400);
+  }
+
+  const passwordHash = await hashPassword(parsed.data.newPassword);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash },
+  });
+
+  return c.json({ ok: true });
 });
 
 authRoutes.post("/logout", (c) => {
@@ -92,5 +140,5 @@ authRoutes.get("/me", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  return c.json(user);
+  return c.json({ id: user.id, loginId: user.email, role: user.role });
 });

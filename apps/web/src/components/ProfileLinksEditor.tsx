@@ -7,6 +7,7 @@ import {
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import {
   DetailDialog,
   DetailField,
@@ -221,29 +222,22 @@ export function ProfileLinksEditor({
       ) : null}
 
       {deletingIndex !== null ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("crud.profiles.links.deleteLink")}
-          role="alertdialog"
+          variant="danger"
           onClose={() => setDeletingIndex(null)}
+          onConfirm={() => {
+            onChange(links.filter((_, i) => i !== deletingIndex));
+            setDeletingIndex(null);
+          }}
+          confirmLabel={t("crud.common.delete")}
         >
           <p className="text-muted">
             {t("crud.profiles.links.deleteDraftBody", {
               key: links[deletingIndex]?.key ?? "",
             })}
           </p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                onChange(links.filter((_, i) => i !== deletingIndex));
-                setDeletingIndex(null);
-              }}
-              className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg"
-            >
-              {t("crud.common.delete")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
     </div>
   );
