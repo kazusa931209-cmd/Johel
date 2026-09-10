@@ -5,7 +5,7 @@ import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
-import { DetailDialog } from "@/components/shared/detail-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
@@ -787,48 +787,34 @@ export default function GeneratePage() {
       </section>
 
       {newConfirmOpen ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("generate.newConfirm.title")}
-          role="alertdialog"
           closeDisabled={resetting}
+          confirmDisabled={resetting}
           onClose={() => setNewConfirmOpen(false)}
+          onConfirm={() => void confirmNewGeneration()}
+          confirmLabel={
+            resetting ? t("generate.newConfirm.confirming") : t("generate.new")
+          }
         >
           <p className="text-muted">{t("generate.newConfirm.body")}</p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={resetting}
-              onClick={() => void confirmNewGeneration()}
-              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
-            >
-              {resetting ? t("generate.newConfirm.confirming") : t("generate.new")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
 
       {runConfirmOpen ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("generate.runConfirm.title")}
-          role="alertdialog"
           closeDisabled={processBusy}
+          confirmDisabled={processBusy}
           onClose={() => {
             pendingRunRef.current = null;
             setRunConfirmOpen(false);
           }}
+          onConfirm={confirmRunWithStaleDownstream}
+          confirmLabel={t("generate.runConfirm.confirm")}
         >
           <p className="text-muted">{t("generate.runConfirm.body")}</p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={processBusy}
-              onClick={confirmRunWithStaleDownstream}
-              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
-            >
-              {t("generate.runConfirm.confirm")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
 
       {jobDuplicateChecking ? (

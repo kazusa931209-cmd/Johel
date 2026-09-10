@@ -9,10 +9,8 @@ import {
   DeleteButton,
   EditButton,
 } from "@/components/shared/action-icon-buttons";
-import {
-  DetailDialog,
-  TABLE_ROW_HOVER_CLASS,
-} from "@/components/shared/detail-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
 import { deleteCompany, type CompanyDetail } from "@/lib/api";
@@ -252,28 +250,21 @@ function CompaniesPageContent() {
       ) : null}
 
       {deleting ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("crud.companies.delete.title")}
-          role="alertdialog"
+          variant="danger"
           closeDisabled={deletingBusy}
+          confirmDisabled={deletingBusy}
           onClose={() => setDeleting(null)}
+          onConfirm={() => void onConfirmDelete()}
+          confirmLabel={
+            deletingBusy ? t("crud.common.deleting") : t("crud.common.delete")
+          }
         >
           <p className="text-muted">
             {t("crud.companies.delete.body", { name: deleting.name })}
           </p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={deletingBusy}
-              onClick={() => void onConfirmDelete()}
-              className="rounded-md bg-toast-error-bg px-3 py-2 text-sm font-medium text-toast-error-fg disabled:opacity-60"
-            >
-              {deletingBusy
-                ? t("crud.common.deleting")
-                : t("crud.common.delete")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
     </section>
   );

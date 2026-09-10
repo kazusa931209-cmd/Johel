@@ -9,7 +9,7 @@ import { PromptEditDialog } from "@/components/PromptEditDialog";
 import { EditButton } from "@/components/shared/action-icon-buttons";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
-import { DetailDialog } from "@/components/shared/detail-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { savePrompt, savePromptExtension, type PromptKind } from "@/lib/api";
 import { loadMe, loadPrompts, setPromptsCache } from "@/lib/cached-settings";
 import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
@@ -412,30 +412,24 @@ function PromptsPageContent() {
       </form>
 
       {isAdmin && confirmReset ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("settings.prompts.resetDialog.title")}
-          role="alertdialog"
           closeDisabled={resetBusy}
+          confirmDisabled={resetBusy}
           onClose={() => setConfirmReset(false)}
+          onConfirm={() => void onConfirmReset()}
+          confirmLabel={
+            resetBusy
+              ? t("settings.prompts.resetting")
+              : t("settings.prompts.resetToDefault")
+          }
         >
           <p className="text-muted">
             {t("settings.prompts.resetDialog.body", {
               label: activeTabConfig.label,
             })}
           </p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={resetBusy}
-              onClick={() => void onConfirmReset()}
-              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
-            >
-              {resetBusy
-                ? t("settings.prompts.resetting")
-                : t("settings.prompts.resetToDefault")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
 
       {isAdmin && editing ? (

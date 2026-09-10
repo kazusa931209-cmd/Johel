@@ -16,7 +16,7 @@ import {
   type GenerateStep,
 } from "@/components/generate/GenerateTimeline";
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
-import { DetailDialog } from "@/components/shared/detail-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Drawer } from "@/components/shared/drawer";
 import { DownloadIcon, PlayIcon } from "@/components/shared/icons";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
@@ -378,26 +378,20 @@ export function GenerationHistoryDrawer({
       </Drawer>
 
       {resumeConfirmOpen ? (
-        <DetailDialog
+        <ConfirmDialog
           title={t("history.resumeConfirm.title")}
-          role="alertdialog"
           closeDisabled={resuming}
+          confirmDisabled={resuming}
           onClose={() => setResumeConfirmOpen(false)}
+          onConfirm={() => void confirmResume()}
+          confirmLabel={
+            resuming
+              ? t("history.resumeConfirm.confirming")
+              : t("history.resumeConfirm.confirm")
+          }
         >
           <p className="text-muted">{resumeConfirmBody}</p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={resuming}
-              onClick={() => void confirmResume()}
-              className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-60"
-            >
-              {resuming
-                ? t("history.resumeConfirm.confirming")
-                : t("history.resumeConfirm.confirm")}
-            </button>
-          </div>
-        </DetailDialog>
+        </ConfirmDialog>
       ) : null}
     </>
   );
