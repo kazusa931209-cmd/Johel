@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
+import { CombinePeriodDisplay } from "@/components/generate/CombinePeriodDisplay";
 import { CombinePeriodSlider } from "@/components/generate/CombinePeriodSlider";
 import {
   buildPeriodWindow,
@@ -45,14 +46,8 @@ export function CombineCompanyCards({
 }: CombineCompanyCardsProps) {
   const t = useT();
   const { locale } = useLocale();
-  const { companies: workspaceCompanies, experiences, loading } = usePce();
+  const { companies: workspaceCompanies, loading } = usePce();
   const [viewCompany, setViewCompany] = useState<CompanyDetail | null>(null);
-
-  const categoryById = useMemo(
-    () =>
-      new Map(experiences.map((item) => [item.id, item.category])),
-    [experiences],
-  );
 
   const cardsDisabled = disabled || profileGraduation == null;
   const periodWindow =
@@ -248,9 +243,12 @@ export function CombineCompanyCards({
                         *
                       </span>
                       </span>
-                      <span className="text-sm font-medium">
-                        {entry.startDate} – {entry.endDate}
-                      </span>
+                      <CombinePeriodDisplay
+                        startDate={entry.startDate}
+                        endDate={entry.endDate}
+                        profileGraduation={profileGraduation}
+                        className="text-sm font-medium"
+                      />
                     </div>
                     <CombinePeriodSlider
                       graduationYear={profileGraduation.year}
@@ -264,8 +262,8 @@ export function CombineCompanyCards({
                     />
                   </div>
 
-                  <label className="block space-y-1 text-sm">
-                    <span>
+                  <label className="flex items-center gap-3 text-sm">
+                    <span className="w-36 shrink-0">
                       {t("generate.combine.roleContext")}
                       <span className="ml-0.5 text-danger" aria-hidden>
                         *
@@ -281,15 +279,14 @@ export function CombineCompanyCards({
                         })
                       }
                       placeholder={t("generate.combine.roleContextPlaceholder")}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
+                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
                     />
                   </label>
 
-                  <label className="block space-y-1 text-sm">
-                    <span>{t("generate.combine.keywordContext")}</span>
-                    <p className="text-xs text-muted">
-                      {t("generate.combine.keywordContextHint")}
-                    </p>
+                  <label className="flex items-center gap-3 text-sm">
+                    <span className="w-36 shrink-0">
+                      {t("generate.combine.keywordContext")}
+                    </span>
                     <input
                       type="text"
                       value={entry.keywordContext}
@@ -302,25 +299,10 @@ export function CombineCompanyCards({
                       placeholder={t(
                         "generate.combine.keywordContextPlaceholder",
                       )}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
+                      title={t("generate.combine.keywordContextHint")}
+                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted disabled:cursor-not-allowed"
                     />
                   </label>
-
-                  {entry.experienceIds.length > 0 ? (
-                    <div>
-                      <p className="text-xs font-medium text-muted">
-                        {t("generate.combine.linkedExperiences")}
-                      </p>
-                      <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
-                        {entry.experienceIds.map((id) => (
-                          <li key={id}>
-                            {categoryById.get(id) ??
-                              t("generate.combine.suggestionExperienceMissing")}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
                 </div>
               ) : null}
             </article>

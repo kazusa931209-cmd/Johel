@@ -7,15 +7,18 @@ import { useToast } from "@/components/app/ToastProvider";
 import {
   type CombineFieldErrors,
   type CombineSnapshot,
-  formatCompanyPeriod,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
+import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
+import { CombinePeriodDisplay } from "@/components/generate/CombinePeriodDisplay";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
+import { ViewButton } from "@/components/shared/action-icon-buttons";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
   runAiCombineRecommend,
   type CombineRecommendResult,
+  type ExperienceDetail,
 } from "@/lib/api";
 import { usePce } from "@/lib/pce";
 import { fullName, type ProfileGraduation } from "@/lib/profile";
@@ -43,24 +46,88 @@ function mergeExperienceSuggestions(
   }));
 }
 
+function CombineSuggestedExperienceList({
+  experienceIds,
+}: {
+  experienceIds: string[];
+}) {
+  const t = useT();
+  const { experiences } = usePce();
+  const [viewExperience, setViewExperience] = useState<ExperienceDetail | null>(
+    null,
+  );
+  const experienceById = useMemo(
+    () => new Map(experiences.map((item) => [item.id, item])),
+    [experiences],
+  );
+
+  if (experienceIds.length === 0) {
+    return (
+      <p className="mt-1 text-muted">
+        {t("generate.combine.suggestionNoExperiences")}
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <ul className="mt-1 space-y-1">
+        {experienceIds.map((id) => {
+          const experience = experienceById.get(id);
+          const label =
+            experience?.category ??
+            t("generate.combine.suggestionExperienceMissing");
+
+          return (
+            <li key={id}>
+              <div className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 hover:bg-surface-muted">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (experience) setViewExperience(experience);
+                  }}
+                  disabled={!experience}
+                  className="min-w-0 flex-1 truncate text-left text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {label}
+                </button>
+                <ViewButton
+                  disabled={!experience}
+                  onClick={() => {
+                    if (experience) setViewExperience(experience);
+                  }}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {viewExperience ? (
+        <ExperienceDetailDialog
+          experience={viewExperience}
+          onClose={() => setViewExperience(null)}
+        />
+      ) : null}
+    </>
+  );
+}
+
 function CombineSuggestionPreview({
   combine,
   appliedResult,
+  profileGraduation,
 }: {
   combine: CombineSnapshot;
   appliedResult: CombineRecommendResult | null;
+  profileGraduation: ProfileGraduation | null;
 }) {
   const t = useT();
-  const { profiles, companies, experiences } = usePce();
+  const { profiles, companies } = usePce();
 
   const profile = profiles.find((item) => item.id === combine.profileId);
   const companyNameById = useMemo(
     () => new Map(companies.map((item) => [item.id, item.name])),
     [companies],
-  );
-  const categoryById = useMemo(
-    () => new Map(experiences.map((item) => [item.id, item.category])),
-    [experiences],
   );
   const rationaleByCompanyId = useMemo(
     () =>
@@ -114,7 +181,11 @@ function CombineSuggestionPreview({
                     {t("generate.combine.period")}
                   </dt>
                   <dd className="mt-1">
-                    {formatCompanyPeriod(entry.startDate, entry.endDate)}
+                    <CombinePeriodDisplay
+                      startDate={entry.startDate}
+                      endDate={entry.endDate}
+                      profileGraduation={profileGraduation}
+                    />
                   </dd>
                 </div>
                 <div>
@@ -140,20 +211,9 @@ function CombineSuggestionPreview({
               <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted">
                 {t("generate.combine.suggestionExperiences")}
               </p>
-              {entry.experienceIds.length > 0 ? (
-                <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
-                  {entry.experienceIds.map((id) => (
-                    <li key={id}>
-                      {categoryById.get(id) ??
-                        t("generate.combine.suggestionExperienceMissing")}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-1 text-muted">
-                  {t("generate.combine.suggestionNoExperiences")}
-                </p>
-              )}
+              <CombineSuggestedExperienceList
+                experienceIds={entry.experienceIds}
+              />
 
               {rationale ? (
                 <>
@@ -296,6 +356,7 @@ export function CombineExperienceSuggest({
             <CombineSuggestionPreview
               combine={combine}
               appliedResult={appliedResult}
+              profileGraduation={profileGraduation}
             />
             <div className="flex justify-end border-t border-border pt-4">
               <button
