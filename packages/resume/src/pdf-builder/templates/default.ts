@@ -3,8 +3,12 @@ import type { GeneratedResume } from "../../domain/generated-resume";
 import { PdfLayout } from "../layout";
 import {
   DEFAULT_RESUME_PDF_STYLE,
+  PDF_PAGE_HEIGHT,
+  PDF_PAGE_WIDTH,
   type ResumePdfStyle,
 } from "../styles";
+
+const PDF_PAGE_SIZE: [number, number] = [PDF_PAGE_WIDTH, PDF_PAGE_HEIGHT];
 
 function formatDateRange(startDate?: string, endDate?: string): string {
   const start = startDate?.trim() ?? "";
@@ -32,10 +36,10 @@ export function renderDefaultResumePdf(
   fonts: { regular: PDFFont; bold: PDFFont; italic: PDFFont },
   style: ResumePdfStyle = DEFAULT_RESUME_PDF_STYLE,
 ): void {
-  let page = doc.addPage();
+  let page = doc.addPage(PDF_PAGE_SIZE);
   const layout = new PdfLayout(page, style);
   const addPage = () => {
-    page = doc.addPage();
+    page = doc.addPage(PDF_PAGE_SIZE);
     layout.setPage(page);
     return page;
   };

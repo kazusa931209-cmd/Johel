@@ -26,5 +26,6 @@ export const DEFAULT_RESUME_PDF_STYLE: ResumePdfStyle = {
   bulletIndent: 12,
 };
 
-export const PDF_PAGE_WIDTH = 612;
-export const PDF_PAGE_HEIGHT = 792;
+/** A4 size in PDF points (matches pdf-lib default page dimensions). */
+export const PDF_PAGE_WIDTH = 595.28;
+export const PDF_PAGE_HEIGHT = 841.89;

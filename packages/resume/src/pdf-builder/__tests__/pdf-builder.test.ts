@@ -1,6 +1,8 @@
+import { PDFDocument } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import type { GeneratedResume } from "../../domain/generated-resume";
 import { buildResumePdfBuffer } from "../builder";
+import { PDF_PAGE_HEIGHT, PDF_PAGE_WIDTH } from "../styles";
 
 const sampleResume: GeneratedResume = {
   header: {
@@ -45,5 +47,13 @@ describe("pdf-builder", () => {
     const header = buffer.subarray(0, 4).toString("utf8");
     expect(header).toBe("%PDF");
     expect(buffer.length).toBeGreaterThan(100);
+  });
+
+  it("uses A4 page size", async () => {
+    const buffer = await buildResumePdfBuffer(sampleResume);
+    const doc = await PDFDocument.load(buffer);
+    const page = doc.getPages()[0];
+    expect(page.getWidth()).toBeCloseTo(PDF_PAGE_WIDTH, 1);
+    expect(page.getHeight()).toBeCloseTo(PDF_PAGE_HEIGHT, 1);
   });
 });

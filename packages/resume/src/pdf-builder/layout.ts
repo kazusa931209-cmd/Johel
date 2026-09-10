@@ -2,8 +2,6 @@ import type { PDFFont, PDFPage, RGB } from "pdf-lib";
 import { filterPdfText } from "./text";
 import {
   DEFAULT_RESUME_PDF_STYLE,
-  PDF_PAGE_HEIGHT,
-  PDF_PAGE_WIDTH,
   type ResumePdfStyle,
 } from "./styles";
 
@@ -22,7 +20,6 @@ export class PdfLayout {
   private readonly style: ResumePdfStyle;
   private page: PDFPage;
   private y: number;
-  private readonly contentWidth: number;
 
   constructor(
     page: PDFPage,
@@ -30,9 +27,13 @@ export class PdfLayout {
   ) {
     this.style = style;
     this.page = page;
-    this.y = PDF_PAGE_HEIGHT - style.marginTop;
-    this.contentWidth =
-      PDF_PAGE_WIDTH - style.marginLeft - style.marginRight;
+    this.y = page.getHeight() - style.marginTop;
+  }
+
+  private get contentWidth(): number {
+    return (
+      this.page.getWidth() - this.style.marginLeft - this.style.marginRight
+    );
   }
 
   get currentPage(): PDFPage {
@@ -41,7 +42,7 @@ export class PdfLayout {
 
   setPage(page: PDFPage): void {
     this.page = page;
-    this.y = PDF_PAGE_HEIGHT - this.style.marginTop;
+    this.y = page.getHeight() - this.style.marginTop;
   }
 
   private minY(): number {
