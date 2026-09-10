@@ -11,6 +11,10 @@ export type ExperienceAdviseDisplayOperation = {
   targetExperienceId: string | null;
   rationale: string;
   draft: ExperienceAdviseDraft;
+  /** Raw AI delta before merge; update preview only. */
+  deltaDraft?: ExperienceAdviseDraft;
+  /** Snapshot before merge; update preview only. */
+  existingDraft?: ExperienceAdviseDraft;
   warnings: string[];
 };
 
@@ -47,6 +51,15 @@ export async function buildExperienceAdviseDisplayOperations(
         placement: "update_experience",
         targetExperienceId: operation.targetExperienceId,
         rationale: operation.rationale,
+        existingDraft: existing
+          ? {
+              category: existing.category,
+              problem: existing.problem,
+              actions: existing.actions,
+              outcome: existing.outcome,
+            }
+          : undefined,
+        deltaDraft: delta,
         draft: {
           category: delta.category ?? existing?.category ?? null,
           problem: existing

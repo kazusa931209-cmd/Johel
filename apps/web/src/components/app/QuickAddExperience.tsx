@@ -60,17 +60,23 @@ export function QuickAddExperience({
             <button
               type="button"
               onClick={() => void handleSuggest()}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+              className={
+                actionable
+                  ? "rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted/40 disabled:opacity-60"
+                  : "rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+              }
             >
               {advising
                 ? t("crud.experiences.advisor.running")
-                : t("crud.experiences.advisor.suggest")}
+                : actionable
+                  ? t("crud.experiences.advisor.suggestAgain")
+                  : t("crud.experiences.advisor.suggest")}
             </button>
             {actionable ? (
               <button
                 type="button"
                 onClick={() => void handleApply()}
-                className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted/40 disabled:opacity-60"
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
               >
                 {applying
                   ? t("crud.experiences.advisor.applying")

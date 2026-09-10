@@ -2,6 +2,7 @@
 
 import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
+import { ExperienceSuggestionUpdateField } from "@/components/ExperienceSuggestionUpdateField";
 import type { ExperienceAdviseResult } from "@/lib/api";
 import type { ExperienceAdviseDisplayOperation } from "@/lib/build-experience-advise-display-operations";
 
@@ -13,6 +14,21 @@ type ExperienceSuggestionContentProps = {
   /** When false, parent renders Apply in a drawer footer. Default true. */
   showApplyButton?: boolean;
 };
+
+function CreateField({
+  label,
+  markdown,
+}: {
+  label: string;
+  markdown: string;
+}) {
+  return (
+    <div>
+      <p className="font-medium">{label}</p>
+      <AiVerdictMarkdown markdown={markdown} />
+    </div>
+  );
+}
 
 export function ExperienceSuggestionContent({
   result,
@@ -62,49 +78,94 @@ export function ExperienceSuggestionContent({
           </div>
         ) : null}
 
-        {displayOperations.map((operation, index) => (
-          <div
-            key={`${operation.placement}-${operation.targetExperienceId ?? "new"}-${index}`}
-            className="space-y-3 rounded-md border border-border p-4"
-          >
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                {operation.placement === "create_experience"
-                  ? t("crud.experiences.advisor.placements.create")
-                  : t("crud.experiences.advisor.placements.update")}
-              </p>
-              <p className="mt-1 whitespace-pre-wrap">{operation.rationale}</p>
-            </div>
+        {displayOperations.map((operation, index) => {
+          const isCreate = operation.placement === "create_experience";
+          const isUpdate = operation.placement === "update_experience";
 
-            {operation.draft.category ? (
-              <div>
-                <p className="font-medium">{t("crud.experiences.form.category")}</p>
-                <p className="mt-1">{operation.draft.category}</p>
-              </div>
-            ) : null}
+          const placementTitle = isCreate
+            ? t("crud.experiences.advisor.placements.create")
+            : operation.draft.category
+              ? t("crud.experiences.advisor.placements.updateWithCategory", {
+                  category: operation.draft.category,
+                })
+              : t("crud.experiences.advisor.placements.update");
 
-            {operation.draft.problem ? (
-              <div>
-                <p className="font-medium">{t("crud.experiences.form.problem")}</p>
-                <AiVerdictMarkdown markdown={operation.draft.problem} />
-              </div>
-            ) : null}
+          return (
+            <article
+              key={`${operation.placement}-${operation.targetExperienceId ?? "new"}-${index}`}
+              aria-label={placementTitle}
+              className="overflow-hidden rounded-md border border-border"
+            >
+              <header className="border-b border-border bg-toast-info-bg px-4 py-2.5 text-sm font-semibold text-toast-info-fg">
+                {placementTitle}
+              </header>
 
-            {operation.draft.actions ? (
-              <div>
-                <p className="font-medium">{t("crud.experiences.form.actions")}</p>
-                <AiVerdictMarkdown markdown={operation.draft.actions} />
-              </div>
-            ) : null}
+              <div className="space-y-3 bg-background p-4 text-sm">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                    {t("crud.experiences.advisor.rationale")}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap">{operation.rationale}</p>
+                </div>
 
-            {operation.draft.outcome ? (
-              <div>
-                <p className="font-medium">{t("crud.experiences.form.outcome")}</p>
-                <AiVerdictMarkdown markdown={operation.draft.outcome} />
+                {operation.draft.category && isCreate ? (
+                  <div>
+                    <p className="font-medium">
+                      {t("crud.experiences.form.category")}
+                    </p>
+                    <p className="mt-1">{operation.draft.category}</p>
+                  </div>
+                ) : null}
+
+                {isCreate ? (
+                  <>
+                    {operation.draft.problem ? (
+                      <CreateField
+                        label={t("crud.experiences.form.problem")}
+                        markdown={operation.draft.problem}
+                      />
+                    ) : null}
+                    {operation.draft.actions ? (
+                      <CreateField
+                        label={t("crud.experiences.form.actions")}
+                        markdown={operation.draft.actions}
+                      />
+                    ) : null}
+                    {operation.draft.outcome ? (
+                      <CreateField
+                        label={t("crud.experiences.form.outcome")}
+                        markdown={operation.draft.outcome}
+                      />
+                    ) : null}
+                  </>
+                ) : null}
+
+                {isUpdate && operation.existingDraft && operation.deltaDraft ? (
+                  <div className="space-y-6">
+                    <ExperienceSuggestionUpdateField
+                      label={t("crud.experiences.form.problem")}
+                      existing={operation.existingDraft.problem}
+                      delta={operation.deltaDraft.problem}
+                      merged={operation.draft.problem}
+                    />
+                    <ExperienceSuggestionUpdateField
+                      label={t("crud.experiences.form.actions")}
+                      existing={operation.existingDraft.actions}
+                      delta={operation.deltaDraft.actions}
+                      merged={operation.draft.actions}
+                    />
+                    <ExperienceSuggestionUpdateField
+                      label={t("crud.experiences.form.outcome")}
+                      existing={operation.existingDraft.outcome}
+                      delta={operation.deltaDraft.outcome}
+                      merged={operation.draft.outcome}
+                    />
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        ))}
+            </article>
+          );
+        })}
       </div>
 
       {showApplyButton && actionable ? (

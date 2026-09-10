@@ -323,6 +323,7 @@ export const en = {
         factsPlaceholder:
           "Example: At my last role I fixed shared-wallet nonce conflicts using PostgreSQL send leases and reduced failed sends…",
         suggest: "Suggest",
+        suggestAgain: "Suggest Again",
         running: "Suggesting…",
         applying: "Applying…",
         apply: "Apply",
@@ -342,7 +343,11 @@ export const en = {
         placements: {
           create: "New experience card",
           update: "Update existing card",
+          updateWithCategory: 'Update existing card · "{category}"',
         },
+        fieldExisting: "Existing",
+        fieldSuggestedAddition: "Suggested addition",
+        fieldSuggestedChange: "Suggested change",
       },
     },
   },

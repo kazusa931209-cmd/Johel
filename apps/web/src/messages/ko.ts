@@ -325,6 +325,7 @@ export const ko: MessageTree = {
         factsPlaceholder:
           "예: PostgreSQL send lease로 공유 지갑 nonce 충돌을 해결하고 실패 전송을 줄였습니다…",
         suggest: "제안",
+        suggestAgain: "다시 제안",
         running: "제안 중…",
         applying: "적용 중…",
         apply: "적용",
@@ -344,7 +345,11 @@ export const ko: MessageTree = {
         placements: {
           create: "새 경험 카드",
           update: "기존 카드 보충",
+          updateWithCategory: '기존 카드 보충 · "{category}"',
         },
+        fieldExisting: "기존 내용",
+        fieldSuggestedAddition: "추가 제안",
+        fieldSuggestedChange: "변경 제안",
       },
     },
   },
