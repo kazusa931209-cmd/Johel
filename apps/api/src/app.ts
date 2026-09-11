@@ -53,7 +53,7 @@ const attachRateLimitUserId: MiddlewareHandler = async (c, next) => {
   if (user) {
     c.set("rateLimitUserId", user.id);
   }
-  await next();
+  return await next();
 };
 
 export function createApp() {
@@ -78,12 +78,13 @@ export function createApp() {
   app.use("/auth/password", attachRateLimitUserId, authPasswordRateLimit());
   app.route("/auth", authRoutes);
 
+  const aiRateLimitMiddleware = aiRateLimit();
   const aiRoutes: MiddlewareHandler = async (c, next) => {
     const user = await requireUser(c);
     if (user) {
       c.set("rateLimitUserId", user.id);
     }
-    await aiRateLimit()(c, next);
+    return aiRateLimitMiddleware(c, next);
   };
 
   app.use("/ai-verdict/*", aiRoutes);
