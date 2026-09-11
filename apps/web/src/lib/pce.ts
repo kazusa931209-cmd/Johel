@@ -11,8 +11,11 @@ import {
 
 const PCE_INVALIDATED_STORAGE_KEY = "johel:pce-invalidated";
 
+type PceResult = { data?: PceBundle; error?: string };
+
 let cached: PceBundle | null = null;
-let inflight: Promise<{ data?: PceBundle; error?: string }> | null = null;
+let inflight: Promise<PceResult> | null = null;
+let fetchGeneration = 0;
 const invalidationListeners = new Set<() => void>();
 
 function notifyPceInvalidation() {
@@ -31,45 +34,43 @@ export function subscribePceInvalidation(listener: () => void): () => void {
 export function clearPceCache() {
   cached = null;
   inflight = null;
+  fetchGeneration += 1;
   if (typeof window !== "undefined") {
     localStorage.setItem(PCE_INVALIDATED_STORAGE_KEY, String(Date.now()));
   }
   notifyPceInvalidation();
 }
 
-async function fetchPce(): Promise<{
-  data?: PceBundle;
-  error?: string;
-}> {
-  if (!inflight) {
-    inflight = getPce().then((res) => {
+function requestPce(): Promise<PceResult> {
+  const generation = fetchGeneration;
+  const promise = getPce().then((res) => {
+    if (inflight === promise) {
       inflight = null;
-      if (res.data) {
-        cached = res.data;
-      }
-      return res;
-    });
-  }
-  return inflight;
+    }
+    if (generation === fetchGeneration && res.data) {
+      cached = res.data;
+    }
+    return res;
+  });
+  inflight = promise;
+  return promise;
 }
 
-export async function loadPce(): Promise<{
-  data?: PceBundle;
-  error?: string;
-}> {
+export async function loadPce(): Promise<PceResult> {
   if (cached) {
     return { data: cached };
   }
-  return fetchPce();
+  if (inflight) {
+    return inflight;
+  }
+  return requestPce();
 }
 
-export async function reloadPce(): Promise<{
-  data?: PceBundle;
-  error?: string;
-}> {
+export async function reloadPce(): Promise<PceResult> {
   cached = null;
+  fetchGeneration += 1;
   inflight = null;
-  return fetchPce();
+  return requestPce();
 }
 
 export type PceState = {
@@ -100,8 +101,8 @@ export function usePce(): PceState {
   useEffect(() => {
     let cancelled = false;
 
-    async function refresh() {
-      const res = await loadPce();
+    async function refresh(force = false) {
+      const res = force ? await reloadPce() : await loadPce();
       if (cancelled) return;
       if (res.error || !res.data) {
         setState((current) => ({
@@ -125,14 +126,15 @@ export function usePce(): PceState {
     void refresh();
 
     const unsubscribe = subscribePceInvalidation(() => {
-      void refresh();
+      void refresh(true);
     });
 
     function onStorage(event: StorageEvent) {
       if (event.key !== PCE_INVALIDATED_STORAGE_KEY) return;
       cached = null;
       inflight = null;
-      void refresh();
+      fetchGeneration += 1;
+      void refresh(true);
     }
 
     window.addEventListener("storage", onStorage);

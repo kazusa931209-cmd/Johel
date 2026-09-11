@@ -15,8 +15,7 @@ import {
   toExperienceAdviseApplyOperations,
   type ExperienceAdviseDisplayOperation,
 } from "@/lib/build-experience-advise-display-operations";
-import { invalidateWorkspaceCrudCaches } from "@/lib/cached-crud-list";
-import { dispatchWorkspaceUpdated } from "@/lib/workspace-updated";
+import { notifyExperienceWorkspaceChanged } from "@/lib/workspace-experience";
 
 export const EXPERIENCE_FACTS_MAX = 10_000;
 
@@ -114,10 +113,9 @@ export function useExperienceAdviseFlow({
       toast(warning, "warning");
     }
 
-    invalidateWorkspaceCrudCaches("experiences");
-    dispatchWorkspaceUpdated({
-      experienceId: res.data.experienceIds[0] ?? experienceId ?? null,
-    });
+    notifyExperienceWorkspaceChanged(
+      res.data.experienceIds[0] ?? experienceId ?? null,
+    );
 
     toast(
       mode === "create"

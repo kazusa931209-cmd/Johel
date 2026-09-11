@@ -194,7 +194,9 @@ export function CombineCompanyExperienceList({
 
       {viewExperience ? (
         <ExperienceDetailDialog
-          experience={viewExperience}
+          experience={
+            experienceById.get(viewExperience.id) ?? viewExperience
+          }
           onClose={() => setViewExperience(null)}
         />
       ) : null}

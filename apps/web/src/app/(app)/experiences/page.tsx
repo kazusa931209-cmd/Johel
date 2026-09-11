@@ -14,11 +14,9 @@ import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
 import { deleteExperience, type ExperienceDetail } from "@/lib/api";
-import {
-  invalidateWorkspaceCrudCaches,
-  loadExperienceList,
-} from "@/lib/cached-crud-list";
+import { loadExperienceList } from "@/lib/cached-crud-list";
 import { useCrudListParams } from "@/lib/crud-list-params";
+import { notifyExperienceWorkspaceChanged } from "@/lib/workspace-experience";
 
 function ExperiencesPageFallback() {
   const t = useT();
@@ -94,7 +92,7 @@ function ExperiencesPageContent() {
       return;
     }
     setDeleting(null);
-    invalidateWorkspaceCrudCaches("experiences");
+    notifyExperienceWorkspaceChanged(deleting.id);
     toast(t("toast.experienceDeleted"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     if (nextPage !== page) {

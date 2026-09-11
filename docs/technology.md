@@ -6,7 +6,7 @@ Product requirements and feature specifications belong in [`specification.md`](.
 
 ## Operational cost constraint
 
-The stack must run with **no paid operational SaaS**. Local deployment only. LLM usage is billed only through **user-owned API keys**; the application itself does not require a paid third-party account to operate.
+The stack must run with **no paid operational SaaS**. Deployment targets are **local/LAN** (Phase 33) and **public internet** (Phase 83, self-hosted HTTPS). LLM usage is billed only through **user-owned API keys**; the application itself does not require a paid third-party account to operate.
 
 ## Approved stack
 
@@ -19,13 +19,13 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | UI | Next.js (App Router) + Tailwind CSS | Frontend only; no paid UI SaaS |
 | Database | SQLite via Prisma | On-disk multi-user data; no hosted DB cost |
 | Auth | Login ID + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP. API field `loginId`; DB column `users.email` stores the login ID (no email-format validation). |
-| Secrets / API keys | Per-user **plaintext** `Setting.apiKey` (Phase 5) | Masked on read; encrypt later if needed |
+| Secrets / API keys | Per-user `Setting.apiKey` — **plaintext today** (Phase 5); **AES-256-GCM at rest** (Phase 83) | Masked on read; server `ENCRYPTION_KEY` |
 | LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `apps/api` | User-owned keys; Anthropic adapters later |
 | JD ingest (later) | Manual / URL (`fetch` + cheerio) / file (`pdf-parse`, `mammoth`) | No scraping or parse SaaS |
 | Resume export | `docx`; `pdf-lib` (PDF) | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
 | Package manager | pnpm workspaces | Monorepo (`apps/api`, `apps/web`) |
-| Testing | Vitest (+ Playwright later) | Unit tests for Noise Filter; e2e when that work begins |
+| Testing | Vitest; Playwright smoke (Phase 83); GitHub Actions CI (Phase 83) | Unit tests today; integration + CI in Phase 83 |
 
 ## Architecture sketch
 
@@ -435,6 +435,45 @@ Tiered strategy to reduce redundant AI calls and prompt size (see Embedding + RA
 - **Module:** `apps/api/src/lib/job-embedding/` (`build-input`, `upsert`, `sync-after-save`, `ensure-embeddings`, `duplicate-check`, `source-hash`, `constants`)
 - **Web:** `useJobDuplicateFlow`, `GenerateJobDuplicateDialog`; session `jobDuplicateDismissedHash` (filtered JD hash) suppresses repeat dialog until Job text changes; **Cancel** / **Switch** call `clearJobAndPersist` (empty job + embedding delete via PUT sync)
 - **Migration:** `20260910100008_generation_job_embeddings`
+
+## Internet hardening (Phase 83, planned)
+
+Public deployment adds security and operability without paid SaaS. Full plan: [`plans/2026-09-11-phase-83-internet-hardening.md`](./plans/2026-09-11-phase-83-internet-hardening.md).
+
+### HTTPS
+
+- TLS terminated by **Caddy** (or operator reverse proxy) in front of the existing app container
+- Env: `PUBLIC_URL`, `TRUST_PROXY=true`; API CORS allows `PUBLIC_URL` when set
+- Session cookie `secure: true` when HTTPS / trusted proxy
+
+### Encrypted API keys
+
+- `ENCRYPTION_KEY` (32-byte secret, base64 in env) — required for public deploy
+- `apps/api/src/lib/secrets/` — AES-256-GCM encrypt/decrypt; migrate existing plaintext rows
+- All LLM routes read keys via `getUserApiKey(userId)` helper
+
+### Rate limiting
+
+- Hono middleware; keys by IP (auth) or `userId` (AI)
+- Defaults: login 10/15m, register 5/h, AI 30/h per user; returns `429` + `Retry-After`
+- In-memory store for single-container deploy (document shared store if scaling later)
+
+### Session security
+
+- `users.sessionVersion` embedded in JWT; increment on password change → stale tokens rejected
+- Boot fails when `PUBLIC_DEPLOY=true` and `JWT_SECRET` / `ENCRYPTION_KEY` are weak or default
+- Configurable `SESSION_TTL` (default 7d)
+
+### Backups
+
+- `scripts/backup-db.sh` / `scripts/restore-db.sh` — timestamped SQLite copies to `BACKUP_DIR`
+- Documented in [`docker.md`](./docker.md); retention via `BACKUP_RETENTION_DAYS`
+
+### Test coverage + CI
+
+- `.github/workflows/ci.yml` — install, api test, web test, lint, web build
+- API integration tests: auth, settings encryption, rate limit, owner isolation
+- Optional Playwright smoke: register → login → settings
 
 ## Plans
 

@@ -49,7 +49,8 @@ Authoring criteria, good/bad examples, stack-variant rules, and the mapping to u
 ## Deployment
 
 * Local deployment (development: `pnpm dev:api` + `pnpm dev:web`)
-* **Docker Desktop** — one combined image (API + web). Port **4444** is published so other devices on the LAN can use the app. The container may run on **this machine** or **another machine** on the LAN; the **database stays on whichever machine runs the container** when the image is replaced. See [`docs/docker.md`](./docker.md).
+* **Docker Desktop (LAN)** — one combined image (API + web). Port **4444** is published so other devices on the LAN can use the app. The container may run on **this machine** or **another machine** on the LAN; the **database stays on whichever machine runs the container** when the image is replaced. See [`docs/docker.md`](./docker.md).
+* **Public internet (Phase 83)** — JoHEL may be published on the internet so strangers can register and use the app. Public deployment requires **HTTPS**, **encrypted storage of user API keys**, **rate limiting**, **stronger session security**, **operator backup/restore**, and **automated test coverage in CI**. LLM usage remains billed through each user's own API key; the application itself must still incur **no paid operational SaaS** to run.
 
 ## Requirements
 
@@ -390,6 +391,8 @@ Phases are listed below as they are defined. Only the current/next Phase is full
   * **Outcome (2026-09-11):** `useCombineExperienceSuggest`, `CombineCompanyExperienceList`, `CombineExperiencePickerDrawer`, `CombineEmphasisField`; removed `CombineExperienceSuggest`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-11-phase-81-combine-companies-experiences.md`](./plans/2026-09-11-phase-81-combine-companies-experiences.md).
 * [x] **Phase 82 — Combine experience memory & per-company suggest** — Remember linked **experience ids** in Combine defaults for new generations; add per-company **Suggest** beside **View** on included company rows; limit include toggle to checkbox + company name only; confirm before re-suggesting (section-wide or per company).
   * **Outcome (2026-09-11):** `combine-defaults` stores `experienceIds`; `POST /ai-combine-recommend` accepts optional `companyId`; per-company suggest in `CombineCompanyCard`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-11-phase-82-combine-experience-memory-per-company-suggest.md`](./plans/2026-09-11-phase-82-combine-experience-memory-per-company-suggest.md).
+* [ ] **Phase 83 — Internet hardening (public deployment)** — Make JoHEL safe to publish on the internet and onboard strangers: **HTTPS** (reverse-proxy deployment path), **encrypted API key storage** (no plaintext keys in SQLite), **rate limiting** on auth and AI routes, **stronger session security** (secure cookies, session invalidation on password change, production secret validation), **operator backup/restore** for the SQLite database, and **broader test coverage** (API integration tests + CI). LAN Docker deployment continues to work for trusted-network use.
+  * Plan: [`docs/plans/2026-09-11-phase-83-internet-hardening.md`](./plans/2026-09-11-phase-83-internet-hardening.md).
 
 ## Cursor Rules (Documentation Governance)
 

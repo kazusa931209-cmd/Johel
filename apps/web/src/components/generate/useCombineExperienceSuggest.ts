@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -18,6 +18,8 @@ import {
   mergeExperienceSuggestionsForCompany,
 } from "@/lib/combine-experience-suggest";
 import { runAiCombineRecommend, type CombineRecommendResult } from "@/lib/api";
+import { buildLinkedExperienceRevision } from "@/lib/experience";
+import { usePce } from "@/lib/pce";
 import type { ProfileGraduation } from "@/lib/profile";
 
 type UseCombineExperienceSuggestOptions = {
@@ -44,6 +46,7 @@ export function useCombineExperienceSuggest({
   const t = useT();
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
+  const { experiences: workspaceExperiences } = usePce();
   const [suggesting, setSuggesting] = useState(false);
   const [suggestingCompanyId, setSuggestingCompanyId] = useState<string | null>(
     null,
@@ -63,6 +66,39 @@ export function useCombineExperienceSuggest({
     setAppliedResult(null);
     setSuggestSucceeded(false);
   }, [combine.profileId, companySelectionKey]);
+
+  const linkedExperienceIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const entry of combine.companies) {
+      for (const id of entry.experienceIds) {
+        ids.add(id);
+      }
+    }
+    return [...ids].sort();
+  }, [combine.companies]);
+
+  const linkedExperienceRevision = useMemo(
+    () =>
+      buildLinkedExperienceRevision(
+        linkedExperienceIds,
+        workspaceExperiences,
+      ),
+    [linkedExperienceIds, workspaceExperiences],
+  );
+  const linkedExperienceRevisionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (linkedExperienceRevisionRef.current === null) {
+      linkedExperienceRevisionRef.current = linkedExperienceRevision;
+      return;
+    }
+    if (linkedExperienceRevisionRef.current === linkedExperienceRevision) {
+      return;
+    }
+    linkedExperienceRevisionRef.current = linkedExperienceRevision;
+    setAppliedResult(null);
+    setSuggestSucceeded(false);
+  }, [linkedExperienceRevision]);
 
   const rationaleByCompanyId = useMemo(
     () =>
