@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
 import { StudioHeaderStatus } from "@/components/app/StudioHeaderStatus";
+import { MenuIcon } from "@/components/shared/icons";
 import { logout } from "@/lib/api";
 import { clearAllCrudListCaches } from "@/lib/cached-crud-list";
 import { clearAllSettingsCaches } from "@/lib/cached-settings";
@@ -14,11 +15,15 @@ import { formatTokenUsed } from "@/lib/tokens";
 type StudioHeaderProps = {
   userName: string;
   tokenUsage?: number;
+  sidebarOpen: boolean;
+  onToggleSidebar: () => void;
 };
 
 export function StudioHeader({
   userName,
   tokenUsage = 0,
+  sidebarOpen,
+  onToggleSidebar,
 }: StudioHeaderProps) {
   const t = useT();
   const router = useRouter();
@@ -46,6 +51,18 @@ export function StudioHeader({
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-header px-4">
+      {!sidebarOpen ? (
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label={t("nav.header.openSidebar")}
+          aria-expanded={sidebarOpen}
+          aria-controls="studio-sidebar-nav"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md hover:bg-surface-muted"
+        >
+          <MenuIcon className="h-5 w-5" />
+        </button>
+      ) : null}
       <div className="min-w-0 flex-1">
         <StudioHeaderStatus />
       </div>

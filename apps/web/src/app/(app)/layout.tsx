@@ -45,7 +45,12 @@ function AppShell({
         onToggleSidebar={onToggleSidebar}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <StudioHeader userName={user.loginId} tokenUsage={tokenUsed} />
+        <StudioHeader
+          userName={user.loginId}
+          tokenUsage={tokenUsed}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={onToggleSidebar}
+        />
         <main className="min-h-0 flex-1 overflow-y-auto p-6">{children}</main>
       </div>
       <StudioBottomFabCluster />

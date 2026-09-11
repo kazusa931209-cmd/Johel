@@ -211,7 +211,6 @@ html[lang="ko"] body {
   --drawer-duration: 420ms;
   --drawer-ease: cubic-bezier(0.32, 0.72, 0, 1);
   --sidebar-width: 13rem;
-  --sidebar-brand-width: 3.5rem;
 }
 
 .drawer-backdrop {
@@ -245,12 +244,14 @@ html[lang="ko"] body {
 }
 
 .studio-sidebar {
-  width: var(--sidebar-brand-width);
+  width: 0;
+  pointer-events: none;
   transition: width var(--drawer-duration) var(--drawer-ease);
 }
 
 .studio-sidebar.studio-sidebar-open {
   width: var(--sidebar-width);
+  pointer-events: auto;
 }
 
 .studio-sidebar-nav {

@@ -81,18 +81,18 @@ export function StudioSidebar({
             />
           </Link>
         ) : null}
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label={
-            open ? t("nav.header.collapseSidebar") : t("nav.header.openSidebar")
-          }
-          aria-expanded={open}
-          aria-controls="studio-sidebar-nav"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md hover:bg-surface-muted"
-        >
-          <MenuIcon className="h-5 w-5" />
-        </button>
+        {open ? (
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            aria-label={t("nav.header.collapseSidebar")}
+            aria-expanded={open}
+            aria-controls="studio-sidebar-nav"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md hover:bg-surface-muted"
+          >
+            <MenuIcon className="h-5 w-5" />
+          </button>
+        ) : null}
       </div>
       <div
         id="studio-sidebar-nav"
