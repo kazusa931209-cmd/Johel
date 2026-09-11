@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeCombineExperiencesPerCompanyMax } from "../combine-experiences-per-company.js";
 import {
   dedupePreservingOrder,
   resolveCompanyRef,
@@ -23,6 +24,7 @@ const responseSchema = z.object({
 export function parseCombineRecommendResponse(
   raw: string,
   refMaps: RefMaps,
+  maxExperiencesPerCompany?: number,
 ):
   | { success: true; result: CombineRecommendResult }
   | { success: false; error: string } {
@@ -50,6 +52,9 @@ export function parseCombineRecommendResponse(
   }
 
   const companies: CombineRecommendResult["companies"] = [];
+  const perCompanyMax = normalizeCombineExperiencesPerCompanyMax(
+    maxExperiencesPerCompany,
+  );
 
   for (const company of parsed.data.companies) {
     const companyId = resolveCompanyRef(
@@ -82,7 +87,7 @@ export function parseCombineRecommendResponse(
 
     companies.push({
       companyId,
-      experienceIds: dedupePreservingOrder(experienceIds),
+      experienceIds: dedupePreservingOrder(experienceIds).slice(0, perCompanyMax),
       rationale: company.rationale,
     });
   }

@@ -145,6 +145,7 @@ export type GenerationProcessSettings = {
   resumeLanguage: ResumeLanguage;
   downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
+  combineExperiencesPerCompanyMax: number;
 };
 
 export function getGenerationProcess() {
@@ -157,6 +158,7 @@ export function saveGenerationProcess(payload: {
   resumeLanguage: ResumeLanguage;
   downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
+  combineExperiencesPerCompanyMax: number;
 }) {
   return request<GenerationProcessSettings>("/settings/process", {
     method: "PUT",

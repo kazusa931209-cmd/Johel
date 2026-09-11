@@ -89,6 +89,7 @@ export default function GeneratePage() {
   const [newConfirmOpen, setNewConfirmOpen] = useState(false);
   const [runConfirmOpen, setRunConfirmOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [resettingJob, setResettingJob] = useState(false);
   const pendingRunRef = useRef<(() => void) | null>(null);
   const {
     ready: sessionReady,
@@ -418,7 +419,28 @@ export default function GeneratePage() {
     generatingResume ||
     evaluating ||
     jobDuplicateChecking ||
-    jobDuplicateDialogBusy;
+    jobDuplicateDialogBusy ||
+    resettingJob;
+
+  const jobIsEmpty = useMemo(
+    () =>
+      !job.jobText.trim() &&
+      !job.jdCompanyName.trim() &&
+      !job.jdJobRole.trim() &&
+      !job.acceptedMarkdown?.trim(),
+    [job],
+  );
+
+  const onResetJob = useCallback(async () => {
+    setResettingJob(true);
+    const res = await clearJobAndPersist();
+    setResettingJob(false);
+    if (res?.error) {
+      toast(res.error ?? t("toast.generationSaveFailed"), "error");
+      return;
+    }
+    toast(t("toast.jobResetSuccess"), "success");
+  }, [clearJobAndPersist, t, toast]);
 
   const runFromJob = useCallback(() => {
     requestRun("Job", async () => {
@@ -762,6 +784,21 @@ export default function GeneratePage() {
             previous={previousContent}
             previousHeaderRight={previousHeaderRight}
             currentTitle={getGenerateCurrentPanelTitle(normalizedActiveStep, t)}
+            currentHeaderRight={
+              normalizedActiveStep === "Job" ? (
+                <button
+                  type="button"
+                  onClick={() => void onResetJob()}
+                  disabled={jobIsEmpty || processBusy}
+                  aria-label={t("generate.job.resetAria")}
+                  className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
+                >
+                  {resettingJob
+                    ? t("generate.job.resetting")
+                    : t("generate.job.reset")}
+                </button>
+              ) : undefined
+            }
             swapColumns={normalizedActiveStep === "Job"}
             currentFill={normalizedActiveStep === "Job"}
           >

@@ -3,6 +3,7 @@
 import { useT } from "@/components/app/LocaleProvider";
 import { DetailDialog, DetailField } from "@/components/shared/detail-dialog";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
+import { Drawer } from "@/components/shared/drawer";
 import type { ExperienceDetail } from "@/lib/api";
 
 type ExperienceDetailDialogProps = {
@@ -33,17 +34,11 @@ function MarkdownField({
   );
 }
 
-export function ExperienceDetailDialog({
-  experience,
-  onClose,
-}: ExperienceDetailDialogProps) {
+function ExperienceDetailFields({ experience }: { experience: ExperienceDetail }) {
   const t = useT();
 
   return (
-    <DetailDialog
-      title={experience.category || t("crud.experiences.detailTitle")}
-      onClose={onClose}
-    >
+    <>
       <DetailField
         label={t("crud.experiences.columns.category")}
         value={experience.category}
@@ -71,6 +66,57 @@ export function ExperienceDetailDialog({
         label={t("crud.common.updated")}
         value={new Date(experience.updatedAt).toLocaleString()}
       />
+    </>
+  );
+}
+
+export function ExperienceDetailDialog({
+  experience,
+  onClose,
+}: ExperienceDetailDialogProps) {
+  const t = useT();
+
+  return (
+    <DetailDialog
+      title={experience.category || t("crud.experiences.detailTitle")}
+      onClose={onClose}
+    >
+      <ExperienceDetailFields experience={experience} />
     </DetailDialog>
+  );
+}
+
+type ExperienceDetailDrawerProps = {
+  experience: ExperienceDetail | null;
+  open: boolean;
+  onClose: () => void;
+};
+
+export function ExperienceDetailDrawer({
+  experience,
+  open,
+  onClose,
+}: ExperienceDetailDrawerProps) {
+  const t = useT();
+
+  return (
+    <Drawer
+      title={
+        experience?.category || t("crud.experiences.detailTitle")
+      }
+      open={open}
+      onClose={onClose}
+      widthClass="w-[min(56rem,85vw)]"
+      zIndex={60}
+      closeOnEscape
+    >
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        {experience ? (
+          <div className="space-y-4">
+            <ExperienceDetailFields experience={experience} />
+          </div>
+        ) : null}
+      </div>
+    </Drawer>
   );
 }

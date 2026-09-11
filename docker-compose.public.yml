@@ -8,7 +8,7 @@ services:
     platform: linux/arm64
     restart: unless-stopped
     expose:
-      - "4444"
+      - "4321"
     environment:
       DATABASE_URL: file:/data/johel.db
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
@@ -18,7 +18,7 @@ services:
       PUBLIC_URL: https://${PUBLIC_DOMAIN:?Set PUBLIC_DOMAIN in .env}
       HOST: "127.0.0.1"
       PORT: "4042"
-      WEB_PORT: "4444"
+      WEB_PORT: "4321"
       API_ORIGIN: http://127.0.0.1:4042
       HOSTNAME: "0.0.0.0"
     volumes:
@@ -29,7 +29,7 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:4444/backend/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:4321/backend/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 30s
       timeout: 10s

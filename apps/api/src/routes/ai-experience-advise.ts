@@ -9,7 +9,9 @@ import type { ExperienceAdviseExperienceSnapshot } from "../lib/ai-experience-ad
 import {
   ensureExperienceEmbeddings,
   normalizeExperienceAdvisePoolDepth,
+  rankByCosine,
   selectExpandedExperienceIdsWithEmbedding,
+  selectIndexExperienceIdsForAdvise,
 } from "../lib/experience-embedding/index.js";
 import { createOpenAiEmbedding } from "../lib/openai/embeddings.js";
 import { getUserAiSettings } from "../lib/user-ai-settings.js";
@@ -132,6 +134,11 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
       },
     });
 
+    const embeddingRank = rankByCosine(
+      queryEmbedding.vector,
+      embeddingCandidates,
+    );
+
     const expandedIds = selectExpandedExperienceIdsWithEmbedding({
       experiences: graph.experiences,
       targetExperienceId: graph.targetExperienceId,
@@ -140,11 +147,19 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
       embeddingCandidates,
     });
 
+    const { indexIds } = selectIndexExperienceIdsForAdvise({
+      experiences: graph.experiences,
+      expandedIds,
+      poolDepth,
+      embeddingRankedIds: embeddingRank.map((item) => item.id),
+    });
+
     const result = await runExperienceAdvise(provider, {
       apiKey: aiSettings.apiKey,
       graph,
       userFacts: parsed.data.userFacts,
       expandedIds,
+      indexIds,
     });
 
     await recordAiUsage({

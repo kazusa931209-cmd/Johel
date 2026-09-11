@@ -205,8 +205,9 @@ model GenerationProcess {
   doEvaluate                Boolean  @default(true)
   resumeLanguage            String   @default("en")
   downloadFormat            String   @default("docx")
-  experienceAdvisePoolDepth String   @default("normal")
-  createdAt                 DateTime @default(now())
+  experienceAdvisePoolDepth        String   @default("normal")
+  combineExperiencesPerCompanyMax  Int      @default(5)
+  createdAt                        DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
   @@map("generationProcess")

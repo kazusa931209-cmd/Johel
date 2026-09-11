@@ -124,7 +124,7 @@ export const ko: MessageTree = {
       experienceAdvisePoolDepth: {
         title: "경험 제안 풀 깊이",
         description:
-          "제안(Suggest) 프롬프트에 전체 STAR 텍스트를 포함할 경험 카드 수입니다. 모든 카드는 항상 요약 인덱스에 포함되며, 깊이를 높이면 중복 검출은 좋아지지만 토큰 사용량이 늘어납니다.",
+          "제안(Suggest) 프롬프트에 전체 STAR 텍스트를 포함할 경험 카드 수입니다. 큰 풀에서는 요약 인덱스도 깊이에 따라 제한되며, 깊이를 높이면 중복 검출은 좋아지지만 토큰 사용량이 늘어납니다.",
         label: "풀 깊이",
         options: {
           compact: "간략 (전체 STAR 5장)",
@@ -132,6 +132,13 @@ export const ko: MessageTree = {
           thorough: "상세 (전체 STAR 25장)",
           full: "전체 풀 (모든 카드 전체 STAR)",
         },
+      },
+      combineExperiencesPerCompanyMax: {
+        title: "회사당 조합 경험 수",
+        description:
+          "Generate / Combine에서 경험 제안(Suggest) 시 AI가 포함된 각 회사에 연결할 수 있는 최대 경험 카드 수입니다. 채용 공고와의 겹침이 적을 때는 더 적은 카드를 우선합니다.",
+        label: "회사당 최대",
+        option: "{count}장",
       },
     },
     prompts: {
@@ -432,6 +439,9 @@ export const ko: MessageTree = {
     },
     job: {
       title: "채용 공고",
+      reset: "초기화",
+      resetting: "초기화 중…",
+      resetAria: "채용 공고 입력 초기화",
       filteredPreviewTitle: "노이즈 제거된 채용 공고",
       filteredPreviewHint:
         "노이즈 필터를 거친 미리보기입니다. 판정을 끄면 이후 단계에서 이 내용을 사용합니다.",
@@ -720,6 +730,7 @@ export const ko: MessageTree = {
     aiAgentSaveFailed: "저장에 실패했습니다.",
     aiAgentSaved: "AI 에이전트 설정을 저장했습니다.",
     generationSaveFailed: "저장에 실패했습니다.",
+    jobResetSuccess: "채용 공고 입력을 초기화했습니다.",
     generationSaved: "생성 설정을 저장했습니다.",
     promptsLoadFailed: "프롬프트를 불러오지 못했습니다.",
     promptSaveFailed: "저장에 실패했습니다.",

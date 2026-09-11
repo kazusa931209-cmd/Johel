@@ -20,6 +20,18 @@ const FULL_STAR_K_BY_DEPTH: Record<
   thorough: 25,
 };
 
+/** Below this pool size, the compact index lists every non-expanded card. */
+export const EXPERIENCE_INDEX_TRUNCATION_THRESHOLD = 20;
+
+const INDEX_K_BY_DEPTH: Record<
+  Exclude<ExperienceAdvisePoolDepth, "full">,
+  number
+> = {
+  compact: 20,
+  normal: 40,
+  thorough: 80,
+};
+
 export function isExperienceAdvisePoolDepth(
   value: string,
 ): value is ExperienceAdvisePoolDepth {
@@ -33,6 +45,15 @@ export function resolveExperienceAdviseFullStarK(
     return null;
   }
   return FULL_STAR_K_BY_DEPTH[depth];
+}
+
+export function resolveExperienceAdviseIndexK(
+  depth: ExperienceAdvisePoolDepth,
+): number | null {
+  if (depth === "full") {
+    return null;
+  }
+  return INDEX_K_BY_DEPTH[depth];
 }
 
 export function normalizeExperienceAdvisePoolDepth(

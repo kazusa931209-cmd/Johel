@@ -4,5 +4,5 @@
 
 {$PUBLIC_DOMAIN} {
 	encode gzip
-	reverse_proxy app:4444
+	reverse_proxy app:4321
 }

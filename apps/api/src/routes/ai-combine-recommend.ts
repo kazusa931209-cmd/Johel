@@ -5,6 +5,7 @@ import {
   loadExperienceIndex,
   runCombineRecommend,
 } from "../lib/ai-combine-recommend/index.js";
+import { normalizeCombineExperiencesPerCompanyMax } from "../lib/combine-experiences-per-company.js";
 import { withTokenUsed } from "../lib/ai-token-used-response.js";
 import { prisma } from "../lib/prisma.js";
 import { getUserAiSettings } from "../lib/user-ai-settings.js";
@@ -63,9 +64,12 @@ aiCombineRecommendRoutes.post("/", async (c) => {
 
   const provider = aiSettings.provider;
 
-  const profile = await prisma.profile.findFirst({
-    where: { id: loaded.input.profileId, userId: user.id },
-  });
+  const [profile, generationProcess] = await Promise.all([
+    prisma.profile.findFirst({
+      where: { id: loaded.input.profileId, userId: user.id },
+    }),
+    prisma.generationProcess.findUnique({ where: { userId: user.id } }),
+  ]);
   if (!profile) {
     return c.json({ error: "Selected profile was not found." }, 400);
   }
@@ -126,8 +130,15 @@ aiCombineRecommendRoutes.post("/", async (c) => {
     experienceIndex,
   };
 
+  const combineExperiencesPerCompanyMax = normalizeCombineExperiencesPerCompanyMax(
+    generationProcess?.combineExperiencesPerCompanyMax,
+  );
+
   try {
-    const result = await runCombineRecommend(runInput);
+    const result = await runCombineRecommend(
+      runInput,
+      combineExperiencesPerCompanyMax,
+    );
 
     await recordAiUsage({
       userId: user.id,

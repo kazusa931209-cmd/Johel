@@ -1,3 +1,6 @@
+import {
+  resolveCombineExperiencesPerCompanyRange,
+} from "../combine-experiences-per-company.js";
 import type { CombineRecommendRunCompany } from "./types.js";
 import { buildCombineRecommendRefMaps } from "./refs.js";
 
@@ -12,26 +15,43 @@ const JSON_SCHEMA = `{
   "warnings": ["string"]
 }`;
 
-const SHARED_RULES = `You are an AI Combine advisor for JoHEL resume generation.
+function buildSharedRules(maxPerCompany: number): string {
+  const { minPerCompany, maxPerCompany: max, thinOverlapMaxPerCompany } =
+    resolveCombineExperiencesPerCompanyRange(maxPerCompany);
+
+  const pickRule =
+    minPerCompany === max
+      ? `- Pick ${max} experience card${max === 1 ? "" : "s"} per company when possible; fewer only when the JD has little overlap.`
+      : `- Pick ${minPerCompany}–${max} experience cards per company when possible; fewer only when the JD has little overlap.`;
+
+  const thinOverlapRule =
+    thinOverlapMaxPerCompany === 1
+      ? "- When Keyword context is provided but job overlap is thin (keywords match cards but the JD does not strongly support them), select only 1 card for that company and add a warning about keyword/JD mismatch or thin overlap."
+      : `- When Keyword context is provided but job overlap is thin (keywords match cards but the JD does not strongly support them), select only 1–${thinOverlapMaxPerCompany} cards for that company—not the usual ${minPerCompany === max ? max : `${minPerCompany}–${max}`}—and add a warning about keyword/JD mismatch or thin overlap.`;
+
+  return `You are an AI Combine advisor for JoHEL resume generation.
 
 Given job context, a profile, company entries (with employment period, role context, and optional keyword context), and an experience index, recommend which experience cards to link to each company for this run.
 
 Rules:
-- Pick 2–5 experience cards per company when possible; fewer only when the JD has little overlap.
+${pickRule}
 - Do not link stack variants of the same capability to the same company (e.g. NestJS and Go twins for the same story).
 - Only use companyRef and experienceRef tokens exactly as shown in the index (e.g. C01, E02). Do not invent refs.
 - Per company: if Keyword context is provided, prioritize experience cards that match those keywords (category and problem text) while still fitting the job context and that company's role context. Keywords steer emphasis; the JD still constrains relevance.
 - Per company: if Keyword context is empty or "(none)", choose the best set from the full index using job context and that company's role context only (Auto).
-- When Keyword context is provided but job overlap is thin (keywords match cards but the JD does not strongly support them), select only 1–2 cards for that company—not the usual 2–5—and add a warning about keyword/JD mismatch or thin overlap.
+${thinOverlapRule}
 - warnings: note stack-variant conflicts, empty selections, keyword/JD mismatches, or thin overlap.
 
 Return ONLY valid JSON matching the schema. Do NOT wrap in a code fence.
 
 Schema:
 ${JSON_SCHEMA}`;
+}
 
-export function getCombineRecommendSystemPrompt(): string {
-  return `${SHARED_RULES}\n\nProvider notes (OpenAI): Return ONLY valid JSON.`;
+export function getCombineRecommendSystemPrompt(
+  maxPerCompany = 5,
+): string {
+  return `${buildSharedRules(maxPerCompany)}\n\nProvider notes (OpenAI): Return ONLY valid JSON.`;
 }
 
 function formatKeywordContext(keywordContext?: string): string {

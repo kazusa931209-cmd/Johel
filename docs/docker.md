@@ -1,6 +1,6 @@
 # Docker deployment
 
-JoHEL runs as **one Docker image** (API + web) on **Docker Desktop** for **macOS Apple Silicon** (`linux/arm64`). Port **4444** is published so **other devices on your LAN** can open the app.
+JoHEL runs as **one Docker image** (API + web) on **Docker Desktop** for **macOS Apple Silicon** (`linux/arm64`). Port **4321** is published so **other devices on your LAN** can open the app.
 
 The **database** (SQLite) lives in a Docker Desktop **named volume** on whichever Mac runs the container. When you update the image, **replace the container only** — do not remove the volume.
 
@@ -23,10 +23,10 @@ On the Mac that runs Docker Desktop, find its LAN IP (e.g. **System Settings →
 Other devices on the same network open:
 
 ```text
-http://<LAN-IP-of-host-Mac>:4444
+http://<LAN-IP-of-host-Mac>:4321
 ```
 
-If the page does not load from another device, allow incoming connections for Docker Desktop or port **4444** in the Mac firewall.
+If the page does not load from another device, allow incoming connections for Docker Desktop or port **4321** in the Mac firewall.
 
 The API (`:4042`) is **not** published — browsers use the web UI and `/backend/*` proxy only.
 
@@ -44,15 +44,30 @@ From the repo root:
 docker compose up -d --build
 ```
 
-Open `http://127.0.0.1:4444` locally, or `http://<this-mac-lan-ip>:4444` from another device.
+Open `http://127.0.0.1:4321` locally, or `http://<this-mac-lan-ip>:4321` from another device.
 
-### Update (code or migrations changed)
+### Update (code, port, or migrations changed)
+
+Recreate the **container** only. The named volume `johel-data` (database) is **not** removed by these commands:
 
 ```bash
 docker compose up -d --build --force-recreate
 ```
 
-Do **not** pass `-v`. The `johel-data` volume keeps your database.
+Optional: stop the old container first, still without touching the volume:
+
+```bash
+docker compose down          # no -v — volume kept
+docker compose up -d --build
+```
+
+| Safe (volume kept) | Unsafe (deletes database) |
+| --- | --- |
+| `docker compose up -d --build --force-recreate` | `docker compose down -v` |
+| `docker compose down` then `up` (no `-v`) | `docker volume rm …` on `johel-data` |
+| `docker compose stop` / `start` | Removing the `johel-data` volume in Docker Desktop |
+
+After a port change (e.g. `4321`), use the same safe update commands above — only the published port mapping changes; `johel-data` is unchanged.
 
 ---
 
@@ -89,7 +104,7 @@ docker load < johel-local.tar.gz
 docker compose up -d
 ```
 
-LAN devices open `http://<other-mac-lan-ip>:4444`.
+LAN devices open `http://<other-mac-lan-ip>:4321`.
 
 ### Update (code or migrations changed)
 
@@ -187,11 +202,11 @@ On Case B (another Mac), adjust the source path to wherever your `.db` file live
 Verify the app is healthy:
 
 ```bash
-curl -s http://127.0.0.1:4444/backend/health
+curl -s http://127.0.0.1:4321/backend/health
 docker compose logs -f
 ```
 
-Open `http://127.0.0.1:4444` and confirm your data appears as expected.
+Open `http://127.0.0.1:4321` and confirm your data appears as expected.
 
 ### Notes
 
@@ -212,7 +227,7 @@ docker compose logs -f
 docker compose down
 
 # Health (from host)
-curl -s http://127.0.0.1:4444/backend/health
+curl -s http://127.0.0.1:4321/backend/health
 ```
 
 After Docker Desktop restarts, the container comes back automatically (`restart: unless-stopped`).
@@ -244,7 +259,7 @@ From the repo root:
 docker compose -f docker-compose.public.yml up -d --build
 ```
 
-Caddy terminates TLS on ports **80** and **443** and proxies to the JoHEL app container on `:4444`.
+Caddy terminates TLS on ports **80** and **443** and proxies to the JoHEL app container on `:4321`.
 
 Open `https://<PUBLIC_DOMAIN>`.
 

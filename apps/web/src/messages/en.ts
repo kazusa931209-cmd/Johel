@@ -122,7 +122,7 @@ export const en = {
       experienceAdvisePoolDepth: {
         title: "Experience advisor pool depth",
         description:
-          "How many experience cards receive full STAR text in Suggest prompts. All cards always appear in the compact index; higher depth improves duplicate detection at higher token cost.",
+          "How many experience cards receive full STAR text in Suggest prompts. Large pools also cap the compact index by depth; higher depth improves duplicate detection at higher token cost.",
         label: "Pool depth",
         options: {
           compact: "Compact (5 full STAR cards)",
@@ -130,6 +130,13 @@ export const en = {
           thorough: "Thorough (25 full STAR cards)",
           full: "Full pool (all cards full STAR)",
         },
+      },
+      combineExperiencesPerCompanyMax: {
+        title: "Combine experiences per company",
+        description:
+          "Maximum experience cards the AI may link to each included company when you Suggest experiences on Generate / Combine. The advisor still prefers fewer cards when job overlap is thin.",
+        label: "Max per company",
+        option: "{count} cards",
       },
     },
     prompts: {
@@ -430,6 +437,9 @@ export const en = {
     },
     job: {
       title: "Job",
+      reset: "Reset",
+      resetting: "Resetting…",
+      resetAria: "Reset job fields",
       filteredPreviewTitle: "Noise-Filtered Job Description",
       filteredPreviewHint:
         "Live preview after the noise filter. Later steps use this text when Do Verdict is off.",
@@ -719,6 +729,7 @@ export const en = {
     aiAgentSaveFailed: "Save failed",
     aiAgentSaved: "AI Agent settings saved.",
     generationSaveFailed: "Save failed.",
+    jobResetSuccess: "Job fields reset.",
     generationSaved: "Generation settings saved.",
     promptsLoadFailed: "Failed to load prompts.",
     promptSaveFailed: "Save failed.",

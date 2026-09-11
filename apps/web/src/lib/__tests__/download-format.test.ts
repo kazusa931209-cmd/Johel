@@ -10,6 +10,7 @@ describe("resolveDownloadFormat", () => {
         resumeLanguage: "ja",
         downloadFormat: "pdf",
         experienceAdvisePoolDepth: "normal",
+        combineExperiencesPerCompanyMax: 5,
       }),
     ).toBe("docx");
   });
@@ -22,6 +23,7 @@ describe("resolveDownloadFormat", () => {
         resumeLanguage: "en",
         downloadFormat: "pdf",
         experienceAdvisePoolDepth: "normal",
+        combineExperiencesPerCompanyMax: 5,
       }),
     ).toBe("pdf");
   });

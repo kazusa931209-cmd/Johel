@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { normalizeCombineExperiencesPerCompanyMax } from "../lib/combine-experiences-per-company.js";
 import { EXPERIENCE_ADVISE_POOL_DEPTHS } from "../lib/experience-embedding/pool-depth.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
@@ -13,6 +14,7 @@ const putSchema = z.object({
   resumeLanguage: z.enum(RESUME_LANGUAGES),
   downloadFormat: z.enum(DOWNLOAD_FORMATS),
   experienceAdvisePoolDepth: z.enum(EXPERIENCE_ADVISE_POOL_DEPTHS),
+  combineExperiencesPerCompanyMax: z.number().int().min(1).max(10),
 });
 
 export const DEFAULT_GENERATION_PROCESS = {
@@ -21,6 +23,7 @@ export const DEFAULT_GENERATION_PROCESS = {
   resumeLanguage: "en",
   downloadFormat: "docx",
   experienceAdvisePoolDepth: "normal",
+  combineExperiencesPerCompanyMax: 5,
 } as const;
 
 export function normalizeDownloadFormat(
@@ -44,6 +47,7 @@ function toProcessResponse(
     resumeLanguage: string;
     downloadFormat?: string;
     experienceAdvisePoolDepth: string;
+    combineExperiencesPerCompanyMax?: number | null;
   } | null,
 ) {
   const resumeLanguage = process?.resumeLanguage ?? DEFAULT_GENERATION_PROCESS.resumeLanguage;
@@ -68,6 +72,9 @@ function toProcessResponse(
     )
       ? experienceAdvisePoolDepth
       : DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
+    combineExperiencesPerCompanyMax: normalizeCombineExperiencesPerCompanyMax(
+      process?.combineExperiencesPerCompanyMax,
+    ),
   };
 }
 
@@ -112,6 +119,7 @@ settingsProcessRoutes.put("/", async (c) => {
       resumeLanguage: parsed.data.resumeLanguage,
       downloadFormat,
       experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
+      combineExperiencesPerCompanyMax: parsed.data.combineExperiencesPerCompanyMax,
     },
     update: {
       doVerdict: parsed.data.doVerdict,
@@ -119,6 +127,7 @@ settingsProcessRoutes.put("/", async (c) => {
       resumeLanguage: parsed.data.resumeLanguage,
       downloadFormat,
       experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
+      combineExperiencesPerCompanyMax: parsed.data.combineExperiencesPerCompanyMax,
     },
   });
 
