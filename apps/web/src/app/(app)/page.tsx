@@ -6,6 +6,7 @@ import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { CombineTotalTenureHeader } from "@/components/generate/CombineTotalTenureHeader";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
@@ -797,6 +798,8 @@ export default function GeneratePage() {
                     ? t("generate.job.resetting")
                     : t("generate.job.reset")}
                 </button>
+              ) : normalizedActiveStep === "Combine" ? (
+                <CombineTotalTenureHeader combine={combine} />
               ) : undefined
             }
             swapColumns={normalizedActiveStep === "Job"}

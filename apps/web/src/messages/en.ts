@@ -534,6 +534,8 @@ export const en = {
       periodDurationMonths: "{count} months",
       periodDurationShortYears: "{count}y",
       periodDurationShortMonths: "{count}m",
+      totalTenureLabel: "Tenure",
+      totalTenureAria: "Total work tenure: {duration}",
       periodStartAria: "Start month for {label}",
       periodEndAria: "End month for {label}",
       roleContext: "Role context",

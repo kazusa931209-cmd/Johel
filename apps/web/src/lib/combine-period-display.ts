@@ -1,4 +1,7 @@
-import { formatCompanyPeriod } from "@/components/generate/combine-types";
+import {
+  formatCompanyPeriod,
+  type CombineCompanyEntry,
+} from "@/components/generate/combine-types";
 import {
   buildPeriodWindow,
   labelsToMonthIndices,
@@ -6,6 +9,44 @@ import {
 } from "@/lib/combine-period";
 import { formatThousandsSeparated } from "@/lib/helper";
 import type { ProfileGraduation } from "@/lib/profile";
+
+/** Compact y/m label (e.g. 8y 5m) for total tenure display. */
+export function formatPeriodDurationYmLabel(monthCount: number): string {
+  const count = Math.max(0, monthCount);
+  if (count === 0) return "0m";
+  const years = Math.floor(count / 12);
+  const months = count % 12;
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years}y`);
+  if (months > 0) parts.push(`${months}m`);
+  return parts.join(" ");
+}
+
+export function sumCombineCompaniesPeriodMonths(
+  companies: CombineCompanyEntry[],
+  profileGraduation: ProfileGraduation | null,
+  locale: string,
+): number | null {
+  if (!profileGraduation || companies.length === 0) return null;
+
+  const window = buildPeriodWindow(
+    profileGraduation.year,
+    profileGraduation.month,
+  );
+
+  let total = 0;
+  for (const company of companies) {
+    if (!company.startDate.trim() || !company.endDate.trim()) continue;
+    total += inclusiveMonthCountFromPeriodLabels(
+      window,
+      company.startDate,
+      company.endDate,
+      locale,
+    );
+  }
+
+  return total;
+}
 
 export function inclusiveMonthCountFromPeriodLabels(
   window: PeriodWindow,

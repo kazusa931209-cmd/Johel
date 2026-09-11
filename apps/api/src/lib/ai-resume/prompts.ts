@@ -50,6 +50,7 @@ const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation s
 - The user message is labeled Markdown sections (Job context, Run intent, Profile, Companies). Use Job context as the scoring rubric. Do not require specific heading names. If Instructions mention headings that are absent, use the closest sections present (for example Role ≈ title, Technical Requirements ≈ skills). If Instructions name JSON-style fields (for example companies[].roleContext), they refer to the matching labeled subsections.
 - Follow the tailoring rules and output expectations defined in Instructions above.
 - Do not invent employers, dates, skills, or experience not present in the supplied input data.
+- When the summary states years of experience, derive the total from the sum of each supplied company employment period (startDate–endDate). Express that total accurately. Do not inflate years to match or exceed JD requirements.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
 
 Required JSON schema:

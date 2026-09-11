@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { CombinePeriodDisplay } from "@/components/generate/CombinePeriodDisplay";
 import { CombinePeriodSlider } from "@/components/generate/CombinePeriodSlider";
@@ -27,6 +27,17 @@ export const CombineCompanyPeriodBlock = memo(function CombineCompanyPeriodBlock
   onPeriodChange,
 }: CombineCompanyPeriodBlockProps) {
   const t = useT();
+  const [previewPeriod, setPreviewPeriod] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
+
+  useEffect(() => {
+    setPreviewPeriod(null);
+  }, [startDate, endDate]);
+
+  const displayStartDate = previewPeriod?.startDate ?? startDate;
+  const displayEndDate = previewPeriod?.endDate ?? endDate;
 
   return (
     <div className="space-y-1">
@@ -38,8 +49,8 @@ export const CombineCompanyPeriodBlock = memo(function CombineCompanyPeriodBlock
           </span>
         </span>
         <CombinePeriodDisplay
-          startDate={startDate}
-          endDate={endDate}
+          startDate={displayStartDate}
+          endDate={displayEndDate}
           profileGraduation={profileGraduation}
           className="text-sm font-medium"
         />
@@ -50,7 +61,11 @@ export const CombineCompanyPeriodBlock = memo(function CombineCompanyPeriodBlock
         startDate={startDate}
         endDate={endDate}
         priorStartIndex={priorStartIndex}
-        onChange={(period) => onPeriodChange(companyId, period)}
+        onPreviewChange={setPreviewPeriod}
+        onChange={(period) => {
+          setPreviewPeriod(null);
+          onPeriodChange(companyId, period);
+        }}
       />
     </div>
   );

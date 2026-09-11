@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import {
   buildPeriodWindow,
@@ -10,12 +10,17 @@ import {
   periodEndOverlapsPriorStart,
 } from "@/lib/combine-period";
 
+type PeriodRange = { startDate: string; endDate: string };
+
 type CombinePeriodSliderProps = {
   graduationYear: number;
   graduationMonth: number;
   startDate: string;
   endDate: string;
-  onChange: (period: { startDate: string; endDate: string }) => void;
+  /** Live preview while dragging; does not update session combine state. */
+  onPreviewChange?: (period: PeriodRange) => void;
+  /** Commits the period when the user finishes adjusting the slider. */
+  onChange: (period: PeriodRange) => void;
   /** Prior selected company's start month index (chain constraint). */
   priorStartIndex?: number | null;
 };
@@ -25,6 +30,7 @@ export function CombinePeriodSlider({
   graduationMonth,
   startDate,
   endDate,
+  onPreviewChange,
   onChange,
   priorStartIndex = null,
 }: CombinePeriodSliderProps) {
@@ -48,13 +54,29 @@ export function CombinePeriodSlider({
 
   const safeStart = Math.min(startIndex, endIndex);
   const safeEnd = Math.max(startIndex, endIndex);
+  const indicesRef = useRef({ start: safeStart, end: safeEnd });
+  indicesRef.current = { start: safeStart, end: safeEnd };
 
-  function emitPeriod(nextStart: number, nextEnd: number) {
+  function toPeriod(nextStart: number, nextEnd: number): PeriodRange {
     const start = Math.min(nextStart, nextEnd);
     const end = Math.max(nextStart, nextEnd);
+    return indicesToPeriod(window, start, end, locale);
+  }
+
+  function previewPeriod(nextStart: number, nextEnd: number) {
+    const start = Math.min(nextStart, nextEnd);
+    const end = Math.max(nextStart, nextEnd);
+    indicesRef.current = { start, end };
     setStartIndex(start);
     setEndIndex(end);
-    onChange(indicesToPeriod(window, start, end, locale));
+    onPreviewChange?.(toPeriod(start, end));
+  }
+
+  function commitCurrentPeriod() {
+    const { start, end } = indicesRef.current;
+    setStartIndex(start);
+    setEndIndex(end);
+    onChange(toPeriod(start, end));
   }
 
   const rangeLabel = formatPeriodRangeLabel(window, safeStart, safeEnd, locale);
@@ -85,8 +107,10 @@ export function CombinePeriodSlider({
           max={window.maxIndex}
           value={safeStart}
           onChange={(event) =>
-            emitPeriod(Number(event.target.value), safeEnd)
+            previewPeriod(Number(event.target.value), safeEnd)
           }
+          onPointerUp={commitCurrentPeriod}
+          onKeyUp={commitCurrentPeriod}
           className="combine-period-range combine-period-range-start absolute inset-0 z-20 w-full appearance-none bg-transparent"
           aria-label={t("generate.combine.periodStartAria", { label: rangeLabel })}
         />
@@ -96,8 +120,10 @@ export function CombinePeriodSlider({
           max={window.maxIndex}
           value={safeEnd}
           onChange={(event) =>
-            emitPeriod(safeStart, Number(event.target.value))
+            previewPeriod(safeStart, Number(event.target.value))
           }
+          onPointerUp={commitCurrentPeriod}
+          onKeyUp={commitCurrentPeriod}
           className="combine-period-range combine-period-range-end absolute inset-0 z-30 w-full appearance-none bg-transparent"
           aria-label={t("generate.combine.periodEndAria", { label: rangeLabel })}
         />

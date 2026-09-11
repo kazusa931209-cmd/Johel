@@ -116,6 +116,7 @@ For each company, emit one experience object.
 
 ## Summary
 Write 3–5 sentences: target role from Role, then 2–3 proofs taken from the rewritten experiences that match Top Hiring Signals and Technical Requirements.
+When stating total years of experience, derive it from the sum of each company's employment period (\`companies[].startDate\`–\`endDate\`). Express that total accurately; do not inflate it to match JD requirements.
 Do not introduce skills that are not in the materials.
 
 ## Skills

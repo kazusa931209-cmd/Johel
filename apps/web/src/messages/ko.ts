@@ -536,6 +536,8 @@ export const ko: MessageTree = {
       periodDurationMonths: "{count}개월",
       periodDurationShortYears: "{count}년",
       periodDurationShortMonths: "{count}개월",
+      totalTenureLabel: "총 근무",
+      totalTenureAria: "총 근무 기간: {duration}",
       periodStartAria: "{label}의 시작 월",
       periodEndAria: "{label}의 종료 월",
       roleContext: "역할 설명",
