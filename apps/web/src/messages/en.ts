@@ -559,7 +559,7 @@ export const en = {
       suggestCompanyNotIncluded:
         "Include this company in Combine before suggesting experiences.",
       suggestRunGuidance:
-        "When you're ready please click Run button on the Step Bar to generate the resume.",
+        "You're ready to run Generate. Click Run in the Step Bar.",
       suggesting: "Suggesting…",
       suggestingOverlay: {
         title: "Suggesting experiences…",

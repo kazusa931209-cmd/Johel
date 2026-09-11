@@ -16,9 +16,10 @@ import {
   COMBINE_SECTION_CLASS,
   COMBINE_SECTION_TITLE_CLASS,
 } from "@/components/generate/combine-section-styles";
-import type {
-  CombineCompanyEntry,
-  CombineSnapshot,
+import {
+  type CombineCompanyEntry,
+  type CombineSnapshot,
+  isCombineRunReady,
 } from "@/components/generate/combine-types";
 import { useCombineExperienceSuggest } from "@/components/generate/useCombineExperienceSuggest";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
@@ -349,6 +350,7 @@ export function CombineCompanyCards({
 
   const companiesError = error ?? suggestFieldErrors.companies;
   const showSuggestFooter = !loading && workspaceCompanies.length > 0;
+  const runReady = isCombineRunReady(combine, profileGraduation);
 
   useEffect(() => {
     if (!onFooterChange) return;
@@ -360,7 +362,7 @@ export function CombineCompanyCards({
 
     onFooterChange(
       <CombineSuggestFooter
-        suggestSucceeded={suggestSucceeded}
+        runReady={runReady}
         suggesting={suggesting}
         disabled={cardsDisabled}
         onRequestSuggest={requestSuggest}
@@ -370,10 +372,12 @@ export function CombineCompanyCards({
     return () => onFooterChange(null);
   }, [
     cardsDisabled,
+    combine,
     onFooterChange,
+    profileGraduation,
     requestSuggest,
+    runReady,
     showSuggestFooter,
-    suggestSucceeded,
     suggesting,
   ]);
 

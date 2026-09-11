@@ -23,7 +23,12 @@ export async function requireUser(c: Context) {
 }
 
 export function maskApiKey(apiKey: string): string {
-  const plaintext = decryptApiKeyFromStorage(apiKey);
+  let plaintext: string;
+  try {
+    plaintext = decryptApiKeyFromStorage(apiKey);
+  } catch {
+    return "********";
+  }
   if (plaintext.length <= 8) {
     return "********";
   }

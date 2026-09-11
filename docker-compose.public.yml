@@ -8,8 +8,8 @@ services:
     image: johel:local
     platform: linux/arm64
     restart: unless-stopped
-    expose:
-      - "4321"
+    ports:
+      - "4321:4321"
     environment:
       DATABASE_URL: file:/data/johel.db
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}

@@ -1,12 +1,30 @@
 import { encryptSecret, decryptSecret, isEncryptedSecret } from "./encrypt.js";
 import { prisma } from "../prisma.js";
 
+export class ApiKeyDecryptError extends Error {
+  readonly code = "API_KEY_DECRYPT_FAILED" as const;
+
+  constructor() {
+    super(
+      "Stored API key cannot be decrypted. Re-save your API key in Settings, or set ENCRYPTION_KEY to the value used when it was saved.",
+    );
+    this.name = "ApiKeyDecryptError";
+  }
+}
+
 export function encryptApiKeyForStorage(apiKey: string): string {
   return encryptSecret(apiKey);
 }
 
 export function decryptApiKeyFromStorage(stored: string): string {
-  return decryptSecret(stored);
+  try {
+    return decryptSecret(stored);
+  } catch {
+    if (isEncryptedSecret(stored)) {
+      throw new ApiKeyDecryptError();
+    }
+    throw new Error("Failed to read stored API key.");
+  }
 }
 
 export async function migratePlaintextApiKeys(): Promise<number> {

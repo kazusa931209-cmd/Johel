@@ -6,6 +6,7 @@ type AppVariables = {
   rateLimitUserId: string;
 };
 import { validateDeployConfig } from "./lib/deploy-config.js";
+import { ApiKeyDecryptError } from "./lib/secrets/api-key.js";
 import { requireUser } from "./lib/session.js";
 import {
   aiRateLimit,
@@ -105,6 +106,14 @@ export function createApp() {
   app.route("/prompts", promptsRoutes);
   app.route("/generations", generationsRoutes);
   app.route("/pce", pceRoutes);
+
+  app.onError((err, c) => {
+    if (err instanceof ApiKeyDecryptError) {
+      return c.json({ error: err.message }, 400);
+    }
+    console.error(err);
+    return c.json({ error: "Internal server error." }, 500);
+  });
 
   return app;
 }

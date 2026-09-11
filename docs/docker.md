@@ -263,6 +263,8 @@ Caddy listens on host ports **4080** (HTTP) and **4443** (HTTPS), mapped to Cadd
 
 Open `https://<PUBLIC_DOMAIN>:4443` (or `http://<PUBLIC_DOMAIN>:4080`).
 
+For direct LAN access without Caddy, the app is also published on **4321** (same as Case A): `http://<LAN-IP>:4321`.
+
 Set `PUBLIC_URL=https://<PUBLIC_DOMAIN>:4443` in `.env` when using the HTTPS port suffix.
 
 ### Update
@@ -280,7 +282,7 @@ Do **not** pass `-v`. The `johel-data` volume keeps your database.
 - User OpenAI API keys are encrypted at rest when `ENCRYPTION_KEY` is set.
 - Auth and AI routes are rate-limited server-side.
 
-LAN deployment (`docker compose up`) remains unchanged and does not require `ENCRYPTION_KEY`.
+LAN deployment (`docker compose up`) does not require `ENCRYPTION_KEY` for a fresh database. If the `johel-data` volume was used with public deploy first, keep the same `ENCRYPTION_KEY` in `.env` — `docker-compose.yml` passes it when set so encrypted API keys can be decrypted.
 
 ---
 

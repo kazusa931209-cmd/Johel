@@ -6,6 +6,7 @@ import {
   COOKIE_NAME,
   hashPassword,
   normalizeLoginId,
+  sessionCookieClearOptions,
   sessionCookieOptions,
   signSessionToken,
   verifyPassword,
@@ -67,7 +68,7 @@ authRoutes.post("/register", async (c) => {
   });
 
   const token = await signSessionToken(user.id, user.email, user.sessionVersion);
-  setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
+  setCookie(c, COOKIE_NAME, token, sessionCookieOptions(c));
 
   return c.json(
     { id: user.id, loginId: user.email, role: user.role },
@@ -89,7 +90,7 @@ authRoutes.post("/login", async (c) => {
   }
 
   const token = await signSessionToken(user.id, user.email, user.sessionVersion);
-  setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
+  setCookie(c, COOKIE_NAME, token, sessionCookieOptions(c));
 
   return c.json({ id: user.id, loginId: user.email, role: user.role });
 });
@@ -142,13 +143,13 @@ authRoutes.put("/password", async (c) => {
     updated.email,
     updated.sessionVersion,
   );
-  setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
+  setCookie(c, COOKIE_NAME, token, sessionCookieOptions(c));
 
   return c.json({ ok: true });
 });
 
 authRoutes.post("/logout", (c) => {
-  deleteCookie(c, COOKIE_NAME, { path: "/" });
+  deleteCookie(c, COOKIE_NAME, sessionCookieClearOptions(c));
   return c.json({ ok: true });
 });
 

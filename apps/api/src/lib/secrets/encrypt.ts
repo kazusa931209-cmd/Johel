@@ -68,6 +68,12 @@ export function decryptSecret(stored: string): string {
     return stored;
   }
 
+  if (!process.env.ENCRYPTION_KEY?.trim()) {
+    throw new Error(
+      "ENCRYPTION_KEY is not set but stored secrets are encrypted. Set the same ENCRYPTION_KEY used when they were saved.",
+    );
+  }
+
   const key = decodeEncryptionKey();
   const raw = Buffer.from(stored.slice(ENCRYPTED_SECRET_PREFIX.length), "base64url");
   if (raw.length <= IV_LENGTH + AUTH_TAG_LENGTH) {

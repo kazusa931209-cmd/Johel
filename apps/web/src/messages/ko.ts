@@ -561,7 +561,7 @@ export const ko: MessageTree = {
       suggestCompanyNotIncluded:
         "경험을 제안하기 전에 이 회사를 조합에 포함해 주세요.",
       suggestRunGuidance:
-        "준비되면 단계 표시줄의 실행 버튼을 눌러 이력서를 생성하세요.",
+        "Generate를 실행할 준비가 되었습니다. 단계 표시줄에서 실행을 클릭하세요.",
       suggesting: "경험 제안 중…",
       suggestingOverlay: {
         title: "경험 제안 중…",

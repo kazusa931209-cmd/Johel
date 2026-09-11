@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import type { Context } from "hono";
 import { SignJWT, jwtVerify } from "jose";
 
 const COOKIE_NAME = "johel_session";
@@ -76,16 +77,40 @@ export async function verifySessionToken(
   }
 }
 
-export function sessionCookieOptions(maxAgeSeconds = sessionMaxAgeSeconds()) {
-  const secure =
-    process.env.TRUST_PROXY === "true" || process.env.PUBLIC_DEPLOY === "true";
+export function resolveSessionCookieSecure(c: Context): boolean {
+  const override = process.env.SESSION_COOKIE_SECURE?.trim().toLowerCase();
+  if (override === "true") return true;
+  if (override === "false") return false;
 
+  const forwarded = c.req.header("x-forwarded-proto");
+  if (forwarded) {
+    return forwarded.split(",")[0]?.trim().toLowerCase() === "https";
+  }
+
+  try {
+    return new URL(c.req.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function sessionCookieOptions(
+  c: Context,
+  maxAgeSeconds = sessionMaxAgeSeconds(),
+) {
   return {
     httpOnly: true,
-    secure,
+    secure: resolveSessionCookieSecure(c),
     sameSite: "Lax" as const,
     path: "/",
     maxAge: maxAgeSeconds,
+  };
+}
+
+export function sessionCookieClearOptions(c: Context) {
+  return {
+    path: "/",
+    secure: resolveSessionCookieSecure(c),
   };
 }
 

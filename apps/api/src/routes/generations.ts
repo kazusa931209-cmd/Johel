@@ -343,11 +343,15 @@ generationsRoutes.put("/:id", async (c) => {
     },
   });
 
-  await syncGenerationJobEmbeddingAfterSave({
-    userId: user.id,
-    generationId: generation.id,
-    jobJson,
-  });
+  try {
+    await syncGenerationJobEmbeddingAfterSave({
+      userId: user.id,
+      generationId: generation.id,
+      jobJson,
+    });
+  } catch (err) {
+    console.error("Job embedding sync skipped after generation save:", err);
+  }
 
   return c.json(toDetailResponse(generation));
 });
