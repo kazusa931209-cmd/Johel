@@ -547,7 +547,7 @@ export const ko: MessageTree = {
         title: "이력서 생성 중…",
         description: "AI가 채용 공고에 맞춰 이력서를 작성하는 중입니다.",
       },
-      suggestExperiences: "경험 제안",
+      suggestExperiences: "제안",
       suggestConfirm: {
         title: "경험을 다시 제안할까요?",
         body: "다시 제안하면 포함된 모든 회사의 연결된 경험과 AI 근거가 교체됩니다. 계속할까요?",

@@ -274,7 +274,7 @@ User browser (:4041)
 - `POST /resume/pdf` — same body; returns `.pdf` attachment; used by Generate/Evaluate/History **Download** when Settings **Download** is PDF and Resume Language is `en`
 - Consumed by API (validation), web (display + download), and Vitest unit tests
 - **DOCX template management** — architecture, default template, style tokens, and extension guide: [`docx-template-management.md`](./docx-template-management.md)
-- **Workspace authoring** — how Company / Experience / Workflow fields should be written so assembly and the Generate Prompt can multiply scene × capability × rubric: [`workspace-authoring.md`](./workspace-authoring.md). `assembleResumeGenerationInput` nests linked experiences under each workflow company; it does not de-duplicate stack variants. The default Generate Prompt treats `whatCompanyIs` / `domainAndStack` as scene, `roleContext` as title hint, and each linked card as 1–3 bullets (`actions` lead, `outcome` close).
+- **Workspace authoring** — how Company / Experience / Workflow fields should be written so assembly and the Generate Prompt can multiply scene × capability × rubric: [`workspace-authoring.md`](./workspace-authoring.md). `assembleFromCombineSnapshot` nests linked experiences under each Combine company; it does not de-duplicate stack variants. The default Generate Prompt treats `whatCompanyIs` / `domainAndStack` as scene tone only, `roleContext` as title hint, `keywordContext` as per-company steering at Generate, and each linked card as its own bullet(s) (`actions` lead, `outcome` close) with card isolation, cross-company metric dedup, and Skills 12–20 items from JD ∩ materials then materials-strong fill.
 
 ## Noise Filter (Phase 12)
 
@@ -337,7 +337,7 @@ User browser (:4041)
 - `POST /ai-combine-recommend` — body `{ generationId, companyId? }`; optional `companyId` scopes the request to one included Combine company; client **explicitly saves** the generation snapshot (`PUT /generations/:id`) immediately before Suggest; server loads `jobJson` (`filteredJobText` preferred), `verdictMarkdown`, and `combineJson` from `generations`; per-company max linked experiences from `generationProcess.combineExperiencesPerCompanyMax` (default 5, range 1–10; prompt pick rule and response cap); per-company optional `keywordContext` (comma-separated, max 500 chars); empty → Auto; filled → keyword-guided; thin JD overlap → fewer cards + warnings; **AI I/O uses per-request ref tokens** (`C01`, `E01`, …); server maps refs to ids; `warnings` humanize `Cxx`/`Exx`; HTTP response returns `companies`, `warnings`, and `tokenUsed` only (no `usage.input`/`usage.output`); audit text stored via `recordAiUsage`; `generateType: combineRecommend`
 - **AI POST response slimming (Phase 78)** — `POST /ai-verdict`, `/ai-resume`, `/ai-evaluate`, `/ai-experience-advise`, and `/ai-combine-recommend` return business fields + `tokenUsed` only; prompt input/output strings are persisted on `aiUsage` for History detail, not echoed in the POST response
 - **Generation save (`filteredJobText`)** — `buildGenerationUpdatePayload` stores `job.filteredJobText` from client noise filter so server-side AI routes can use the same JD text without re-uploading job body
-- `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run
+- `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run; each `combine.companies[]` entry may include optional `keywordContext` (max 500 chars), passed through `assembleFromCombineSnapshot` into the Generate user prompt (`Keyword context:` line per company, same Auto placeholder as Combine Suggest when empty)
 - `POST /resume/combine-fingerprint` — fingerprint for Combine snapshot (replaces workflow fingerprint)
 - `GET /auth/me` includes `role` (`admin` | `user`)
 - `GET /prompts` returns `*Extension` fields; `PUT /prompts/{kind}/extension` for all users; full prompt `PUT` for admins only
@@ -370,8 +370,9 @@ User browser (:4041)
 
 ### Resume assembly
 
-- `assembleFromCombineSnapshot()` in `apps/api/src/lib/resume/assemble-input.ts`
+- `assembleFromCombineSnapshot()` in `apps/api/src/lib/resume/assemble-input.ts` — maps Combine snapshot (including per-company `keywordContext`) to `ResumeGenerationInput`; fingerprint includes assembled companies so keyword changes invalidate resume reuse
 - `ResumeGenerationInput.run` — `{ language, emphasis? }` replaces workflow block
+- Default Generate Prompt (`@johel/prompt-defaults`) + `EXECUTION_RULES` in `apps/api/src/lib/ai-resume/prompts.ts` — card-scoped bullets, tenure-safe tech wording, multi-cloud limits, one quantified outcome per resume, keyword steering, Skills 12–20; prompt-only (no post-AI content rewrite)
 
 ## Generation history (Phase 62)
 

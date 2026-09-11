@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
 import { CombineCompanyCard } from "@/components/generate/CombineCompanyCard";
@@ -16,6 +23,7 @@ import type {
 import { useCombineExperienceSuggest } from "@/components/generate/useCombineExperienceSuggest";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { CombineSuggestConfirmDialogs } from "@/components/generate/CombineSuggestConfirmDialogs";
+import { CombineSuggestFooter } from "@/components/generate/CombineSuggestFooter";
 import {
   buildPeriodWindow,
   clampPeriodToWindow,
@@ -45,6 +53,7 @@ type CombineCompanyCardsProps = {
   error?: string;
   onClearError?: () => void;
   onRegisterContextFlush?: (flush: () => void) => void;
+  onFooterChange?: (footer: ReactNode | null) => void;
 };
 
 function normalizeIncludedEntries(
@@ -69,6 +78,7 @@ export function CombineCompanyCards({
   error,
   onClearError,
   onRegisterContextFlush,
+  onFooterChange,
 }: CombineCompanyCardsProps) {
   const t = useT();
   const { locale } = useLocale();
@@ -338,6 +348,34 @@ export function CombineCompanyCards({
   }, [suggestingCompanyId, workspaceCompanies]);
 
   const companiesError = error ?? suggestFieldErrors.companies;
+  const showSuggestFooter = !loading && workspaceCompanies.length > 0;
+
+  useEffect(() => {
+    if (!onFooterChange) return;
+
+    if (!showSuggestFooter) {
+      onFooterChange(null);
+      return;
+    }
+
+    onFooterChange(
+      <CombineSuggestFooter
+        suggestSucceeded={suggestSucceeded}
+        suggesting={suggesting}
+        disabled={cardsDisabled}
+        onRequestSuggest={requestSuggest}
+      />,
+    );
+
+    return () => onFooterChange(null);
+  }, [
+    cardsDisabled,
+    onFooterChange,
+    requestSuggest,
+    showSuggestFooter,
+    suggestSucceeded,
+    suggesting,
+  ]);
 
   if (loading) {
     return <p className="text-sm text-muted">{t("shared.detail.loading")}</p>;
@@ -386,16 +424,6 @@ export function CombineCompanyCards({
             >
               {t("generate.combine.resetCompanies")}
             </button>
-            <button
-              type="button"
-              onClick={requestSuggest}
-              disabled={suggesting || cardsDisabled}
-              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
-            >
-              {suggesting
-                ? t("generate.combine.suggesting")
-                : t("generate.combine.suggestExperiences")}
-            </button>
           </div>
         </div>
 
@@ -442,14 +470,6 @@ export function CombineCompanyCards({
           })}
         </div>
 
-        {suggestSucceeded ? (
-          <div
-            role="alert"
-            className="rounded-md border border-border bg-toast-success-bg px-3 py-3 text-sm text-toast-success-fg"
-          >
-            {t("generate.combine.suggestRunGuidance")}
-          </div>
-        ) : null}
       </section>
 
       {viewCompany ? (

@@ -43,6 +43,7 @@ export type ResumeGenerationCompany = {
   startDate: string;
   endDate: string;
   roleContext: string;
+  keywordContext?: string;
   experiences: ResumeGenerationExperience[];
 };
 

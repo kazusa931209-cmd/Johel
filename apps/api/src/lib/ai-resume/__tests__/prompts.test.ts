@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAiResumeUserPrompt } from "../prompts.js";
+import { buildAiResumeUserPrompt, getAiResumeSystemPrompt } from "../prompts.js";
 import type { ResumeGenerationInput } from "../types.js";
 
 const input: ResumeGenerationInput = {
@@ -95,5 +95,39 @@ describe("buildAiResumeUserPrompt", () => {
     expect(prompt).not.toContain("jane@example.com");
     expect(prompt).not.toContain("Education:");
     expect(prompt).not.toContain("Links:");
+  });
+
+  it("includes keyword context when provided", () => {
+    const prompt = buildAiResumeUserPrompt({
+      ...input,
+      companies: [
+        {
+          ...input.companies[0],
+          keywordContext: "AWS, AI agents",
+        },
+      ],
+    });
+
+    expect(prompt).toContain("Keyword context: AWS, AI agents");
+  });
+
+  it("shows auto keyword context placeholder when empty", () => {
+    const prompt = buildAiResumeUserPrompt(input);
+
+    expect(prompt).toContain(
+      "Keyword context: (none — match from job context only)",
+    );
+  });
+});
+
+describe("getAiResumeSystemPrompt", () => {
+  it("mirrors resume quality execution rules", () => {
+    const prompt = getAiResumeSystemPrompt("openai", "Custom generate prompt");
+
+    expect(prompt).toContain("Custom generate prompt");
+    expect(prompt).toContain("Keep bullets card-scoped");
+    expect(prompt).toContain("Each quantified before→after outcome may appear only once");
+    expect(prompt).toContain("When Keyword context is provided for a company");
+    expect(prompt).toContain("Build Skills with 12–20 grounded items");
   });
 });

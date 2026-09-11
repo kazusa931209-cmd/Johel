@@ -545,7 +545,7 @@ export const en = {
         title: "Generating Resume…",
         description: "Please wait while the AI tailors your resume to the job.",
       },
-      suggestExperiences: "Suggest experiences",
+      suggestExperiences: "Suggest",
       suggestConfirm: {
         title: "Suggest experiences again?",
         body: "Running suggest again will replace the linked experiences and AI rationale for all included companies. Continue?",

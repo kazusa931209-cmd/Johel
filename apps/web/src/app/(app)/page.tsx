@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
@@ -91,6 +98,7 @@ export default function GeneratePage() {
   const [runConfirmOpen, setRunConfirmOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resettingJob, setResettingJob] = useState(false);
+  const [combineFooter, setCombineFooter] = useState<ReactNode | null>(null);
   const pendingRunRef = useRef<(() => void) | null>(null);
   const {
     ready: sessionReady,
@@ -148,6 +156,12 @@ export default function GeneratePage() {
       setActiveStep(normalizedActiveStep);
     }
   }, [activeStep, normalizedActiveStep, sessionReady, setActiveStep]);
+
+  useEffect(() => {
+    if (normalizedActiveStep !== "Combine") {
+      setCombineFooter(null);
+    }
+  }, [normalizedActiveStep]);
 
   useEffect(() => {
     let cancelled = false;
@@ -785,6 +799,9 @@ export default function GeneratePage() {
             previous={previousContent}
             previousHeaderRight={previousHeaderRight}
             currentTitle={getGenerateCurrentPanelTitle(normalizedActiveStep, t)}
+            currentFooter={
+              normalizedActiveStep === "Combine" ? combineFooter : undefined
+            }
             currentHeaderRight={
               normalizedActiveStep === "Job" ? (
                 <button
@@ -828,6 +845,7 @@ export default function GeneratePage() {
                 generationId={generationId}
                 onSaveBeforeSuggest={onSaveBeforeSuggest}
                 onRunFromCombine={runFromCombine}
+                onFooterChange={setCombineFooter}
               />
             ) : null}
             {normalizedActiveStep === "Generate" ? (

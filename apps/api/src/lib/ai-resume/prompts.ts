@@ -51,6 +51,10 @@ const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation s
 - Follow the tailoring rules and output expectations defined in Instructions above.
 - Do not invent employers, dates, skills, or experience not present in the supplied input data.
 - When the summary states years of experience, derive the total from the sum of each supplied company employment period (startDate–endDate). Express that total accurately. Do not inflate years to match or exceed JD requirements.
+- Keep bullets card-scoped: do not merge technologies or metrics from different linked experience cards into one bullet.
+- Each quantified before→after outcome may appear only once across the entire resume; rephrase duplicates qualitatively elsewhere.
+- When Keyword context is provided for a company, steer that company's bullets toward those keywords and the JD rubric; keep the block concise.
+- Build Skills with 12–20 grounded items (4–5 groups): JD ∩ materials first, then strong technologies from linked experience materials.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
 
 Required JSON schema:
@@ -72,6 +76,13 @@ function optionalLine(label: string, value: string | null | undefined): string |
   const trimmed = value?.trim();
   if (!trimmed) return null;
   return `- ${label}: ${trimmed}`;
+}
+
+function formatKeywordContext(keywordContext?: string): string {
+  const trimmed = keywordContext?.trim();
+  return trimmed
+    ? trimmed
+    : "(none — match from job context only)";
 }
 
 function formatProfileSection(input: ResumeGenerationInput): string {
@@ -122,6 +133,7 @@ function formatCompaniesSection(input: ResumeGenerationInput): string {
     return [
       `### ${index + 1}. ${company.name} (${company.startDate} – ${company.endDate})`,
       `Role context: ${company.roleContext.trim()}`,
+      `Keyword context: ${formatKeywordContext(company.keywordContext)}`,
       `What this company is:\n${company.whatCompanyIs.trim()}`,
       `Domain & stack:\n${company.domainAndStack.trim()}`,
       `Linked experiences:\n\n${experienceBlocks.join("\n\n")}`,
