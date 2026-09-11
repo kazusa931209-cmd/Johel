@@ -52,6 +52,6 @@ COPY --from=build /app/apps/web/public ./apps/web/public
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-EXPOSE 4444
+EXPOSE 4321
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

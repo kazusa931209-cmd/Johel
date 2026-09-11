@@ -101,6 +101,30 @@ describe("parseCombineRecommendResponse", () => {
     });
   });
 
+  it("caps mapped experience ids per company", () => {
+    const payload = {
+      companies: [
+        {
+          companyRef: "C01",
+          experienceRefs: ["E01", "E02"],
+          rationale: "Too many refs.",
+        },
+      ],
+      warnings: [],
+    };
+
+    const result = parseCombineRecommendResponse(
+      JSON.stringify(payload),
+      refMaps,
+      1,
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.result.companies[0]?.experienceIds).toEqual([ownershipId]);
+  });
+
   it("dedupes mapped experience ids", () => {
     const payload = {
       companies: [

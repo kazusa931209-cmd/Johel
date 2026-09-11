@@ -35,8 +35,8 @@ function getCorsOrigins(): string[] {
   const origins = new Set([
     "http://127.0.0.1:4041",
     "http://localhost:4041",
-    "http://127.0.0.1:4444",
-    "http://localhost:4444",
+    "http://127.0.0.1:4321",
+    "http://localhost:4321",
   ]);
 
   const publicUrl = process.env.PUBLIC_URL?.trim();

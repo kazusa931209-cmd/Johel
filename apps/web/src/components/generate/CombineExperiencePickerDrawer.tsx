@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
+import { ExperienceDetailDrawer } from "@/components/ExperienceDetailDialog";
 import { AddButton } from "@/components/shared/action-icon-buttons";
 import { DRAWER_TRANSITION_MS, Drawer } from "@/components/shared/drawer";
+import type { ExperienceDetail } from "@/lib/api";
 import { matchesExperienceSearch } from "@/lib/experience-search";
 import { usePce } from "@/lib/pce";
 
@@ -23,6 +25,9 @@ export function CombineExperiencePickerDrawer({
   const t = useT();
   const { experiences, loading } = usePce();
   const [search, setSearch] = useState("");
+  const [viewExperience, setViewExperience] = useState<ExperienceDetail | null>(
+    null,
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const firstLinkableRef = useRef<HTMLLIElement>(null);
@@ -47,6 +52,11 @@ export function CombineExperiencePickerDrawer({
     );
     return match?.id ?? null;
   }, [filteredExperiences, linkedSet]);
+
+  useEffect(() => {
+    if (open) return;
+    setViewExperience(null);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -77,18 +87,23 @@ export function CombineExperiencePickerDrawer({
   function handleSelect(experienceId: string) {
     if (linkedSet.has(experienceId)) return;
     onSelect(experienceId);
-    onClose();
-    setSearch("");
   }
 
+  function closePicker() {
+    onClose();
+    setSearch("");
+    setViewExperience(null);
+  }
+
+  const detailOpen = viewExperience != null;
+
   return (
+    <>
     <Drawer
       title={t("generate.combine.pickerTitle")}
       open={open}
-      onClose={() => {
-        onClose();
-        setSearch("");
-      }}
+      onClose={closePicker}
+      closeOnEscape={!detailOpen}
     >
       <div
         ref={scrollRef}
@@ -120,13 +135,15 @@ export function CombineExperiencePickerDrawer({
                     }
                   >
                   <div className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
-                    <span
-                      className={`min-w-0 flex-1 truncate text-sm ${
-                        alreadyLinked ? "text-muted" : ""
+                    <button
+                      type="button"
+                      onClick={() => setViewExperience(experience)}
+                      className={`min-w-0 flex-1 truncate text-left text-sm ${
+                        alreadyLinked ? "text-muted" : "hover:text-foreground"
                       }`}
                     >
                       {experience.category}
-                    </span>
+                    </button>
                     {alreadyLinked ? (
                       <span className="shrink-0 text-xs text-muted">
                         {t("generate.combine.alreadyLinked")}
@@ -134,7 +151,10 @@ export function CombineExperiencePickerDrawer({
                     ) : (
                       <AddButton
                         label={t("generate.combine.linkExperienceAria")}
-                        onClick={() => handleSelect(experience.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleSelect(experience.id);
+                        }}
                       />
                     )}
                   </div>
@@ -146,5 +166,12 @@ export function CombineExperiencePickerDrawer({
         </div>
       </div>
     </Drawer>
+
+    <ExperienceDetailDrawer
+      experience={viewExperience}
+      open={detailOpen}
+      onClose={() => setViewExperience(null)}
+    />
+    </>
   );
 }

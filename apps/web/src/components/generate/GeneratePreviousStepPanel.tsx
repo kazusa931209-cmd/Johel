@@ -65,7 +65,7 @@ export function useGeneratePreviousStepPanel({
       : undefined;
 
   const previousHeaderRight = isFilteredJobPanel ? (
-    <span>
+    <span className="text-xs tabular-nums text-muted">
       {t("generate.job.filteredCharCountLabel", { count: filteredCharCount })}
     </span>
   ) : undefined;

@@ -36,11 +36,7 @@ function StepPanel({
           ) : (
             <span />
           )}
-          {headerRight ? (
-            <div className="shrink-0 text-xs tabular-nums text-muted">
-              {headerRight}
-            </div>
-          ) : null}
+          {headerRight ? <div className="shrink-0">{headerRight}</div> : null}
         </div>
       ) : null}
       <div

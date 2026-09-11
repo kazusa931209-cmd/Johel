@@ -131,6 +131,13 @@ export const en = {
           full: "Full pool (all cards full STAR)",
         },
       },
+      combineExperiencesPerCompanyMax: {
+        title: "Combine experiences per company",
+        description:
+          "Maximum experience cards the AI may link to each included company when you Suggest experiences on Generate / Combine. The advisor still prefers fewer cards when job overlap is thin.",
+        label: "Max per company",
+        option: "{count} cards",
+      },
     },
     prompts: {
       title: "Prompts",
@@ -430,6 +437,9 @@ export const en = {
     },
     job: {
       title: "Job",
+      reset: "Reset",
+      resetting: "Resetting…",
+      resetAria: "Reset job fields",
       filteredPreviewTitle: "Noise-Filtered Job Description",
       filteredPreviewHint:
         "Live preview after the noise filter. Later steps use this text when Do Verdict is off.",
@@ -719,6 +729,7 @@ export const en = {
     aiAgentSaveFailed: "Save failed",
     aiAgentSaved: "AI Agent settings saved.",
     generationSaveFailed: "Save failed.",
+    jobResetSuccess: "Job fields reset.",
     generationSaved: "Generation settings saved.",
     promptsLoadFailed: "Failed to load prompts.",
     promptSaveFailed: "Save failed.",

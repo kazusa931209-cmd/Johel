@@ -33,4 +33,6 @@ cp .env.example .env   # set JWT_SECRET
 docker compose up -d --build
 ```
 
-Open `http://127.0.0.1:4444` or `http://<host-lan-ip>:4444` from other devices on the LAN.
+Open `http://127.0.0.1:4321` or `http://<host-lan-ip>:4321` from other devices on the LAN.
+
+To rebuild after config changes (e.g. port), use `docker compose up -d --build --force-recreate`. Do **not** use `docker compose down -v` — that deletes the `johel-data` volume and your database.

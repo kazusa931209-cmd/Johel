@@ -12,6 +12,7 @@ import {
   type DownloadFormat,
   type ExperienceAdvisePoolDepth,
 } from "@/lib/api";
+import { formatThousandsSeparated } from "@/lib/helper";
 import {
   loadGenerationProcess,
   loadMe,
@@ -44,6 +45,10 @@ const POOL_DEPTH_OPTIONS: ExperienceAdvisePoolDepth[] = [
   "full",
 ];
 
+const COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+] as const;
+
 const DOWNLOAD_FORMAT_OPTIONS: DownloadFormat[] = ["docx", "pdf"];
 
 const DEFAULT_SETTINGS = {
@@ -52,6 +57,7 @@ const DEFAULT_SETTINGS = {
   resumeLanguage: "en" as ResumeLanguage,
   downloadFormat: "docx" as DownloadFormat,
   experienceAdvisePoolDepth: "normal" as ExperienceAdvisePoolDepth,
+  combineExperiencesPerCompanyMax: 5,
 };
 
 export default function GenerationSettingsPage() {
@@ -71,6 +77,8 @@ export default function GenerationSettingsPage() {
     useState<ExperienceAdvisePoolDepth>(
       DEFAULT_SETTINGS.experienceAdvisePoolDepth,
     );
+  const [combineExperiencesPerCompanyMax, setCombineExperiencesPerCompanyMax] =
+    useState(DEFAULT_SETTINGS.combineExperiencesPerCompanyMax);
   const [savedDoVerdict, setSavedDoVerdict] = useState(DEFAULT_SETTINGS.doVerdict);
   const [savedDoEvaluate, setSavedDoEvaluate] = useState(DEFAULT_SETTINGS.doEvaluate);
   const [savedResumeLanguage, setSavedResumeLanguage] = useState<ResumeLanguage>(
@@ -95,6 +103,9 @@ export default function GenerationSettingsPage() {
         setResumeLanguage(res.data.resumeLanguage);
         setDownloadFormat(res.data.downloadFormat);
         setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
+        setCombineExperiencesPerCompanyMax(
+          res.data.combineExperiencesPerCompanyMax,
+        );
         setSavedDoVerdict(res.data.doVerdict);
         setSavedDoEvaluate(res.data.doEvaluate);
         setSavedResumeLanguage(res.data.resumeLanguage);
@@ -122,6 +133,7 @@ export default function GenerationSettingsPage() {
       resumeLanguage,
       downloadFormat,
       experienceAdvisePoolDepth,
+      combineExperiencesPerCompanyMax,
     });
     setSaving(false);
     if (res.error || !res.data) {
@@ -134,6 +146,7 @@ export default function GenerationSettingsPage() {
     setResumeLanguage(res.data.resumeLanguage);
     setDownloadFormat(res.data.downloadFormat);
     setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
+    setCombineExperiencesPerCompanyMax(res.data.combineExperiencesPerCompanyMax);
     const settingsChanged =
       res.data.doVerdict !== savedDoVerdict ||
       res.data.doEvaluate !== savedDoEvaluate ||
@@ -309,6 +322,49 @@ export default function GenerationSettingsPage() {
                     <option key={option} value={option}>
                       {t(
                         `settings.generation.experienceAdvisePoolDepth.options.${option}`,
+                      )}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
+              </div>
+            </label>
+          )}
+        </div>
+
+        <div className="space-y-3 border-t border-border pt-4">
+          <h2 className="text-sm font-medium">
+            {t("settings.generation.combineExperiencesPerCompanyMax.title")}
+          </h2>
+          <p className="text-sm text-muted">
+            {t(
+              "settings.generation.combineExperiencesPerCompanyMax.description",
+            )}
+          </p>
+          {loading ? (
+            <p className="text-sm text-muted">
+              {t("settings.generation.process.loading")}
+            </p>
+          ) : (
+            <label className="block max-w-md space-y-1 text-sm">
+              <span>
+                {t(
+                  "settings.generation.combineExperiencesPerCompanyMax.label",
+                )}
+              </span>
+              <div className="relative">
+                <select
+                  value={combineExperiencesPerCompanyMax}
+                  onChange={(e) =>
+                    setCombineExperiencesPerCompanyMax(Number(e.target.value))
+                  }
+                  className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
+                >
+                  {COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {t(
+                        "settings.generation.combineExperiencesPerCompanyMax.option",
+                        { count: formatThousandsSeparated(option) },
                       )}
                     </option>
                   ))}

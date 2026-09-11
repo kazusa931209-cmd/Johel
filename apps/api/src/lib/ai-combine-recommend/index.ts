@@ -32,13 +32,14 @@ export type CombineRecommendRunInput = Omit<
 
 export async function runCombineRecommend(
   input: CombineRecommendRunInput,
+  maxExperiencesPerCompany = 5,
 ): Promise<CombineRecommendProviderResult> {
   const refMaps = buildCombineRecommendRefMaps({
     experienceIds: input.experienceIndex.map((item) => item.id),
     companyIds: input.companies.map((item) => item.companyId),
   });
 
-  const instructions = getCombineRecommendSystemPrompt();
+  const instructions = getCombineRecommendSystemPrompt(maxExperiencesPerCompany);
   const user = buildCombineRecommendUserPrompt(input);
 
   const response = await runOpenAiAuthorAdviseResponse(
@@ -47,7 +48,11 @@ export async function runCombineRecommend(
     user,
   );
 
-  const parsed = parseCombineRecommendResponse(response.outputText, refMaps);
+  const parsed = parseCombineRecommendResponse(
+    response.outputText,
+    refMaps,
+    maxExperiencesPerCompany,
+  );
   if (!parsed.success) {
     throw new Error(parsed.error);
   }

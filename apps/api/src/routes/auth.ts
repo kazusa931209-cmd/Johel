@@ -52,6 +52,8 @@ authRoutes.post("/register", async (c) => {
           downloadFormat: DEFAULT_GENERATION_PROCESS.downloadFormat,
           experienceAdvisePoolDepth:
             DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
+          combineExperiencesPerCompanyMax:
+            DEFAULT_GENERATION_PROCESS.combineExperiencesPerCompanyMax,
         },
       },
       prompt: {
