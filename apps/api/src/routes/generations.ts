@@ -1,7 +1,11 @@
+import { Prisma } from "@prisma/client";
 import { Hono } from "hono";
 import { z } from "zod";
 import { deriveProcessedStep } from "../lib/generation-processed-step.js";
-import { allocateGenerationPublicId } from "../lib/generation-public-id.js";
+import {
+  allocateGenerationPublicId,
+  incrementGenerationPublicId,
+} from "../lib/generation-public-id.js";
 import { findJobDuplicateMatch } from "../lib/job-embedding/duplicate-check.js";
 import { syncGenerationJobEmbeddingAfterSave } from "../lib/job-embedding/sync-after-save.js";
 import {
@@ -214,6 +218,17 @@ async function loadPromptAndProcess(userId: string) {
 
 export const generationsRoutes = new Hono();
 
+const GENERATION_CREATE_MAX_ATTEMPTS = 5;
+
+function isGenerationPublicIdConflict(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002" &&
+    Array.isArray(error.meta?.target) &&
+    error.meta.target.includes("publicId")
+  );
+}
+
 generationsRoutes.post("/start", async (c) => {
   const user = await requireUser(c);
   if (!user) {
@@ -221,39 +236,62 @@ generationsRoutes.post("/start", async (c) => {
   }
 
   const settings = await loadPromptAndProcess(user.id);
-  const publicId = await allocateGenerationPublicId(user.id);
+  const createData = {
+    userId: user.id,
+    activeStep: "Job",
+    jobJson: JSON.stringify({
+      method: "manual",
+      jobText: "",
+      acceptedMarkdown: null,
+      jdCompanyName: "",
+      jdJobRole: "",
+    }),
+    combineJson: JSON.stringify({
+      profileId: "",
+      language: settings.resumeLanguage,
+      emphasis: "",
+      companies: [],
+    }),
+    doVerdict: settings.doVerdict,
+    doEvaluate: settings.doEvaluate,
+    resumeLanguage: settings.resumeLanguage,
+    verdictPrompt: settings.verdictPrompt,
+    generatePrompt: settings.generatePrompt,
+    evaluatePrompt: settings.evaluatePrompt,
+  };
 
-  const generation = await prisma.generation.create({
-    data: {
-      publicId,
-      userId: user.id,
-      activeStep: "Job",
-      jobJson: JSON.stringify({
-        method: "manual",
-        jobText: "",
-        acceptedMarkdown: null,
-        jdCompanyName: "",
-        jdJobRole: "",
-      }),
-      combineJson: JSON.stringify({
-        profileId: "",
-        language: settings.resumeLanguage,
-        emphasis: "",
-        companies: [],
-      }),
-      doVerdict: settings.doVerdict,
-      doEvaluate: settings.doEvaluate,
-      resumeLanguage: settings.resumeLanguage,
-      verdictPrompt: settings.verdictPrompt,
-      generatePrompt: settings.generatePrompt,
-      evaluatePrompt: settings.evaluatePrompt,
-    },
-  });
+  let publicId = await allocateGenerationPublicId(user.id);
 
-  return c.json({
-    id: generation.id,
-    publicId: generation.publicId,
-  });
+  for (let attempt = 0; attempt < GENERATION_CREATE_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const generation = await prisma.generation.create({
+        data: {
+          publicId,
+          ...createData,
+        },
+      });
+
+      return c.json({
+        id: generation.id,
+        publicId: generation.publicId,
+      });
+    } catch (error) {
+      if (!isGenerationPublicIdConflict(error)) {
+        console.error(error);
+        return c.json({ error: "Failed to start a new generation." }, 500);
+      }
+
+      const bumped = incrementGenerationPublicId(publicId);
+      if (bumped) {
+        publicId = bumped;
+        continue;
+      }
+
+      publicId = await allocateGenerationPublicId(user.id);
+    }
+  }
+
+  return c.json({ error: "Failed to allocate a generation ID." }, 500);
 });
 
 generationsRoutes.put("/:id", async (c) => {

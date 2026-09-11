@@ -383,7 +383,7 @@ User browser (:4041)
 
 ### Public ID
 
-- Format: `GEN-YYYYMMDD-NNN` (per user, per calendar day; `NNN` zero-padded sequence)
+- Format: `GEN-YYYYMMDD-NNN` (per user, per calendar day; `NNN` zero-padded sequence). Allocation scans existing `publicId` values for the day and uses max(`NNN`) + 1 (not row count); `POST /generations/start` retries on `(userId, publicId)` unique conflicts.
 
 ### API
 

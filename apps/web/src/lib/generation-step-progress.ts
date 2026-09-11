@@ -48,17 +48,23 @@ export function deriveProcessedStepFromSession(
   if (session.resume) {
     return "Generate";
   }
-  if (
-    session.combine.profileId?.trim() ||
-    (session.combine.companies?.length ?? 0) > 0
-  ) {
+
+  const active = normalizeProcessedStep(session.activeStep);
+  const hasCombineSelection =
+    Boolean(session.combine.profileId?.trim()) ||
+    (session.combine.companies?.length ?? 0) > 0;
+
+  // Remembered Combine defaults are pre-filled on + New before the user reaches
+  // Combine; only count them once the timeline active step is Combine or later.
+  if (STEP_ORDER[active] >= STEP_ORDER.Combine && hasCombineSelection) {
     return "Combine";
   }
+
   if (session.job.acceptedMarkdown?.trim()) {
     return "Verdict";
   }
   if (session.job.jobText?.trim()) {
     return "Job";
   }
-  return normalizeProcessedStep(session.activeStep);
+  return active;
 }

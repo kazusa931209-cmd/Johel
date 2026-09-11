@@ -666,20 +666,34 @@ export default function GeneratePage() {
     [generationPublicId, job.jdCompanyName, job.jdJobRole],
   );
 
+  const runNewGeneration = useCallback(async () => {
+    setResetting(true);
+    const result = await resetSession();
+    setResetting(false);
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+    setNewConfirmOpen(false);
+  }, [resetSession, toast]);
+
   const requestNewGeneration = useCallback(() => {
-    if (processBusy) return;
+    if (processBusy || resetting) return;
     if (needsNewGenerationConfirm(normalizedActiveStep, visibleSteps)) {
       setNewConfirmOpen(true);
       return;
     }
-    void resetSession();
-  }, [normalizedActiveStep, processBusy, resetSession, visibleSteps]);
+    void runNewGeneration();
+  }, [
+    normalizedActiveStep,
+    processBusy,
+    resetting,
+    runNewGeneration,
+    visibleSteps,
+  ]);
 
-  async function confirmNewGeneration() {
-    setResetting(true);
-    await resetSession();
-    setResetting(false);
-    setNewConfirmOpen(false);
+  function confirmNewGeneration() {
+    void runNewGeneration();
   }
 
   function confirmRunWithStaleDownstream() {

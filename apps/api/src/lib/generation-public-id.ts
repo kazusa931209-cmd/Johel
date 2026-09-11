@@ -7,22 +7,51 @@ function formatDatePrefix(date: Date): string {
   return `${year}${month}${day}`;
 }
 
+export function nextGenerationPublicId(
+  prefix: string,
+  existingPublicIds: readonly string[],
+): string {
+  let maxSeq = 0;
+  for (const publicId of existingPublicIds) {
+    if (!publicId.startsWith(prefix)) {
+      continue;
+    }
+    const seq = Number.parseInt(publicId.slice(prefix.length), 10);
+    if (Number.isFinite(seq) && seq > maxSeq) {
+      maxSeq = seq;
+    }
+  }
+
+  return `${prefix}${String(maxSeq + 1).padStart(3, "0")}`;
+}
+
+export function incrementGenerationPublicId(publicId: string): string | null {
+  const lastDash = publicId.lastIndexOf("-");
+  if (lastDash < 0) {
+    return null;
+  }
+  const prefix = publicId.slice(0, lastDash + 1);
+  const seq = Number.parseInt(publicId.slice(lastDash + 1), 10);
+  if (!Number.isFinite(seq)) {
+    return null;
+  }
+  return `${prefix}${String(seq + 1).padStart(3, "0")}`;
+}
+
 export async function allocateGenerationPublicId(userId: string): Promise<string> {
   const now = new Date();
   const prefix = `GEN-${formatDatePrefix(now)}-`;
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endOfDay = new Date(startOfDay);
-  endOfDay.setDate(endOfDay.getDate() + 1);
 
-  const count = await prisma.generation.count({
+  const existing = await prisma.generation.findMany({
     where: {
       userId,
-      createdAt: {
-        gte: startOfDay,
-        lt: endOfDay,
-      },
+      publicId: { startsWith: prefix },
     },
+    select: { publicId: true },
   });
 
-  return `${prefix}${String(count + 1).padStart(3, "0")}`;
+  return nextGenerationPublicId(
+    prefix,
+    existing.map((row) => row.publicId),
+  );
 }

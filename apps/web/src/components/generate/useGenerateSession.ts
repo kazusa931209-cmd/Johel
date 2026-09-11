@@ -63,6 +63,7 @@ export function useGenerateSession() {
   const sessionRef = useRef(session);
   sessionRef.current = session;
   const startingRef = useRef(false);
+  const allocationEpochRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,9 +123,16 @@ export function useGenerateSession() {
 
   useEffect(() => {
     if (!ready || !userId || session.generationId) return;
+    const epoch = allocationEpochRef.current;
     let cancelled = false;
     void ensureGenerationStarted().then((started) => {
-      if (cancelled || !started) return;
+      if (
+        cancelled ||
+        !started ||
+        epoch !== allocationEpochRef.current
+      ) {
+        return;
+      }
       setSession((current) => ({
         ...current,
         generationId: started.id,
@@ -264,12 +272,14 @@ export function useGenerateSession() {
     [],
   );
 
-  const resetSession = useCallback(async () => {
+  const resetSession = useCallback(async (): Promise<{ error?: string }> => {
+    allocationEpochRef.current += 1;
     await saveSnapshot();
     if (userId) {
       clearGenerateSession(userId);
     }
-    const started = await ensureGenerationStarted();
+    const res = await allocateNewGeneration();
+    const started = res.data;
     const combine = seedCombineFromDefaults(EMPTY_COMBINE_SNAPSHOT, userId);
     setSession({
       ...EMPTY_GENERATE_SESSION,
@@ -277,7 +287,13 @@ export function useGenerateSession() {
       generationPublicId: started?.publicId ?? null,
       combine,
     });
-  }, [ensureGenerationStarted, saveSnapshot, userId]);
+    if (!started) {
+      return {
+        error: res.error ?? "Failed to start a new generation.",
+      };
+    }
+    return {};
+  }, [saveSnapshot, userId]);
 
   const markFinalized = useCallback(() => {
     setSession((current) => {
