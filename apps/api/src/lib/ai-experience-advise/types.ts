@@ -52,6 +52,7 @@ export type ExperienceAdviseRequest = {
   graph: ExperienceAdviseGraph;
   userFacts: string;
   expandedIds: Set<string>;
+  indexIds: Set<string>;
 };
 
 export type ExperienceAdviseUsage = {

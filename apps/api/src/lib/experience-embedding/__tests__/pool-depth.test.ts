@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeExperienceAdvisePoolDepth,
   resolveExperienceAdviseFullStarK,
+  resolveExperienceAdviseIndexK,
 } from "../pool-depth.js";
 
 describe("pool-depth", () => {
@@ -10,6 +11,13 @@ describe("pool-depth", () => {
     expect(resolveExperienceAdviseFullStarK("normal")).toBe(10);
     expect(resolveExperienceAdviseFullStarK("thorough")).toBe(25);
     expect(resolveExperienceAdviseFullStarK("full")).toBeNull();
+  });
+
+  it("maps presets to compact index counts", () => {
+    expect(resolveExperienceAdviseIndexK("compact")).toBe(20);
+    expect(resolveExperienceAdviseIndexK("normal")).toBe(40);
+    expect(resolveExperienceAdviseIndexK("thorough")).toBe(80);
+    expect(resolveExperienceAdviseIndexK("full")).toBeNull();
   });
 
   it("falls back to normal for invalid values", () => {

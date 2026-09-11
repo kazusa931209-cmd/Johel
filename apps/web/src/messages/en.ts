@@ -122,7 +122,7 @@ export const en = {
       experienceAdvisePoolDepth: {
         title: "Experience advisor pool depth",
         description:
-          "How many experience cards receive full STAR text in Suggest prompts. All cards always appear in the compact index; higher depth improves duplicate detection at higher token cost.",
+          "How many experience cards receive full STAR text in Suggest prompts. Large pools also cap the compact index by depth; higher depth improves duplicate detection at higher token cost.",
         label: "Pool depth",
         options: {
           compact: "Compact (5 full STAR cards)",

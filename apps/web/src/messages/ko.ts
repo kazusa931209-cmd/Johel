@@ -124,7 +124,7 @@ export const ko: MessageTree = {
       experienceAdvisePoolDepth: {
         title: "경험 제안 풀 깊이",
         description:
-          "제안(Suggest) 프롬프트에 전체 STAR 텍스트를 포함할 경험 카드 수입니다. 모든 카드는 항상 요약 인덱스에 포함되며, 깊이를 높이면 중복 검출은 좋아지지만 토큰 사용량이 늘어납니다.",
+          "제안(Suggest) 프롬프트에 전체 STAR 텍스트를 포함할 경험 카드 수입니다. 큰 풀에서는 요약 인덱스도 깊이에 따라 제한되며, 깊이를 높이면 중복 검출은 좋아지지만 토큰 사용량이 늘어납니다.",
         label: "풀 깊이",
         options: {
           compact: "간략 (전체 STAR 5장)",

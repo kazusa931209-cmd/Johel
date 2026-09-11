@@ -28,7 +28,7 @@ function makeExperience(
 }
 
 describe("formatExperiencePoolForAdvise", () => {
-  it("uses full STAR for expanded cards and index for all cards in create mode", () => {
+  it("uses full STAR for expanded cards and index for non-expanded cards in create mode", () => {
     const experiences = [
       makeExperience("exp-1", "APIs"),
       makeExperience("exp-2", "Sync"),
@@ -39,18 +39,19 @@ describe("formatExperiencePoolForAdvise", () => {
         experiences,
       },
       new Set(["exp-1"]),
+      new Set(["exp-2"]),
     );
 
     expect(pool).toContain("### Expanded candidates (full STAR)");
     expect(pool).toContain("### APIs (id: exp-1)");
     expect(pool).toContain("Actions:\n- **Act**");
-    expect(pool).toContain("### Experience index (all cards");
-    expect(pool).toContain("- exp-1: APIs —");
+    expect(pool).toContain("### Experience index (other pool cards");
     expect(pool).toContain("- exp-2: Sync —");
+    expect(pool).not.toContain("- exp-1: APIs —");
     expect(pool).not.toContain("### Sync (id: exp-2)");
   });
 
-  it("uses full STAR for target and index for all cards in edit mode", () => {
+  it("uses full STAR for target and index for other cards in edit mode", () => {
     const target = makeExperience("exp-target", "Edit me");
     const other = makeExperience("exp-other", "Other card");
 
@@ -60,16 +61,37 @@ describe("formatExperiencePoolForAdvise", () => {
         experiences: [target, other],
       },
       new Set(["exp-target"]),
+      new Set(["exp-other"]),
     );
 
     expect(pool).toContain("### Edit target and expanded candidates (full STAR)");
     expect(pool).toContain("### Edit me (id: exp-target)");
     expect(pool).toContain("Actions:\n- **Act**");
-    expect(pool).toContain("### Experience index (all cards");
     expect(pool).toContain("- exp-other: Other card — - **Legacy issue**");
     expect(pool).not.toMatch(
       /### Other card \(id: exp-other\)[\s\S]*Actions:/,
     );
+  });
+
+  it("notes truncation when the index omits non-expanded cards", () => {
+    const experiences = Array.from({ length: 5 }, (_, index) =>
+      makeExperience(`exp-${index + 1}`, `Card ${index + 1}`),
+    );
+
+    const pool = formatExperiencePoolForAdvise(
+      {
+        targetExperienceId: null,
+        experiences,
+      },
+      new Set(["exp-1"]),
+      new Set(["exp-2"]),
+    );
+
+    expect(pool).toContain(
+      "### Experience index (1 of 5 pool cards — id, category, problem summary only; expanded cards above omitted)",
+    );
+    expect(pool).toContain("- exp-2:");
+    expect(pool).not.toContain("- exp-3:");
   });
 
   it("returns empty pool marker when there are no experiences", () => {
@@ -79,6 +101,7 @@ describe("formatExperiencePoolForAdvise", () => {
           targetExperienceId: "missing",
           experiences: [],
         },
+        new Set(),
         new Set(),
       ),
     ).toBe("## Experience pool\n\n(none)");
@@ -91,6 +114,7 @@ describe("buildExperienceAdviseUserPrompt", () => {
       apiKey: "key",
       userFacts: "Added caching layer.",
       expandedIds: new Set(["exp-1"]),
+      indexIds: new Set(),
       graph: {
         targetExperienceId: "exp-1",
         experiences: [makeExperience("exp-1", "APIs")],
@@ -107,6 +131,7 @@ describe("buildExperienceAdviseUserPrompt", () => {
       apiKey: "key",
       userFacts: "Built a new service.",
       expandedIds: new Set(["exp-1"]),
+      indexIds: new Set(),
       graph: {
         targetExperienceId: null,
         experiences: [makeExperience("exp-1", "APIs")],

@@ -28,7 +28,7 @@ const SHARED_RULES = `You are an AI Experience authoring advisor for JoHEL, a re
 
 Your job: given the user's Experience pool and what they actually did, produce one or more operations that create or update STAR capability cards.
 
-Pool layout: every card appears in the compact index (id, category, problem summary). Selected cards also show full STAR (problem, actions, outcome) for duplicate detection and update decisions.
+Pool layout: expanded cards show full STAR (problem, actions, outcome) for duplicate detection and update decisions. Other relevant pool cards appear in a compact index (id, category, problem summary). Large pools truncate the index to the most relevant non-expanded cards; the prompt notes total pool size when truncated.
 
 Authoring rules (must follow):
 - Experience holds one capability unit (STAR): category, problem, actions, outcome. One card = one capability (one problem solved), not one technology.
@@ -76,6 +76,7 @@ function formatExperienceIndexLine(
 export function formatExperiencePoolForAdvise(
   graph: ExperienceAdviseGraph,
   expandedIds: Set<string>,
+  indexIds: Set<string>,
 ): string {
   const { experiences } = graph;
   if (experiences.length === 0) {
@@ -85,6 +86,10 @@ export function formatExperiencePoolForAdvise(
   const expanded = experiences.filter((experience) =>
     expandedIds.has(experience.id),
   );
+  const indexed = experiences.filter((experience) =>
+    indexIds.has(experience.id),
+  );
+  const nonExpandedCount = experiences.length - expanded.length;
 
   const sections: string[] = ["## Experience pool", ""];
 
@@ -99,12 +104,18 @@ export function formatExperiencePoolForAdvise(
     );
   }
 
-  sections.push(
-    "",
-    "### Experience index (all cards — id, category, problem summary only)",
-    "",
-    ...experiences.map((experience) => formatExperienceIndexLine(experience)),
-  );
+  if (indexed.length > 0) {
+    const truncated = indexed.length < nonExpandedCount;
+    const indexHeading = truncated
+      ? `### Experience index (${indexed.length} of ${experiences.length} pool cards — id, category, problem summary only; expanded cards above omitted)`
+      : "### Experience index (other pool cards — id, category, problem summary only; expanded cards above omitted)";
+    sections.push(
+      "",
+      indexHeading,
+      "",
+      ...indexed.map((experience) => formatExperienceIndexLine(experience)),
+    );
+  }
 
   return sections.join("\n").trimEnd();
 }
@@ -120,7 +131,11 @@ export function buildExperienceAdviseUserPrompt(
     "Draft Experience STAR cards from the user's facts.",
     targetLine,
     "",
-    formatExperiencePoolForAdvise(input.graph, input.expandedIds),
+    formatExperiencePoolForAdvise(
+      input.graph,
+      input.expandedIds,
+      input.indexIds,
+    ),
     "",
     "## User facts",
     "",
