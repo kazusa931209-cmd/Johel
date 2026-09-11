@@ -126,7 +126,79 @@ Migrations run automatically when the container starts. Pending migrations apply
 
 Keep the same `JWT_SECRET` in `.env` across image updates. Changing it only forces users to log in again; data remains in SQLite.
 
-Each Mac that runs the container has its **own** `johel-data` volume. Case A and Case B are separate databases unless you back up and restore manually (not covered here).
+Each Mac that runs the container has its **own** `johel-data` volume. Case A and Case B are separate databases unless you copy a database file manually (see below).
+
+---
+
+## Replace the Docker database with a local file
+
+Use this when you want the container to use your **local working SQLite file** instead of what is already in the `johel-data` volume — for example, copying `apps/api/prisma/dev.db` from dev into Docker.
+
+| Location | Path |
+| --- | --- |
+| Local dev (default) | `apps/api/prisma/dev.db` |
+| Inside the container | `/data/johel.db` (on volume `johel-data`) |
+
+Run all commands from the **repo root** (Case A) or from the folder that contains `docker-compose.yml` (Case B).
+
+### Recommended — `docker compose cp`
+
+```bash
+# Stop the app (volume is kept)
+docker compose stop
+
+# Optional — backup the current Docker database
+docker compose cp app:/data/johel.db ./johel-docker-backup.db
+
+# Overwrite the container database with your working file
+docker compose cp apps/api/prisma/dev.db app:/data/johel.db
+
+# Start again (migrations run on start)
+docker compose up -d
+```
+
+The Compose service name is `app`. Step three replaces `/data/johel.db` in the volume.
+
+### Alternative — copy via a helper container
+
+Use this if the app container is not available (for example, after `docker compose down`):
+
+```bash
+docker compose down   # do NOT pass -v
+
+docker run --rm \
+  -v johel_johel-data:/data \
+  -v "$(pwd)/apps/api/prisma/dev.db":/backup/dev.db:ro \
+  alpine sh -c "cp /backup/dev.db /data/johel.db"
+
+docker compose up -d
+```
+
+The volume name may differ. List volumes and use the actual name (often `<project-folder>_johel-data`):
+
+```bash
+docker volume ls | grep johel
+```
+
+On Case B (another Mac), adjust the source path to wherever your `.db` file lives before running the helper container.
+
+### After replacing
+
+Verify the app is healthy:
+
+```bash
+curl -s http://127.0.0.1:4444/backend/health
+docker compose logs -f
+```
+
+Open `http://127.0.0.1:4444` and confirm your data appears as expected.
+
+### Notes
+
+- **Schema:** The entrypoint runs `prisma migrate deploy` on every start. Your file should match the current migrations (run `pnpm db:migrate` locally first if needed). If migration history is incompatible, see [Keeping the database](#keeping-the-database) above.
+- **`JWT_SECRET`:** Replacing the database does not change stored data. A different `JWT_SECRET` in `.env` only forces users to log in again.
+- **Do not use `docker compose down -v`:** That deletes the volume and all data.
+- **Do not bind-mount the database from macOS:** Keep using the named volume `johel-data` (see [`technology.md`](./technology.md)).
 
 ---
 

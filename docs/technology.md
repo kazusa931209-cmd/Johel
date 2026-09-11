@@ -307,6 +307,7 @@ User browser (:4041)
 - **Database:** SQLite at `file:/data/johel.db` on named volume `johel-data` (Docker Desktop VM — do not bind-mount to macOS for SQLite)
 - **Start:** entrypoint runs `prisma migrate deploy`, starts API, waits for `GET /health`, then starts Next on `:4444` (`WEB_PORT`)
 - **Update image:** rebuild and `docker compose up -d --force-recreate` (never `down -v`); Case B also uses `docker save` / `docker load` between Macs
+- **Replace database:** copy a local SQLite file (e.g. `apps/api/prisma/dev.db`) into `/data/johel.db` on `johel-data` — see [`docker.md` — Replace the Docker database with a local file](./docker.md#replace-the-docker-database-with-a-local-file)
 - **Secrets:** `JWT_SECRET` from root `.env` via Compose (not in image)
 - **Next build:** `output: "standalone"` and `outputFileTracingRoot` in `apps/web/next.config.ts` for monorepo tracing; image build copies workspace packages `packages/resume` and `packages/prompt-defaults`
 - **pnpm in Docker:** `pnpm install --store-dir /pnpm/store` with pnpm **9.15.9** in the image (pnpm 12 blocks build scripts without approve-builds)
