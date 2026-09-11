@@ -1,4 +1,4 @@
-import { prisma } from "../prisma.js";
+import { getUserAiSettings } from "../user-ai-settings.js";
 import { upsertGenerationJobEmbedding } from "./upsert.js";
 
 export async function syncGenerationJobEmbeddingAfterSave(input: {
@@ -6,16 +6,14 @@ export async function syncGenerationJobEmbeddingAfterSave(input: {
   generationId: string;
   jobJson: string;
 }): Promise<void> {
-  const setting = await prisma.setting.findUnique({
-    where: { userId: input.userId },
-  });
-  if (!setting?.apiKey) {
+  const aiSettings = await getUserAiSettings(input.userId);
+  if (!aiSettings) {
     return;
   }
 
   await upsertGenerationJobEmbedding({
     userId: input.userId,
-    apiKey: setting.apiKey,
+    apiKey: aiSettings.apiKey,
     generationId: input.generationId,
     jobJson: input.jobJson,
   });

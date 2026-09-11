@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { AI_PROVIDER_IDS } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
+import { encryptApiKeyForStorage } from "../lib/secrets/api-key.js";
 import { maskApiKey, requireUser } from "../lib/session.js";
 import { settingsProcessRoutes } from "./settings-process.js";
 
@@ -50,16 +51,18 @@ settingsRoutes.put("/", async (c) => {
     return c.json({ error: "Invalid provider or API key" }, 400);
   }
 
+  const storedApiKey = encryptApiKeyForStorage(apiKey);
+
   const setting = await prisma.setting.upsert({
     where: { userId: user.id },
     create: {
       userId: user.id,
       provider: parsed.data.provider ?? "openai",
-      apiKey,
+      apiKey: storedApiKey,
     },
     update: {
       provider: parsed.data.provider ?? "openai",
-      apiKey,
+      apiKey: storedApiKey,
     },
   });
 

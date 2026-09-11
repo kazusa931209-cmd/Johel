@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 
 const COOKIE_NAME = "johel_session";
-const JWT_TTL = "7d";
+const DEFAULT_SESSION_TTL = "7d";
 
 function getJwtSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET;
@@ -10,6 +10,24 @@ function getJwtSecret(): Uint8Array {
     throw new Error("JWT_SECRET is not set");
   }
   return new TextEncoder().encode(secret);
+}
+
+function getSessionTtl(): string {
+  const configured = process.env.SESSION_TTL?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_SESSION_TTL;
+}
+
+export function sessionMaxAgeSeconds(): number {
+  const ttl = getSessionTtl();
+  const dayMatch = ttl.match(/^(\d+)d$/);
+  if (dayMatch) {
+    return Number.parseInt(dayMatch[1], 10) * 60 * 60 * 24;
+  }
+  const hourMatch = ttl.match(/^(\d+)h$/);
+  if (hourMatch) {
+    return Number.parseInt(hourMatch[1], 10) * 60 * 60;
+  }
+  return 60 * 60 * 24 * 7;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -23,33 +41,48 @@ export async function verifyPassword(
   return bcrypt.compare(password, passwordHash);
 }
 
-export async function signSessionToken(userId: string, email: string): Promise<string> {
-  return new SignJWT({ email })
+export async function signSessionToken(
+  userId: string,
+  email: string,
+  sessionVersion: number,
+): Promise<string> {
+  return new SignJWT({ email, sv: sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(userId)
     .setIssuedAt()
-    .setExpirationTime(JWT_TTL)
+    .setExpirationTime(getSessionTtl())
     .sign(getJwtSecret());
 }
 
 export async function verifySessionToken(
   token: string,
-): Promise<{ userId: string; email: string } | null> {
+): Promise<{ userId: string; email: string; sessionVersion: number } | null> {
   try {
     const { payload } = await jwtVerify(token, getJwtSecret());
     const userId = payload.sub;
     const email = typeof payload.email === "string" ? payload.email : null;
-    if (!userId || !email) return null;
-    return { userId, email };
+    const sessionVersion =
+      typeof payload.sv === "number"
+        ? payload.sv
+        : typeof payload.sv === "string"
+          ? Number.parseInt(payload.sv, 10)
+          : 0;
+    if (!userId || !email || !Number.isFinite(sessionVersion)) {
+      return null;
+    }
+    return { userId, email, sessionVersion };
   } catch {
     return null;
   }
 }
 
-export function sessionCookieOptions(maxAgeSeconds = 60 * 60 * 24 * 7) {
+export function sessionCookieOptions(maxAgeSeconds = sessionMaxAgeSeconds()) {
+  const secure =
+    process.env.TRUST_PROXY === "true" || process.env.PUBLIC_DEPLOY === "true";
+
   return {
     httpOnly: true,
-    secure: false,
+    secure,
     sameSite: "Lax" as const,
     path: "/",
     maxAge: maxAgeSeconds,

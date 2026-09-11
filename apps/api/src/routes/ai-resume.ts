@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { isAiProviderId } from "../lib/ai-provider.js";
-import { runAiResume, type AiProviderId } from "../lib/ai-resume/index.js";
+import { runAiResume } from "../lib/ai-resume/index.js";
+import { getUserAiSettings } from "../lib/user-ai-settings.js";
 import { assembleFromCombineSnapshot } from "../lib/resume/assemble-input.js";
 import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
@@ -54,10 +54,8 @@ aiResumeRoutes.post("/", async (c) => {
     );
   }
 
-  const setting = await prisma.setting.findUnique({
-    where: { userId: user.id },
-  });
-  if (!setting?.apiKey || !setting.provider) {
+  const aiSettings = await getUserAiSettings(user.id);
+  if (!aiSettings) {
     return c.json(
       {
         error:
@@ -67,14 +65,7 @@ aiResumeRoutes.post("/", async (c) => {
     );
   }
 
-  if (!isAiProviderId(setting.provider)) {
-    return c.json(
-      { error: `Unsupported AI provider: ${setting.provider}` },
-      400,
-    );
-  }
-
-  const provider: AiProviderId = setting.provider;
+  const provider = aiSettings.provider;
 
   const prompts = await prisma.prompt.findUnique({
     where: { userId: user.id },
@@ -112,7 +103,7 @@ aiResumeRoutes.post("/", async (c) => {
     );
 
     const result = await runAiResume(provider, {
-      apiKey: setting.apiKey,
+      apiKey: aiSettings.apiKey,
       generatePrompt: compiledGeneratePrompt,
       input: generationInput,
     });

@@ -64,7 +64,7 @@ authRoutes.post("/register", async (c) => {
     },
   });
 
-  const token = await signSessionToken(user.id, user.email);
+  const token = await signSessionToken(user.id, user.email, user.sessionVersion);
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
 
   return c.json(
@@ -86,7 +86,7 @@ authRoutes.post("/login", async (c) => {
     return c.json({ error: "Invalid login ID or password" }, 401);
   }
 
-  const token = await signSessionToken(user.id, user.email);
+  const token = await signSessionToken(user.id, user.email, user.sessionVersion);
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
 
   return c.json({ id: user.id, loginId: user.email, role: user.role });
@@ -121,10 +121,26 @@ authRoutes.put("/password", async (c) => {
   }
 
   const passwordHash = await hashPassword(parsed.data.newPassword);
-  await prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash },
+    data: {
+      passwordHash,
+      sessionVersion: { increment: 1 },
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      sessionVersion: true,
+    },
   });
+
+  const token = await signSessionToken(
+    updated.id,
+    updated.email,
+    updated.sessionVersion,
+  );
+  setCookie(c, COOKIE_NAME, token, sessionCookieOptions());
 
   return c.json({ ok: true });
 });

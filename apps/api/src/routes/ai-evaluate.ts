@@ -1,8 +1,8 @@
 import { generatedResumeSchema } from "@johel/resume";
 import { Hono } from "hono";
 import { z } from "zod";
-import { runAiEvaluate, type AiProviderId } from "../lib/ai-evaluate/index.js";
-import { isAiProviderId } from "../lib/ai-provider.js";
+import { runAiEvaluate } from "../lib/ai-evaluate/index.js";
+import { getUserAiSettings } from "../lib/user-ai-settings.js";
 import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
@@ -52,10 +52,8 @@ aiEvaluateRoutes.post("/", async (c) => {
     );
   }
 
-  const setting = await prisma.setting.findUnique({
-    where: { userId: user.id },
-  });
-  if (!setting?.apiKey || !setting.provider) {
+  const aiSettings = await getUserAiSettings(user.id);
+  if (!aiSettings) {
     return c.json(
       {
         error:
@@ -79,14 +77,7 @@ aiEvaluateRoutes.post("/", async (c) => {
     );
   }
 
-  if (!isAiProviderId(setting.provider)) {
-    return c.json(
-      { error: `Unsupported AI provider: ${setting.provider}` },
-      400,
-    );
-  }
-
-  const provider: AiProviderId = setting.provider;
+  const provider = aiSettings.provider;
 
   try {
     const compiledEvaluatePrompt = compileInstruction(
@@ -99,7 +90,7 @@ aiEvaluateRoutes.post("/", async (c) => {
       jobContext,
       resume: parsed.data.resume,
       evaluatePrompt: compiledEvaluatePrompt,
-      apiKey: setting.apiKey,
+      apiKey: aiSettings.apiKey,
     });
 
     const generationId = await resolveOwnedGenerationId(

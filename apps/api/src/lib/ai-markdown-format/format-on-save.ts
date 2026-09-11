@@ -1,5 +1,4 @@
-import { isAiProviderId, type AiProviderId } from "../ai-provider.js";
-import { prisma } from "../prisma.js";
+import { requireUserAiSettings } from "../user-ai-settings.js";
 import { recordAiUsage } from "../record-ai-usage.js";
 import {
   areCompanyFieldsUnchanged,
@@ -54,24 +53,6 @@ function finalizeStoredMarkdown(
   return finalizeFormattedMarkdown(kind, markdown);
 }
 
-async function loadUserAiSettings(userId: string): Promise<{
-  provider: AiProviderId;
-  apiKey: string;
-}> {
-  const setting = await prisma.setting.findUnique({
-    where: { userId },
-  });
-  if (!setting?.apiKey || !setting.provider) {
-    throw new Error(
-      "AI Agent is not configured. Save a provider and API key in Settings first.",
-    );
-  }
-  if (!isAiProviderId(setting.provider)) {
-    throw new Error(`Unsupported AI provider: ${setting.provider}`);
-  }
-  return { provider: setting.provider, apiKey: setting.apiKey };
-}
-
 export async function formatMarkdownOnSave(
   input: FormatMarkdownOnSaveInput,
 ): Promise<FormatMarkdownOnSaveResult> {
@@ -83,7 +64,7 @@ export async function formatMarkdownOnSave(
     };
   }
 
-  const { provider, apiKey } = await loadUserAiSettings(input.userId);
+  const { provider, apiKey } = await requireUserAiSettings(input.userId);
   const result = await runAiMarkdownFormat(provider, {
     kind: input.kind,
     text: submitted,
@@ -133,7 +114,7 @@ export async function formatExperienceFieldsOnSave(
     };
   }
 
-  const { provider, apiKey } = await loadUserAiSettings(input.userId);
+  const { provider, apiKey } = await requireUserAiSettings(input.userId);
   const result = await runAiExperienceFieldsMarkdownFormat(provider, {
     problem,
     actions,
@@ -206,7 +187,7 @@ export async function formatCompanyFieldsOnSave(
     };
   }
 
-  const { provider, apiKey } = await loadUserAiSettings(input.userId);
+  const { provider, apiKey } = await requireUserAiSettings(input.userId);
   const result = await runAiCompanyFieldsMarkdownFormat(provider, {
     whatCompanyIs,
     domainAndStack,

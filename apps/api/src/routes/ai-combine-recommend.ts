@@ -6,8 +6,8 @@ import {
   runCombineRecommend,
 } from "../lib/ai-combine-recommend/index.js";
 import { withTokenUsed } from "../lib/ai-token-used-response.js";
-import { isAiProviderId, type AiProviderId } from "../lib/ai-provider.js";
 import { prisma } from "../lib/prisma.js";
+import { getUserAiSettings } from "../lib/user-ai-settings.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
@@ -50,10 +50,8 @@ aiCombineRecommendRoutes.post("/", async (c) => {
     return c.json({ error: loaded.error }, 400);
   }
 
-  const setting = await prisma.setting.findUnique({
-    where: { userId: user.id },
-  });
-  if (!setting?.apiKey || !setting.provider) {
+  const aiSettings = await getUserAiSettings(user.id);
+  if (!aiSettings) {
     return c.json(
       {
         error:
@@ -63,14 +61,7 @@ aiCombineRecommendRoutes.post("/", async (c) => {
     );
   }
 
-  if (!isAiProviderId(setting.provider)) {
-    return c.json(
-      { error: `Unsupported AI provider: ${setting.provider}` },
-      400,
-    );
-  }
-
-  const provider: AiProviderId = setting.provider;
+  const provider = aiSettings.provider;
 
   const profile = await prisma.profile.findFirst({
     where: { id: loaded.input.profileId, userId: user.id },
@@ -114,7 +105,7 @@ aiCombineRecommendRoutes.post("/", async (c) => {
   }
 
   const runInput = {
-    apiKey: setting.apiKey,
+    apiKey: aiSettings.apiKey,
     jobDescription: loaded.input.jobDescription,
     acceptedMarkdown: loaded.input.acceptedMarkdown,
     profileId: loaded.input.profileId,

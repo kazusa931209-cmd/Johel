@@ -19,13 +19,13 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | UI | Next.js (App Router) + Tailwind CSS | Frontend only; no paid UI SaaS |
 | Database | SQLite via Prisma | On-disk multi-user data; no hosted DB cost |
 | Auth | Login ID + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP. API field `loginId`; DB column `users.email` stores the login ID (no email-format validation). |
-| Secrets / API keys | Per-user `Setting.apiKey` — **plaintext today** (Phase 5); **AES-256-GCM at rest** (Phase 83) | Masked on read; server `ENCRYPTION_KEY` |
+| Secrets / API keys | Per-user `Setting.apiKey` — **AES-256-GCM at rest** when `ENCRYPTION_KEY` is set (Phase 83); plaintext only in local dev without the key | Masked on read; decrypt via `getUserAiSettings` |
 | LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `apps/api` | User-owned keys; Anthropic adapters later |
 | JD ingest (later) | Manual / URL (`fetch` + cheerio) / file (`pdf-parse`, `mammoth`) | No scraping or parse SaaS |
 | Resume export | `docx`; `pdf-lib` (PDF) | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
 | Package manager | pnpm workspaces | Monorepo (`apps/api`, `apps/web`) |
-| Testing | Vitest; Playwright smoke (Phase 83); GitHub Actions CI (Phase 83) | Unit tests today; integration + CI in Phase 83 |
+| Testing | Vitest; GitHub Actions CI (Phase 83) | Unit + auth/security integration tests; Playwright smoke deferred |
 
 ## Architecture sketch
 
@@ -104,12 +104,12 @@ User browser (:4041)
 
 ## AI Agent settings (Phase 5, 21)
 
-- Provider ids: `cursor` (UI label: Cursor AI Agent), `openai` (UI label: OpenAI)
+- Provider id: `openai` (UI label: OpenAI)
 - `GET /settings` → `{ provider, apiKeyMasked }` or both `null` if unset
-- `PUT /settings` → `{ provider: "cursor" | "openai", apiKey }` (min 8 chars); upsert; returns `{ provider, apiKeyMasked }`
-- One active provider + one API key per user in `settings`; switching provider requires saving that provider’s key
+- `PUT /settings` → `{ provider: "openai", apiKey }` (min 8 chars); upsert; returns `{ provider, apiKeyMasked }`
+- One active provider + one API key per user in `settings`
 - Mask derived at read time: first 4 + ` ******** ` + last 4 (e.g. `4F28 ******** 3429`)
-- Full `apiKey` is stored plaintext in SQLite; never returned to the client
+- `apiKey` encrypted at rest with AES-256-GCM when `ENCRYPTION_KEY` is set (Phase 83); never returned to the client; decrypt via `getUserAiSettings`
 - Web Settings: enabled provider dropdown; masked key shown only when the selected provider matches the saved provider; Save stays enabled with inline validation on submit; toast on API result
 
 ## Process settings (Phase 26, 36, 80)
@@ -436,9 +436,9 @@ Tiered strategy to reduce redundant AI calls and prompt size (see Embedding + RA
 - **Web:** `useJobDuplicateFlow`, `GenerateJobDuplicateDialog`; session `jobDuplicateDismissedHash` (filtered JD hash) suppresses repeat dialog until Job text changes; **Cancel** / **Switch** call `clearJobAndPersist` (empty job + embedding delete via PUT sync)
 - **Migration:** `20260910100008_generation_job_embeddings`
 
-## Internet hardening (Phase 83, planned)
+## Internet hardening (Phase 83)
 
-Public deployment adds security and operability without paid SaaS. Full plan: [`plans/2026-09-11-phase-83-internet-hardening.md`](./plans/2026-09-11-phase-83-internet-hardening.md).
+Public deployment adds security and operability without paid SaaS. Plan: [`plans/2026-09-11-phase-83-internet-hardening.md`](./plans/2026-09-11-phase-83-internet-hardening.md).
 
 ### HTTPS
 
@@ -473,7 +473,14 @@ Public deployment adds security and operability without paid SaaS. Full plan: [`
 
 - `.github/workflows/ci.yml` — install, api test, web test, lint, web build
 - API integration tests: auth, settings encryption, rate limit, owner isolation
-- Optional Playwright smoke: register → login → settings
+- `.github/workflows/ci.yml` — install, Prisma generate, api test, web test, web lint, web build
+- Integration: `apps/api/src/routes/__tests__/auth-security.test.ts` (encrypted settings, session invalidation)
+
+### Backups
+
+- `scripts/backup-db.sh` — SQLite backup to `BACKUP_DIR` (default `./backups`); Docker or local dev DB
+- `scripts/restore-db.sh` — restore with `RESTORE` confirmation prompt
+- `BACKUP_RETENTION_DAYS` (default 14) prunes old files
 
 ## Plans
 

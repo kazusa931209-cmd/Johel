@@ -12,7 +12,7 @@ import {
   selectExpandedExperienceIdsWithEmbedding,
 } from "../lib/experience-embedding/index.js";
 import { createOpenAiEmbedding } from "../lib/openai/embeddings.js";
-import { isAiProviderId, type AiProviderId } from "../lib/ai-provider.js";
+import { getUserAiSettings } from "../lib/user-ai-settings.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { withTokenUsed } from "../lib/ai-token-used-response.js";
@@ -85,10 +85,8 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
     );
   }
 
-  const setting = await prisma.setting.findUnique({
-    where: { userId: user.id },
-  });
-  if (!setting?.apiKey || !setting.provider) {
+  const aiSettings = await getUserAiSettings(user.id);
+  if (!aiSettings) {
     return c.json(
       {
         error:
@@ -98,14 +96,7 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
     );
   }
 
-  if (!isAiProviderId(setting.provider)) {
-    return c.json(
-      { error: `Unsupported AI provider: ${setting.provider}` },
-      400,
-    );
-  }
-
-  const provider: AiProviderId = setting.provider;
+  const provider = aiSettings.provider;
 
   try {
     const [{ graph, workspaceFingerprint }, generationProcess] =
@@ -120,12 +111,12 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
 
     const embeddingCandidates = await ensureExperienceEmbeddings({
       userId: user.id,
-      apiKey: setting.apiKey,
+      apiKey: aiSettings.apiKey,
       experiences: graph.experiences,
     });
 
     const queryEmbedding = await createOpenAiEmbedding(
-      setting.apiKey,
+      aiSettings.apiKey,
       parsed.data.userFacts,
     );
 
@@ -150,7 +141,7 @@ aiExperienceAdviseRoutes.post("/", async (c) => {
     });
 
     const result = await runExperienceAdvise(provider, {
-      apiKey: setting.apiKey,
+      apiKey: aiSettings.apiKey,
       graph,
       userFacts: parsed.data.userFacts,
       expandedIds,

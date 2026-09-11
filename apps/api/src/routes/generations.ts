@@ -11,6 +11,7 @@ import {
 import { prisma } from "../lib/prisma.js";
 import { DEFAULT_GENERATION_PROCESS } from "./settings-process.js";
 import { requireUser } from "../lib/session.js";
+import { getUserAiSettings } from "../lib/user-ai-settings.js";
 
 const PAGE_SIZE = 10;
 
@@ -264,17 +265,15 @@ generationsRoutes.post("/:id/job-duplicate-check", async (c) => {
     return c.json({ error: "Generation not found." }, 404);
   }
 
-  const setting = await prisma.setting.findUnique({
-    where: { userId: user.id },
-  });
-  if (!setting?.apiKey) {
+  const aiSettings = await getUserAiSettings(user.id);
+  if (!aiSettings) {
     return c.json({ error: "Configure an OpenAI API key in Settings." }, 400);
   }
 
   try {
     const match = await findJobDuplicateMatch({
       userId: user.id,
-      apiKey: setting.apiKey,
+      apiKey: aiSettings.apiKey,
       generationId: existing.id,
     });
 

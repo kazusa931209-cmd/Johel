@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { isAiProviderId } from "../lib/ai-provider.js";
 import { compileInstruction } from "../lib/prompt-optimize/index.js";
-import { runAiVerdict, type AiProviderId } from "../lib/ai-verdict/index.js";
+import { runAiVerdict } from "../lib/ai-verdict/index.js";
 import { prisma } from "../lib/prisma.js";
+import { getUserAiSettings } from "../lib/user-ai-settings.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
 import { resolveOwnedGenerationId } from "../lib/resolve-generation-id.js";
 import { withTokenUsed } from "../lib/ai-token-used-response.js";
@@ -48,10 +48,8 @@ aiVerdictRoutes.post("/", async (c) => {
     );
   }
 
-  const setting = await prisma.setting.findUnique({
-    where: { userId: user.id },
-  });
-  if (!setting?.apiKey || !setting.provider) {
+  const aiSettings = await getUserAiSettings(user.id);
+  if (!aiSettings) {
     return c.json(
       {
         error:
@@ -61,14 +59,7 @@ aiVerdictRoutes.post("/", async (c) => {
     );
   }
 
-  if (!isAiProviderId(setting.provider)) {
-    return c.json(
-      { error: `Unsupported AI provider: ${setting.provider}` },
-      400,
-    );
-  }
-
-  const provider: AiProviderId = setting.provider;
+  const provider = aiSettings.provider;
 
   try {
     const compiledVerdictPrompt = compileInstruction(
@@ -80,7 +71,7 @@ aiVerdictRoutes.post("/", async (c) => {
     const result = await runAiVerdict(provider, {
       jobDescription: parsed.data.jobDescription,
       verdictPrompt: compiledVerdictPrompt,
-      apiKey: setting.apiKey,
+      apiKey: aiSettings.apiKey,
     });
 
     const generationId = await resolveOwnedGenerationId(

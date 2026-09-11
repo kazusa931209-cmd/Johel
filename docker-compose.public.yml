@@ -1,0 +1,59 @@
+services:
+  app:
+    build:
+      context: .
+      platforms:
+        - linux/arm64
+    image: johel:local
+    platform: linux/arm64
+    restart: unless-stopped
+    expose:
+      - "4444"
+    environment:
+      DATABASE_URL: file:/data/johel.db
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
+      PUBLIC_DEPLOY: "true"
+      TRUST_PROXY: "true"
+      PUBLIC_URL: https://${PUBLIC_DOMAIN:?Set PUBLIC_DOMAIN in .env}
+      HOST: "127.0.0.1"
+      PORT: "4042"
+      WEB_PORT: "4444"
+      API_ORIGIN: http://127.0.0.1:4042
+      HOSTNAME: "0.0.0.0"
+    volumes:
+      - johel-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4444/backend/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?Set PUBLIC_DOMAIN in .env}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  johel-data:
+  caddy-data:
+  caddy-config:

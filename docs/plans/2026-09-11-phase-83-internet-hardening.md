@@ -1,7 +1,7 @@
 # Phase 83 — Internet hardening (public deployment)
 
-**Defined:** 2026-09-11  
-**Status:** Planned
+**Performed:** 2026-09-11  
+**Status:** Finished
 
 ## Goal
 
@@ -215,14 +215,23 @@ LAN Docker deployment (Phase 33) continues to work unchanged for local/trusted-n
 
 ---
 
+## Delivered
+
+- **HTTPS:** `docker-compose.public.yml`, `Caddyfile`, public deployment section in [`docs/docker.md`](../docker.md)
+- **Encrypted API keys:** `apps/api/src/lib/secrets/` (AES-256-GCM, `enc:v1:` prefix, startup plaintext migration)
+- **Rate limiting:** `apps/api/src/lib/rate-limit.ts` on auth login/register/password and AI routes
+- **Session security:** `users.sessionVersion`, JWT `sv` claim, secure cookies when `TRUST_PROXY` / `PUBLIC_DEPLOY`, `validateDeployConfig`
+- **Backups:** `scripts/backup-db.sh`, `scripts/restore-db.sh`
+- **Tests + CI:** encrypt/rate-limit/deploy-config unit tests, `auth-security` integration tests, `.github/workflows/ci.yml`
+
 ## Phase completion checklist
 
-- [ ] HTTPS public deployment documented and verified on a staging domain
-- [ ] API keys encrypted at rest; migration path tested
-- [ ] Rate limits active on auth and AI routes
-- [ ] Session invalidation on password change; production secret validation
-- [ ] Backup/restore scripts documented and tested
-- [ ] CI workflow running unit + integration tests
-- [ ] `docs/specification.md` Deployment section updated
-- [ ] `docs/technology.md` security sections updated
-- [ ] Phase marked `[x]` in specification with outcome date
+- [x] HTTPS public deployment documented (staging domain verification left to operator)
+- [x] API keys encrypted at rest; migration path tested
+- [x] Rate limits active on auth and AI routes
+- [x] Session invalidation on password change; production secret validation
+- [x] Backup/restore scripts documented
+- [x] CI workflow running unit + integration tests
+- [x] `docs/specification.md` Deployment section updated
+- [x] `docs/technology.md` security sections updated
+- [x] Phase marked `[x]` in specification with outcome date

@@ -216,3 +216,76 @@ curl -s http://127.0.0.1:4444/backend/health
 ```
 
 After Docker Desktop restarts, the container comes back automatically (`restart: unless-stopped`).
+
+---
+
+## Public internet deployment (Phase 83)
+
+Use this when JoHEL should be reachable on the **public internet** with **HTTPS**, encrypted user API keys, rate limiting, and stronger session security.
+
+### Prerequisites
+
+- A VPS or cloud VM with Docker (Apple Silicon `linux/arm64` image as today, or rebuild for your platform later)
+- A domain name pointing at the server (`A` / `AAAA` record)
+- Root `.env` values:
+
+```bash
+PUBLIC_DOMAIN=johel.example.com
+ACME_EMAIL=you@example.com
+JWT_SECRET=<strong random string, min 32 characters>
+ENCRYPTION_KEY=<output of: openssl rand -base64 32>
+```
+
+### First start
+
+From the repo root:
+
+```bash
+docker compose -f docker-compose.public.yml up -d --build
+```
+
+Caddy terminates TLS on ports **80** and **443** and proxies to the JoHEL app container on `:4444`.
+
+Open `https://<PUBLIC_DOMAIN>`.
+
+### Update
+
+```bash
+docker compose -f docker-compose.public.yml up -d --build --force-recreate
+```
+
+Do **not** pass `-v`. The `johel-data` volume keeps your database.
+
+### Security notes
+
+- `PUBLIC_DEPLOY=true` requires `JWT_SECRET`, `ENCRYPTION_KEY`, and `TRUST_PROXY=true` inside the app container (set by `docker-compose.public.yml`).
+- Session cookies are `Secure` when `TRUST_PROXY=true`.
+- User OpenAI API keys are encrypted at rest when `ENCRYPTION_KEY` is set.
+- Auth and AI routes are rate-limited server-side.
+
+LAN deployment (`docker compose up`) remains unchanged and does not require `ENCRYPTION_KEY`.
+
+---
+
+## Database backup and restore
+
+Scripts live under `scripts/`:
+
+```bash
+# Backup (Docker container name defaults to johel-app-1)
+./scripts/backup-db.sh
+
+# Restore — prompts for RESTORE confirmation
+./scripts/restore-db.sh ./backups/johel-20260911-030000.db
+```
+
+Environment overrides:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BACKUP_DIR` | `./backups` | Output directory |
+| `BACKUP_RETENTION_DAYS` | `14` | Delete older backup files |
+| `JOHEL_CONTAINER` | `johel-app-1` | Docker container name |
+| `LOCAL_DB_PATH` | `./apps/api/prisma/dev.db` | Local dev DB when Docker is not running |
+
+**Before upgrading the image**, take a backup. Treat backups as sensitive — they may contain user prompts, job descriptions, and AI usage I/O.

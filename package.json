@@ -4,7 +4,8 @@
   "scripts": {
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
-    "db:migrate": "pnpm --filter api prisma migrate dev"
+    "db:migrate": "pnpm --filter api prisma migrate dev",
+    "test": "pnpm --filter api test && pnpm --filter web test"
   },
   "engines": {
     "node": ">=20"

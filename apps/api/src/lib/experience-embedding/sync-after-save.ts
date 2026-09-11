@@ -1,4 +1,4 @@
-import { prisma } from "../prisma.js";
+import { getUserAiSettings } from "../user-ai-settings.js";
 import { upsertExperienceEmbedding } from "./upsert.js";
 
 export async function syncExperienceEmbeddingAfterSave(input: {
@@ -9,16 +9,14 @@ export async function syncExperienceEmbeddingAfterSave(input: {
   actions: string;
   outcome: string;
 }): Promise<void> {
-  const setting = await prisma.setting.findUnique({
-    where: { userId: input.userId },
-  });
-  if (!setting?.apiKey) {
+  const aiSettings = await getUserAiSettings(input.userId);
+  if (!aiSettings) {
     return;
   }
 
   await upsertExperienceEmbedding({
     userId: input.userId,
-    apiKey: setting.apiKey,
+    apiKey: aiSettings.apiKey,
     experienceId: input.experienceId,
     category: input.category,
     problem: input.problem,
