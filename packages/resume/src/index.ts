@@ -16,5 +16,9 @@ export {
   buildResumeDocxFileName,
   buildResumeExportFileName,
   buildResumePdfFileName,
+  formatCompactYmd,
+  parseGenerationPublicIdParts,
+  sanitizeExportFileSegment,
   type ResumeExportFormat,
+  type ResumeExportNameInput,
 } from "./docx-filename";

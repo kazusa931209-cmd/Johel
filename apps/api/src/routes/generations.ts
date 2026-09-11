@@ -10,6 +10,12 @@ import {
 } from "../lib/list-pagination.js";
 import { prisma } from "../lib/prisma.js";
 import { DEFAULT_GENERATION_PROCESS } from "./settings-process.js";
+import {
+  formatGenerationInformation,
+  formatProfileName,
+  parseGenerationCombineProfileId,
+  parseGenerationJobJson,
+} from "../lib/generation-list-info.js";
 import { requireUser } from "../lib/session.js";
 import { getUserAiSettings } from "../lib/user-ai-settings.js";
 
@@ -37,7 +43,7 @@ const resumeSchema = z.object({
   archive: updateSchema.extend({ generationId: z.string() }).optional(),
 });
 
-function toListItem(generation: {
+type GenerationListRow = {
   id: string;
   publicId: string;
   finalized: boolean;
@@ -52,7 +58,18 @@ function toListItem(generation: {
   inputToken: number;
   outputToken: number;
   updatedAt: Date;
-}) {
+};
+
+function toListItem(
+  generation: GenerationListRow,
+  profileNameById: Map<string, string>,
+) {
+  const job = parseGenerationJobJson(generation.jobJson);
+  const profileId = parseGenerationCombineProfileId(generation.combineJson);
+  const profileName = profileId
+    ? (profileNameById.get(profileId) ?? null)
+    : null;
+
   return {
     id: generation.id,
     publicId: generation.publicId,
@@ -64,7 +81,51 @@ function toListItem(generation: {
     outputToken: generation.outputToken,
     tokenUsed: generation.inputToken + generation.outputToken,
     updatedAt: generation.updatedAt.toISOString(),
+    profileName,
+    jdCompanyName: job.jdCompanyName,
+    jdJobRole: job.jdJobRole,
+    information: formatGenerationInformation({
+      profileName,
+      jdCompanyName: job.jdCompanyName,
+      jdJobRole: job.jdJobRole,
+    }),
   };
+}
+
+async function loadProfileNamesById(
+  userId: string,
+  generations: GenerationListRow[],
+): Promise<Map<string, string>> {
+  const profileIds = new Set<string>();
+  for (const generation of generations) {
+    const profileId = parseGenerationCombineProfileId(generation.combineJson);
+    if (profileId) {
+      profileIds.add(profileId);
+    }
+  }
+
+  if (profileIds.size === 0) {
+    return new Map();
+  }
+
+  const profiles = await prisma.profile.findMany({
+    where: {
+      userId,
+      id: { in: [...profileIds] },
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+    },
+  });
+
+  return new Map(
+    profiles.map((profile) => [
+      profile.id,
+      formatProfileName(profile.firstName, profile.lastName),
+    ]),
+  );
 }
 
 function toDetailResponse(generation: {
@@ -171,6 +232,8 @@ generationsRoutes.post("/start", async (c) => {
         method: "manual",
         jobText: "",
         acceptedMarkdown: null,
+        jdCompanyName: "",
+        jdJobRole: "",
       }),
       combineJson: JSON.stringify({
         profileId: "",
@@ -424,8 +487,9 @@ generationsRoutes.get("/", async (c) => {
   ]);
 
   const pageSize = listResponsePageSize(pagination, total);
+  const profileNameById = await loadProfileNamesById(user.id, items);
   return c.json({
-    items: items.map(toListItem),
+    items: items.map((item) => toListItem(item, profileNameById)),
     total,
     page: pagination.page,
     pageSize,

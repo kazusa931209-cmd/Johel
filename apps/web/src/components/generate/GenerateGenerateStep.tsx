@@ -7,10 +7,11 @@ import { useT } from "@/components/app/LocaleProvider";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
+import type { ResumeDownloadLabel } from "@/lib/api";
 
 type GenerateGenerateStepProps = {
   resume: GeneratedResume | null;
-  runLabel?: string;
+  downloadLabel?: ResumeDownloadLabel;
   doEvaluate: boolean;
   generating: boolean;
   onRun: () => void;
@@ -19,14 +20,14 @@ type GenerateGenerateStepProps = {
 
 export function GenerateGenerateStep({
   resume,
-  runLabel,
+  downloadLabel,
   doEvaluate,
   generating,
   onRun,
   onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDownload(resume, runLabel, {
+  const { onDownload, downloading } = useResumeDownload(resume, downloadLabel, {
     onDownloaded,
   });
   const markdown = useMemo(

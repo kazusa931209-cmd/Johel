@@ -657,7 +657,14 @@ export default function GeneratePage() {
     });
   }, [requestRun, resume, runEvaluation, setActiveStep, t, toast]);
 
-  const runLabel = combine.emphasis.trim() || combine.language;
+  const downloadLabel = useMemo(
+    () => ({
+      publicId: generationPublicId,
+      jdCompanyName: job.jdCompanyName,
+      jdJobRole: job.jdJobRole,
+    }),
+    [generationPublicId, job.jdCompanyName, job.jdJobRole],
+  );
 
   const requestNewGeneration = useCallback(() => {
     if (processBusy) return;
@@ -772,7 +779,7 @@ export default function GeneratePage() {
             {normalizedActiveStep === "Generate" ? (
               <GenerateGenerateStep
                 resume={resume}
-                runLabel={runLabel}
+                downloadLabel={downloadLabel}
                 doEvaluate={processSettings.doEvaluate}
                 generating={generatingResume}
                 onRun={runFromGenerate}
@@ -783,7 +790,7 @@ export default function GeneratePage() {
             normalizedActiveStep === "Evaluate" ? (
               <GenerateEvaluateStep
                 resume={resume}
-                runLabel={runLabel}
+                downloadLabel={downloadLabel}
                 evaluationMarkdown={evaluationMarkdown}
                 evaluating={evaluating}
                 onDownloaded={handleResumeDownloaded}

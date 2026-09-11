@@ -5,7 +5,9 @@ import { useDrawerPosition } from "@/components/app/DrawerPositionProvider";
 import { CloseButton } from "@/components/shared/action-icon-buttons";
 
 type DrawerProps = {
-  title: string;
+  title: ReactNode;
+  /** Accessible name when `title` is not plain text. */
+  titleAriaLabel?: string;
   open: boolean;
   onClose: () => void;
   children: ReactNode;
@@ -25,6 +27,7 @@ function prefersReducedMotion(): boolean {
 
 export function Drawer({
   title,
+  titleAriaLabel,
   open,
   onClose,
   children,
@@ -33,6 +36,8 @@ export function Drawer({
   zIndex = 50,
   closeOnEscape = true,
 }: DrawerProps) {
+  const accessibleTitle =
+    titleAriaLabel ?? (typeof title === "string" ? title : undefined);
   const { drawerPosition } = useDrawerPosition();
   const [mounted, setMounted] = useState(open);
   const [entered, setEntered] = useState(false);
@@ -98,7 +103,7 @@ export function Drawer({
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label={accessibleTitle}
         className={`${panelSideClass} absolute top-0 flex h-full flex-col bg-surface shadow-xl ${widthClass}${entered ? " drawer-open" : ""}`}
         onClick={(event) => event.stopPropagation()}
       >

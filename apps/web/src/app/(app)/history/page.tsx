@@ -144,6 +144,9 @@ function HistoryPageContent() {
                 {t("history.list.columns.generationId")}
               </th>
               <th className="px-3 py-2 font-medium">
+                {t("history.list.columns.information")}
+              </th>
+              <th className="px-3 py-2 font-medium">
                 {t("history.list.columns.tokenUsed")}
               </th>
               <th className="px-3 py-2 font-medium">
@@ -157,13 +160,13 @@ function HistoryPageContent() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-muted">
+                <td colSpan={6} className="px-3 py-8 text-center text-muted">
                   {t("crud.common.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-muted">
+                <td colSpan={6} className="px-3 py-8 text-center text-muted">
                   {t("history.list.empty")}
                 </td>
               </tr>
@@ -191,7 +194,10 @@ function HistoryPageContent() {
                       </span>
                     ) : null}
                   </td>
-                  <td className="px-3 py-2 font-medium">{row.publicId}</td>
+                  <td className="px-3 py-2 font-mono font-medium">
+                    {row.publicId}
+                  </td>
+                  <td className="px-3 py-2 text-muted">{row.information}</td>
                   <td className="px-3 py-2 text-muted">
                     {formatTokenUsed(row.tokenUsed)}
                   </td>

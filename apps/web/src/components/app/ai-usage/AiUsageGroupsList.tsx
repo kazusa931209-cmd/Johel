@@ -70,7 +70,7 @@ export function AiUsageGroupsList({
                   expanded ? "rotate-90" : ""
                 }`}
               />
-              <span className="min-w-0 truncate font-medium">
+              <span className="min-w-0 truncate font-mono font-medium">
                 {group.generationPublicId ?? unassignedLabel}
               </span>
               <span className="text-right tabular-nums text-muted">

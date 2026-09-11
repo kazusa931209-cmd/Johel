@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 import { useT } from "@/components/app/LocaleProvider";
 import type { JobDuplicateMatch } from "@/lib/api";
@@ -21,14 +22,16 @@ function JobPanel({
   text,
 }: {
   title: string;
-  meta?: string;
+  meta?: ReactNode;
   text: string;
 }) {
   return (
     <div className="flex min-h-0 flex-col gap-2">
       <div className="space-y-1">
         <h3 className="text-sm font-medium">{title}</h3>
-        {meta ? <p className="text-xs text-muted">{meta}</p> : null}
+        {meta ? (
+          <p className="text-xs text-muted">{meta}</p>
+        ) : null}
       </div>
       <pre className="max-h-60 min-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-background p-3 font-mono text-sm text-foreground">
         {text}
@@ -60,13 +63,19 @@ export function GenerateJobDuplicateDialog({
   const body = isFinalized
     ? t("generate.jobDuplicate.finalized.body")
     : t("generate.jobDuplicate.unfinished.body");
-  const matchedMeta = isFinalized
-    ? t("generate.jobDuplicate.matchedMetaFinalized", {
-        publicId: match.publicId,
-      })
-    : t("generate.jobDuplicate.matchedMetaUnfinished", {
-        publicId: match.publicId,
-      });
+  const matchedMeta = isFinalized ? (
+    <>
+      {t("generate.jobDuplicate.matchedMetaFinalizedPrefix")}{" "}
+      <span className="font-mono">{match.publicId}</span>
+      {t("generate.jobDuplicate.matchedMetaFinalizedSuffix")}
+    </>
+  ) : (
+    <>
+      {t("generate.jobDuplicate.matchedMetaUnfinishedPrefix")}{" "}
+      <span className="font-mono">{match.publicId}</span>
+      {t("generate.jobDuplicate.matchedMetaUnfinishedSuffix")}
+    </>
+  );
 
   return (
     <DetailDialog

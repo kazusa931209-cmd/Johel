@@ -40,7 +40,7 @@ export function GenerateJobStep({
   onRunFromJob,
 }: GenerateJobStepProps) {
   const t = useT();
-  const { method, jobText } = job;
+  const { method, jobText, jdCompanyName, jdJobRole } = job;
   const [jobError, setJobError] = useState<string | undefined>();
 
   function updateJob(patch: Partial<GenerateJobState>) {
@@ -101,6 +101,31 @@ export function GenerateJobStep({
       ) : null}
       {method === "file" ? (
         <ComingSoonAlert methodLabel={methodLabels.file} />
+      ) : null}
+
+      {method === "manual" ? (
+        <div className="grid shrink-0 gap-4 sm:grid-cols-2">
+          <label className="block space-y-1 text-sm">
+            <span>{t("generate.job.jdCompanyName")}</span>
+            <input
+              type="text"
+              value={jdCompanyName}
+              onChange={(e) => updateJob({ jdCompanyName: e.target.value })}
+              placeholder={t("generate.job.jdCompanyNamePlaceholder")}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
+            />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>{t("generate.job.jdJobRole")}</span>
+            <input
+              type="text"
+              value={jdJobRole}
+              onChange={(e) => updateJob({ jdJobRole: e.target.value })}
+              placeholder={t("generate.job.jdJobRolePlaceholder")}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
+            />
+          </label>
+        </div>
       ) : null}
 
       {method === "manual" ? (

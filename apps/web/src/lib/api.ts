@@ -520,6 +520,16 @@ export type GenerationListItem = {
   outputToken: number;
   tokenUsed: number;
   updatedAt: string;
+  profileName: string | null;
+  jdCompanyName: string;
+  jdJobRole: string;
+  information: string;
+};
+
+export type ResumeDownloadLabel = {
+  publicId?: string | null;
+  jdCompanyName?: string;
+  jdJobRole?: string;
 };
 
 export type GenerationList = {
@@ -764,7 +774,7 @@ export function resolveDownloadFormat(
 async function downloadResumeExport(
   path: "/backend/resume/docx" | "/backend/resume/pdf",
   resume: import("@johel/resume").GeneratedResume,
-  runLabel: string | undefined,
+  label: ResumeDownloadLabel | undefined,
   fallbackFileName: string,
   failureLabel: string,
 ): Promise<ResumeDownloadResult> {
@@ -774,7 +784,12 @@ async function downloadResumeExport(
       credentials: "include",
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume, runLabel }),
+      body: JSON.stringify({
+        resume,
+        publicId: label?.publicId ?? undefined,
+        jdCompanyName: label?.jdCompanyName,
+        jdJobRole: label?.jdJobRole,
+      }),
     });
 
     if (!res.ok) {
@@ -808,12 +823,12 @@ async function downloadResumeExport(
 
 export async function downloadResumeDocx(
   resume: import("@johel/resume").GeneratedResume,
-  runLabel?: string,
+  label?: ResumeDownloadLabel,
 ): Promise<ResumeDownloadResult> {
   return downloadResumeExport(
     "/backend/resume/docx",
     resume,
-    runLabel,
+    label,
     "resume.docx",
     "DOCX download failed.",
   );
@@ -821,12 +836,12 @@ export async function downloadResumeDocx(
 
 export async function downloadResumePdf(
   resume: import("@johel/resume").GeneratedResume,
-  runLabel?: string,
+  label?: ResumeDownloadLabel,
 ): Promise<ResumeDownloadResult> {
   return downloadResumeExport(
     "/backend/resume/pdf",
     resume,
-    runLabel,
+    label,
     "resume.pdf",
     "PDF download failed.",
   );

@@ -68,7 +68,7 @@ export function AiUsageItemsTable({
               {formatThousandsSeparated(startNo + index + 1)}
             </td>
             {showGenerationIdColumn ? (
-              <td className="px-3 py-2 text-muted">
+              <td className="px-3 py-2 font-mono text-muted">
                 {row.generationPublicId ?? ""}
               </td>
             ) : null}

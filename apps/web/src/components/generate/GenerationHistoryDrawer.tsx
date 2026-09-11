@@ -47,7 +47,13 @@ function parseResume(value: unknown): GeneratedResume | null {
 
 function parseJob(value: unknown): GenerateJobState {
   if (!value || typeof value !== "object") {
-    return { method: "manual", jobText: "", acceptedMarkdown: null };
+    return {
+      method: "manual",
+      jobText: "",
+      acceptedMarkdown: null,
+      jdCompanyName: "",
+      jdJobRole: "",
+    };
   }
   const raw = value as Record<string, unknown>;
   const method =
@@ -59,6 +65,9 @@ function parseJob(value: unknown): GenerateJobState {
     jobText: typeof raw.jobText === "string" ? raw.jobText : "",
     acceptedMarkdown:
       typeof raw.acceptedMarkdown === "string" ? raw.acceptedMarkdown : null,
+    jdCompanyName:
+      typeof raw.jdCompanyName === "string" ? raw.jdCompanyName : "",
+    jdJobRole: typeof raw.jdJobRole === "string" ? raw.jdJobRole : "",
   };
 }
 
@@ -212,7 +221,14 @@ export function GenerationHistoryDrawer({
     [activeStep, detail],
   );
 
-  const runLabel = combine.emphasis.trim() || combine.language;
+  const downloadLabel = useMemo(
+    () => ({
+      publicId: detail?.publicId ?? publicId,
+      jdCompanyName: job.jdCompanyName,
+      jdJobRole: job.jdJobRole,
+    }),
+    [detail?.publicId, job.jdCompanyName, job.jdJobRole, publicId],
+  );
 
   async function handleHistoryDownloaded() {
     if (!detail) return;
@@ -232,7 +248,7 @@ export function GenerationHistoryDrawer({
     }
   }
 
-  const { onDownload, downloading } = useResumeDownload(resume, runLabel, {
+  const { onDownload, downloading } = useResumeDownload(resume, downloadLabel, {
     onDownloaded: handleHistoryDownloaded,
   });
   const showDownload = resume != null;
@@ -257,14 +273,20 @@ export function GenerationHistoryDrawer({
   }
 
   const resumeConfirmBody =
-    currentPublicId && currentPublicId !== detail?.publicId
-      ? t("history.resumeConfirm.body", {
-          currentId: currentPublicId,
-          targetId: detail?.publicId ?? "",
-        })
-      : t("history.resumeConfirm.bodyNoCurrent", {
-          targetId: detail?.publicId ?? "",
-        });
+    currentPublicId && currentPublicId !== detail?.publicId ? (
+      <>
+        {t("history.resumeConfirm.bodyPrefix")}{" "}
+        <span className="font-mono">{currentPublicId}</span>
+        {t("history.resumeConfirm.bodyMiddle")}{" "}
+        <span className="font-mono">{detail?.publicId ?? ""}</span>
+        {t("history.resumeConfirm.bodySuffix")}
+      </>
+    ) : (
+      <>
+        <span className="font-mono">{detail?.publicId ?? ""}</span>
+        {t("history.resumeConfirm.bodyNoCurrentSuffix")}
+      </>
+    );
 
   const rawJobText = job.jobText.trim();
   const filteredJobText = useMemo(
@@ -283,12 +305,20 @@ export function GenerationHistoryDrawer({
       resume,
     });
 
-  const drawerTitle = detail?.publicId ?? publicId ?? t("history.detail.title");
+  const drawerTitle =
+    detail?.publicId ?? publicId ? (
+      <span className="font-mono">{detail?.publicId ?? publicId}</span>
+    ) : (
+      t("history.detail.title")
+    );
 
   return (
     <>
       <Drawer
         title={drawerTitle}
+        titleAriaLabel={
+          detail?.publicId ?? publicId ?? t("history.detail.title")
+        }
         open={open}
         onClose={onClose}
         widthClass={HISTORY_DRAWER_WIDTH}

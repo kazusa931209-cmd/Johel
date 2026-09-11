@@ -5,10 +5,11 @@ import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
+import type { ResumeDownloadLabel } from "@/lib/api";
 
 type GenerateEvaluateStepProps = {
   resume: GeneratedResume | null;
-  runLabel?: string;
+  downloadLabel?: ResumeDownloadLabel;
   evaluationMarkdown: string | null;
   evaluating: boolean;
   onDownloaded?: () => void | Promise<void>;
@@ -16,13 +17,13 @@ type GenerateEvaluateStepProps = {
 
 export function GenerateEvaluateStep({
   resume,
-  runLabel,
+  downloadLabel,
   evaluationMarkdown,
   evaluating,
   onDownloaded,
 }: GenerateEvaluateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDownload(resume, runLabel, {
+  const { onDownload, downloading } = useResumeDownload(resume, downloadLabel, {
     onDownloaded,
   });
 

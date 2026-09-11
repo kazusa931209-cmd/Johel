@@ -7,6 +7,7 @@ import {
   downloadResumeDocx,
   downloadResumePdf,
   resolveDownloadFormat,
+  type ResumeDownloadLabel,
 } from "@/lib/api";
 import { loadGenerationProcess } from "@/lib/cached-settings";
 import { useToast } from "@/components/app/ToastProvider";
@@ -18,7 +19,7 @@ type UseResumeDownloadOptions = {
 
 export function useResumeDownload(
   resume: GeneratedResume | null,
-  runLabel?: string,
+  label?: ResumeDownloadLabel,
   options?: UseResumeDownloadOptions,
 ) {
   const { toast } = useToast();
@@ -36,7 +37,7 @@ export function useResumeDownload(
           : "docx";
       const download =
         format === "pdf" ? downloadResumePdf : downloadResumeDocx;
-      const res = await download(resume, runLabel);
+      const res = await download(resume, label);
       if (!res.blob) {
         toast(res.error ?? t("generate.download.failed"), "error");
         return;
@@ -45,8 +46,7 @@ export function useResumeDownload(
       const url = URL.createObjectURL(res.blob);
       const anchor = document.createElement("a");
       const fileName =
-        res.fileName ??
-        buildResumeExportFileName(resume, runLabel, format);
+        res.fileName ?? buildResumeExportFileName(label ?? {}, format);
       anchor.href = url;
       anchor.download = fileName;
       anchor.click();
@@ -58,7 +58,7 @@ export function useResumeDownload(
     } finally {
       setDownloading(false);
     }
-  }, [downloading, options, resume, runLabel, t, toast]);
+  }, [downloading, label, options, resume, t, toast]);
 
   return { onDownload, downloading };
 }

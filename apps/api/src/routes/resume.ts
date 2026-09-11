@@ -3,10 +3,10 @@ import { z } from "zod";
 import { buildResumeDocxBuffer } from "@johel/resume/docx";
 import { buildResumePdfBuffer } from "@johel/resume/pdf";
 import {
-  buildResumeDocxFileName,
-  buildResumePdfFileName,
+  buildResumeExportFileName,
   generatedResumeSchema,
   isNonEmptyResume,
+  type ResumeExportFormat,
 } from "@johel/resume";
 import { buildCombineGenerationFingerprint } from "../lib/resume/generation-fingerprint.js";
 import { requireUser } from "../lib/session.js";
@@ -32,7 +32,9 @@ const combineSchema = z.object({
 
 const exportPostSchema = z.object({
   resume: generatedResumeSchema,
-  runLabel: z.string().trim().max(200).optional(),
+  publicId: z.string().trim().max(64).optional(),
+  jdCompanyName: z.string().trim().max(200).optional(),
+  jdJobRole: z.string().trim().max(200).optional(),
 });
 
 const fingerprintPostSchema = z.object({
@@ -87,9 +89,13 @@ resumeRoutes.post("/docx", async (c) => {
 
   try {
     const buffer = await buildResumeDocxBuffer(resume);
-    const fileName = buildResumeDocxFileName(
-      resume,
-      parsed.data.runLabel,
+    const fileName = buildResumeExportFileName(
+      {
+        publicId: parsed.data.publicId,
+        jdCompanyName: parsed.data.jdCompanyName,
+        jdJobRole: parsed.data.jdJobRole,
+      },
+      "docx",
     );
     return c.body(buffer, 200, {
       "Content-Type": DOCX_MEDIA_TYPE,
@@ -99,6 +105,20 @@ resumeRoutes.post("/docx", async (c) => {
     return c.json({ error: "DOCX generation failed." }, 500);
   }
 });
+
+function buildExportFileName(
+  parsed: z.infer<typeof exportPostSchema>,
+  format: ResumeExportFormat,
+): string {
+  return buildResumeExportFileName(
+    {
+      publicId: parsed.publicId,
+      jdCompanyName: parsed.jdCompanyName,
+      jdJobRole: parsed.jdJobRole,
+    },
+    format,
+  );
+}
 
 resumeRoutes.post("/pdf", async (c) => {
   const user = await requireUser(c);
@@ -119,7 +139,7 @@ resumeRoutes.post("/pdf", async (c) => {
 
   try {
     const buffer = await buildResumePdfBuffer(resume);
-    const fileName = buildResumePdfFileName(resume, parsed.data.runLabel);
+    const fileName = buildExportFileName(parsed.data, "pdf");
     return c.body(buffer, 200, {
       "Content-Type": PDF_MEDIA_TYPE,
       "Content-Disposition": `attachment; filename="${fileName}"`,

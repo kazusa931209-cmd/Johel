@@ -1,84 +1,58 @@
 import { describe, expect, it } from "vitest";
-import type { GeneratedResume } from "../../domain/generated-resume";
 import {
-  buildResumeDocxFileName,
   buildResumeExportFileName,
-  buildResumePdfFileName,
-  formatLocalYmd,
+  formatCompactYmd,
+  parseGenerationPublicIdParts,
+  sanitizeExportFileSegment,
   sanitizeFileNameSegment,
 } from "../../docx-filename";
 
-const sampleResume: GeneratedResume = {
-  header: {
-    name: "John Doe",
-    title: "Engineer",
-    contact: { email: "john@example.com" },
-  },
-  summary: "Summary",
-  skills: [],
-  experience: [],
-  education: [],
-  projects: [],
-  certifications: [],
-};
-
 describe("docx-filename", () => {
-  it("sanitizes file name segments", () => {
+  it("sanitizes legacy file name segments", () => {
     expect(sanitizeFileNameSegment("John Doe", "resume")).toBe("john-doe");
     expect(sanitizeFileNameSegment("  ", "workflow")).toBe("workflow");
   });
 
-  it("formats local YYYY-MM-DD", () => {
-    expect(formatLocalYmd(new Date(2026, 8, 5))).toBe("2026-09-05");
-  });
-
-  it("builds date-name-workflow filename", () => {
-    const fileName = buildResumeDocxFileName(
-      sampleResume,
-      "Senior Backend",
-      new Date(2026, 8, 5),
+  it("sanitizes export file segments while preserving readable text", () => {
+    expect(sanitizeExportFileSegment("Acme Corp", "Company")).toBe("Acme Corp");
+    expect(sanitizeExportFileSegment("Senior/Backend", "Role")).toBe(
+      "SeniorBackend",
     );
-    expect(fileName).toBe("2026-09-05-john-doe-senior-backend.docx");
+    expect(sanitizeExportFileSegment("  ", "Role")).toBe("Role");
   });
 
-  it("uses fallbacks when name or workflow are empty", () => {
-    const resume: GeneratedResume = {
-      ...sampleResume,
-      header: { ...sampleResume.header, name: "   " },
-    };
-    const fileName = buildResumeDocxFileName(
-      resume,
-      undefined,
-      new Date(2026, 8, 5),
+  it("formats compact YYYYMMDD", () => {
+    expect(formatCompactYmd(new Date(2026, 8, 5))).toBe("20260905");
+  });
+
+  it("parses generation public id date and sequence", () => {
+    expect(parseGenerationPublicIdParts("GEN-20260911-006")).toEqual({
+      dateYmd: "20260911",
+      sequence: "06",
+    });
+    expect(parseGenerationPublicIdParts("GEN-20260911-073")).toEqual({
+      dateYmd: "20260911",
+      sequence: "73",
+    });
+  });
+
+  it("builds export filename from generation metadata", () => {
+    const fileName = buildResumeExportFileName(
+      {
+        publicId: "GEN-20260911-006",
+        jdCompanyName: "Acme Corp",
+        jdJobRole: "Senior Backend Engineer",
+      },
+      "docx",
     );
-    expect(fileName).toBe("2026-09-05-resume-workflow.docx");
-  });
-
-  it("builds pdf export filename", () => {
-    const fileName = buildResumePdfFileName(
-      sampleResume,
-      "Senior Backend",
-      new Date(2026, 8, 5),
+    expect(fileName).toBe(
+      "20260911 - 06 - Acme Corp - Senior Backend Engineer.docx",
     );
-    expect(fileName).toBe("2026-09-05-john-doe-senior-backend.pdf");
   });
 
-  it("builds export filename for each format", () => {
-    expect(
-      buildResumeExportFileName(
-        sampleResume,
-        "Senior Backend",
-        "docx",
-        new Date(2026, 8, 5),
-      ),
-    ).toBe("2026-09-05-john-doe-senior-backend.docx");
-    expect(
-      buildResumeExportFileName(
-        sampleResume,
-        "Senior Backend",
-        "pdf",
-        new Date(2026, 8, 5),
-      ),
-    ).toBe("2026-09-05-john-doe-senior-backend.pdf");
+  it("uses fallbacks when metadata is missing", () => {
+    expect(buildResumeExportFileName({}, "pdf")).toMatch(
+      /^\d{8} - 00 - Company - Role\.pdf$/,
+    );
   });
 });

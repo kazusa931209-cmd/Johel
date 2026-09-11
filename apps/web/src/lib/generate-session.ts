@@ -15,6 +15,8 @@ export type GenerateJobState = {
   method: GenerateJobInputMethod;
   jobText: string;
   acceptedMarkdown: string | null;
+  jdCompanyName: string;
+  jdJobRole: string;
   /** Persisted on generation save for server-side AI calls. */
   filteredJobText?: string;
 };
@@ -44,6 +46,8 @@ export const EMPTY_JOB_STATE: GenerateJobState = {
   method: "manual",
   jobText: "",
   acceptedMarkdown: null,
+  jdCompanyName: "",
+  jdJobRole: "",
 };
 
 export const EMPTY_GENERATE_SESSION: GenerateSession = {
@@ -139,6 +143,11 @@ function parseJobState(value: unknown): GenerateJobState {
     jobText: typeof raw.jobText === "string" ? raw.jobText : "",
     acceptedMarkdown:
       typeof raw.acceptedMarkdown === "string" ? raw.acceptedMarkdown : null,
+    jdCompanyName:
+      typeof raw.jdCompanyName === "string" ? raw.jdCompanyName : "",
+    jdJobRole: typeof raw.jdJobRole === "string" ? raw.jdJobRole : "",
+    filteredJobText:
+      typeof raw.filteredJobText === "string" ? raw.filteredJobText : undefined,
   };
 }
 
