@@ -15,6 +15,7 @@ import type {
 } from "@/components/generate/combine-types";
 import { useCombineExperienceSuggest } from "@/components/generate/useCombineExperienceSuggest";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
+import { CombineSuggestConfirmDialogs } from "@/components/generate/CombineSuggestConfirmDialogs";
 import {
   buildPeriodWindow,
   clampPeriodToWindow,
@@ -73,6 +74,10 @@ export function CombineCompanyCards({
   const { locale } = useLocale();
   const { companies: workspaceCompanies, loading } = usePce();
   const [viewCompany, setViewCompany] = useState<CompanyDetail | null>(null);
+  const [suggestConfirmOpen, setSuggestConfirmOpen] = useState(false);
+  const [companySuggestConfirmId, setCompanySuggestConfirmId] = useState<
+    string | null
+  >(null);
   const contextFlushersRef = useRef(
     new Set<() => CombineCompanyContextFlushResult | null>(),
   );
@@ -82,12 +87,15 @@ export function CombineCompanyCards({
 
   const {
     runSuggest,
+    runSuggestForCompany,
     suggesting,
+    suggestingCompanyId,
     suggestError,
     fieldErrors: suggestFieldErrors,
     suggestSucceeded,
     rationaleByCompanyId,
     warnings,
+    companyNeedsSuggestConfirm,
   } = useCombineExperienceSuggest({
     combine,
     resolveCombineSnapshot,
@@ -282,6 +290,53 @@ export function CombineCompanyCards({
     updateIncluded([]);
   }, [updateIncluded]);
 
+  const requestSuggest = useCallback(() => {
+    if (suggestSucceeded) {
+      setSuggestConfirmOpen(true);
+      return;
+    }
+    void runSuggest();
+  }, [runSuggest, suggestSucceeded]);
+
+  const confirmSuggest = useCallback(() => {
+    setSuggestConfirmOpen(false);
+    void runSuggest();
+  }, [runSuggest]);
+
+  const requestCompanySuggest = useCallback(
+    (companyId: string) => {
+      if (companyNeedsSuggestConfirm(companyId)) {
+        setCompanySuggestConfirmId(companyId);
+        return;
+      }
+      void runSuggestForCompany(companyId);
+    },
+    [companyNeedsSuggestConfirm, runSuggestForCompany],
+  );
+
+  const confirmCompanySuggest = useCallback(() => {
+    if (!companySuggestConfirmId) return;
+    const companyId = companySuggestConfirmId;
+    setCompanySuggestConfirmId(null);
+    void runSuggestForCompany(companyId);
+  }, [companySuggestConfirmId, runSuggestForCompany]);
+
+  const companySuggestConfirmName = useMemo(() => {
+    if (!companySuggestConfirmId) return "";
+    return (
+      workspaceCompanies.find((company) => company.id === companySuggestConfirmId)
+        ?.name ?? ""
+    );
+  }, [companySuggestConfirmId, workspaceCompanies]);
+
+  const suggestingCompanyName = useMemo(() => {
+    if (!suggestingCompanyId) return null;
+    return (
+      workspaceCompanies.find((company) => company.id === suggestingCompanyId)
+        ?.name ?? null
+    );
+  }, [suggestingCompanyId, workspaceCompanies]);
+
   const companiesError = error ?? suggestFieldErrors.companies;
 
   if (loading) {
@@ -333,7 +388,7 @@ export function CombineCompanyCards({
             </button>
             <button
               type="button"
-              onClick={() => void runSuggest()}
+              onClick={requestSuggest}
               disabled={suggesting || cardsDisabled}
               className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
             >
@@ -377,6 +432,9 @@ export function CombineCompanyCards({
                 onPeriodChange={onPeriodChange}
                 onRegisterFlush={registerContextFlush}
                 onView={setViewCompany}
+                onSuggest={() => requestCompanySuggest(company.id)}
+                suggesting={suggestingCompanyId === company.id}
+                suggestDisabled={suggesting || cardsDisabled}
                 rationale={rationaleByCompanyId.get(company.id)}
                 onExperienceIdsChange={onExperienceIdsChange}
               />
@@ -404,9 +462,26 @@ export function CombineCompanyCards({
       {suggesting ? (
         <BusyOverlay
           title={t("generate.combine.suggestingOverlay.title")}
-          description={t("generate.combine.suggestingOverlay.description")}
+          description={
+            suggestingCompanyName
+              ? t("generate.combine.suggestingOverlay.descriptionCompany", {
+                  name: suggestingCompanyName,
+                })
+              : t("generate.combine.suggestingOverlay.description")
+          }
         />
       ) : null}
+
+      <CombineSuggestConfirmDialogs
+        suggestConfirmOpen={suggestConfirmOpen}
+        companySuggestConfirmId={companySuggestConfirmId}
+        companySuggestConfirmName={companySuggestConfirmName}
+        suggesting={suggesting}
+        onCloseSuggestConfirm={() => setSuggestConfirmOpen(false)}
+        onConfirmSuggest={confirmSuggest}
+        onCloseCompanySuggestConfirm={() => setCompanySuggestConfirmId(null)}
+        onConfirmCompanySuggest={confirmCompanySuggest}
+      />
     </>
   );
 }

@@ -528,6 +528,18 @@ export const en = {
         description: "Please wait while the AI tailors your resume to the job.",
       },
       suggestExperiences: "Suggest experiences",
+      suggestConfirm: {
+        title: "Suggest experiences again?",
+        body: "Running suggest again will replace the linked experiences and AI rationale for all included companies. Continue?",
+        confirm: "Suggest again",
+      },
+      suggestCompanyConfirm: {
+        title: "Suggest experiences again?",
+        body: "Running suggest again will replace the linked experiences and AI rationale for {name}. Continue?",
+      },
+      suggestCompanyAria: "Suggest experiences for {name}",
+      suggestCompanyNotIncluded:
+        "Include this company in Combine before suggesting experiences.",
       suggestRunGuidance:
         "When you're ready please click Run button on the Step Bar to generate the resume.",
       suggesting: "Suggesting…",
@@ -535,6 +547,8 @@ export const en = {
         title: "Suggesting experiences…",
         description:
           "Please wait while the AI maps capability cards to your companies.",
+        descriptionCompany:
+          "Please wait while the AI maps capability cards to {name}.",
       },
       keywordContext: "Keyword context",
       keywordContextHint:

@@ -530,12 +530,25 @@ export const ko: MessageTree = {
         description: "AI가 채용 공고에 맞춰 이력서를 작성하는 중입니다.",
       },
       suggestExperiences: "경험 제안",
+      suggestConfirm: {
+        title: "경험을 다시 제안할까요?",
+        body: "다시 제안하면 포함된 모든 회사의 연결된 경험과 AI 근거가 교체됩니다. 계속할까요?",
+        confirm: "다시 제안",
+      },
+      suggestCompanyConfirm: {
+        title: "경험을 다시 제안할까요?",
+        body: "다시 제안하면 {name}의 연결된 경험과 AI 근거가 교체됩니다. 계속할까요?",
+      },
+      suggestCompanyAria: "{name}에 대한 경험 제안",
+      suggestCompanyNotIncluded:
+        "경험을 제안하기 전에 이 회사를 조합에 포함해 주세요.",
       suggestRunGuidance:
         "준비되면 단계 표시줄의 실행 버튼을 눌러 이력서를 생성하세요.",
       suggesting: "경험 제안 중…",
       suggestingOverlay: {
         title: "경험 제안 중…",
         description: "AI가 회사별로 역량 카드를 매핑하는 중입니다.",
+        descriptionCompany: "AI가 {name}에 역량 카드를 매핑하는 중입니다.",
       },
       keywordContext: "키워드 맥락",
       keywordContextHint:

@@ -8,6 +8,7 @@ export type CombineDefaultCompanyEntry = {
   endDate: string;
   roleContext: string;
   keywordContext: string;
+  experienceIds: string[];
 };
 
 export type CombineSelectionDefaults = {
@@ -32,12 +33,20 @@ export function extractCombineDefaults(
   return {
     profileId: combine.profileId,
     companies: combine.companies.map(
-      ({ companyId, startDate, endDate, roleContext, keywordContext }) => ({
+      ({
         companyId,
         startDate,
         endDate,
         roleContext,
         keywordContext,
+        experienceIds,
+      }) => ({
+        companyId,
+        startDate,
+        endDate,
+        roleContext,
+        keywordContext,
+        experienceIds: [...experienceIds],
       }),
     ),
   };
@@ -52,7 +61,7 @@ export function applyCombineDefaults(
     profileId: defaults.profileId,
     companies: defaults.companies.map((entry) => ({
       ...entry,
-      experienceIds: [],
+      experienceIds: [...entry.experienceIds],
     })),
   };
 }
@@ -71,10 +80,21 @@ export function seedCombineFromDefaults(
   return applyCombineDefaults(combine, defaults);
 }
 
+function sanitizeExperienceIds(
+  experienceIds: string[],
+  validExperienceIds?: Set<string>,
+): string[] {
+  if (!validExperienceIds) {
+    return experienceIds;
+  }
+  return experienceIds.filter((id) => validExperienceIds.has(id));
+}
+
 export function sanitizeCombineSelection(
   combine: CombineSnapshot,
   validProfileIds: Set<string>,
   validCompanyIds: Set<string>,
+  validExperienceIds?: Set<string>,
 ): CombineSnapshot | null {
   if (isCombineSelectionEmpty(combine)) {
     return null;
@@ -84,12 +104,34 @@ export function sanitizeCombineSelection(
     return { ...combine, profileId: "", companies: [] };
   }
 
-  const nextCompanies = combine.companies.filter((entry) =>
-    validCompanyIds.has(entry.companyId),
-  );
-  if (nextCompanies.length === combine.companies.length) {
+  let changed = false;
+  const nextCompanies = combine.companies
+    .filter((entry) => {
+      const keep = validCompanyIds.has(entry.companyId);
+      if (!keep) {
+        changed = true;
+      }
+      return keep;
+    })
+    .map((entry) => {
+      const experienceIds = sanitizeExperienceIds(
+        entry.experienceIds,
+        validExperienceIds,
+      );
+      if (
+        experienceIds.length === entry.experienceIds.length &&
+        experienceIds.every((id, index) => id === entry.experienceIds[index])
+      ) {
+        return entry;
+      }
+      changed = true;
+      return { ...entry, experienceIds };
+    });
+
+  if (!changed) {
     return null;
   }
+
   return { ...combine, companies: nextCompanies };
 }
 
@@ -159,6 +201,13 @@ function parseCombineSelectionDefaults(
     if (!companyId) {
       continue;
     }
+    const experienceIdsRaw = Array.isArray(entry.experienceIds)
+      ? entry.experienceIds
+      : [];
+    const experienceIds = experienceIdsRaw.filter(
+      (id): id is string => typeof id === "string" && id.trim().length > 0,
+    );
+
     companies.push({
       companyId,
       startDate: typeof entry.startDate === "string" ? entry.startDate : "",
@@ -167,6 +216,7 @@ function parseCombineSelectionDefaults(
         typeof entry.roleContext === "string" ? entry.roleContext : "",
       keywordContext:
         typeof entry.keywordContext === "string" ? entry.keywordContext : "",
+      experienceIds,
     });
   }
 

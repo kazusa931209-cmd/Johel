@@ -31,7 +31,7 @@ describe("combine-defaults", () => {
     ).toBe(false);
   });
 
-  it("extracts profile and company fields without experienceIds", () => {
+  it("extracts profile, company fields, and experienceIds", () => {
     const defaults = extractCombineDefaults({
       profileId: "prof-1",
       language: "ko",
@@ -57,12 +57,13 @@ describe("combine-defaults", () => {
           endDate: "Present",
           roleContext: "Backend lead",
           keywordContext: "payments",
+          experienceIds: ["exp-1", "exp-2"],
         },
       ],
     });
   });
 
-  it("applies defaults without emphasis or experienceIds", () => {
+  it("applies defaults with remembered experienceIds", () => {
     const seeded = applyCombineDefaults(
       { ...emptyCombine, language: "ja", emphasis: "Old guidance" },
       {
@@ -74,6 +75,7 @@ describe("combine-defaults", () => {
             endDate: "Present",
             roleContext: "Backend lead",
             keywordContext: "payments",
+            experienceIds: ["exp-1"],
           },
         ],
       },
@@ -90,7 +92,7 @@ describe("combine-defaults", () => {
           endDate: "Present",
           roleContext: "Backend lead",
           keywordContext: "payments",
-          experienceIds: [],
+          experienceIds: ["exp-1"],
         },
       ],
     });
@@ -104,7 +106,7 @@ describe("combine-defaults", () => {
     expect(seedCombineFromDefaults(current, "user-1")).toBe(current);
   });
 
-  it("sanitizes deleted profile and company references", () => {
+  it("sanitizes deleted profile, company, and experience references", () => {
     const combine = {
       profileId: "prof-missing",
       language: "en",
@@ -116,7 +118,7 @@ describe("combine-defaults", () => {
           endDate: "Present",
           roleContext: "Lead",
           keywordContext: "",
-          experienceIds: [],
+          experienceIds: ["exp-missing"],
         },
       ],
     };
@@ -126,6 +128,7 @@ describe("combine-defaults", () => {
         combine,
         new Set(["prof-1"]),
         new Set(["co-1"]),
+        new Set(["exp-1"]),
       ),
     ).toEqual({
       ...combine,
@@ -138,15 +141,35 @@ describe("combine-defaults", () => {
         {
           ...combine,
           profileId: "prof-1",
+          companies: [
+            {
+              companyId: "co-1",
+              startDate: "Jan 2022",
+              endDate: "Present",
+              roleContext: "Lead",
+              keywordContext: "",
+              experienceIds: ["exp-1", "exp-missing"],
+            },
+          ],
         },
         new Set(["prof-1"]),
         new Set(["co-1"]),
+        new Set(["exp-1"]),
       ),
     ).toEqual({
       profileId: "prof-1",
       language: "en",
       emphasis: "",
-      companies: [],
+      companies: [
+        {
+          companyId: "co-1",
+          startDate: "Jan 2022",
+          endDate: "Present",
+          roleContext: "Lead",
+          keywordContext: "",
+          experienceIds: ["exp-1"],
+        },
+      ],
     });
   });
 });

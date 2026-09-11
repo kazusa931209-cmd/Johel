@@ -7,28 +7,18 @@ import { useToast } from "@/components/app/ToastProvider";
 import {
   type CombineFieldErrors,
   type CombineSnapshot,
+  getCombineCompanySuggestError,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import {
-  runAiCombineRecommend,
-  type CombineRecommendResult,
-} from "@/lib/api";
+  mergeCombineRecommendResults,
+  mergeExperienceSuggestions,
+  mergeExperienceSuggestionsForCompany,
+} from "@/lib/combine-experience-suggest";
+import { runAiCombineRecommend, type CombineRecommendResult } from "@/lib/api";
 import type { ProfileGraduation } from "@/lib/profile";
-
-export function mergeExperienceSuggestions(
-  combine: CombineSnapshot,
-  result: CombineRecommendResult,
-): CombineSnapshot["companies"] {
-  const byCompanyId = new Map(
-    result.companies.map((item) => [item.companyId, item.experienceIds]),
-  );
-  return combine.companies.map((entry) => ({
-    ...entry,
-    experienceIds: byCompanyId.get(entry.companyId) ?? entry.experienceIds,
-  }));
-}
 
 type UseCombineExperienceSuggestOptions = {
   combine: CombineSnapshot;
@@ -55,6 +45,9 @@ export function useCombineExperienceSuggest({
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
   const [suggesting, setSuggesting] = useState(false);
+  const [suggestingCompanyId, setSuggestingCompanyId] = useState<string | null>(
+    null,
+  );
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [appliedResult, setAppliedResult] =
@@ -82,6 +75,77 @@ export function useCombineExperienceSuggest({
 
   const warnings = appliedResult?.warnings ?? [];
 
+  const applySuggestResult = useCallback(
+    (
+      snapshot: CombineSnapshot,
+      result: CombineRecommendResult,
+      companyId?: string,
+    ) => {
+      onCombineChange({
+        ...snapshot,
+        companies: companyId
+          ? mergeExperienceSuggestionsForCompany(snapshot, result, companyId)
+          : mergeExperienceSuggestions(snapshot, result),
+      });
+      setAppliedResult((previous) => mergeCombineRecommendResults(previous, result));
+      setSuggestSucceeded(true);
+      toast(t("toast.combineRecommendReady"), "success");
+    },
+    [onCombineChange, t, toast],
+  );
+
+  const runSuggestRequest = useCallback(
+    async (
+      snapshot: CombineSnapshot,
+      companyId?: string,
+    ): Promise<boolean> => {
+      if (!generationId) {
+        setSuggestError(t("generate.combine.suggestGenerationRequired"));
+        return false;
+      }
+
+      setSuggesting(true);
+      setSuggestingCompanyId(companyId ?? null);
+      const saveRes = await onSaveBeforeSuggest();
+      if (saveRes.error) {
+        setSuggesting(false);
+        setSuggestingCompanyId(null);
+        toast(saveRes.error, "error");
+        return false;
+      }
+
+      const res = await runAiCombineRecommend({
+        generationId,
+        companyId,
+      });
+      setSuggesting(false);
+      setSuggestingCompanyId(null);
+
+      if (res.error || !res.data) {
+        toast(res.error ?? t("toast.combineRecommendFailed"), "error");
+        return false;
+      }
+
+      if (res.data.tokenUsed != null) {
+        setTokenUsed(res.data.tokenUsed);
+      } else {
+        void refreshTokenUsed();
+      }
+
+      applySuggestResult(snapshot, res.data, companyId);
+      return true;
+    },
+    [
+      applySuggestResult,
+      generationId,
+      onSaveBeforeSuggest,
+      refreshTokenUsed,
+      setTokenUsed,
+      t,
+      toast,
+    ],
+  );
+
   const runSuggest = useCallback(async (): Promise<boolean> => {
     if (suggesting) return false;
 
@@ -102,66 +166,87 @@ export function useCombineExperienceSuggest({
       setSuggestError(t("generate.combine.suggestVerdictRequired"));
       return false;
     }
-    if (!generationId) {
-      setSuggestError(t("generate.combine.suggestGenerationRequired"));
-      return false;
-    }
 
-    setSuggesting(true);
-    const saveRes = await onSaveBeforeSuggest();
-    if (saveRes.error) {
-      setSuggesting(false);
-      toast(saveRes.error, "error");
-      return false;
-    }
-
-    const res = await runAiCombineRecommend({ generationId });
-    setSuggesting(false);
-
-    if (res.error || !res.data) {
-      toast(res.error ?? t("toast.combineRecommendFailed"), "error");
-      return false;
-    }
-
-    if (res.data.tokenUsed != null) {
-      setTokenUsed(res.data.tokenUsed);
-    } else {
-      void refreshTokenUsed();
-    }
-
-    onCombineChange({
-      ...snapshot,
-      companies: mergeExperienceSuggestions(snapshot, res.data),
-    });
-    setAppliedResult(res.data);
-    setSuggestSucceeded(true);
-    toast(t("toast.combineRecommendReady"), "success");
-    return true;
+    return runSuggestRequest(snapshot);
   }, [
     combine,
     doVerdict,
-    generationId,
     job.acceptedMarkdown,
     job.jobText,
-    onCombineChange,
-    onSaveBeforeSuggest,
     profileGraduation,
-    refreshTokenUsed,
     resolveCombineSnapshot,
-    setTokenUsed,
+    runSuggestRequest,
     suggesting,
     t,
-    toast,
   ]);
+
+  const runSuggestForCompany = useCallback(
+    async (companyId: string): Promise<boolean> => {
+      if (suggesting) return false;
+
+      setSuggestError(null);
+      setFieldErrors({});
+      const snapshot = resolveCombineSnapshot?.() ?? combine;
+      const companyError = getCombineCompanySuggestError(
+        snapshot,
+        companyId,
+        profileGraduation,
+        t,
+      );
+      if (companyError) {
+        setSuggestError(companyError);
+        return false;
+      }
+
+      const filteredJob = noiseFilter(job.jobText.trim()).text;
+      if (!filteredJob) {
+        setSuggestError(t("validation.jobDescriptionRequired"));
+        return false;
+      }
+      if (doVerdict && !job.acceptedMarkdown?.trim()) {
+        setSuggestError(t("generate.combine.suggestVerdictRequired"));
+        return false;
+      }
+
+      return runSuggestRequest(snapshot, companyId);
+    },
+    [
+      combine,
+      doVerdict,
+      job.acceptedMarkdown,
+      job.jobText,
+      profileGraduation,
+      resolveCombineSnapshot,
+      runSuggestRequest,
+      suggesting,
+      t,
+    ],
+  );
+
+  const companyNeedsSuggestConfirm = useCallback(
+    (companyId: string) => {
+      const entry = combine.companies.find((item) => item.companyId === companyId);
+      if (!entry) {
+        return false;
+      }
+      return (
+        entry.experienceIds.length > 0 || rationaleByCompanyId.has(companyId)
+      );
+    },
+    [combine.companies, rationaleByCompanyId],
+  );
 
   return {
     runSuggest,
+    runSuggestForCompany,
     suggesting,
+    suggestingCompanyId,
     suggestError,
     fieldErrors,
     appliedResult,
     suggestSucceeded,
     rationaleByCompanyId,
     warnings,
+    companyNeedsSuggestConfirm,
   };
 }

@@ -39,8 +39,12 @@ export function GenerateCombineStep({
   onRunFromCombine,
 }: GenerateCombineStepProps) {
   const t = useT();
-  const { profiles, companies: workspaceCompanies, loading: pceLoading } =
-    usePce();
+  const {
+    profiles,
+    companies: workspaceCompanies,
+    experiences: workspaceExperiences,
+    loading: pceLoading,
+  } = usePce();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
   const combineRef = useRef(combine);
   combineRef.current = combine;
@@ -51,6 +55,7 @@ export function GenerateCombineStep({
       combine,
       new Set(profiles.map((profile) => profile.id)),
       new Set(workspaceCompanies.map((company) => company.id)),
+      new Set(workspaceExperiences.map((experience) => experience.id)),
     );
     if (sanitized) {
       onCombineChange(sanitized);
@@ -61,6 +66,7 @@ export function GenerateCombineStep({
     pceLoading,
     profiles,
     workspaceCompanies,
+    workspaceExperiences,
   ]);
 
   const profileGraduation = useMemo(() => {

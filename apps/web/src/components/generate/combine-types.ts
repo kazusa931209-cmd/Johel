@@ -71,6 +71,32 @@ export function validateCombineSnapshot(
   return errors;
 }
 
+export function getCombineCompanySuggestError(
+  snapshot: CombineSnapshot,
+  companyId: string,
+  graduation: { year: number; month: number } | null | undefined,
+  t: (key: string) => string,
+): string | null {
+  if (!snapshot.profileId) {
+    return t("validation.profileRequired");
+  }
+  if (graduation == null) {
+    return t("validation.profileGraduationRequired");
+  }
+  const entry = snapshot.companies.find((item) => item.companyId === companyId);
+  if (!entry) {
+    return t("generate.combine.suggestCompanyNotIncluded");
+  }
+  if (
+    !entry.startDate.trim() ||
+    !entry.endDate.trim() ||
+    !entry.roleContext.trim()
+  ) {
+    return t("validation.companyEntryIncomplete");
+  }
+  return null;
+}
+
 export function isCombineRunReady(
   snapshot: CombineSnapshot,
   graduation?: { year: number; month: number } | null,

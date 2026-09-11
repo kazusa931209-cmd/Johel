@@ -227,6 +227,7 @@ export function getCombineGenerationFingerprint(combine: CombineSnapshot) {
 
 export type CombineRecommendRequest = {
   generationId: string;
+  companyId?: string;
 };
 
 export type CombineRecommendCompanyResult = {

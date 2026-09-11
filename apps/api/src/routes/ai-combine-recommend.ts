@@ -14,6 +14,7 @@ import { requireUser } from "../lib/session.js";
 
 const postSchema = z.object({
   generationId: z.string().trim().min(1),
+  companyId: z.string().trim().min(1).optional(),
 });
 
 export const aiCombineRecommendRoutes = new Hono();
@@ -78,7 +79,23 @@ aiCombineRecommendRoutes.post("/", async (c) => {
     return c.json({ error: "Selected profile was not found." }, 400);
   }
 
-  const companyIds = loaded.input.companies.map((item) => item.companyId);
+  const scopedCompanies = parsed.data.companyId
+    ? loaded.input.companies.filter(
+        (item) => item.companyId === parsed.data.companyId,
+      )
+    : loaded.input.companies;
+  if (scopedCompanies.length < 1) {
+    return c.json(
+      {
+        error: parsed.data.companyId
+          ? "Selected company is not included in Combine."
+          : "Include at least one company in Combine first.",
+      },
+      400,
+    );
+  }
+
+  const companyIds = scopedCompanies.map((item) => item.companyId);
   const companies = await prisma.company.findMany({
     where: { userId: user.id, id: { in: companyIds } },
   });
@@ -101,7 +118,7 @@ aiCombineRecommendRoutes.post("/", async (c) => {
     jobDescription: loaded.input.jobDescription,
     acceptedMarkdown: loaded.input.acceptedMarkdown,
     profileId: loaded.input.profileId,
-    companies: loaded.input.companies.map((entry) => {
+    companies: scopedCompanies.map((entry) => {
       const company = companyById.get(entry.companyId);
       if (!company) {
         throw new Error("Company was not found.");

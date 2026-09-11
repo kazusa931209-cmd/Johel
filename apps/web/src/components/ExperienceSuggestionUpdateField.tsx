@@ -12,7 +12,7 @@ type ExperienceSuggestionUpdateFieldProps = {
 };
 
 const OUTLINE_BOUNDARY_CLASS =
-  "rounded-md border border-border px-3 py-3 text-sm";
+  "rounded-md border border-border px-3 py-3 text-sm bg-muted/20";
 
 function trimField(value: string | null | undefined): string {
   if (value == null) return "";

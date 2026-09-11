@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyContextFields } from "@/components/generate/CombineCompanyContextFields";
 import type { CombineCompanyContextFlushResult } from "@/components/generate/CombineCompanyContextFields";
 import { CombineCompanyExperienceList } from "@/components/generate/CombineCompanyExperienceList";
@@ -30,6 +31,9 @@ type CombineCompanyCardProps = {
     flusher: () => CombineCompanyContextFlushResult | null,
   ) => () => void;
   onView: (company: CompanyDetail) => void;
+  onSuggest?: () => void;
+  suggesting?: boolean;
+  suggestDisabled?: boolean;
   rationale?: string;
   onExperienceIdsChange: (companyId: string, experienceIds: string[]) => void;
 };
@@ -46,31 +50,53 @@ export const CombineCompanyCard = memo(function CombineCompanyCard({
   onPeriodChange,
   onRegisterFlush,
   onView,
+  onSuggest,
+  suggesting = false,
+  suggestDisabled = false,
   rationale,
   onExperienceIdsChange,
 }: CombineCompanyCardProps) {
+  const t = useT();
+
   return (
     <article className="overflow-hidden rounded-md border border-border bg-background">
-      <div className="flex items-stretch">
-        <label
-          className={`flex min-h-12 min-w-0 flex-1 items-center gap-3 px-4 py-3 ${
-            cardsDisabled
-              ? "cursor-not-allowed"
-              : "cursor-pointer hover:bg-surface-muted/60"
-          }`}
-        >
-          <input
-            type="checkbox"
-            checked={included}
-            disabled={cardsDisabled}
-            onChange={(event) =>
-              onToggleInclude(company.id, event.target.checked)
-            }
-            className="h-4 w-4 shrink-0 rounded border-border disabled:cursor-not-allowed"
-          />
-          <span className="min-w-0 flex-1 font-medium">{company.name}</span>
-        </label>
-        <div className="pointer-events-auto flex items-center px-3">
+      <div className="flex min-h-12 items-stretch">
+        <div className="flex min-w-0 flex-1 items-center px-4 py-3">
+          <label
+            className={`inline-flex min-w-0 max-w-full items-center gap-3 ${
+              cardsDisabled
+                ? "cursor-not-allowed"
+                : "cursor-pointer hover:opacity-90"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={included}
+              disabled={cardsDisabled}
+              onChange={(event) =>
+                onToggleInclude(company.id, event.target.checked)
+              }
+              className="h-4 w-4 shrink-0 rounded border-border disabled:cursor-not-allowed"
+            />
+            <span className="min-w-0 font-medium">{company.name}</span>
+          </label>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 px-3">
+          {included && onSuggest ? (
+            <button
+              type="button"
+              onClick={onSuggest}
+              disabled={suggestDisabled || suggesting}
+              aria-label={t("generate.combine.suggestCompanyAria", {
+                name: company.name,
+              })}
+              className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-60"
+            >
+              {suggesting
+                ? t("generate.combine.suggesting")
+                : t("crud.experiences.advisor.suggest")}
+            </button>
+          ) : null}
           <ViewButton onClick={() => onView(company)} />
         </div>
       </div>
