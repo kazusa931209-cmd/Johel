@@ -1,5 +1,6 @@
 services:
   app:
+    container_name: app-johel
     build:
       context: .
       platforms:
@@ -37,11 +38,12 @@ services:
       start_period: 60s
 
   caddy:
+    container_name: caddy-johel
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "4080:80"
+      - "4443:443"
     environment:
       PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?Set PUBLIC_DOMAIN in .env}
       ACME_EMAIL: ${ACME_EMAIL:-}

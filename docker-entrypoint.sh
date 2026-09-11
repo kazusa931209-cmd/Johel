@@ -11,6 +11,11 @@ API_PID=$!
 
 echo "Waiting for API health..."
 until node -e "fetch('http://127.0.0.1:4042/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"; do
+  if ! kill -0 "$API_PID" 2>/dev/null; then
+    echo "API process exited during startup."
+    wait "$API_PID" 2>/dev/null || true
+    exit 1
+  fi
   sleep 1
 done
 echo "API is ready."

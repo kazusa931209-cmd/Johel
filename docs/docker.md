@@ -259,9 +259,11 @@ From the repo root:
 docker compose -f docker-compose.public.yml up -d --build
 ```
 
-Caddy terminates TLS on ports **80** and **443** and proxies to the JoHEL app container on `:4321`.
+Caddy listens on host ports **4080** (HTTP) and **4443** (HTTPS), mapped to Caddy **80** / **443** inside the container, and proxies to the JoHEL app container on `:4321`. Use non-default host ports when another stack (e.g. a local ingress) already binds **80** / **443**.
 
-Open `https://<PUBLIC_DOMAIN>`.
+Open `https://<PUBLIC_DOMAIN>:4443` (or `http://<PUBLIC_DOMAIN>:4080`).
+
+Set `PUBLIC_URL=https://<PUBLIC_DOMAIN>:4443` in `.env` when using the HTTPS port suffix.
 
 ### Update
 
@@ -287,7 +289,7 @@ LAN deployment (`docker compose up`) remains unchanged and does not require `ENC
 Scripts live under `scripts/`:
 
 ```bash
-# Backup (Docker container name defaults to johel-app-1)
+# Backup (Docker container name defaults to app-johel)
 ./scripts/backup-db.sh
 
 # Restore — prompts for RESTORE confirmation
@@ -300,7 +302,7 @@ Environment overrides:
 | --- | --- | --- |
 | `BACKUP_DIR` | `./backups` | Output directory |
 | `BACKUP_RETENTION_DAYS` | `14` | Delete older backup files |
-| `JOHEL_CONTAINER` | `johel-app-1` | Docker container name |
+| `JOHEL_CONTAINER` | `app-johel` | Docker container name |
 | `LOCAL_DB_PATH` | `./apps/api/prisma/dev.db` | Local dev DB when Docker is not running |
 
 **Before upgrading the image**, take a backup. Treat backups as sensitive — they may contain user prompts, job descriptions, and AI usage I/O.
