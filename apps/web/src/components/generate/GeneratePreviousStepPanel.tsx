@@ -65,14 +65,10 @@ export function useGeneratePreviousStepPanel({
       : undefined;
 
   const previousHeaderRight = isFilteredJobPanel ? (
-      <span
-        aria-label={t("generate.job.filteredCharCountAria", {
-          count: filteredCharCount,
-        })}
-      >
-        {filteredCharCount}
-      </span>
-    ) : undefined;
+    <span>
+      {t("generate.job.filteredCharCountLabel", { count: filteredCharCount })}
+    </span>
+  ) : undefined;
 
   const previousContent = useMemo(() => {
     if (currentStep === "Job") {

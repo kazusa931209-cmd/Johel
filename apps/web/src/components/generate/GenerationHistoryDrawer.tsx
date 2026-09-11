@@ -368,12 +368,10 @@ export function GenerationHistoryDrawer({
                       <GeneratePanelCopyActions
                         text={filteredJobText}
                         trailing={
-                          <span
-                            aria-label={t("generate.job.filteredCharCountAria", {
+                          <span>
+                            {t("generate.job.filteredCharCountLabel", {
                               count: filteredCharCount,
                             })}
-                          >
-                            {filteredCharCount}
                           </span>
                         }
                       />

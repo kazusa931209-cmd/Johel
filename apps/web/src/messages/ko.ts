@@ -435,7 +435,7 @@ export const ko: MessageTree = {
       filteredPreviewTitle: "노이즈 제거된 채용 공고",
       filteredPreviewHint:
         "노이즈 필터를 거친 미리보기입니다. 판정을 끄면 이후 단계에서 이 내용을 사용합니다.",
-      filteredCharCountAria: "노이즈 제거 후 {count}자",
+      filteredCharCountLabel: "필터 {count}자",
       methods: {
         manual: "직접 입력",
         url: "URL",
@@ -805,6 +805,8 @@ export const ko: MessageTree = {
     companyEntryIncomplete:
       "포함된 각 회사에 기간과 역할 설명이 필요합니다.",
     jobDescriptionRequired: "채용 공고는 필수입니다.",
+    jdCompanyNameRequired: "JD 회사명은 필수입니다.",
+    jdRoleRequired: "JD 직무는 필수입니다.",
     factsRequired: "필요한 내용을 설명해 주세요.",
     factsMaxLength: "최대 {max}자까지 입력할 수 있습니다.",
     keyRequired: "키는 필수입니다.",

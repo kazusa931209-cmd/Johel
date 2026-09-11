@@ -433,7 +433,7 @@ export const en = {
       filteredPreviewTitle: "Noise-Filtered Job Description",
       filteredPreviewHint:
         "Live preview after the noise filter. Later steps use this text when Do Verdict is off.",
-      filteredCharCountAria: "{count} characters after noise filter",
+      filteredCharCountLabel: "{count} filtered chars",
       methods: {
         manual: "Manual",
         url: "URL",
@@ -446,7 +446,7 @@ export const en = {
       jobDescription: "Job Description",
       jdCompanyName: "JD Company Name",
       jdCompanyNamePlaceholder: "Employer from the job posting",
-      jdJobRole: "JD Job Role",
+      jdJobRole: "JD Role",
       jdJobRolePlaceholder: "Role or title from the job posting",
       placeholder: "Paste or enter the job description…",
       runningVerdict: {
@@ -802,6 +802,8 @@ export const en = {
     companyEntryIncomplete:
       "Each included company needs a period and role context.",
     jobDescriptionRequired: "Job Description is required.",
+    jdCompanyNameRequired: "JD Company Name is required.",
+    jdRoleRequired: "JD Role is required.",
     factsRequired: "Describe what you need.",
     factsMaxLength: "Maximum {max} characters.",
     keyRequired: "Key is required.",

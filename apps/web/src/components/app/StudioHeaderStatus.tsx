@@ -49,7 +49,7 @@ export function StudioHeaderStatus() {
 
   return (
     <div
-      className="flex max-w-full min-w-0 flex-wrap items-center justify-center gap-4"
+      className="flex max-w-full min-w-0 flex-wrap items-center justify-start gap-4"
       title={t("nav.header.statusTitle", {
         id: status.generationPublicId,
         step: processedStepLabel,

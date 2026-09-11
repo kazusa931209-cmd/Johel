@@ -211,6 +211,7 @@ html[lang="ko"] body {
   --drawer-duration: 420ms;
   --drawer-ease: cubic-bezier(0.32, 0.72, 0, 1);
   --sidebar-width: 13rem;
+  --sidebar-brand-width: 3.5rem;
 }
 
 .drawer-backdrop {
@@ -244,13 +245,21 @@ html[lang="ko"] body {
 }
 
 .studio-sidebar {
-  width: 0;
-  pointer-events: none;
+  width: var(--sidebar-brand-width);
   transition: width var(--drawer-duration) var(--drawer-ease);
 }
 
 .studio-sidebar.studio-sidebar-open {
   width: var(--sidebar-width);
+}
+
+.studio-sidebar-nav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.studio-sidebar.studio-sidebar-open .studio-sidebar-nav {
+  opacity: 1;
   pointer-events: auto;
 }
 
@@ -266,6 +275,10 @@ html[lang="ko"] body {
 
 .studio-sidebar.studio-sidebar-open .studio-sidebar-inner {
   transform: translate3d(0, 0, 0);
+}
+
+.studio-sidebar.studio-sidebar-motion .studio-sidebar-nav {
+  transition: opacity var(--drawer-duration) var(--drawer-ease);
 }
 
 @media (prefers-reduced-motion: reduce) {

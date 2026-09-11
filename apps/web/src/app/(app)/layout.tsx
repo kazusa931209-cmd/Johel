@@ -38,16 +38,15 @@ function AppShell({
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
-      <StudioHeader
-        userName={user.loginId}
-        tokenUsage={tokenUsed}
-        sidebarOpen={sidebarOpen}
+    <div className="fixed inset-0 flex overflow-hidden bg-background">
+      <StudioSidebar
+        open={sidebarOpen}
+        motion={sidebarMotion}
         onToggleSidebar={onToggleSidebar}
       />
-      <div className="flex min-h-0 flex-1">
-        <StudioSidebar open={sidebarOpen} motion={sidebarMotion} />
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <StudioHeader userName={user.loginId} tokenUsage={tokenUsed} />
+        <main className="min-h-0 flex-1 overflow-y-auto p-6">{children}</main>
       </div>
       <StudioBottomFabCluster />
     </div>
