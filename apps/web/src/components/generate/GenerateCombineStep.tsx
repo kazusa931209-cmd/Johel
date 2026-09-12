@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useT } from "@/components/app/LocaleProvider";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
 import type { CombineEmphasisFlushResult } from "@/components/generate/CombineEmphasisField";
 import { CombineEmphasisField } from "@/components/generate/CombineEmphasisField";
@@ -24,6 +24,7 @@ import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNa
 import type { GenerateJobState } from "@/lib/generate-session";
 import { usePce } from "@/lib/pce";
 import { sanitizeCombineSelection } from "@/lib/combine-defaults";
+import { reclampCombineCompanyPeriods } from "@/lib/combine-period";
 import { resolveProfileGraduation } from "@/lib/profile";
 
 type GenerateCombineStepProps = {
@@ -48,6 +49,7 @@ export function GenerateCombineStep({
   onFooterChange,
 }: GenerateCombineStepProps) {
   const t = useT();
+  const { locale } = useLocale();
   const {
     profiles,
     companies: workspaceCompanies,
@@ -77,6 +79,16 @@ export function GenerateCombineStep({
     workspaceCompanies,
     workspaceExperiences,
   ]);
+
+  useEffect(() => {
+    if (pceLoading || combine.profileId || profiles.length < 1) {
+      return;
+    }
+    onCombineChange({
+      ...combineRef.current,
+      profileId: profiles[0].id,
+    });
+  }, [combine.profileId, onCombineChange, pceLoading, profiles]);
 
   const profileGraduation = useMemo(() => {
     if (!combine.profileId) return null;
@@ -137,15 +149,31 @@ export function GenerateCombineStep({
   const handleProfileIdChange = useCallback(
     (profileId: string) => {
       const current = combineRef.current;
+      if (profileId === current.profileId) {
+        return;
+      }
+
+      const graduation = resolveProfileGraduation(
+        profiles.find((profile) => profile.id === profileId),
+      );
+      const companies =
+        graduation != null && current.companies.length > 0
+          ? reclampCombineCompanyPeriods(
+              current.companies,
+              graduation,
+              locale,
+            )
+          : current.companies;
+
       const next = {
         ...current,
         profileId,
-        companies: profileId === current.profileId ? current.companies : [],
+        companies,
       };
       combineRef.current = next;
       onCombineChange(next);
     },
-    [onCombineChange],
+    [locale, onCombineChange, profiles],
   );
 
   const registerContextFlush = useCallback((flush: () => void) => {

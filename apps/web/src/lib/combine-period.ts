@@ -220,3 +220,31 @@ export function clampPeriodToWindow(
   );
   return indicesToPeriod(window, startIndex, endIndex, locale);
 }
+
+export type CombinePeriodEntry = {
+  startDate: string;
+  endDate: string;
+};
+
+/** Re-clamp each company period to a profile graduation window; other fields stay unchanged. */
+export function reclampCombineCompanyPeriods<T extends CombinePeriodEntry>(
+  companies: T[],
+  graduation: { year: number; month: number },
+  locale: string,
+): T[] {
+  const window = buildPeriodWindow(graduation.year, graduation.month);
+  return companies.map((entry) => {
+    if (!entry.startDate.trim() || !entry.endDate.trim()) {
+      const { startIndex, endIndex } = defaultPeriodIndices(window);
+      const period = indicesToPeriod(window, startIndex, endIndex, locale);
+      return { ...entry, startDate: period.startDate, endDate: period.endDate };
+    }
+    const period = clampPeriodToWindow(
+      window,
+      entry.startDate,
+      entry.endDate,
+      locale,
+    );
+    return { ...entry, startDate: period.startDate, endDate: period.endDate };
+  });
+}

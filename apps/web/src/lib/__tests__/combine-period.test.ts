@@ -4,6 +4,7 @@ import {
   defaultChainedPeriodIndices,
   defaultPeriodIndices,
   periodEndOverlapsPriorStart,
+  reclampCombineCompanyPeriods,
 } from "@/lib/combine-period";
 
 describe("defaultChainedPeriodIndices", () => {
@@ -44,5 +45,55 @@ describe("buildPeriodWindow", () => {
     const window = buildPeriodWindow(2020, 6);
     expect(window.graduationMonth).toBe(6);
     expect(window.monthCount).toBeGreaterThan(0);
+  });
+});
+
+describe("reclampCombineCompanyPeriods", () => {
+  it("keeps non-period fields and reclamps dates to the new graduation window", () => {
+    const companies = [
+      {
+        companyId: "co-1",
+        startDate: "Jan 2020",
+        endDate: "Present",
+        roleContext: "Backend lead",
+        keywordContext: "payments",
+        experienceIds: ["exp-1", "exp-2"],
+      },
+    ];
+
+    const reclamped = reclampCombineCompanyPeriods(
+      companies,
+      { year: 2018, month: 1 },
+      "en",
+    );
+
+    expect(reclamped[0]?.companyId).toBe("co-1");
+    expect(reclamped[0]?.roleContext).toBe("Backend lead");
+    expect(reclamped[0]?.keywordContext).toBe("payments");
+    expect(reclamped[0]?.experienceIds).toEqual(["exp-1", "exp-2"]);
+    expect(reclamped[0]?.startDate).toBeTruthy();
+    expect(reclamped[0]?.endDate).toBe("Present");
+  });
+
+  it("assigns default periods when dates are empty", () => {
+    const companies = [
+      {
+        companyId: "co-1",
+        startDate: "",
+        endDate: "",
+        roleContext: "Engineer",
+        keywordContext: "",
+        experienceIds: [],
+      },
+    ];
+
+    const reclamped = reclampCombineCompanyPeriods(
+      companies,
+      { year: 2020, month: 1 },
+      "en",
+    );
+
+    expect(reclamped[0]?.startDate).toBeTruthy();
+    expect(reclamped[0]?.endDate).toBe("Present");
   });
 });
