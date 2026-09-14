@@ -28,6 +28,14 @@ function forwardRequestHeaders(request: NextRequest): Headers {
       headers.set(key, value);
     }
   });
+
+  if (!headers.has("x-forwarded-proto")) {
+    headers.set("x-forwarded-proto", request.nextUrl.protocol.replace(":", ""));
+  }
+  if (!headers.has("x-forwarded-host")) {
+    headers.set("x-forwarded-host", request.headers.get("host") ?? request.nextUrl.host);
+  }
+
   return headers;
 }
 

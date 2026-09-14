@@ -6,6 +6,7 @@ export type CombineCompanySnapshot = {
   startDate: string;
   endDate: string;
   roleContext: string;
+  keywordContext?: string;
   experienceIds: string[];
 };
 
@@ -99,6 +100,7 @@ export async function assembleFromCombineSnapshot(
       startDate: entry.startDate,
       endDate: entry.endDate,
       roleContext: entry.roleContext,
+      keywordContext: entry.keywordContext?.trim() || undefined,
       experiences: entry.experienceIds.map((experienceId) => {
         const experience = experienceById.get(experienceId);
         if (!experience) {

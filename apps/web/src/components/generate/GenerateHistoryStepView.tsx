@@ -8,6 +8,7 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { GenerateCombineSummary } from "@/components/generate/GenerateCombineSummary";
+import { GenerateJdMetaFields } from "@/components/generate/GenerateJdMetaFields";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import type { GenerateJobState } from "@/lib/generate-session";
 
@@ -47,9 +48,21 @@ export function GenerateHistoryStepView({
       );
     }
     case "Verdict":
-      return job.acceptedMarkdown ? (
-        <div className="rounded-md border border-border bg-background px-3 py-3">
-          <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
+      return job.acceptedMarkdown || job.jdCompanyName.trim() || job.jdJobRole.trim() ? (
+        <div className="space-y-4">
+          {job.jdCompanyName.trim() || job.jdJobRole.trim() ? (
+            <GenerateJdMetaFields
+              jdCompanyName={job.jdCompanyName}
+              jdJobRole={job.jdJobRole}
+              onChange={() => {}}
+              readOnly
+            />
+          ) : null}
+          {job.acceptedMarkdown ? (
+            <div className="rounded-md border border-border bg-background px-3 py-3">
+              <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
+            </div>
+          ) : null}
         </div>
       ) : (
         <p className="text-sm text-muted">{t("generate.previous.verdictEmpty")}</p>

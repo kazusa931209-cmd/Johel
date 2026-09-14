@@ -7,7 +7,7 @@ if [ $# -lt 1 ]; then
 fi
 
 BACKUP_FILE="$1"
-CONTAINER="${JOHEL_CONTAINER:-johel-app-1}"
+CONTAINER="${JOHEL_CONTAINER:-app-johel}"
 DB_PATH="${JOHEL_DB_PATH:-/data/johel.db}"
 
 if [ ! -f "$BACKUP_FILE" ]; then

@@ -276,6 +276,11 @@ export function clearDownstreamFromVerdict(
 ): GenerateSession {
   return {
     ...session,
+    job: {
+      ...session.job,
+      jdCompanyName: "",
+      jdJobRole: "",
+    },
     resume: null,
     generationInputKey: null,
     evaluationMarkdown: null,

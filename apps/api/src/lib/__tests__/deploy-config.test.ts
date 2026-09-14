@@ -25,6 +25,15 @@ describe("validateDeployConfig", () => {
     expect(() => validateDeployConfig()).toThrow(/JWT_SECRET/);
   });
 
+  it("rejects an ENCRYPTION_KEY that is not valid base64 32 bytes", () => {
+    process.env.PUBLIC_DEPLOY = "true";
+    process.env.JWT_SECRET = TEST_JWT;
+    process.env.ENCRYPTION_KEY = "not-valid-base64-key";
+    process.env.TRUST_PROXY = "true";
+
+    expect(() => validateDeployConfig()).toThrow(/base64 encoding 32 bytes/);
+  });
+
   it("passes when public deploy secrets are configured", () => {
     process.env.PUBLIC_DEPLOY = "true";
     process.env.JWT_SECRET = TEST_JWT;

@@ -9,6 +9,7 @@ type GenerateStepLayoutProps = {
   previousHeaderRight?: ReactNode;
   currentTitle?: string;
   currentHeaderRight?: ReactNode;
+  currentFooter?: ReactNode;
   swapColumns?: boolean;
   currentFill?: boolean;
   children: ReactNode;
@@ -17,15 +18,20 @@ type GenerateStepLayoutProps = {
 function StepPanel({
   title,
   headerRight,
+  footer,
   children,
   fill,
 }: {
   title?: string;
   headerRight?: ReactNode;
+  footer?: ReactNode;
   children: ReactNode;
   fill?: boolean;
 }) {
   const showHeader = Boolean(title || headerRight);
+  const bodyClassName = `flex min-h-0 flex-1 flex-col px-4 py-4 ${
+    fill ? "overflow-hidden" : "overflow-y-auto"
+  }`;
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border bg-surface">
@@ -39,13 +45,16 @@ function StepPanel({
           {headerRight ? <div className="shrink-0">{headerRight}</div> : null}
         </div>
       ) : null}
-      <div
-        className={`flex min-h-0 flex-1 flex-col px-4 py-4 ${
-          fill ? "overflow-hidden" : "overflow-y-auto"
-        }`}
-      >
-        {children}
-      </div>
+      {footer ? (
+        <>
+          <div className={bodyClassName}>{children}</div>
+          <div className="flex shrink-0 items-center border-t border-border px-4 py-3">
+            {footer}
+          </div>
+        </>
+      ) : (
+        <div className={bodyClassName}>{children}</div>
+      )}
     </div>
   );
 }
@@ -64,6 +73,7 @@ export function GenerateStepLayout({
   previousHeaderRight,
   currentTitle,
   currentHeaderRight,
+  currentFooter,
   swapColumns = false,
   currentFill = false,
   children,
@@ -85,6 +95,7 @@ export function GenerateStepLayout({
       <StepPanel
         title={currentTitle}
         headerRight={currentHeaderRight}
+        footer={currentFooter}
         fill={currentFill}
       >
         {children}

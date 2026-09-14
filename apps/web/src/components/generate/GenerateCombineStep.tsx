@@ -1,7 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useT } from "@/components/app/LocaleProvider";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
 import type { CombineEmphasisFlushResult } from "@/components/generate/CombineEmphasisField";
 import { CombineEmphasisField } from "@/components/generate/CombineEmphasisField";
@@ -13,32 +20,43 @@ import {
   isCombineRunReady,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
+import { GenerateJdMetaFields } from "@/components/generate/GenerateJdMetaFields";
+import {
+  validateGenerateJdMetaFields,
+  type GenerateJdMetaFieldErrors,
+} from "@/lib/jd-meta-validation";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { usePce } from "@/lib/pce";
 import { sanitizeCombineSelection } from "@/lib/combine-defaults";
+import { reclampCombineCompanyPeriods } from "@/lib/combine-period";
 import { resolveProfileGraduation } from "@/lib/profile";
 
 type GenerateCombineStepProps = {
   combine: CombineSnapshot;
   onCombineChange: (combine: CombineSnapshot) => void;
   job: GenerateJobState;
+  onJobChange: (job: GenerateJobState) => void;
   doVerdict: boolean;
   generationId?: string | null;
   onSaveBeforeSuggest: () => Promise<{ error?: string }>;
   onRunFromCombine: () => void | Promise<void>;
+  onFooterChange?: (footer: ReactNode | null) => void;
 };
 
 export function GenerateCombineStep({
   combine,
   onCombineChange,
   job,
+  onJobChange,
   doVerdict,
   generationId,
   onSaveBeforeSuggest,
   onRunFromCombine,
+  onFooterChange,
 }: GenerateCombineStepProps) {
   const t = useT();
+  const { locale } = useLocale();
   const {
     profiles,
     companies: workspaceCompanies,
@@ -46,6 +64,9 @@ export function GenerateCombineStep({
     loading: pceLoading,
   } = usePce();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
+  const [jdMetaErrors, setJdMetaErrors] = useState<GenerateJdMetaFieldErrors>(
+    {},
+  );
   const combineRef = useRef(combine);
   combineRef.current = combine;
 
@@ -68,6 +89,16 @@ export function GenerateCombineStep({
     workspaceCompanies,
     workspaceExperiences,
   ]);
+
+  useEffect(() => {
+    if (pceLoading || combine.profileId || profiles.length < 1) {
+      return;
+    }
+    onCombineChange({
+      ...combineRef.current,
+      profileId: profiles[0].id,
+    });
+  }, [combine.profileId, onCombineChange, pceLoading, profiles]);
 
   const profileGraduation = useMemo(() => {
     if (!combine.profileId) return null;
@@ -99,6 +130,19 @@ export function GenerateCombineStep({
   }, [flushPendingFields]);
 
   const handleRun = useCallback(() => {
+    if (!doVerdict) {
+      const metaErrors = validateGenerateJdMetaFields(
+        job.jdCompanyName,
+        job.jdJobRole,
+        t,
+      );
+      if (Object.keys(metaErrors).length > 0) {
+        setJdMetaErrors(metaErrors);
+        return;
+      }
+      setJdMetaErrors({});
+    }
+
     const snapshot = resolveCombineSnapshot();
     const errors = validateCombineSnapshot(snapshot, t, profileGraduation);
     if (Object.keys(errors).length > 0) {
@@ -107,7 +151,15 @@ export function GenerateCombineStep({
     }
     setFieldErrors({});
     void onRunFromCombine();
-  }, [profileGraduation, onRunFromCombine, resolveCombineSnapshot, t]);
+  }, [
+    doVerdict,
+    job.jdCompanyName,
+    job.jdJobRole,
+    onRunFromCombine,
+    profileGraduation,
+    resolveCombineSnapshot,
+    t,
+  ]);
 
   const runReady = isCombineRunReady(combine, profileGraduation);
 
@@ -128,15 +180,31 @@ export function GenerateCombineStep({
   const handleProfileIdChange = useCallback(
     (profileId: string) => {
       const current = combineRef.current;
+      if (profileId === current.profileId) {
+        return;
+      }
+
+      const graduation = resolveProfileGraduation(
+        profiles.find((profile) => profile.id === profileId),
+      );
+      const companies =
+        graduation != null && current.companies.length > 0
+          ? reclampCombineCompanyPeriods(
+              current.companies,
+              graduation,
+              locale,
+            )
+          : current.companies;
+
       const next = {
         ...current,
         profileId,
-        companies: profileId === current.profileId ? current.companies : [],
+        companies,
       };
       combineRef.current = next;
       onCombineChange(next);
     },
-    [onCombineChange],
+    [locale, onCombineChange, profiles],
   );
 
   const registerContextFlush = useCallback((flush: () => void) => {
@@ -167,6 +235,29 @@ export function GenerateCombineStep({
 
   return (
     <div className="space-y-6">
+      {!doVerdict ? (
+        <GenerateJdMetaFields
+          jdCompanyName={job.jdCompanyName}
+          jdJobRole={job.jdJobRole}
+          onChange={(patch) => {
+            onJobChange({ ...job, ...patch });
+            if (jdMetaErrors.jdCompanyName && patch.jdCompanyName?.trim()) {
+              setJdMetaErrors((current) => ({
+                ...current,
+                jdCompanyName: undefined,
+              }));
+            }
+            if (jdMetaErrors.jdJobRole && patch.jdJobRole?.trim()) {
+              setJdMetaErrors((current) => ({
+                ...current,
+                jdJobRole: undefined,
+              }));
+            }
+          }}
+          errors={jdMetaErrors}
+        />
+      ) : null}
+
       <p className="text-sm text-muted">{t("generate.combine.description")}</p>
 
       <CombineProfilePicker
@@ -191,6 +282,7 @@ export function GenerateCombineStep({
         error={fieldErrors.companies}
         onClearError={clearCompaniesError}
         onRegisterContextFlush={registerContextFlush}
+        onFooterChange={onFooterChange}
       />
 
       <CombineEmphasisField

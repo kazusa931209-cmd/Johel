@@ -463,6 +463,10 @@ export const en = {
         title: "Running AI Verdict…",
         description: "Please wait. Noise filter and AI analysis are in progress.",
       },
+      runningJdMeta: {
+        title: "Extracting JD company and role…",
+        description: "Please wait while JoHEL reads the job description.",
+      },
     },
     jobDuplicate: {
       checking: {
@@ -545,7 +549,7 @@ export const en = {
         title: "Generating Resume…",
         description: "Please wait while the AI tailors your resume to the job.",
       },
-      suggestExperiences: "Suggest experiences",
+      suggestExperiences: "Suggest",
       suggestConfirm: {
         title: "Suggest experiences again?",
         body: "Running suggest again will replace the linked experiences and AI rationale for all included companies. Continue?",
@@ -559,7 +563,7 @@ export const en = {
       suggestCompanyNotIncluded:
         "Include this company in Combine before suggesting experiences.",
       suggestRunGuidance:
-        "When you're ready please click Run button on the Step Bar to generate the resume.",
+        "You're ready to run Generate. Click Run in the Step Bar.",
       suggesting: "Suggesting…",
       suggestingOverlay: {
         title: "Suggesting experiences…",
@@ -768,6 +772,8 @@ export const en = {
     resumeEvaluated: "Resume evaluated.",
     verdictFailed: "AI Verdict failed.",
     verdictCompleted: "AI Verdict completed.",
+    jdMetaFailed: "JD company and role extraction failed.",
+    jdMetaCompleted: "JD company and role extracted.",
     experienceAdvisorFailed: "Experience advisor failed.",
     experienceSuggestionReady: "Experience suggestion ready.",
     combineRecommendFailed: "Experience suggestion for Combine failed.",

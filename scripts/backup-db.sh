@@ -4,7 +4,7 @@ set -e
 BACKUP_DIR="${BACKUP_DIR:-./backups}"
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
-CONTAINER="${JOHEL_CONTAINER:-johel-app-1}"
+CONTAINER="${JOHEL_CONTAINER:-app-johel}"
 DB_PATH="${JOHEL_DB_PATH:-/data/johel.db}"
 
 mkdir -p "$BACKUP_DIR"

@@ -1,5 +1,6 @@
 services:
   app:
+    container_name: app-johel
     build:
       context: .
       platforms:
@@ -12,6 +13,7 @@ services:
     environment:
       DATABASE_URL: file:/data/johel.db
       JWT_SECRET: ${JWT_SECRET:-change-me-in-local-docker}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
       HOST: "127.0.0.1"
       PORT: "4042"
       WEB_PORT: "4321"

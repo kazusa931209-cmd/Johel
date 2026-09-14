@@ -465,6 +465,10 @@ export const ko: MessageTree = {
         title: "AI 판정 실행 중…",
         description: "잠시만 기다려 주세요. 노이즈 필터와 AI 분석이 진행 중입니다.",
       },
+      runningJdMeta: {
+        title: "JD 회사명과 직무 추출 중…",
+        description: "채용 공고를 읽는 중입니다. 잠시만 기다려 주세요.",
+      },
     },
     jobDuplicate: {
       checking: {
@@ -547,7 +551,7 @@ export const ko: MessageTree = {
         title: "이력서 생성 중…",
         description: "AI가 채용 공고에 맞춰 이력서를 작성하는 중입니다.",
       },
-      suggestExperiences: "경험 제안",
+      suggestExperiences: "제안",
       suggestConfirm: {
         title: "경험을 다시 제안할까요?",
         body: "다시 제안하면 포함된 모든 회사의 연결된 경험과 AI 근거가 교체됩니다. 계속할까요?",
@@ -561,7 +565,7 @@ export const ko: MessageTree = {
       suggestCompanyNotIncluded:
         "경험을 제안하기 전에 이 회사를 조합에 포함해 주세요.",
       suggestRunGuidance:
-        "준비되면 단계 표시줄의 실행 버튼을 눌러 이력서를 생성하세요.",
+        "Generate를 실행할 준비가 되었습니다. 단계 표시줄에서 실행을 클릭하세요.",
       suggesting: "경험 제안 중…",
       suggestingOverlay: {
         title: "경험 제안 중…",
@@ -771,6 +775,8 @@ export const ko: MessageTree = {
     resumeEvaluated: "이력서를 평가했습니다.",
     verdictFailed: "AI 판정에 실패했습니다.",
     verdictCompleted: "AI 판정을 완료했습니다.",
+    jdMetaFailed: "JD 회사명과 직무 추출에 실패했습니다.",
+    jdMetaCompleted: "JD 회사명과 직무를 추출했습니다.",
     experienceAdvisorFailed: "경험 어드바이저에 실패했습니다.",
     experienceSuggestionReady: "경험 제안이 준비되었습니다.",
     combineRecommendFailed: "조합 경험 제안에 실패했습니다.",

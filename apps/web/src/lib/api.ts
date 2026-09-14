@@ -404,6 +404,14 @@ export function deleteExperience(id: string) {
 
 export type AiVerdictResult = {
   markdown: string;
+  jdCompanyName: string;
+  jdJobRole: string;
+  tokenUsed: number;
+};
+
+export type AiJdMetaResult = {
+  jdCompanyName: string;
+  jdJobRole: string;
   tokenUsed: number;
 };
 
@@ -451,6 +459,20 @@ export type AiUsageDetail = AiUsageListItem & {
   input: string;
   output: string;
 };
+
+export function runAiJdMetaExtract(
+  jobDescription: string,
+  generationId?: string | null,
+) {
+  return request<AiJdMetaResult>("/ai-jd-meta", {
+    method: "POST",
+    body: JSON.stringify({
+      jobDescription,
+      ...(generationId ? { generationId } : {}),
+    }),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
 
 export function runAiVerdict(
   jobDescription: string,

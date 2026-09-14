@@ -74,7 +74,14 @@ Summarize in 3-5 bullets:
 Represent the JD, not the candidate. Every output item must be traceable to the original JD.
 
 ## Company & Contacts
-Extract when present: company name, description, website, industry, products/services, mission/vision, contact details.
+- Company name:
+- Description:
+- Website:
+- Industry:
+- Products/services:
+- Mission/vision:
+- Contact details:
+
 Use Not found for missing items.`;
 
 export const DEFAULT_GENERATE_PROMPT = `## Targeting
@@ -95,7 +102,8 @@ Do not treat company or experience fields as the job target.
 - \`companies[].whatCompanyIs\`: One-sentence scene (industry, product, customer). Do not paste as bullets.
 - \`companies[].domainAndStack\`: Domain, product scope, tech. Bullet list with bold labels; use for wording and grounding; do not paste as bullets.
 - \`companies[].roleContext\`: Nature of the role held there. Primary hint for \`title\`. Not achievements.
-- \`companies[].startDate\` / \`endDate\`: Employment dates. Copy as-is.
+- \`companies[].keywordContext\`: Optional steering for this employer block in this run. Use with the JD rubric to choose emphasis and compress bullets. When filled, prioritize linked cards that match those keywords; compress or omit cards with no keyword and rubric overlap unless \`run.emphasis\` says otherwise. When empty or "(none — match from job context only)", use the JD rubric and role context only (Auto).
+- \`companies[].startDate\` / \`endDate\`: Employment dates. Copy as-is. They mark tenure only; they do not mean every tool named under that company was used for the full period.
 - \`companies[].experiences[]\`: Materials already assigned to that company. Do not move them. Do not drop a linked experience unless it has zero overlap with the rubric and \`run.emphasis\` says to omit.
 - \`experiences[].category\`: Work cluster; use when choosing \`title\` and grouping skills.
 - \`experiences[].problem\`: What was solved. Bullet list with bold labels; use as the situation in the bullet.
@@ -106,12 +114,22 @@ Do not treat company or experience fields as the job target.
 For each company, emit one experience object.
 - \`company\`: \`companies[].name\`
 - \`title\`: Honest blend of \`roleContext\` + scene (\`whatCompanyIs\`, \`domainAndStack\`) + linked \`category\`s, angled toward Role.title. Do not copy the JD title onto every company.
-- \`bullets\`: One linked experience → 1–3 bullets. Prefer this shape:
-  - Lead with an action from \`actions\`.
-  - Ground the scene with company domain/stack wording.
-  - Close with \`outcome\` when present.
-  - Keep the problem visible only when it clarifies impact.
-- Ground tools, products, and metrics only if they appear in \`actions\`, \`outcome\`, \`whatCompanyIs\`, or \`domainAndStack\`.
+- \`bullets\`: One linked experience card → its own bullet(s). Do not merge tech, metrics, or outcomes from different cards into one bullet.
+  - When \`keywordContext\` is filled: prefer 1–2 bullets per linked card; keep the company block focused on keyword + rubric overlap.
+  - When \`keywordContext\` is empty: 1–3 bullets per linked card.
+  - Prefer this shape:
+    - Lead with an action from that card's \`actions\`.
+    - Ground the scene with company domain wording only (not a stack dump from \`domainAndStack\`).
+    - Close with that card's \`outcome\` when present.
+    - Keep the problem visible only when it clarifies impact.
+- Card isolation: each bullet must trace to exactly one linked experience card. Never move a tool or metric from card A into a bullet derived from card B.
+- Tech density: name at most 2–3 technologies per bullet, taken only from that card's \`actions\`. If the source lists more, paraphrase around the capability instead of inventorying frameworks, agents, or clouds.
+- No stack laundry lists: do not enumerate multiple agent frameworks, LLM SDKs, or cloud platforms in one bullet (for example LangGraph, LangChain, CrewAI, AutoGen together). Use the 1–2 tools explicitly named on that card's action line.
+- \`domainAndStack\` is scene tone only. Do not treat it as a tech source for bullets and do not paste it as bullets.
+- Tenure wording: employment dates describe tenure only. Write capability-led bullets ("Built agentic workflows with LangGraph for …"). Do not write period-wide inventories ("Used X, Y, Z throughout tenure") and do not synthesize all linked cards into one concurrent operating stack for the full employment period.
+- Multi-cloud / platform: at most one primary cloud or Kubernetes platform per bullet, from that card's \`actions\`. Across the whole company block, include at most two distinct cloud/platform families grounded in linked cards for that company. Do not combine EKS, GKE, Vertex AI, Azure, or similar into one bullet unless a single linked card explicitly describes that multi-cloud setup.
+- Cross-company metrics: each quantified before→after outcome (same metric and baseline) may appear only once in the entire resume. When the same outcome appears in materials for multiple companies, keep the numbers on the most specific card in resume company order; elsewhere rephrase qualitatively without repeating the same numbers or baseline.
+- Ground tools, products, and metrics only if they appear in that card's \`actions\` or \`outcome\`, or in \`whatCompanyIs\` for scene wording only.
 - Prefer: company-domain wording (scene) + STAR facts (materials) + JD keywords (rubric).
 
 ## Summary
@@ -120,13 +138,17 @@ When stating total years of experience, derive it from the sum of each company's
 Do not introduce skills that are not in the materials.
 
 ## Skills
-Build 3–5 skill groups from the intersection of Technical Requirements / Critical JD Terminology and the experience materials (\`actions\`, \`domainAndStack\`, \`category\`).
-At most 12 skill items in total across all groups.
-Do not copy the JD skill list. Do not fill Verdict missing-skill questions. Do not use Mentioned-only items unless they also appear in the materials.
+Build 4–5 skill groups. Include 12–20 skill items in total across all groups for senior depth.
+Source in this order:
+1. Intersection of Technical Requirements / Critical JD Terminology with experience materials (\`actions\`, \`category\`).
+2. Strong technologies from linked experience materials even when not in the JD (secondary groups).
+3. Mentioned-only JD items only when they also appear in the materials.
+Do not copy the full JD skill list. Do not fill Verdict missing-skill questions. Do not leave Skills sparse when the materials support more grounded items.
 
 ## Grounding
 Copy employers, dates, education, and contact from input.
 You may rewrite phrasing. You may not invent employers, dates, tools, metrics, or jobs.
+Do not imply that tools named under a company were used for the entire employment period unless a single linked card's materials clearly support that scope.
 Output language must follow \`run.language\`.`;
 
 export const DEFAULT_EVALUATE_PROMPT = `## Rubric

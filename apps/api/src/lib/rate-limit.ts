@@ -51,8 +51,7 @@ export function createRateLimiter(input: {
   return async (c, next) => {
     const identity = input.key(c);
     if (!identity) {
-      await next();
-      return;
+      return await next();
     }
 
     const bucketKey = `${input.group}:${identity}`;
@@ -62,7 +61,7 @@ export function createRateLimiter(input: {
       return c.json({ error: "Too many requests. Try again later." }, 429);
     }
 
-    await next();
+    return await next();
   };
 }
 

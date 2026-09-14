@@ -6,6 +6,7 @@ type AppVariables = {
   rateLimitUserId: string;
 };
 import { validateDeployConfig } from "./lib/deploy-config.js";
+import { ApiKeyDecryptError } from "./lib/secrets/api-key.js";
 import { requireUser } from "./lib/session.js";
 import {
   aiRateLimit,
@@ -22,6 +23,7 @@ import { companiesRoutes } from "./routes/companies.js";
 import { experiencesRoutes } from "./routes/experiences.js";
 import { aiEvaluateRoutes } from "./routes/ai-evaluate.js";
 import { aiResumeRoutes } from "./routes/ai-resume.js";
+import { aiJdMetaRoutes } from "./routes/ai-jd-meta.js";
 import { aiVerdictRoutes } from "./routes/ai-verdict.js";
 import { aiCombineRecommendRoutes } from "./routes/ai-combine-recommend.js";
 import { resumeRoutes } from "./routes/resume.js";
@@ -52,7 +54,7 @@ const attachRateLimitUserId: MiddlewareHandler = async (c, next) => {
   if (user) {
     c.set("rateLimitUserId", user.id);
   }
-  await next();
+  return await next();
 };
 
 export function createApp() {
@@ -77,15 +79,17 @@ export function createApp() {
   app.use("/auth/password", attachRateLimitUserId, authPasswordRateLimit());
   app.route("/auth", authRoutes);
 
+  const aiRateLimitMiddleware = aiRateLimit();
   const aiRoutes: MiddlewareHandler = async (c, next) => {
     const user = await requireUser(c);
     if (user) {
       c.set("rateLimitUserId", user.id);
     }
-    await aiRateLimit()(c, next);
+    return aiRateLimitMiddleware(c, next);
   };
 
   app.use("/ai-verdict/*", aiRoutes);
+  app.use("/ai-jd-meta/*", aiRoutes);
   app.use("/ai-resume/*", aiRoutes);
   app.use("/ai-evaluate/*", aiRoutes);
   app.use("/ai-experience-advise/*", aiRoutes);
@@ -97,6 +101,7 @@ export function createApp() {
   app.route("/experiences", experiencesRoutes);
   app.route("/ai-resume", aiResumeRoutes);
   app.route("/ai-verdict", aiVerdictRoutes);
+  app.route("/ai-jd-meta", aiJdMetaRoutes);
   app.route("/ai-evaluate", aiEvaluateRoutes);
   app.route("/ai-experience-advise", aiExperienceAdviseRoutes);
   app.route("/ai-combine-recommend", aiCombineRecommendRoutes);
@@ -105,6 +110,14 @@ export function createApp() {
   app.route("/prompts", promptsRoutes);
   app.route("/generations", generationsRoutes);
   app.route("/pce", pceRoutes);
+
+  app.onError((err, c) => {
+    if (err instanceof ApiKeyDecryptError) {
+      return c.json({ error: err.message }, 400);
+    }
+    console.error(err);
+    return c.json({ error: "Internal server error." }, 500);
+  });
 
   return app;
 }

@@ -259,9 +259,13 @@ From the repo root:
 docker compose -f docker-compose.public.yml up -d --build
 ```
 
-Caddy terminates TLS on ports **80** and **443** and proxies to the JoHEL app container on `:4321`.
+Caddy listens on host ports **4080** (HTTP) and **4443** (HTTPS), mapped to Caddy **80** / **443** inside the container, and proxies to the JoHEL app container on `:4321`. Use non-default host ports when another stack (e.g. a local ingress) already binds **80** / **443**.
 
-Open `https://<PUBLIC_DOMAIN>`.
+Open `https://<PUBLIC_DOMAIN>:4443` (or `http://<PUBLIC_DOMAIN>:4080`).
+
+For direct LAN access without Caddy, the app is also published on **4321** (same as Case A): `http://<LAN-IP>:4321`.
+
+Set `PUBLIC_URL=https://<PUBLIC_DOMAIN>:4443` in `.env` when using the HTTPS port suffix.
 
 ### Update
 
@@ -278,7 +282,7 @@ Do **not** pass `-v`. The `johel-data` volume keeps your database.
 - User OpenAI API keys are encrypted at rest when `ENCRYPTION_KEY` is set.
 - Auth and AI routes are rate-limited server-side.
 
-LAN deployment (`docker compose up`) remains unchanged and does not require `ENCRYPTION_KEY`.
+LAN deployment (`docker compose up`) does not require `ENCRYPTION_KEY` for a fresh database. If the `johel-data` volume was used with public deploy first, keep the same `ENCRYPTION_KEY` in `.env` — `docker-compose.yml` passes it when set so encrypted API keys can be decrypted.
 
 ---
 
@@ -287,7 +291,7 @@ LAN deployment (`docker compose up`) remains unchanged and does not require `ENC
 Scripts live under `scripts/`:
 
 ```bash
-# Backup (Docker container name defaults to johel-app-1)
+# Backup (Docker container name defaults to app-johel)
 ./scripts/backup-db.sh
 
 # Restore — prompts for RESTORE confirmation
@@ -300,7 +304,7 @@ Environment overrides:
 | --- | --- | --- |
 | `BACKUP_DIR` | `./backups` | Output directory |
 | `BACKUP_RETENTION_DAYS` | `14` | Delete older backup files |
-| `JOHEL_CONTAINER` | `johel-app-1` | Docker container name |
+| `JOHEL_CONTAINER` | `app-johel` | Docker container name |
 | `LOCAL_DB_PATH` | `./apps/api/prisma/dev.db` | Local dev DB when Docker is not running |
 
 **Before upgrading the image**, take a backup. Treat backups as sensitive — they may contain user prompts, job descriptions, and AI usage I/O.

@@ -9,6 +9,7 @@ import { prisma } from "./prisma.js";
 
 export const AI_GENERATE_TYPES = [
   "verdict",
+  "jdMeta",
   "generate",
   "evaluate",
   "workflowRecommend",

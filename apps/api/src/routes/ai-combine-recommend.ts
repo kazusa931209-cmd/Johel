@@ -108,33 +108,33 @@ aiCombineRecommendRoutes.post("/", async (c) => {
     );
   }
 
-  const runInput = {
-    apiKey: aiSettings.apiKey,
-    jobDescription: loaded.input.jobDescription,
-    acceptedMarkdown: loaded.input.acceptedMarkdown,
-    profileId: loaded.input.profileId,
-    companies: scopedCompanies.map((entry) => {
-      const company = companyById.get(entry.companyId);
-      if (!company) {
-        throw new Error("Company was not found.");
-      }
-      return {
-        companyId: entry.companyId,
-        name: company.name,
-        startDate: entry.startDate,
-        endDate: entry.endDate,
-        roleContext: entry.roleContext,
-        keywordContext: entry.keywordContext,
-      };
-    }),
-    experienceIndex,
-  };
-
   const combineExperiencesPerCompanyMax = normalizeCombineExperiencesPerCompanyMax(
     generationProcess?.combineExperiencesPerCompanyMax,
   );
 
   try {
+    const runInput = {
+      apiKey: aiSettings.apiKey,
+      jobDescription: loaded.input.jobDescription,
+      acceptedMarkdown: loaded.input.acceptedMarkdown,
+      profileId: loaded.input.profileId,
+      companies: scopedCompanies.map((entry) => {
+        const company = companyById.get(entry.companyId);
+        if (!company) {
+          throw new Error("Company was not found.");
+        }
+        return {
+          companyId: entry.companyId,
+          name: company.name,
+          startDate: entry.startDate,
+          endDate: entry.endDate,
+          roleContext: entry.roleContext,
+          keywordContext: entry.keywordContext,
+        };
+      }),
+      experienceIndex,
+    };
+
     const result = await runCombineRecommend(
       runInput,
       combineExperiencesPerCompanyMax,

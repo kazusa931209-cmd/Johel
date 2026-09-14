@@ -1,3 +1,4 @@
+import { extractJdMetaFromVerdictMarkdown } from "@johel/jd-meta";
 import { Hono } from "hono";
 import { z } from "zod";
 import { compileInstruction } from "../lib/prompt-optimize/index.js";
@@ -88,8 +89,16 @@ aiVerdictRoutes.post("/", async (c) => {
     });
 
     const tokenUsed = await sumTokenUsed(user.id);
+    const { jdCompanyName, jdJobRole } = extractJdMetaFromVerdictMarkdown(
+      result.markdown,
+    );
 
-    return c.json(withTokenUsed({ markdown: result.markdown }, tokenUsed));
+    return c.json(
+      withTokenUsed(
+        { markdown: result.markdown, jdCompanyName, jdJobRole },
+        tokenUsed,
+      ),
+    );
   } catch (err) {
     const message =
       err instanceof Error && err.message

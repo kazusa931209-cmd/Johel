@@ -15,6 +15,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/resume/package.json packages/resume/
 COPY packages/prompt-defaults/package.json packages/prompt-defaults/
+COPY packages/jd-meta/package.json packages/jd-meta/
 
 RUN pnpm install --frozen-lockfile --store-dir /pnpm/store
 
@@ -22,6 +23,7 @@ COPY apps/api apps/api
 COPY apps/web apps/web
 COPY packages/resume packages/resume
 COPY packages/prompt-defaults packages/prompt-defaults
+COPY packages/jd-meta packages/jd-meta
 
 RUN pnpm --filter api exec prisma generate
 

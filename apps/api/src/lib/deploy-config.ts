@@ -26,8 +26,14 @@ export function validateDeployConfig(): void {
     );
   }
 
-  if (!hasEncryptionKey()) {
+  const encryptionKey = process.env.ENCRYPTION_KEY?.trim() ?? "";
+  if (!encryptionKey) {
     throw new Error("PUBLIC_DEPLOY requires ENCRYPTION_KEY.");
+  }
+  if (!hasEncryptionKey()) {
+    throw new Error(
+      "PUBLIC_DEPLOY requires ENCRYPTION_KEY as base64 encoding 32 bytes (generate with: openssl rand -base64 32).",
+    );
   }
 
   if (process.env.TRUST_PROXY !== "true") {

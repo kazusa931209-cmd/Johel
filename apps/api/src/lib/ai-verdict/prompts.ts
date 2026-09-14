@@ -5,6 +5,8 @@ const EXECUTION_RULES = `- You are an AI Verdict assistant for a resume-generati
 - Analyze the Job Description in the user message.
 - Output Markdown only. Do not output JSON. Do not wrap the answer in a code fence.
 - Follow the structure, questions, and output format defined in Instructions above.
+- Under ## Role, always include a bullet line \`- Title:\` with the job title from the JD.
+- Under ## Company & Contacts, always include a bullet line \`- Company name:\` with the employer name from the JD.
 - Do not invent data; write "Not found" when information is missing.
 - Preserve technical terms exactly as written.`;
 

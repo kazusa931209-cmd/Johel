@@ -246,16 +246,19 @@ Default Generate Prompt (`@johel/prompt-defaults`) maps fields like this:
 
 | Workspace field | Generate use |
 | --- | --- |
-| `whatCompanyIs` / `domainAndStack` | Scene wording. Not pasted as bullets. |
+| `whatCompanyIs` / `domainAndStack` | Scene tone only. Not pasted as bullets; not a tech source for bullets. |
 | `roleContext` | Primary hint for experience `title`. |
+| `keywordContext` (Combine company entry) | Steers Suggest card selection and Generate bullet focus/compression for that employer block. |
 | `experiences[].category` | Title blend and skill grouping. |
 | `problem` | Situation, only when it clarifies impact. |
-| `actions` | Lead of each bullet (verb + object + tech). |
-| `outcome` | Close of the bullet when present. |
-| `workflow.description` | Persona / what to emphasize or omit. |
+| `actions` | Lead of each bullet (verb + object + tech). One card's actions must not supply tech for another card's bullet. |
+| `outcome` | Close of the bullet when present. Each quantified before→after outcome should appear on one card only; Generate deduplicates across companies. |
+| `run.emphasis` (Combine Run guidance) | Persona / what to emphasize or omit. |
 | Job context (Verdict or filtered JD) | **Only** scoring rubric. Company and Experience are not the job target. |
 
 Changing Prompts changes *how* materials are read. It does not add missing facts. If ScalyX has no Outcome numbers, no Generate Prompt will honestly create them.
+
+**Custom Generate Prompts:** Sign-up seeds defaults from `@johel/prompt-defaults`. If you edit Generate Prompt in Settings, keep it aligned with the default quality principles (card-scoped bullets, no cross-company metric duplication, concise tech naming, Skills 12–20 grounded items) or resume output may regress.
 
 **Do not** put authoring rules that belong here into Experience Actions (“Use this when the JD lists startup experience”). That is prompt logic, not STAR material.
 
