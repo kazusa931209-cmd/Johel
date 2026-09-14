@@ -465,6 +465,10 @@ export const ko: MessageTree = {
         title: "AI 판정 실행 중…",
         description: "잠시만 기다려 주세요. 노이즈 필터와 AI 분석이 진행 중입니다.",
       },
+      runningJdMeta: {
+        title: "JD 회사명과 직무 추출 중…",
+        description: "채용 공고를 읽는 중입니다. 잠시만 기다려 주세요.",
+      },
     },
     jobDuplicate: {
       checking: {
@@ -771,6 +775,8 @@ export const ko: MessageTree = {
     resumeEvaluated: "이력서를 평가했습니다.",
     verdictFailed: "AI 판정에 실패했습니다.",
     verdictCompleted: "AI 판정을 완료했습니다.",
+    jdMetaFailed: "JD 회사명과 직무 추출에 실패했습니다.",
+    jdMetaCompleted: "JD 회사명과 직무를 추출했습니다.",
     experienceAdvisorFailed: "경험 어드바이저에 실패했습니다.",
     experienceSuggestionReady: "경험 제안이 준비되었습니다.",
     combineRecommendFailed: "조합 경험 제안에 실패했습니다.",

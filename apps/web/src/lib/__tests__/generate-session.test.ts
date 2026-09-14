@@ -207,6 +207,8 @@ describe("generate-session run downstream helpers", () => {
     };
     const cleared = clearDownstreamFromVerdict(session);
     expect(cleared.job.acceptedMarkdown).toBe("# Verdict");
+    expect(cleared.job.jdCompanyName).toBe("");
+    expect(cleared.job.jdJobRole).toBe("");
     expect(cleared.verdictInputKey).toBe("key");
     expect(cleared.resume).toBeNull();
     expect(cleared.evaluationMarkdown).toBeNull();

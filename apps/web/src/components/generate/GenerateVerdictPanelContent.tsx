@@ -2,19 +2,34 @@
 
 import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
+import {
+  GenerateJdMetaFields,
+  type GenerateJdMetaFieldErrors,
+} from "@/components/generate/GenerateJdMetaFields";
 import type { GenerateJobState } from "@/lib/generate-session";
 
 type GenerateVerdictPanelContentProps = {
   job: GenerateJobState;
+  onJobChange: (job: GenerateJobState) => void;
+  jdMetaErrors?: GenerateJdMetaFieldErrors;
 };
 
 export function GenerateVerdictPanelContent({
   job,
+  onJobChange,
+  jdMetaErrors,
 }: GenerateVerdictPanelContentProps) {
   const t = useT();
 
   return (
     <div className="space-y-6">
+      <GenerateJdMetaFields
+        jdCompanyName={job.jdCompanyName}
+        jdJobRole={job.jdJobRole}
+        onChange={(patch) => onJobChange({ ...job, ...patch })}
+        errors={jdMetaErrors}
+      />
+
       <p className="text-sm text-muted">{t("generate.verdict.description")}</p>
 
       {job.acceptedMarkdown ? (

@@ -20,6 +20,11 @@ import {
   isCombineRunReady,
   validateCombineSnapshot,
 } from "@/components/generate/combine-types";
+import { GenerateJdMetaFields } from "@/components/generate/GenerateJdMetaFields";
+import {
+  validateGenerateJdMetaFields,
+  type GenerateJdMetaFieldErrors,
+} from "@/lib/jd-meta-validation";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { usePce } from "@/lib/pce";
@@ -31,6 +36,7 @@ type GenerateCombineStepProps = {
   combine: CombineSnapshot;
   onCombineChange: (combine: CombineSnapshot) => void;
   job: GenerateJobState;
+  onJobChange: (job: GenerateJobState) => void;
   doVerdict: boolean;
   generationId?: string | null;
   onSaveBeforeSuggest: () => Promise<{ error?: string }>;
@@ -42,6 +48,7 @@ export function GenerateCombineStep({
   combine,
   onCombineChange,
   job,
+  onJobChange,
   doVerdict,
   generationId,
   onSaveBeforeSuggest,
@@ -57,6 +64,9 @@ export function GenerateCombineStep({
     loading: pceLoading,
   } = usePce();
   const [fieldErrors, setFieldErrors] = useState<CombineFieldErrors>({});
+  const [jdMetaErrors, setJdMetaErrors] = useState<GenerateJdMetaFieldErrors>(
+    {},
+  );
   const combineRef = useRef(combine);
   combineRef.current = combine;
 
@@ -120,6 +130,19 @@ export function GenerateCombineStep({
   }, [flushPendingFields]);
 
   const handleRun = useCallback(() => {
+    if (!doVerdict) {
+      const metaErrors = validateGenerateJdMetaFields(
+        job.jdCompanyName,
+        job.jdJobRole,
+        t,
+      );
+      if (Object.keys(metaErrors).length > 0) {
+        setJdMetaErrors(metaErrors);
+        return;
+      }
+      setJdMetaErrors({});
+    }
+
     const snapshot = resolveCombineSnapshot();
     const errors = validateCombineSnapshot(snapshot, t, profileGraduation);
     if (Object.keys(errors).length > 0) {
@@ -128,7 +151,15 @@ export function GenerateCombineStep({
     }
     setFieldErrors({});
     void onRunFromCombine();
-  }, [profileGraduation, onRunFromCombine, resolveCombineSnapshot, t]);
+  }, [
+    doVerdict,
+    job.jdCompanyName,
+    job.jdJobRole,
+    onRunFromCombine,
+    profileGraduation,
+    resolveCombineSnapshot,
+    t,
+  ]);
 
   const runReady = isCombineRunReady(combine, profileGraduation);
 
@@ -204,6 +235,29 @@ export function GenerateCombineStep({
 
   return (
     <div className="space-y-6">
+      {!doVerdict ? (
+        <GenerateJdMetaFields
+          jdCompanyName={job.jdCompanyName}
+          jdJobRole={job.jdJobRole}
+          onChange={(patch) => {
+            onJobChange({ ...job, ...patch });
+            if (jdMetaErrors.jdCompanyName && patch.jdCompanyName?.trim()) {
+              setJdMetaErrors((current) => ({
+                ...current,
+                jdCompanyName: undefined,
+              }));
+            }
+            if (jdMetaErrors.jdJobRole && patch.jdJobRole?.trim()) {
+              setJdMetaErrors((current) => ({
+                ...current,
+                jdJobRole: undefined,
+              }));
+            }
+          }}
+          errors={jdMetaErrors}
+        />
+      ) : null}
+
       <p className="text-sm text-muted">{t("generate.combine.description")}</p>
 
       <CombineProfilePicker

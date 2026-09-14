@@ -59,9 +59,11 @@ import {
   isAutoRunInFlight,
   releaseAutoRun,
 } from "@/lib/generate-auto-run";
+import { extractJdMetaFromVerdictMarkdown } from "@johel/jd-meta";
 import {
   getCombineGenerationFingerprint,
   runAiEvaluate,
+  runAiJdMetaExtract,
   runAiResume,
   runAiVerdict,
   type ResumeLanguage,
@@ -91,6 +93,7 @@ export default function GeneratePage() {
   const generatingResumeRef = useRef(false);
   const evaluatingRef = useRef(false);
   const [verdictRunning, setVerdictRunning] = useState(false);
+  const [jdMetaRunning, setJdMetaRunning] = useState(false);
   const [missing, setMissing] = useState<MissingPrerequisite[] | null>(null);
   const [processSettings, setProcessSettings] = useState(DEFAULT_PROCESS);
   const [promptSettings, setPromptSettings] = useState(DEFAULT_PROMPTS);
@@ -357,6 +360,14 @@ export default function GeneratePage() {
     const filtered = noiseFilter(job.jobText.trim()).text;
     const inputKey = buildVerdictInputKey(job, promptCacheContext);
     if (canReuseStoredVerdict({ job, verdictInputKey }, inputKey)) {
+      if (job.acceptedMarkdown) {
+        const jdMeta = extractJdMetaFromVerdictMarkdown(job.acceptedMarkdown);
+        setJob({
+          ...job,
+          jdCompanyName: jdMeta.jdCompanyName,
+          jdJobRole: jdMeta.jdJobRole,
+        });
+      }
       return;
     }
 
@@ -376,7 +387,10 @@ export default function GeneratePage() {
         return;
       }
 
-      setVerdictResult(res.data.markdown, inputKey);
+      setVerdictResult(res.data.markdown, inputKey, {
+        jdCompanyName: res.data.jdCompanyName,
+        jdJobRole: res.data.jdJobRole,
+      });
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();
       toast(t("toast.verdictCompleted"), "success");
@@ -392,6 +406,7 @@ export default function GeneratePage() {
     promptCacheContext,
     refreshTokenUsed,
     setTokenUsed,
+    setJob,
     setVerdictResult,
     t,
     toast,
@@ -431,6 +446,7 @@ export default function GeneratePage() {
 
   const processBusy =
     verdictRunning ||
+    jdMetaRunning ||
     generatingResume ||
     evaluating ||
     jobDuplicateChecking ||
@@ -438,11 +454,7 @@ export default function GeneratePage() {
     resettingJob;
 
   const jobIsEmpty = useMemo(
-    () =>
-      !job.jobText.trim() &&
-      !job.jdCompanyName.trim() &&
-      !job.jdJobRole.trim() &&
-      !job.acceptedMarkdown?.trim(),
+    () => !job.jobText.trim() && !job.acceptedMarkdown?.trim(),
     [job],
   );
 
@@ -467,18 +479,46 @@ export default function GeneratePage() {
         }
         return;
       }
-      setJob({ ...job, acceptedMarkdown: null });
-      setActiveStep("Combine");
+
+      const filtered = noiseFilter(job.jobText.trim()).text;
+      setJdMetaRunning(true);
+      try {
+        const res = await runAiJdMetaExtract(filtered, generationId);
+        if (!res.data) {
+          toast(res.error ?? t("toast.jdMetaFailed"), "error");
+          return;
+        }
+
+        setJob({
+          ...job,
+          acceptedMarkdown: null,
+          jdCompanyName: res.data.jdCompanyName,
+          jdJobRole: res.data.jdJobRole,
+        });
+        setTokenUsed(res.data.tokenUsed);
+        await refreshTokenUsed();
+        toast(t("toast.jdMetaCompleted"), "success");
+        setActiveStep("Combine");
+      } catch {
+        toast(t("toast.jdMetaFailed"), "error");
+      } finally {
+        setJdMetaRunning(false);
+      }
     });
   }, [
     checkBeforeVerdict,
     clearDownstreamFromVerdictSession,
+    generationId,
     job,
     proceedToVerdict,
     processSettings.doVerdict,
+    refreshTokenUsed,
     requestRun,
     setActiveStep,
     setJob,
+    setTokenUsed,
+    t,
+    toast,
   ]);
 
   const runFromVerdict = useCallback(() => {
@@ -832,6 +872,7 @@ export default function GeneratePage() {
             {processSettings.doVerdict && normalizedActiveStep === "Verdict" ? (
               <GenerateVerdictStep
                 job={job}
+                onJobChange={setJob}
                 running={verdictRunning}
                 onRun={runFromVerdict}
               />
@@ -841,6 +882,7 @@ export default function GeneratePage() {
                 combine={combine}
                 onCombineChange={setCombine}
                 job={job}
+                onJobChange={setJob}
                 doVerdict={processSettings.doVerdict}
                 generationId={generationId}
                 onSaveBeforeSuggest={onSaveBeforeSuggest}
@@ -907,6 +949,13 @@ export default function GeneratePage() {
         <BusyOverlay
           title={t("generate.jobDuplicate.checking.title")}
           description={t("generate.jobDuplicate.checking.description")}
+        />
+      ) : null}
+
+      {jdMetaRunning ? (
+        <BusyOverlay
+          title={t("generate.job.runningJdMeta.title")}
+          description={t("generate.job.runningJdMeta.description")}
         />
       ) : null}
 

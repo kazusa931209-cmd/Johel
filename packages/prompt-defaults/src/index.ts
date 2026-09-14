@@ -74,7 +74,14 @@ Summarize in 3-5 bullets:
 Represent the JD, not the candidate. Every output item must be traceable to the original JD.
 
 ## Company & Contacts
-Extract when present: company name, description, website, industry, products/services, mission/vision, contact details.
+- Company name:
+- Description:
+- Website:
+- Industry:
+- Products/services:
+- Mission/vision:
+- Contact details:
+
 Use Not found for missing items.`;
 
 export const DEFAULT_GENERATE_PROMPT = `## Targeting

@@ -8,6 +8,7 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import { GenerateCombineSummary } from "@/components/generate/GenerateCombineSummary";
+import { GenerateJdMetaFields } from "@/components/generate/GenerateJdMetaFields";
 import { GenerateJobDescriptionPreview } from "@/components/generate/GenerateJobDescriptionPreview";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { formatThousandsSeparated } from "@/lib/helper";
@@ -92,10 +93,22 @@ export function useGeneratePreviousStepPanel({
           <GenerateJobDescriptionPreview jobText={job.jobText} />
         );
       case "Verdict":
-        return job.acceptedMarkdown ? (
-          <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
-        ) : (
-          <p className="text-sm text-muted">{t("generate.previous.verdictEmpty")}</p>
+        return (
+          <div className="space-y-4">
+            <GenerateJdMetaFields
+              jdCompanyName={job.jdCompanyName}
+              jdJobRole={job.jdJobRole}
+              onChange={() => {}}
+              readOnly
+            />
+            {job.acceptedMarkdown ? (
+              <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
+            ) : (
+              <p className="text-sm text-muted">
+                {t("generate.previous.verdictEmpty")}
+              </p>
+            )}
+          </div>
         );
       case "Combine":
         return (

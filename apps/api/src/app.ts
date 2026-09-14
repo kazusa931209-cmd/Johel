@@ -23,6 +23,7 @@ import { companiesRoutes } from "./routes/companies.js";
 import { experiencesRoutes } from "./routes/experiences.js";
 import { aiEvaluateRoutes } from "./routes/ai-evaluate.js";
 import { aiResumeRoutes } from "./routes/ai-resume.js";
+import { aiJdMetaRoutes } from "./routes/ai-jd-meta.js";
 import { aiVerdictRoutes } from "./routes/ai-verdict.js";
 import { aiCombineRecommendRoutes } from "./routes/ai-combine-recommend.js";
 import { resumeRoutes } from "./routes/resume.js";
@@ -88,6 +89,7 @@ export function createApp() {
   };
 
   app.use("/ai-verdict/*", aiRoutes);
+  app.use("/ai-jd-meta/*", aiRoutes);
   app.use("/ai-resume/*", aiRoutes);
   app.use("/ai-evaluate/*", aiRoutes);
   app.use("/ai-experience-advise/*", aiRoutes);
@@ -99,6 +101,7 @@ export function createApp() {
   app.route("/experiences", experiencesRoutes);
   app.route("/ai-resume", aiResumeRoutes);
   app.route("/ai-verdict", aiVerdictRoutes);
+  app.route("/ai-jd-meta", aiJdMetaRoutes);
   app.route("/ai-evaluate", aiEvaluateRoutes);
   app.route("/ai-experience-advise", aiExperienceAdviseRoutes);
   app.route("/ai-combine-recommend", aiCombineRecommendRoutes);

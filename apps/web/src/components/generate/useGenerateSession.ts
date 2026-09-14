@@ -236,11 +236,24 @@ export function useGenerateSession() {
   }, []);
 
   const setVerdictResult = useCallback(
-    (acceptedMarkdown: string, verdictInputKey: string) => {
+    (
+      acceptedMarkdown: string,
+      verdictInputKey: string,
+      jdMeta?: { jdCompanyName: string; jdJobRole: string },
+    ) => {
       setSession((current) =>
         withoutResume({
           ...current,
-          job: { ...current.job, acceptedMarkdown },
+          job: {
+            ...current.job,
+            acceptedMarkdown,
+            ...(jdMeta
+              ? {
+                  jdCompanyName: jdMeta.jdCompanyName,
+                  jdJobRole: jdMeta.jdJobRole,
+                }
+              : {}),
+          },
           verdictInputKey,
         }),
       );

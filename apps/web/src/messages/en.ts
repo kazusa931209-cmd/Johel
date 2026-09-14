@@ -463,6 +463,10 @@ export const en = {
         title: "Running AI Verdict…",
         description: "Please wait. Noise filter and AI analysis are in progress.",
       },
+      runningJdMeta: {
+        title: "Extracting JD company and role…",
+        description: "Please wait while JoHEL reads the job description.",
+      },
     },
     jobDuplicate: {
       checking: {
@@ -768,6 +772,8 @@ export const en = {
     resumeEvaluated: "Resume evaluated.",
     verdictFailed: "AI Verdict failed.",
     verdictCompleted: "AI Verdict completed.",
+    jdMetaFailed: "JD company and role extraction failed.",
+    jdMetaCompleted: "JD company and role extracted.",
     experienceAdvisorFailed: "Experience advisor failed.",
     experienceSuggestionReady: "Experience suggestion ready.",
     combineRecommendFailed: "Experience suggestion for Combine failed.",
