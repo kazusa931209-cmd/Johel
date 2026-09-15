@@ -1,13 +1,16 @@
 "use client";
 
 import type { GeneratedResume } from "@johel/resume";
+import { useAiAssistant } from "@/components/app/AiAssistant";
 import { useT } from "@/components/app/LocaleProvider";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
+import { TextSelectionToolbar } from "@/components/shared/TextSelectionToolbar";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
 import type { ResumeDownloadLabel } from "@/lib/api";
 
 type GenerateEvaluateStepProps = {
+  generationId: string | null;
   resume: GeneratedResume | null;
   downloadLabel?: ResumeDownloadLabel;
   evaluationMarkdown: string | null;
@@ -16,6 +19,7 @@ type GenerateEvaluateStepProps = {
 };
 
 export function GenerateEvaluateStep({
+  generationId,
   resume,
   downloadLabel,
   evaluationMarkdown,
@@ -23,6 +27,7 @@ export function GenerateEvaluateStep({
   onDownloaded,
 }: GenerateEvaluateStepProps) {
   const t = useT();
+  const { openAiAssistant } = useAiAssistant();
   const { onDownload, downloading } = useResumeDownload(resume, downloadLabel, {
     onDownloaded,
   });
@@ -63,6 +68,16 @@ export function GenerateEvaluateStep({
   }
 
   return (
-    <AiVerdictMarkdown markdown={evaluationMarkdown} />
+    <TextSelectionToolbar
+      onCheck={(selectedText) =>
+        openAiAssistant({
+          query: selectedText,
+          category: "check-gaps",
+          generationId,
+        })
+      }
+    >
+      <AiVerdictMarkdown markdown={evaluationMarkdown} />
+    </TextSelectionToolbar>
   );
 }

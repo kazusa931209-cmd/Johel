@@ -925,6 +925,7 @@ export default function GeneratePage() {
             {processSettings.doEvaluate &&
             normalizedActiveStep === "Evaluate" ? (
               <GenerateEvaluateStep
+                generationId={generationId}
                 resume={resume}
                 downloadLabel={downloadLabel}
                 evaluationMarkdown={evaluationMarkdown}

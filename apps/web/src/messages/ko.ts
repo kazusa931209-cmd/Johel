@@ -23,20 +23,14 @@ export const ko: MessageTree = {
         today: "오늘",
         total: "전체",
       },
-      search: {
-        title: "검색",
-        placeholder: "검색…",
-        openAria: "검색 열기",
-        close: "검색 닫기",
-        loading: "검색 중…",
-        noResults: "결과 없음",
-        kind: {
-          navigation: "탐색",
-          profile: "프로필",
-          company: "회사",
-          experience: "경험",
-          generation: "생성",
-        },
+      aiAssistant: {
+        title: "AI Assistant",
+        placeholder: "AI Assistant…",
+        openAria: "AI Assistant 열기",
+        close: "AI Assistant 닫기",
+        loading: "확인 중…",
+        sending: "확인 중…",
+        send: "확인",
       },
     },
     sidebar: {
@@ -690,6 +684,11 @@ export const ko: MessageTree = {
         title: "이력서 평가 중…",
         description: "AI가 채용 공고와 이력서를 비교 평가하는 중입니다.",
       },
+      selection: {
+        toolbarAria: "선택 작업",
+        ask: "Ask",
+        check: "Check",
+      },
     },
     pceSection: {
       selectSingle: "행을 클릭하여 하나를 선택합니다.",
@@ -943,6 +942,17 @@ export const ko: MessageTree = {
       whatItIsGuideline: "(한 문장: 업종, 제품, 고객)",
       whatItIsGood: "B2B 결제 인프라로 대규모 가맹점에 서비스를 제공합니다.",
       whatItIsBad: "여기서 마이크로서비스를 설계하고 지연 시간을 30% 줄였습니다.",
+    },
+  },
+  aiAssistant: {
+    checkGaps: {
+      category: "Check the Gaps",
+      inputLabel: "Gap description",
+      inputPlaceholder:
+        "Describe the gap to check against your experience cards…",
+      queryRequired: "Enter a gap description to check.",
+      success: "Gap check complete.",
+      failed: "Gap check failed.",
     },
   },
 } satisfies MessageTree;

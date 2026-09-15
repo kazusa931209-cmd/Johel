@@ -129,7 +129,8 @@ Aligned with the product flow above:
 * **Dark theme** is the default; users can switch between **Dark** and **Light**.
 * **Top header**
   * Left: hamburger control (opens / collapses the left sidebar) beside generation status (current Generation ID and step when active)
-  * Right: **global search** field (opens command palette; **⌘K** on macOS, **Ctrl+K** on Windows/Linux) beside the user login-ID dropdown containing **Account** and **Sign out**
+  * Right: **AI Assistant** field (opens categorized AI assistance panel; **⌘K** on macOS, **Ctrl+K** on Windows/Linux) beside the user login-ID dropdown containing **Account** and **Sign out**
+  * **AI Assistant** — categorized assistance (no free chat in v1). First category: **Check the Gaps** — given a gap description, search all shared Experience cards and (when opened from the current Generate) report whether the gap is real, a matching card exists but is not linked in Combine, or is already linked. On the Generate **Evaluate** step, selecting text in the Evaluation Result panel shows a small tooltip with **Ask** (disabled) and **Check**; **Check** opens AI Assistant with **Check the Gaps** prefilled from the selection and scoped to the current Generate.
 * **Floating token metrics** — fixed bottom cluster on the side **opposite** the FAB stack (Quick Add Experience + AI Usage History): one card with **Today** and **Total** token counts (thousand-separated), matching drawer left/right preference
 * **Left sidebar** menus:
   * The sidebar starts **open**; the hamburger toggles it open or collapsed with a slide animation (same velocity easing as drawers). The last choice is remembered for the browser. Icon-only hamburger uses `aria-label` **Collapse sidebar** or **Open sidebar**.

@@ -21,20 +21,14 @@ export const en = {
         today: "Today",
         total: "Total",
       },
-      search: {
-        title: "Search",
-        placeholder: "Search…",
-        openAria: "Open search",
-        close: "Close search",
-        loading: "Searching…",
-        noResults: "No results",
-        kind: {
-          navigation: "Navigation",
-          profile: "Profile",
-          company: "Company",
-          experience: "Experience",
-          generation: "Generation",
-        },
+      aiAssistant: {
+        title: "AI Assistant",
+        placeholder: "AI Assistant…",
+        openAria: "Open AI Assistant",
+        close: "Close AI Assistant",
+        loading: "Checking…",
+        sending: "Checking…",
+        send: "Check",
       },
     },
     sidebar: {
@@ -689,6 +683,11 @@ export const en = {
         title: "Evaluating Resume…",
         description: "Please wait while the AI scores your resume against the job.",
       },
+      selection: {
+        toolbarAria: "Selection actions",
+        ask: "Ask",
+        check: "Check",
+      },
     },
     pceSection: {
       selectSingle: "Click a row to select one.",
@@ -941,6 +940,16 @@ export const en = {
       whatItIsGuideline: "(One sentence: industry, product, customer)",
       whatItIsGood: "B2B payment infrastructure serving enterprise merchants.",
       whatItIsBad: "Here I designed microservices and reduced latency by 30%.",
+    },
+  },
+  aiAssistant: {
+    checkGaps: {
+      category: "Check the Gaps",
+      inputLabel: "Gap description",
+      inputPlaceholder: "Describe the gap to check against your experience cards…",
+      queryRequired: "Enter a gap description to check.",
+      success: "Gap check complete.",
+      failed: "Gap check failed.",
     },
   },
 } as const;

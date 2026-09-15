@@ -1,4 +1,4 @@
-/** Platform-appropriate label for the global search keyboard shortcut. */
+/** Platform-appropriate label for the AI Assistant keyboard shortcut. */
 export function getSearchShortcutLabel(): string {
   if (typeof navigator === "undefined") {
     return "⌘K";
@@ -6,7 +6,7 @@ export function getSearchShortcutLabel(): string {
   return /Mac|iPhone|iPad/i.test(navigator.userAgent) ? "⌘K" : "Ctrl+K";
 }
 
-/** Returns true when the event is the global search shortcut (⌘K / Ctrl+K). */
+/** Returns true when the event is the AI Assistant shortcut (⌘K / Ctrl+K). */
 export function isGlobalSearchShortcut(event: KeyboardEvent): boolean {
   return (
     event.key.toLowerCase() === "k" &&

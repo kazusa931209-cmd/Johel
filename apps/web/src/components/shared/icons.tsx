@@ -242,6 +242,27 @@ export function SplitIcon({ className }: IconProps) {
   );
 }
 
+export function AiAssistantIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 3a7 7 0 0 0-4 12.7V19a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3.3A7 7 0 0 0 12 3z" />
+      <path d="M9 22h6" />
+      <path d="M10 7h.01" />
+      <path d="M14 7h.01" />
+      <path d="M11 11h2" />
+    </svg>
+  );
+}
+
 export function SearchIcon({ className }: IconProps) {
   return (
     <svg

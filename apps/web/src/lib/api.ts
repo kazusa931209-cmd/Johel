@@ -541,6 +541,34 @@ export function runAiEvaluate(
   });
 }
 
+export type CheckGapsVerdict =
+  | "gap_confirmed"
+  | "exists_not_linked"
+  | "exists_and_linked";
+
+export type AiCheckGapsRequest = {
+  gapQuery: string;
+  generationId?: string | null;
+};
+
+export type AiCheckGapsResult = {
+  markdown: string;
+  verdict: CheckGapsVerdict;
+  matchedExperienceIds: string[];
+  tokenUsed: number;
+};
+
+export function runAiCheckGaps(payload: AiCheckGapsRequest) {
+  return request<AiCheckGapsResult>("/ai-check-gaps", {
+    method: "POST",
+    body: JSON.stringify({
+      gapQuery: payload.gapQuery,
+      ...(payload.generationId ? { generationId: payload.generationId } : {}),
+    }),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
 export type GenerationStartResult = {
   id: string;
   publicId: string;

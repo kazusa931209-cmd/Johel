@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
-import { GlobalSearchTrigger } from "@/components/app/GlobalSearch";
+import { AiAssistantTrigger } from "@/components/app/AiAssistant";
 import { StudioHeaderStatus } from "@/components/app/StudioHeaderStatus";
 import { MenuIcon } from "@/components/shared/icons";
 import { logout } from "@/lib/api";
@@ -65,7 +65,7 @@ export function StudioHeader({
         <StudioHeaderStatus />
       </div>
       <div className="flex shrink-0 items-center justify-end gap-3">
-        <GlobalSearchTrigger />
+        <AiAssistantTrigger />
         <div className="relative" ref={menuRef}>
           <button
             type="button"

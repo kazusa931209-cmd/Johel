@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiUsageProvider } from "@/components/app/AiUsageProvider";
 import { GenerateStatusProvider } from "@/components/app/GenerateStatusProvider";
-import { GlobalSearchProvider } from "@/components/app/GlobalSearch";
+import { AiAssistantProvider } from "@/components/app/AiAssistant";
 import { useT } from "@/components/app/LocaleProvider";
 import { StudioBottomFabCluster } from "@/components/app/StudioBottomFabCluster";
 import { StudioHeader } from "@/components/app/StudioHeader";
@@ -39,7 +39,7 @@ function AppShell({
   }
 
   return (
-    <GlobalSearchProvider>
+    <AiAssistantProvider>
       <div className="fixed inset-0 flex overflow-hidden bg-background">
         <StudioSidebar
           open={sidebarOpen}
@@ -57,7 +57,7 @@ function AppShell({
         <StudioBottomFabCluster />
         <StudioTokenMetricsFloater />
       </div>
-    </GlobalSearchProvider>
+    </AiAssistantProvider>
   );
 }
 
