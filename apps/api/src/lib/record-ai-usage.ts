@@ -16,6 +16,7 @@ export const AI_GENERATE_TYPES = [
   "markdownFormat",
   "authorAdvise",
   "experienceAdvise",
+  "experienceSplit",
   "combineRecommend",
   "embedding",
 ] as const;

@@ -53,9 +53,9 @@ function JdMetaFieldRow({
           ) : null}
         </span>
         {readOnly ? (
-          <p className={`${FIELD_CLASS} text-foreground`}>
+          <span className="min-w-0 flex-1 text-sm text-foreground">
             {value.trim() || "—"}
-          </p>
+          </span>
         ) : (
           <input
             type="text"

@@ -1,3 +1,4 @@
+import { liveExperienceWhere } from "../experience-live.js";
 import { prisma } from "../prisma.js";
 import type { ResumeGenerationInput } from "../ai-resume/types.js";
 
@@ -72,7 +73,7 @@ export async function assembleFromCombineSnapshot(
     experienceIds.length > 0
       ? await prisma.experience.findMany({
           where: {
-            userId,
+            ...liveExperienceWhere(userId),
             id: { in: experienceIds },
           },
         })

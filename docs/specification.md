@@ -402,6 +402,9 @@ Phases are listed below as they are defined. Only the current/next Phase is full
 * [x] **Phase 86 — Resume Generate quality principles** — Pass per-company **Keyword context** through resume assembly into Generate (not Suggest-only). Default Generate Prompt and execution rules enforce card-scoped concise bullets, tenure-safe tech wording, multi-cloud/platform limits, cross-company metric deduplication, and richer Skills (12–20 grounded items). Prompt-only enforcement (no post-AI rewrite).
   * **Outcome (2026-09-11):** `generationProcess.combineExperiencesPerCompanyMax`, Generation settings dropdown, dynamic combine prompt rules, parse cap. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-11-phase-85-combine-experiences-per-company-max.md`](./plans/2026-09-11-phase-85-combine-experiences-per-company-max.md).
 
+* [x] **Phase 87 — Experience split and soft archive** — Help users split dense or mixed capability cards into focused cards without an item-level schema change. **Delete** archives experiences (`deletedAt`); live workspace lists, PCE, Combine Suggest, and the Experience advisor use live cards only. **Split by capability** on the Experiences page (dense badge, AI suggest/apply) creates new live cards and archives the source. Active Combine strips archived or missing links with a warning toast; users relink new cards manually before Generate.
+  * **Outcome (2026-09-15):** `experiences.deletedAt`, `POST /ai-experience-split`, density heuristics, Experiences split drawer, archive on delete. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-15-phase-87-experience-split-soft-archive.md`](./plans/2026-09-15-phase-87-experience-split-soft-archive.md).
+
 ## Cursor Rules (Documentation Governance)
 
 These rules apply to **all development phases** and must be followed by Cursor (and any AI agent) working on this project.

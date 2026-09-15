@@ -133,8 +133,7 @@ For each company, emit one experience object.
 - Prefer: company-domain wording (scene) + STAR facts (materials) + JD keywords (rubric).
 
 ## Summary
-Write 3–5 sentences: target role from Role, then 2–3 proofs taken from the rewritten experiences that match Top Hiring Signals and Technical Requirements.
-When stating total years of experience, derive it from the sum of each company's employment period (\`companies[].startDate\`–\`endDate\`). Express that total accurately; do not inflate it to match JD requirements.
+Write 3–5 sentences. The first sentence MUST open with "+{N} years of experience" (or the equivalent in \`run.language\`), where N is the total derived from the sum of each company's employment period (\`companies[].startDate\`–\`endDate\`). Express that total accurately; do not inflate it to match JD requirements. Continue the first sentence with target role fit from Role, then add 2–3 proofs taken from the rewritten experiences that match Top Hiring Signals and Technical Requirements.
 Do not introduce skills that are not in the materials.
 
 ## Skills

@@ -129,5 +129,8 @@ describe("getAiResumeSystemPrompt", () => {
     expect(prompt).toContain("Each quantified before→after outcome may appear only once");
     expect(prompt).toContain("When Keyword context is provided for a company");
     expect(prompt).toContain("Build Skills with 12–20 grounded items");
+    expect(prompt).toContain(
+      'The summary\'s first sentence MUST open with "+{N} years of experience"',
+    );
   });
 });

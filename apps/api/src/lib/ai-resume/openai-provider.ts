@@ -1,4 +1,5 @@
 import { runOpenAiResumeResponse } from "../openai/responses.js";
+import { finalizeResumeSummaryCareerYears } from "./career-years.js";
 import { parseAiResumeJsonResponse } from "./parse-response.js";
 import {
   buildAiResumeUserPrompt,
@@ -35,6 +36,12 @@ export const openAiResumeProvider: AiResumeProvider = {
       outputToken: response.outputToken,
     });
 
-    return { resume: parsed.data, usage };
+    const resume = finalizeResumeSummaryCareerYears(
+      parsed.data,
+      input.input.companies,
+      input.input.run.language,
+    );
+
+    return { resume, usage };
   },
 };

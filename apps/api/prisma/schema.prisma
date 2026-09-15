@@ -101,11 +101,13 @@ model Experience {
   problem     String
   actions     String
   outcome     String
+  deletedAt   DateTime?
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   embedding   ExperienceEmbedding?
 
   @@index([userId])
+  @@index([userId, deletedAt])
   @@map("experiences")
 }
 

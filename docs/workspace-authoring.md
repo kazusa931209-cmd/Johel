@@ -180,6 +180,10 @@ Empty Outcome is allowed only when you truly have no result; a short qualitative
 
 If Problem has 8–12 items that are not the same failure mode, split.
 
+On the **Experiences** page, dense cards show a **Dense** badge. Use **Split by capability** (list row or detail dialog) to get an AI proposal, review it, and **Apply**. Apply creates new live cards and **archives** the source card (hidden from the workspace). Relink the new cards on **Combine** before generating a resume.
+
+**Delete** on an experience also **archives** it (same as split source archive). Stored generation snapshots may still list archived ids until Combine sanitize removes them; relink live cards for new runs.
+
 | Keep together | Split apart |
 | --- | --- |
 | Nonce conflicts + stuck intents + event order | Nonce conflicts + OpenAI cost + EC2 OOM |

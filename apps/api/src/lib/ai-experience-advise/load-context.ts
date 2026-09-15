@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { liveExperienceWhere } from "../experience-live.js";
 import { prisma } from "../prisma.js";
 import type { ExperienceAdviseGraph } from "./types.js";
 
@@ -22,7 +23,7 @@ export async function loadExperienceAdviseContext(
 ): Promise<ExperienceAdviseLoadResult> {
   if (targetExperienceId) {
     const target = await prisma.experience.findFirst({
-      where: { id: targetExperienceId, userId },
+      where: { id: targetExperienceId, ...liveExperienceWhere(userId) },
       select: { id: true },
     });
     if (!target) {
@@ -31,7 +32,7 @@ export async function loadExperienceAdviseContext(
   }
 
   const rows = await prisma.experience.findMany({
-    where: { userId },
+    where: liveExperienceWhere(userId),
     orderBy: { category: "asc" },
     select: {
       id: true,

@@ -53,7 +53,7 @@ User browser (:4041)
 - Prisma `Profile` → table `profiles` (per user): `id`, `userId`, `firstName`, `lastName`, `birthDate?` (`YYYY-MM-DD`), `email?`, `pn?`, `residence?`, `university?`, `graduationYear` (required on write), `graduationMonth` (required on write, 1–12), `degree?`, `createdAt`, `updatedAt`
 - Prisma `ProfileLink` → table `profileLinks`: `id`, `profileId`, `key`, `link?`, `sortOrder`, `createdAt`, `updatedAt`; unique `(profileId, key)`; cascade delete with profile
 - Prisma `Company` → table `companies` (per user): `id`, `userId`, `displayPriority`, `alias`, `name`, `whatCompanyIs`, `domainAndStack`, `createdAt`, `updatedAt`
-- Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `problem`, `actions`, `outcome`, `createdAt`, `updatedAt`
+- Prisma `Experience` → table `experiences` (per user): `id`, `userId`, `category`, `problem`, `actions`, `outcome`, `deletedAt` (nullable; archive timestamp), `createdAt`, `updatedAt`
 - Prisma `AiUsage` → table `aiUsage` (per user): `id`, `userId`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `input`, `output`, `createdAt`
 - Prisma `Prompt` → table `prompts` (one per user): `id`, `userId` (unique), `verdictPrompt`, `generatePrompt`, `evaluatePrompt`, `createdAt`, `updatedAt`
 - Prisma `GenerationProcess` → table `generationProcess` (one per user): `id`, `userId` (unique), `doVerdict`, `doEvaluate`, `resumeLanguage`, `downloadFormat`, `experienceAdvisePoolDepth`, `createdAt`, `updatedAt`; defaults `doVerdict`/`doEvaluate` true, `resumeLanguage` `en`, `downloadFormat` `docx`, `experienceAdvisePoolDepth` `normal`
@@ -164,9 +164,25 @@ User browser (:4041)
 - **Phase 44 migration note:** `companies.description` dropped; existing rows backfill `alias` and `name` from former `name`, `whatCompanyIs` from former `description`, `domainAndStack` to empty string — users must fill domain & stack on next edit
 - **Display priority migration:** existing companies receive sequential 1-based priorities per user ordered by former `name` sort
 
-## Experiences (Phase 10, 30, 45)
+## Experiences (Phase 10, 30, 45, 87)
 
-- `GET /experiences?q=&page=` — page size 10
+### Soft archive (Phase 87)
+
+- **Delete** (`DELETE /experiences/:id`) sets `deletedAt` and removes the row from `experienceEmbeddings`; archived rows stay in the database for stored generation `combineJson` references.
+- **Live pool** — list/get, `GET /pce`, Combine Suggest index, Experience advisor context, and resume assembly load only `deletedAt: null` experiences.
+- Helper: `liveExperienceWhere(userId)` in `apps/api/src/lib/experience-live.ts`; `archiveExperience({ userId, experienceId })` for delete and split apply.
+
+### Split by capability (Phase 87)
+
+- `POST /ai-experience-split` — body `{ experienceId }`; AI proposes `create_experience` operations only; returns `{ result, workspaceFingerprint, tokenUsed }`; `generateType: experienceSplit` (`gpt-5.6-luna`).
+- `POST /ai-experience-split/apply` — body `{ experienceId, workspaceFingerprint, operations }`; creates new live cards, archives source unchanged, returns `{ experienceIds, archivedId, warnings }`.
+- Module: `apps/api/src/lib/ai-experience-split/`; density heuristics in `apps/api/src/lib/experience-density.ts` (also mirrored on web for UI badge).
+- Web: Experiences list **Dense** badge + **Split** action (enabled when dense); `ExperienceSplitDrawer` + `ExperiencesSplitSession`; detail dialog Split when dense. After apply, toast warns to relink Combine.
+- Combine sanitize (`GenerateCombineStep`) toasts when archived/missing experience ids are stripped from the active session.
+
+## Experiences — CRUD (Phase 10, 30, 45)
+
+- `GET /experiences?q=&page=` — page size 10; each item includes `isDense` (Phase 87 density heuristics)
 - List order: `category` ascending (same order in the workflow experience picker, which uses the same list API)
 - `GET /experiences/:id` — full detail for the editor (owner only)
 - `POST /experiences` / `PUT /experiences/:id` — `{ category, problem, actions, outcome }` (all required); on write, changed STAR fields are converted to markdown via **one batched AI call** (`formatExperienceFieldsOnSave`) when any of the three differ from stored values (create always converts); all unchanged → skip conversion; requires Settings provider/apiKey when conversion runs
@@ -213,7 +229,7 @@ User browser (:4041)
 - `GET /ai-usage/summary` — `{ tokenUsed }` = sum of `inputToken + outputToken` for the user; optional `generationId` query returns tokens for that generation only (from `generations.inputToken` + `outputToken`); `sumTokenUsed` in `apps/api/src/lib/sum-token-used.ts`
 - `GET /ai-usage?page=` — owner-only paginated list; page size **100**; `orderBy: { createdAt: "desc" }`; returns `{ items, total, page, pageSize }` where each item has `id`, `aiProvider`, `modelName`, `generateType`, `inputToken`, `outputToken`, `createdAt` (omits `input` / `output`)
 - `GET /ai-usage/:id` — owner-only detail including `input` and `output`; 404 when missing or not owned
-- Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): active `generateType` values are `verdict`, `jdMeta`, `generate`, `evaluate`, `workflowRecommend`, `markdownFormat`, and `authorAdvise` (UI label **Quick Experience**); historical rows may still have `promptHelper` (label **Prompt Helper** in AI Usage History); `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/jdMeta/evaluate/workflow-recommend/author-advise, `gpt-5.6-sol` for OpenAI markdown-format, `gpt-5.6-terra` for OpenAI resume generation
+- Each `aiUsage` row stores `modelName` and `generateType` via `recordAiUsage` (`apps/api/src/lib/record-ai-usage.ts`): active `generateType` values are `verdict`, `jdMeta`, `generate`, `evaluate`, `workflowRecommend`, `markdownFormat`, `authorAdvise` (UI label **Quick Experience**), `experienceAdvise`, `experienceSplit`, and `combineRecommend`; historical rows may still have `promptHelper` (label **Prompt Helper** in AI Usage History); `modelName` is `auto` for Cursor, `gpt-5.6-luna` for OpenAI verdict/jdMeta/evaluate/workflow-recommend/author-advise/experience-advise/experience-split/combine-recommend, `gpt-5.6-sol` for OpenAI markdown-format, `gpt-5.6-terra` for OpenAI resume generation
 - Provider adapter under `apps/api/src/lib/ai-verdict/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-luna`, reasoning `low`)
 - Markdown output structure is **user-defined** in the Verdict Prompt (default template seeded on sign-up); JoHEL does not enforce fixed `## Verdict` / `## Job` / `## Company` sections
 - Web: `runAiVerdict` in `apps/web/src/lib/api.ts`; Job step fullscreen loading; Workflow step renders result with `AiVerdictMarkdown` (`react-markdown` + `@tailwindcss/typography` theme tokens); `AiUsageProvider` refreshes header total after success
@@ -250,7 +266,7 @@ User browser (:4041)
 
 - `POST /ai-resume` — body `{ jobContext, workflowId, oneTimePrompt? }` where `jobContext` is AI Verdict Markdown when the client ran Verdict, otherwise noise-filtered job description text (1–10,000 chars); requires saved Settings provider/apiKey and non-empty `prompts.generatePrompt`; server loads the owned workflow (profile, ordered company entries with period and linked experiences) and assembles generation input; system prompt = compiled user Generate Prompt + optional `## One-time prompt` section when `oneTimePrompt` is non-empty + shared resume rules (use Job context as rubric; map missing Instruction headings to the closest sections present; JSON-style field names in Instructions map to labeled subsections); user prompt is labeled Markdown (`## Job context` with a heading list, `## Workflow intent`, `## Profile`, `## Companies (resume order)`) — not a JSON dump of the assembled input; ids and company alias are omitted; empty optional profile/outcome fields are skipped; returns `{ resume, usage, tokenUsed }` where `resume` is validated `GeneratedResume` JSON
 - `GET /workflows/:id/generation-fingerprint` — returns `{ fingerprint }` where `fingerprint` is a stable JSON string of the assembled profile, nested companies (with period and linked experiences), and workflow fields (same source as `assembleResumeGenerationInput`, excluding job text); used by Generate to detect PCE edits without re-running AI on unchanged content
-- Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`
+- Provider adapter under `apps/api/src/lib/ai-resume/`; Cursor via `@cursor/sdk` `Agent.prompt` (model `auto`, local `cwd`); OpenAI via `openai` SDK Responses API (`gpt-5.6-terra`, reasoning `medium`, JSON output); response parsed as JSON only and validated with Zod from `@johel/resume`; `finalizeResumeSummaryCareerYears` in `career-years.ts` prepends `+{N} years of experience` to the summary first sentence when missing (N from Combine company periods)
 - Web: `runAiResume` in `apps/web/src/lib/api.ts`; Workflow **Next** fullscreen loading; session stores `resume` + `generationInputKey`; Generate step renders Markdown; Evaluate step downloads DOCX without re-calling AI when inputs are unchanged
 
 ## AI Evaluate (Phase 25)
@@ -377,7 +393,7 @@ User browser (:4041)
 
 - `assembleFromCombineSnapshot()` in `apps/api/src/lib/resume/assemble-input.ts` — maps Combine snapshot (including per-company `keywordContext`) to `ResumeGenerationInput`; fingerprint includes assembled companies so keyword changes invalidate resume reuse
 - `ResumeGenerationInput.run` — `{ language, emphasis? }` replaces workflow block
-- Default Generate Prompt (`@johel/prompt-defaults`) + `EXECUTION_RULES` in `apps/api/src/lib/ai-resume/prompts.ts` — card-scoped bullets, tenure-safe tech wording, multi-cloud limits, one quantified outcome per resume, keyword steering, Skills 12–20; prompt-only (no post-AI content rewrite)
+- Default Generate Prompt (`@johel/prompt-defaults`) + `EXECUTION_RULES` in `apps/api/src/lib/ai-resume/prompts.ts` — card-scoped bullets, tenure-safe tech wording, multi-cloud limits, one quantified outcome per resume, keyword steering, Skills 12–20, summary career-years lead; post-AI summary career-years finalize when the model omits it
 
 ## Generation history (Phase 62)
 

@@ -4,18 +4,22 @@ import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
+import { ExperiencesSplitSession } from "@/components/ExperiencesSplitSession";
 import {
   AddButton,
   DeleteButton,
   EditButton,
+  SplitButton,
 } from "@/components/shared/action-icon-buttons";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { TABLE_ROW_HOVER_CLASS } from "@/components/shared/detail-dialog";
+import { ExperienceDensityIndicator } from "@/components/ExperienceDensityIndicator";
 import { ExperienceDetailDialog } from "@/components/ExperienceDetailDialog";
 import { formatThousandsSeparated } from "@/lib/helper";
 import { deleteExperience, type ExperienceDetail } from "@/lib/api";
 import { loadExperienceList } from "@/lib/cached-crud-list";
 import { useCrudListParams } from "@/lib/crud-list-params";
+import { isDenseExperience } from "@/lib/experience-density";
 import { notifyExperienceWorkspaceChanged } from "@/lib/workspace-experience";
 
 function ExperiencesPageFallback() {
@@ -38,6 +42,17 @@ export default function ExperiencesPage() {
   );
 }
 
+function rowIsDense(row: ExperienceDetail): boolean {
+  return (
+    row.isDense ??
+    isDenseExperience({
+      problem: row.problem,
+      actions: row.actions,
+      outcome: row.outcome,
+    })
+  );
+}
+
 function ExperiencesPageContent() {
   const router = useRouter();
   const t = useT();
@@ -51,6 +66,7 @@ function ExperiencesPageContent() {
   const [deleting, setDeleting] = useState<ExperienceDetail | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
   const [viewing, setViewing] = useState<ExperienceDetail | null>(null);
+  const [splitting, setSplitting] = useState<ExperienceDetail | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -82,6 +98,11 @@ function ExperiencesPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change; cached loader dedupes Strict Mode
   }, [q, page]);
 
+  function openSplit(experience: ExperienceDetail) {
+    setViewing(null);
+    setSplitting(experience);
+  }
+
   async function onConfirmDelete() {
     if (!deleting) return;
     setDeletingBusy(true);
@@ -93,7 +114,7 @@ function ExperiencesPageContent() {
     }
     setDeleting(null);
     notifyExperienceWorkspaceChanged(deleting.id);
-    toast(t("toast.experienceDeleted"), "success");
+    toast(t("toast.experienceArchived"), "success");
     const nextPage = items.length === 1 && page > 1 ? page - 1 : page;
     if (nextPage !== page) {
       setPage(nextPage);
@@ -140,6 +161,9 @@ function ExperiencesPageContent() {
                 {t("crud.experiences.columns.category")}
               </th>
               <th className="px-3 py-2 font-medium">
+                {t("crud.experiences.columns.density")}
+              </th>
+              <th className="px-3 py-2 font-medium">
                 {t("crud.experiences.columns.problem")}
               </th>
               <th className="px-3 py-2 font-medium">
@@ -154,59 +178,76 @@ function ExperiencesPageContent() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-muted">
+                <td colSpan={7} className="px-3 py-8 text-center text-muted">
                   {t("crud.common.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-muted">
+                <td colSpan={7} className="px-3 py-8 text-center text-muted">
                   {t("crud.experiences.empty")}
                 </td>
               </tr>
             ) : (
-              items.map((row, index) => (
-                <tr
-                  key={row.id}
-                  className={TABLE_ROW_HOVER_CLASS}
-                  tabIndex={0}
-                  onClick={() => setViewing(row)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setViewing(row);
-                    }
-                  }}
-                >
-                  <td className="w-16 px-3 py-2 text-muted">
-                    {formatThousandsSeparated((page - 1) * pageSize + index + 1)}
-                  </td>
-                  <td className="px-3 py-2 font-medium">{row.category}</td>
-                  <td className="max-w-40 truncate px-3 py-2 text-muted">
-                    {row.problem}
-                  </td>
-                  <td className="max-w-40 truncate px-3 py-2 text-muted">
-                    {row.actions}
-                  </td>
-                  <td className="max-w-40 truncate px-3 py-2 text-muted">
-                    {row.outcome}
-                  </td>
-                  <td
-                    className="cursor-default px-3 py-2"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
+              items.map((row, index) => {
+                const dense = rowIsDense(row);
+                return (
+                  <tr
+                    key={row.id}
+                    className={TABLE_ROW_HOVER_CLASS}
+                    tabIndex={0}
+                    onClick={() => setViewing(row)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setViewing(row);
+                      }
+                    }}
                   >
-                    <div className="flex justify-end gap-2">
-                      <EditButton
-                        onClick={() =>
-                          router.push(`/experiences/${row.id}/edit`)
-                        }
+                    <td className="w-16 px-3 py-2 text-muted">
+                      {formatThousandsSeparated((page - 1) * pageSize + index + 1)}
+                    </td>
+                    <td className="px-3 py-2 font-medium">{row.category}</td>
+                    <td className="px-3 py-2">
+                      <ExperienceDensityIndicator
+                        fields={{
+                          problem: row.problem,
+                          actions: row.actions,
+                          outcome: row.outcome,
+                        }}
+                        isDense={row.isDense}
                       />
-                      <DeleteButton onClick={() => setDeleting(row)} />
-                    </div>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="max-w-40 truncate px-3 py-2 text-muted">
+                      {row.problem}
+                    </td>
+                    <td className="max-w-40 truncate px-3 py-2 text-muted">
+                      {row.actions}
+                    </td>
+                    <td className="max-w-40 truncate px-3 py-2 text-muted">
+                      {row.outcome}
+                    </td>
+                    <td
+                      className="cursor-default px-3 py-2"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex justify-end gap-2">
+                        <SplitButton
+                          disabled={!dense}
+                          onClick={() => openSplit(row)}
+                        />
+                        <EditButton
+                          onClick={() =>
+                            router.push(`/experiences/${row.id}/edit`)
+                          }
+                        />
+                        <DeleteButton onClick={() => setDeleting(row)} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -240,6 +281,19 @@ function ExperiencesPageContent() {
         <ExperienceDetailDialog
           experience={viewing}
           onClose={() => setViewing(null)}
+          onSplit={() => openSplit(viewing)}
+        />
+      ) : null}
+
+      {splitting ? (
+        <ExperiencesSplitSession
+          experience={splitting}
+          open={Boolean(splitting)}
+          onClose={() => setSplitting(null)}
+          onApplied={() => {
+            notifyExperienceWorkspaceChanged(splitting.id);
+            void load(q, page);
+          }}
         />
       ) : null}
 

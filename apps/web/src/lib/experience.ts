@@ -4,6 +4,7 @@ export type ExperienceDetail = {
   problem: string;
   actions: string;
   outcome: string;
+  isDense?: boolean;
   createdAt: string;
   updatedAt: string;
 };
