@@ -11,6 +11,7 @@ export {
 } from "./domain/generated-resume";
 
 export { resumeToMarkdown } from "./markdown/resume-to-markdown";
+export { markdownToResume, type MarkdownToResumeResult } from "./markdown/markdown-to-resume";
 
 export {
   buildResumeDocxFileName,

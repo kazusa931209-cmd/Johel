@@ -102,6 +102,8 @@ export default function GeneratePage() {
   const [resetting, setResetting] = useState(false);
   const [resettingJob, setResettingJob] = useState(false);
   const [combineFooter, setCombineFooter] = useState<ReactNode | null>(null);
+  const [generateHeaderRight, setGenerateHeaderRight] =
+    useState<ReactNode | null>(null);
   const pendingRunRef = useRef<(() => void) | null>(null);
   const {
     ready: sessionReady,
@@ -117,8 +119,10 @@ export default function GeneratePage() {
     verdictInputKey,
     setVerdictResult,
     resume,
+    resumeAiSnapshot,
     generationInputKey,
     setResumeResult,
+    updateResume,
     evaluationMarkdown,
     evaluationInputKey,
     setEvaluationResult,
@@ -268,6 +272,12 @@ export default function GeneratePage() {
   ]);
 
   useEffect(() => {
+    if (normalizedActiveStep !== "Generate") {
+      setGenerateHeaderRight(null);
+    }
+  }, [normalizedActiveStep]);
+
+  useEffect(() => {
     if (!sessionReady || loading || !generationId) return;
     const timer = window.setTimeout(() => {
       void saveSnapshot(finalized ? true : undefined);
@@ -303,6 +313,7 @@ export default function GeneratePage() {
       combine,
       verdictInputKey,
       resume,
+      resumeAiSnapshot,
       generationInputKey,
       evaluationMarkdown,
       evaluationInputKey,
@@ -321,6 +332,7 @@ export default function GeneratePage() {
       jobDuplicateDismissedHash,
       normalizedActiveStep,
       resume,
+      resumeAiSnapshot,
       verdictInputKey,
     ],
   );
@@ -663,6 +675,7 @@ export default function GeneratePage() {
         combine,
         fingerprintRes.data.fingerprint,
         promptCacheContext,
+        resume,
       );
       if (
         canReuseStoredEvaluation(
@@ -784,6 +797,7 @@ export default function GeneratePage() {
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
+      doVerdict: processSettings.doVerdict,
       job,
       combine,
       resume,
@@ -857,10 +871,15 @@ export default function GeneratePage() {
                 </button>
               ) : normalizedActiveStep === "Combine" ? (
                 <CombineTotalTenureHeader combine={combine} />
+              ) : normalizedActiveStep === "Generate" && resume ? (
+                generateHeaderRight
               ) : undefined
             }
             swapColumns={normalizedActiveStep === "Job"}
-            currentFill={normalizedActiveStep === "Job"}
+            currentFill={
+              normalizedActiveStep === "Job" ||
+              (normalizedActiveStep === "Generate" && Boolean(resume))
+            }
           >
             {normalizedActiveStep === "Job" ? (
               <GenerateJobStep
@@ -893,10 +912,13 @@ export default function GeneratePage() {
             {normalizedActiveStep === "Generate" ? (
               <GenerateGenerateStep
                 resume={resume}
+                aiResumeSnapshot={resumeAiSnapshot}
                 downloadLabel={downloadLabel}
                 doEvaluate={processSettings.doEvaluate}
                 generating={generatingResume}
                 onRun={runFromGenerate}
+                onResumeChange={updateResume}
+                onHeaderRightChange={setGenerateHeaderRight}
                 onDownloaded={handleResumeDownloaded}
               />
             ) : null}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildEvaluationInputKey,
   buildGenerationInputKey,
   buildVerdictInputKey,
   canReuseStoredResume,
@@ -213,5 +214,54 @@ describe("generate-session run downstream helpers", () => {
     expect(cleared.resume).toBeNull();
     expect(cleared.evaluationMarkdown).toBeNull();
     expect(clearDownstreamFromGenerate(session).resume).toBeNull();
+  });
+});
+
+describe("generate-session evaluation cache", () => {
+  const job = {
+    ...EMPTY_JOB_STATE,
+    jobText: "Engineer role",
+    acceptedMarkdown: "# Verdict",
+  };
+  const combine = {
+    ...EMPTY_COMBINE_SNAPSHOT,
+    profileId: "profile-1",
+  };
+  const promptContext = {
+    generatePrompt: "Generate a resume",
+    evaluatePrompt: "Evaluate the resume",
+  };
+  const resumeA = {
+    header: { name: "Jane Doe" },
+    experiences: [
+      { company: "Acme", title: "Engineer", bullets: ["Built APIs"] },
+    ],
+  };
+  const resumeB = {
+    header: { name: "Jane Doe" },
+    experiences: [
+      { company: "Acme", title: "Engineer", bullets: ["Built APIs v2"] },
+    ],
+  };
+
+  it("includes resume hash in evaluation input key", () => {
+    const keyA = buildEvaluationInputKey(
+      job,
+      true,
+      combine,
+      "fp-v1",
+      promptContext,
+      resumeA,
+    );
+    const keyB = buildEvaluationInputKey(
+      job,
+      true,
+      combine,
+      "fp-v1",
+      promptContext,
+      resumeB,
+    );
+    expect(keyA).toContain("resumeHash");
+    expect(keyA).not.toBe(keyB);
   });
 });

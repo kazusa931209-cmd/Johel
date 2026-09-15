@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
-import { sumTokenUsed } from "../lib/sum-token-used.js";
+import { sumTodayTokenUsed, sumTokenUsed } from "../lib/sum-token-used.js";
 import {
   listResponsePageSize,
   parseListPagination,
@@ -167,8 +167,11 @@ aiUsageRoutes.get("/summary", async (c) => {
     });
   }
 
-  const tokenUsed = await sumTokenUsed(user.id);
-  return c.json({ tokenUsed });
+  const [tokenUsed, todayTokenUsed] = await Promise.all([
+    sumTokenUsed(user.id),
+    sumTodayTokenUsed(user.id),
+  ]);
+  return c.json({ tokenUsed, todayTokenUsed });
 });
 
 aiUsageRoutes.get("/groups", async (c) => {

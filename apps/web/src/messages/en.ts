@@ -5,6 +5,8 @@ export const en = {
       collapseSidebar: "Collapse sidebar",
       openSidebar: "Open sidebar",
       tokenUsageTitle: "Total token usage across all generations",
+      todayTokenUsageTitle: "Token usage today (UTC calendar day)",
+      todayTokenUsed: "Today Token Used: {count}",
       tokenUsed: "Total Token Used: {count}",
       generationTokenUsed: "Token Used: {count}",
       generationTokenUsedTitle: "Tokens used for this generation",
@@ -622,6 +624,14 @@ export const en = {
         "No generated resume is available for this session. Go back to Combine and run resume generation again.",
       pending: "Generating your resume…",
       title: "Generated Resume",
+      referenceTabsAria: "Combine and Verdict reference",
+      editMode: "Edit",
+      previewMode: "Preview",
+      editHint:
+        "Edit the resume in Markdown. Keep section headings and the Title — Company format for experience entries.",
+      parseError: "Could not parse resume: {error}",
+      revertToAi: "Revert to AI version",
+      revertToAiSuccess: "Restored the AI-generated resume.",
       generating: {
         title: "Generating Resume…",
         description: "Please wait while the AI tailors your resume to the job.",

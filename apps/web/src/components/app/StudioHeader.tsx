@@ -15,6 +15,7 @@ import { formatTokenUsed } from "@/lib/tokens";
 type StudioHeaderProps = {
   userName: string;
   tokenUsage?: number;
+  todayTokenUsage?: number;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
 };
@@ -22,6 +23,7 @@ type StudioHeaderProps = {
 export function StudioHeader({
   userName,
   tokenUsage = 0,
+  todayTokenUsage = 0,
   sidebarOpen,
   onToggleSidebar,
 }: StudioHeaderProps) {
@@ -67,6 +69,14 @@ export function StudioHeader({
         <StudioHeaderStatus />
       </div>
       <div className="flex shrink-0 items-center justify-end gap-3">
+        <span
+          className="text-sm text-muted"
+          title={t("nav.header.todayTokenUsageTitle")}
+        >
+          {t("nav.header.todayTokenUsed", {
+            count: formatTokenUsed(todayTokenUsage),
+          })}
+        </span>
         <span
           className="text-sm text-muted"
           title={t("nav.header.tokenUsageTitle")}

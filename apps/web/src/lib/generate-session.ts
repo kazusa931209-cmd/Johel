@@ -29,6 +29,8 @@ export type GenerateSession = {
   combine: CombineSnapshot;
   verdictInputKey: string | null;
   resume: GeneratedResume | null;
+  /** Snapshot from the last AI resume generation for Revert. */
+  resumeAiSnapshot: GeneratedResume | null;
   generationInputKey: string | null;
   evaluationMarkdown: string | null;
   evaluationInputKey: string | null;
@@ -58,6 +60,7 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   combine: EMPTY_COMBINE_SNAPSHOT,
   verdictInputKey: null,
   resume: null,
+  resumeAiSnapshot: null,
   generationInputKey: null,
   evaluationMarkdown: null,
   evaluationInputKey: null,
@@ -229,12 +232,18 @@ export function buildGenerationInputKey(
   );
 }
 
+export function hashResumeForCache(resume: GeneratedResume | null): string {
+  if (!resume) return "";
+  return hashPromptForCache(JSON.stringify(resume));
+}
+
 export function buildEvaluationInputKey(
   job: GenerateJobState,
   doVerdict: boolean,
   combine: CombineSnapshot,
   combineContentFingerprint: string,
   prompts: Pick<PromptCacheContext, "generatePrompt" | "evaluatePrompt">,
+  resume: GeneratedResume | null,
 ): string {
   return JSON.stringify({
     ...buildGenerationInputKeyParts(
@@ -245,6 +254,7 @@ export function buildEvaluationInputKey(
       prompts,
     ),
     evaluatePromptHash: hashPromptForCache(prompts.evaluatePrompt ?? ""),
+    resumeHash: hashResumeForCache(resume),
   });
 }
 
@@ -282,6 +292,7 @@ export function clearDownstreamFromVerdict(
       jdJobRole: "",
     },
     resume: null,
+    resumeAiSnapshot: null,
     generationInputKey: null,
     evaluationMarkdown: null,
     evaluationInputKey: null,
@@ -342,6 +353,7 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
     combine,
     verdictInputKey,
     resume: parseStoredResume(raw.resume),
+    resumeAiSnapshot: parseStoredResume(raw.resumeAiSnapshot),
     generationInputKey:
       typeof raw.generationInputKey === "string"
         ? raw.generationInputKey

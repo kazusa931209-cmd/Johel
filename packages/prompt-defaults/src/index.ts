@@ -144,6 +144,13 @@ Source in this order:
 3. Mentioned-only JD items only when they also appear in the materials.
 Do not copy the full JD skill list. Do not fill Verdict missing-skill questions. Do not leave Skills sparse when the materials support more grounded items.
 
+## Education
+When Profile includes university / graduation year / degree, emit one \`education[]\` entry.
+- \`institution\`: Profile university
+- \`degree\` / \`field\`: from Profile degree when present
+- \`endDate\`: Profile graduation year only (for example \`2018\`). Do not include graduation month.
+- Omit \`startDate\` unless the input explicitly provides an enrollment year.
+
 ## Grounding
 Copy employers, dates, education, and contact from input.
 You may rewrite phrasing. You may not invent employers, dates, tools, metrics, or jobs.

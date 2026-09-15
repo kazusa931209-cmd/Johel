@@ -6,15 +6,15 @@ import { useToast } from "@/components/app/ToastProvider";
 import { CopyButton } from "@/components/shared/action-icon-buttons";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
-type GeneratePanelCopyActionsProps = {
+type GeneratePanelHeaderActionsProps = {
   text: string;
   trailing?: ReactNode;
 };
 
-export function GeneratePanelCopyActions({
+export function GeneratePanelHeaderActions({
   text,
   trailing,
-}: GeneratePanelCopyActionsProps) {
+}: GeneratePanelHeaderActionsProps) {
   const { toast } = useToast();
   const t = useT();
 

@@ -120,6 +120,55 @@ export function ensureSummaryCareerYears(
   return `${lead}, ${lowercaseFirst(body)}`;
 }
 
+export function educationDateToYearOnly(
+  value: string | undefined,
+): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  if (/^\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+  if (PRESENT_LABEL.test(trimmed)) {
+    return trimmed;
+  }
+
+  const isoMonthMatch = /^(\d{4})-\d{1,2}$/.exec(trimmed);
+  if (isoMonthMatch) {
+    return isoMonthMatch[1];
+  }
+
+  const parsed = new Date(`${trimmed} 1`);
+  if (!Number.isNaN(parsed.getTime()) && /\d{4}/.test(trimmed)) {
+    return String(parsed.getFullYear());
+  }
+
+  const yearMatch = trimmed.match(/\b(19|20)\d{2}\b/);
+  return yearMatch ? yearMatch[0] : trimmed;
+}
+
+export function normalizeEducationDatesInResume(
+  resume: GeneratedResume,
+): GeneratedResume {
+  if (!resume.education || resume.education.length === 0) {
+    return resume;
+  }
+
+  const education = resume.education.map((entry) => ({
+    ...entry,
+    ...(entry.startDate
+      ? { startDate: educationDateToYearOnly(entry.startDate) }
+      : {}),
+    ...(entry.endDate ? { endDate: educationDateToYearOnly(entry.endDate) } : {}),
+  }));
+
+  return {
+    ...resume,
+    education,
+  };
+}
+
 export function finalizeResumeSummaryCareerYears(
   resume: GeneratedResume,
   companies: readonly CareerYearsCompanyPeriod[],

@@ -417,6 +417,7 @@ export type AiJdMetaResult = {
 
 export type AiUsageSummary = {
   tokenUsed: number;
+  todayTokenUsed?: number;
 };
 
 export type AiUsageListItem = {

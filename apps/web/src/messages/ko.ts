@@ -7,6 +7,8 @@ export const ko: MessageTree = {
       collapseSidebar: "사이드바 접기",
       openSidebar: "사이드바 열기",
       tokenUsageTitle: "모든 생성의 전체 토큰 사용량",
+      todayTokenUsageTitle: "오늘 토큰 사용량 (UTC 기준)",
+      todayTokenUsed: "오늘 사용 토큰: {count}",
       tokenUsed: "전체 사용 토큰: {count}",
       generationTokenUsed: "사용 토큰: {count}",
       generationTokenUsedTitle: "이 생성에서 사용한 토큰",
@@ -623,6 +625,14 @@ export const ko: MessageTree = {
         "이 세션에 생성된 이력서가 없습니다. 조합 단계로 돌아가 이력서 생성을 다시 실행해 주세요.",
       pending: "이력서 생성 중…",
       title: "생성된 이력서",
+      referenceTabsAria: "조합 및 판정 참고",
+      editMode: "편집",
+      previewMode: "미리보기",
+      editHint:
+        "마크다운으로 이력서를 편집합니다. 섹션 제목과 경력 항목의 직함 — 회사 형식을 유지해 주세요.",
+      parseError: "이력서를 해석할 수 없습니다: {error}",
+      revertToAi: "AI 버전으로 되돌리기",
+      revertToAiSuccess: "AI가 생성한 이력서로 복원했습니다.",
       generating: {
         title: "이력서 생성 중…",
         description: "AI가 채용 공고에 맞춰 이력서를 작성하는 중입니다.",

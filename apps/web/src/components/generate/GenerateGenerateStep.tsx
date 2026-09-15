@@ -1,39 +1,40 @@
 "use client";
 
-import { useMemo } from "react";
-import { resumeToMarkdown } from "@johel/resume";
-import type { GeneratedResume } from "@johel/resume";
-import { useT } from "@/components/app/LocaleProvider";
-import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
+import { EditableResumePanel } from "@/components/generate/EditableResumePanel";
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
 import type { ResumeDownloadLabel } from "@/lib/api";
+import type { GeneratedResume } from "@johel/resume";
+import { useT } from "@/components/app/LocaleProvider";
+import type { ReactNode } from "react";
 
 type GenerateGenerateStepProps = {
   resume: GeneratedResume | null;
+  aiResumeSnapshot: GeneratedResume | null;
   downloadLabel?: ResumeDownloadLabel;
   doEvaluate: boolean;
   generating: boolean;
   onRun: () => void;
+  onResumeChange: (resume: GeneratedResume) => void;
+  onHeaderRightChange?: (node: ReactNode | null) => void;
   onDownloaded?: () => void | Promise<void>;
 };
 
 export function GenerateGenerateStep({
   resume,
+  aiResumeSnapshot,
   downloadLabel,
   doEvaluate,
   generating,
   onRun,
+  onResumeChange,
+  onHeaderRightChange,
   onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
   const { onDownload, downloading } = useResumeDownload(resume, downloadLabel, {
     onDownloaded,
   });
-  const markdown = useMemo(
-    () => (resume ? resumeToMarkdown(resume) : ""),
-    [resume],
-  );
 
   useRegisterGenerateStepNav({
     onRun:
@@ -80,6 +81,13 @@ export function GenerateGenerateStep({
   }
 
   return (
-    <ResumeMarkdown markdown={markdown} />
+    <div className="flex min-h-0 flex-1 flex-col">
+      <EditableResumePanel
+        resume={resume}
+        aiResumeSnapshot={aiResumeSnapshot}
+        onResumeChange={onResumeChange}
+        onHeaderRightChange={onHeaderRightChange}
+      />
+    </div>
   );
 }

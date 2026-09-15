@@ -55,6 +55,7 @@ const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation s
 - Each quantified before→after outcome may appear only once across the entire resume; rephrase duplicates qualitatively elsewhere.
 - When Keyword context is provided for a company, steer that company's bullets toward those keywords and the JD rubric; keep the block concise.
 - Build Skills with 12–20 grounded items (4–5 groups): JD ∩ materials first, then strong technologies from linked experience materials.
+- Education \`startDate\` and \`endDate\` use graduation year only (for example \`2018\`). Do not include graduation month names or \`YYYY-MM\` values.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
 
 Required JSON schema:
@@ -97,11 +98,9 @@ function formatProfileSection(input: ResumeGenerationInput): string {
 
   const educationLines = [
     optionalLine("University", profile.university),
-    profile.graduationYear != null && profile.graduationMonth != null
-      ? `- Graduation: ${profile.graduationYear}-${String(profile.graduationMonth).padStart(2, "0")}`
-      : profile.graduationYear != null
-        ? `- Graduation year: ${profile.graduationYear}`
-        : null,
+    profile.graduationYear != null
+      ? `- Graduation year: ${profile.graduationYear}`
+      : null,
     optionalLine("Degree", profile.degree),
   ].filter((line): line is string => Boolean(line));
   const linkLines = profile.links

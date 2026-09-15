@@ -34,6 +34,7 @@ function withoutResume(session: GenerateSession): GenerateSession {
   return {
     ...session,
     resume: null,
+    resumeAiSnapshot: null,
     generationInputKey: null,
     evaluationMarkdown: null,
     evaluationInputKey: null,
@@ -266,6 +267,7 @@ export function useGenerateSession() {
       setSession((current) => ({
         ...current,
         resume,
+        resumeAiSnapshot: resume,
         generationInputKey,
         evaluationMarkdown: null,
         evaluationInputKey: null,
@@ -273,6 +275,15 @@ export function useGenerateSession() {
     },
     [],
   );
+
+  const updateResume = useCallback((resume: GeneratedResume) => {
+    setSession((current) => ({
+      ...current,
+      resume,
+      evaluationMarkdown: null,
+      evaluationInputKey: null,
+    }));
+  }, []);
 
   const setEvaluationResult = useCallback(
     (evaluationMarkdown: string, evaluationInputKey: string) => {
@@ -364,8 +375,10 @@ export function useGenerateSession() {
     verdictInputKey: session.verdictInputKey,
     setVerdictResult,
     resume: session.resume,
+    resumeAiSnapshot: session.resumeAiSnapshot,
     generationInputKey: session.generationInputKey,
     setResumeResult,
+    updateResume,
     evaluationMarkdown: session.evaluationMarkdown,
     evaluationInputKey: session.evaluationInputKey,
     setEvaluationResult,

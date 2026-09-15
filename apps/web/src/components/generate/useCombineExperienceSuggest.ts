@@ -164,9 +164,8 @@ export function useCombineExperienceSuggest({
 
       if (res.data.tokenUsed != null) {
         setTokenUsed(res.data.tokenUsed);
-      } else {
-        void refreshTokenUsed();
       }
+      void refreshTokenUsed();
 
       applySuggestResult(snapshot, res.data, companyId);
       return true;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { resumeToMarkdown } from "@johel/resume";
 import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
@@ -19,10 +19,13 @@ import { getAdjacentGenerateStep } from "@/lib/generate-steps";
 type GeneratePreviousStepPanelProps = {
   currentStep: GenerateStep;
   visibleSteps: readonly GenerateStep[];
+  doVerdict: boolean;
   job: GenerateJobState;
   combine: CombineSnapshot;
   resume: GeneratedResume | null;
 };
+
+type GenerateReferenceView = "Combine" | "Verdict";
 
 const PREVIOUS_STEP_TITLE_KEYS: Record<GenerateStep, string> = {
   Job: "generate.previous.jobTitle",
@@ -32,18 +35,94 @@ const PREVIOUS_STEP_TITLE_KEYS: Record<GenerateStep, string> = {
   Evaluate: "generate.previous.evaluationTitle",
 };
 
+const REFERENCE_TAB_LABEL_KEYS: Record<GenerateReferenceView, string> = {
+  Combine: "generate.steps.combine",
+  Verdict: "generate.steps.verdict",
+};
+
+function GenerateReferenceTabs({
+  active,
+  onChange,
+}: {
+  active: GenerateReferenceView;
+  onChange: (view: GenerateReferenceView) => void;
+}) {
+  const t = useT();
+  const tabs: GenerateReferenceView[] = ["Combine", "Verdict"];
+
+  return (
+    <div
+      className="flex gap-1"
+      role="tablist"
+      aria-label={t("generate.generateStep.referenceTabsAria")}
+    >
+      {tabs.map((tab) => {
+        const selected = active === tab;
+        return (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            id={`generate-reference-tab-${tab}`}
+            aria-selected={selected}
+            aria-controls="generate-reference-tabpanel"
+            className={[
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              selected
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted hover:text-foreground",
+            ].join(" ")}
+            onClick={() => onChange(tab)}
+          >
+            {t(REFERENCE_TAB_LABEL_KEYS[tab])}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function VerdictReferenceContent({ job }: { job: GenerateJobState }) {
+  const t = useT();
+
+  return (
+    <div className="space-y-4">
+      <GenerateJdMetaFields
+        jdCompanyName={job.jdCompanyName}
+        jdJobRole={job.jdJobRole}
+        onChange={() => {}}
+        readOnly
+      />
+      {job.acceptedMarkdown ? (
+        <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
+      ) : (
+        <p className="text-sm text-muted">{t("generate.previous.verdictEmpty")}</p>
+      )}
+    </div>
+  );
+}
+
 export function useGeneratePreviousStepPanel({
   currentStep,
   visibleSteps,
+  doVerdict,
   job,
   combine,
   resume,
 }: GeneratePreviousStepPanelProps): {
-  previousTitle?: string;
+  previousTitle?: ReactNode;
   previousContent: ReactNode | null;
   previousHeaderRight?: ReactNode;
 } {
   const t = useT();
+  const [referenceView, setReferenceView] =
+    useState<GenerateReferenceView>("Combine");
+
+  useEffect(() => {
+    if (currentStep !== "Generate") {
+      setReferenceView("Combine");
+    }
+  }, [currentStep]);
 
   const previousStep = useMemo(
     () => getAdjacentGenerateStep(visibleSteps, currentStep, "prev"),
@@ -59,11 +138,21 @@ export function useGeneratePreviousStepPanel({
   const isFilteredJobPanel =
     currentStep === "Job" || previousStep === "Job";
 
+  const showGenerateReferenceTabs =
+    currentStep === "Generate" && doVerdict;
+
   const previousTitle = isFilteredJobPanel
     ? t("generate.job.filteredPreviewTitle")
-    : previousStep
-      ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
-      : undefined;
+    : showGenerateReferenceTabs
+      ? (
+          <GenerateReferenceTabs
+            active={referenceView}
+            onChange={setReferenceView}
+          />
+        )
+      : previousStep
+        ? t(PREVIOUS_STEP_TITLE_KEYS[previousStep])
+        : undefined;
 
   const previousHeaderRight = isFilteredJobPanel ? (
     <span className="text-xs tabular-nums text-muted">
@@ -83,6 +172,34 @@ export function useGeneratePreviousStepPanel({
       );
     }
 
+    if (currentStep === "Generate") {
+      if (doVerdict && referenceView === "Verdict") {
+        return (
+          <div
+            id="generate-reference-tabpanel"
+            role="tabpanel"
+            aria-labelledby={`generate-reference-tab-${referenceView}`}
+          >
+            <VerdictReferenceContent job={job} />
+          </div>
+        );
+      }
+
+      return (
+        <div
+          id={showGenerateReferenceTabs ? "generate-reference-tabpanel" : undefined}
+          role={showGenerateReferenceTabs ? "tabpanel" : undefined}
+          aria-labelledby={
+            showGenerateReferenceTabs
+              ? `generate-reference-tab-${referenceView}`
+              : undefined
+          }
+        >
+          <GenerateCombineSummary combine={combine} />
+        </div>
+      );
+    }
+
     if (!previousStep) {
       return null;
     }
@@ -93,23 +210,7 @@ export function useGeneratePreviousStepPanel({
           <GenerateJobDescriptionPreview jobText={job.jobText} />
         );
       case "Verdict":
-        return (
-          <div className="space-y-4">
-            <GenerateJdMetaFields
-              jdCompanyName={job.jdCompanyName}
-              jdJobRole={job.jdJobRole}
-              onChange={() => {}}
-              readOnly
-            />
-            {job.acceptedMarkdown ? (
-              <AiVerdictMarkdown markdown={job.acceptedMarkdown} />
-            ) : (
-              <p className="text-sm text-muted">
-                {t("generate.previous.verdictEmpty")}
-              </p>
-            )}
-          </div>
-        );
+        return <VerdictReferenceContent job={job} />;
       case "Combine":
         return (
           <GenerateCombineSummary combine={combine} />
@@ -123,7 +224,17 @@ export function useGeneratePreviousStepPanel({
       default:
         return null;
     }
-  }, [combine, currentStep, job, previousStep, resume, t]);
+  }, [
+    combine,
+    currentStep,
+    doVerdict,
+    job,
+    previousStep,
+    referenceView,
+    resume,
+    showGenerateReferenceTabs,
+    t,
+  ]);
 
   return {
     previousTitle,

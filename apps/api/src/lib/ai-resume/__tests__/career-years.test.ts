@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateTotalExperienceYearsFromCompanies,
+  educationDateToYearOnly,
   ensureSummaryCareerYears,
   finalizeResumeSummaryCareerYears,
+  normalizeEducationDatesInResume,
   summaryAlreadyHasCareerYears,
 } from "../career-years.js";
 
@@ -43,6 +45,37 @@ describe("ensureSummaryCareerYears", () => {
       "+8 years of experience as a backend engineer with payments experience.";
     expect(ensureSummaryCareerYears(summary, 8, "en")).toBe(summary);
     expect(summaryAlreadyHasCareerYears(summary, "en")).toBe(true);
+  });
+});
+
+describe("educationDateToYearOnly", () => {
+  it("keeps year-only labels unchanged", () => {
+    expect(educationDateToYearOnly("2018")).toBe("2018");
+  });
+
+  it("strips month from ISO and month-name labels", () => {
+    expect(educationDateToYearOnly("2018-06")).toBe("2018");
+    expect(educationDateToYearOnly("Jun 2018")).toBe("2018");
+  });
+});
+
+describe("normalizeEducationDatesInResume", () => {
+  it("normalizes education end dates to year only", () => {
+    const resume = normalizeEducationDatesInResume({
+      header: { name: "Jane Doe" },
+      experiences: [
+        { company: "Acme", title: "Engineer", bullets: ["Built APIs"] },
+      ],
+      education: [
+        {
+          institution: "State University",
+          degree: "BSc",
+          endDate: "2018-06",
+        },
+      ],
+    });
+
+    expect(resume.education?.[0]?.endDate).toBe("2018");
   });
 });
 
