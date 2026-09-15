@@ -22,7 +22,6 @@ const baseInput = {
       alias: "Acme",
       name: "Acme",
       whatCompanyIs: "Software",
-      domainAndStack: "Web APIs",
       startDate: "2020",
       endDate: "Present",
       roleContext: "Backend engineer",

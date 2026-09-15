@@ -16,7 +16,6 @@ const writeSchema = z.object({
   alias: z.string().trim().min(1).max(200),
   name: z.string().trim().min(1).max(200),
   whatCompanyIs: z.string().trim().min(1).max(20000),
-  domainAndStack: z.string().trim().min(1).max(20000),
 });
 
 type CompanyRow = {
@@ -25,7 +24,6 @@ type CompanyRow = {
   alias: string;
   name: string;
   whatCompanyIs: string;
-  domainAndStack: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -39,7 +37,6 @@ function toDetail(row: CompanyRow) {
     alias: row.alias,
     name: row.name,
     whatCompanyIs: row.whatCompanyIs,
-    domainAndStack: row.domainAndStack,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -64,7 +61,6 @@ companiesRoutes.get("/", async (c) => {
           { alias: { contains: q } },
           { name: { contains: q } },
           { whatCompanyIs: { contains: q } },
-          { domainAndStack: { contains: q } },
         ],
       }
     : {};
@@ -122,13 +118,11 @@ companiesRoutes.post("/", async (c) => {
     const formatted = await formatCompanyFieldsOnSave({
       userId: user.id,
       whatCompanyIs: parsed.data.whatCompanyIs,
-      domainAndStack: parsed.data.domainAndStack,
       stored: {
         whatCompanyIs: "",
-        domainAndStack: "",
       },
     });
-    const { whatCompanyIs, domainAndStack } = formatted;
+    const { whatCompanyIs } = formatted;
 
     const row = await prisma.company.create({
       data: {
@@ -137,7 +131,6 @@ companiesRoutes.post("/", async (c) => {
         alias: parsed.data.alias,
         name: parsed.data.name,
         whatCompanyIs,
-        domainAndStack,
       },
     });
 
@@ -175,13 +168,11 @@ companiesRoutes.put("/:id", async (c) => {
     const formatted = await formatCompanyFieldsOnSave({
       userId: user.id,
       whatCompanyIs: parsed.data.whatCompanyIs,
-      domainAndStack: parsed.data.domainAndStack,
       stored: {
         whatCompanyIs: existing.whatCompanyIs,
-        domainAndStack: existing.domainAndStack,
       },
     });
-    const { whatCompanyIs, domainAndStack } = formatted;
+    const { whatCompanyIs } = formatted;
 
     const row = await prisma.company.update({
       where: { id },
@@ -190,7 +181,6 @@ companiesRoutes.put("/:id", async (c) => {
         alias: parsed.data.alias,
         name: parsed.data.name,
         whatCompanyIs,
-        domainAndStack,
       },
     });
 

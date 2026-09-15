@@ -5,6 +5,7 @@ import {
   ensureSummaryCareerYears,
   finalizeResumeSummaryCareerYears,
   normalizeEducationDatesInResume,
+  replaceSummaryCareerYearsLead,
   summaryAlreadyHasCareerYears,
 } from "../career-years.js";
 
@@ -40,11 +41,31 @@ describe("ensureSummaryCareerYears", () => {
     );
   });
 
-  it("keeps an existing career-years lead unchanged", () => {
+  it("keeps an existing career-years lead when the value is correct", () => {
     const summary =
       "+8 years of experience as a backend engineer with payments experience.";
     expect(ensureSummaryCareerYears(summary, 8, "en")).toBe(summary);
     expect(summaryAlreadyHasCareerYears(summary, "en")).toBe(true);
+  });
+
+  it("replaces a wrong AI career-years lead with the computed value", () => {
+    const summary =
+      "+7 years of experience as a backend engineer with payments experience.";
+    expect(ensureSummaryCareerYears(summary, 5, "en")).toBe(
+      "+5 years of experience as a backend engineer with payments experience.",
+    );
+  });
+});
+
+describe("replaceSummaryCareerYearsLead", () => {
+  it("replaces only the lead phrase", () => {
+    expect(
+      replaceSummaryCareerYearsLead(
+        "+7 years of experience, platform engineer.",
+        5,
+        "en",
+      ),
+    ).toBe("+5 years of experience, platform engineer.");
   });
 });
 

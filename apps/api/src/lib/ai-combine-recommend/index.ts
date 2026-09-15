@@ -9,6 +9,7 @@ import {
   buildCombineRecommendRefMaps,
   humanizeRefTokensInWarnings,
 } from "./refs.js";
+import type { ExperienceDimensionMode } from "../resume-generation-policy.js";
 import {
   buildUsage,
   type CombineRecommendProviderResult,
@@ -33,14 +34,23 @@ export type CombineRecommendRunInput = Omit<
 export async function runCombineRecommend(
   input: CombineRecommendRunInput,
   maxExperiencesPerCompany = 5,
+  experienceDimensionMode: ExperienceDimensionMode = "technical_facet",
+  decayPercent = 80,
 ): Promise<CombineRecommendProviderResult> {
   const refMaps = buildCombineRecommendRefMaps({
     experienceIds: input.experienceIndex.map((item) => item.id),
     companyIds: input.companies.map((item) => item.companyId),
   });
 
-  const instructions = getCombineRecommendSystemPrompt(maxExperiencesPerCompany);
-  const user = buildCombineRecommendUserPrompt(input);
+  const instructions = getCombineRecommendSystemPrompt(
+    maxExperiencesPerCompany,
+    experienceDimensionMode,
+    decayPercent,
+  );
+  const user = buildCombineRecommendUserPrompt({
+    ...input,
+    experienceDimensionMode,
+  });
 
   const response = await runOpenAiAuthorAdviseResponse(
     input.apiKey,

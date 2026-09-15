@@ -3,6 +3,10 @@ import { z } from "zod";
 import { runAiResume } from "../lib/ai-resume/index.js";
 import { getUserAiSettings } from "../lib/user-ai-settings.js";
 import { assembleFromCombineSnapshot } from "../lib/resume/assemble-input.js";
+import {
+  normalizeExperienceDimensionMode,
+  normalizeExperienceJdTierDecayPercent,
+} from "../lib/resume-generation-policy.js";
 import { compileInstruction } from "../lib/prompt-optimize/index.js";
 import { prisma } from "../lib/prisma.js";
 import { recordAiUsage } from "../lib/record-ai-usage.js";
@@ -82,13 +86,27 @@ aiResumeRoutes.post("/", async (c) => {
     );
   }
 
+  const generationProcess = await prisma.generationProcess.findUnique({
+    where: { userId: user.id },
+  });
+
   let generationInput;
   try {
-    generationInput = await assembleFromCombineSnapshot({
-      userId: user.id,
-      jobContext: parsed.data.jobContext,
-      combine: parsed.data.combine,
-    });
+    generationInput = {
+      ...(await assembleFromCombineSnapshot({
+        userId: user.id,
+        jobContext: parsed.data.jobContext,
+        combine: parsed.data.combine,
+      })),
+      generationPolicy: {
+        experienceDimensionMode: normalizeExperienceDimensionMode(
+          generationProcess?.experienceDimensionMode,
+        ),
+        experienceJdTierDecayPercent: normalizeExperienceJdTierDecayPercent(
+          generationProcess?.experienceJdTierDecayPercent,
+        ),
+      },
+    };
   } catch (err) {
     const message =
       err instanceof Error && err.message

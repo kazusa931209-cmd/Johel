@@ -12,7 +12,6 @@ export {
 
 export { runAiMarkdownFormat } from "./run.js";
 export { runAiExperienceFieldsMarkdownFormat } from "./run-experience-fields-format.js";
-export { runAiCompanyFieldsMarkdownFormat } from "./run-company-fields-format.js";
 export {
   formatMarkdownOnSave,
   formatExperienceFieldsOnSave,

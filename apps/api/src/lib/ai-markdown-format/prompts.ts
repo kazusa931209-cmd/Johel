@@ -7,8 +7,6 @@ const KIND_LABELS: Record<MarkdownFormatKind, string> = {
   evaluate: "Evaluate Prompt (used when evaluating resumes)",
   companyWhatItIs:
     "What this company is (used when generating resumes from workflow data)",
-  companyDomainAndStack:
-    "Domain & stack (used when generating resumes from workflow data)",
   experienceProblem:
     "Experience problem (used when generating resumes from workflow data)",
   experienceActions:
@@ -27,7 +25,6 @@ const STRUCTURED_LIST_KINDS = new Set<MarkdownFormatKind>([
   "experienceProblem",
   "experienceActions",
   "experienceOutcome",
-  "companyDomainAndStack",
 ]);
 
 const PROMPT_HEADING_RULES = `- Use ## as the largest heading. Never use # (h1).
@@ -65,8 +62,7 @@ export function isStructuredListKind(
 ): kind is
   | "experienceProblem"
   | "experienceActions"
-  | "experienceOutcome"
-  | "companyDomainAndStack" {
+  | "experienceOutcome" {
   return STRUCTURED_LIST_KINDS.has(kind);
 }
 
@@ -281,111 +277,3 @@ export function finalizeExperienceFieldsOnSave(input: {
   };
 }
 
-const companyFieldsResponseSchema = z.object({
-  whatCompanyIs: z.string(),
-  domainAndStack: z.string(),
-});
-
-export function areCompanyFieldsUnchanged(input: {
-  whatCompanyIs: string;
-  domainAndStack: string;
-  stored?: {
-    whatCompanyIs?: string | null;
-    domainAndStack?: string | null;
-  };
-}): boolean {
-  return (
-    isMarkdownFormatUnchanged(input.whatCompanyIs, input.stored?.whatCompanyIs) &&
-    isMarkdownFormatUnchanged(
-      input.domainAndStack,
-      input.stored?.domainAndStack,
-    )
-  );
-}
-
-export function finalizeCompanyFieldsOnSave(input: {
-  whatCompanyIs: string;
-  domainAndStack: string;
-}): { whatCompanyIs: string; domainAndStack: string } {
-  return {
-    whatCompanyIs: finalizeFormattedMarkdown(
-      "companyWhatItIs",
-      input.whatCompanyIs.trim(),
-    ),
-    domainAndStack: finalizeFormattedMarkdown(
-      "companyDomainAndStack",
-      input.domainAndStack.trim(),
-    ),
-  };
-}
-
-export function getCompanyFieldsFormatSystemMessage(): string {
-  return `${SYSTEM_MESSAGE}
-
-For this task, format two Company fields (whatCompanyIs, domainAndStack) as separate Markdown values.
-
-Output ONLY valid JSON with exactly these keys: "whatCompanyIs", "domainAndStack".
-Each value must contain only the converted Markdown for that field (no code fences, no extra keys).
-
-Field rules:
-- whatCompanyIs: use headings and paragraphs where helpful. ${PROMPT_HEADING_RULES}
-- domainAndStack: ${STRUCTURED_LIST_RULES}`;
-}
-
-export function buildCompanyFieldsFormatUserMessage(input: {
-  whatCompanyIs: string;
-  domainAndStack: string;
-}): string {
-  return `Convert each field below to clean Markdown. Output JSON only.
-
-What this company is:
----
-${input.whatCompanyIs.trim()}
----
-
-Domain and stack:
----
-${input.domainAndStack.trim()}
----`;
-}
-
-export function parseCompanyFieldsFormatResponse(
-  raw: string,
-  maxLen: number,
-): { whatCompanyIs: string; domainAndStack: string } {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    throw new Error("Markdown conversion returned empty text.");
-  }
-
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  const jsonText = fenced ? fenced[1].trim() : trimmed;
-
-  let parsedJson: unknown;
-  try {
-    parsedJson = JSON.parse(jsonText);
-  } catch {
-    throw new Error("Company field formatting response was not valid JSON.");
-  }
-
-  const parsed = companyFieldsResponseSchema.safeParse(parsedJson);
-  if (!parsed.success) {
-    throw new Error(
-      "Company field formatting response did not match the required schema.",
-    );
-  }
-
-  const whatCompanyIs = finalizeFormattedMarkdown(
-    "companyWhatItIs",
-    parsed.data.whatCompanyIs,
-  );
-  const domainAndStack = finalizeFormattedMarkdown(
-    "companyDomainAndStack",
-    parsed.data.domainAndStack,
-  );
-
-  validateFormattedMarkdown(whatCompanyIs, maxLen);
-  validateFormattedMarkdown(domainAndStack, maxLen);
-
-  return { whatCompanyIs, domainAndStack };
-}

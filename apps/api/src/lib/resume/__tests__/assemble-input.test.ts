@@ -43,7 +43,6 @@ describe("assembleFromCombineSnapshot", () => {
         alias: "Acme",
         name: "Acme Corp",
         whatCompanyIs: "B2B payments",
-        domainAndStack: "Go, PostgreSQL",
       },
     ]);
     experienceFindMany.mockResolvedValue([

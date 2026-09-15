@@ -27,7 +27,6 @@ type FieldErrors = {
   alias?: string;
   name?: string;
   whatCompanyIs?: string;
-  domainAndStack?: string;
 };
 
 function RequiredMark() {
@@ -97,7 +96,7 @@ function FieldExamples({
 }
 
 export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
-  const { t, tLines } = useLocale();
+  const { t } = useLocale();
   const { toast } = useToast();
   const { refreshTokenUsed } = useAiUsage();
   const { goBack } = useCrudFormNavigation("/companies");
@@ -109,11 +108,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
   const [whatCompanyIs, setWhatCompanyIs] = useState(
     initial?.whatCompanyIs ?? "",
   );
-  const [domainAndStack, setDomainAndStack] = useState(
-    initial?.domainAndStack ?? "",
-  );
   const [storedWhatCompanyIs] = useState(initial?.whatCompanyIs ?? "");
-  const [storedDomainAndStack] = useState(initial?.domainAndStack ?? "");
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -135,9 +130,6 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     if (!whatCompanyIs.trim()) {
       nextErrors.whatCompanyIs = t("validation.whatCompanyIsRequired");
     }
-    if (!domainAndStack.trim()) {
-      nextErrors.domainAndStack = t("validation.domainAndStackRequired");
-    }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -148,7 +140,6 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
       alias: alias.trim(),
       name: name.trim(),
       whatCompanyIs: whatCompanyIs.trim(),
-      domainAndStack: domainAndStack.trim(),
     };
     setSaving(true);
     const res =
@@ -173,11 +164,7 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
     whatCompanyIs,
     storedWhatCompanyIs,
   );
-  const convertingDomain = needsMarkdownFormatOnSave(
-    domainAndStack,
-    storedDomainAndStack,
-  );
-  const converting = saving && (convertingWhat || convertingDomain);
+  const converting = saving && convertingWhat;
 
   return (
     <form
@@ -303,45 +290,6 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
         </p>
         <p className="text-xs text-muted">{t("guidance.autoMarkdownFormat")}</p>
         <FieldError message={fieldErrors.whatCompanyIs} />
-      </label>
-
-      <label className="block space-y-1 text-sm">
-        <span>
-          {t("crud.companies.form.domainAndStack")}
-          <RequiredMark />
-        </span>
-        <p className="text-xs text-muted">
-          {t("guidance.company.domainStackGuideline")}
-        </p>
-        <p className="text-xs text-muted">
-          {t("guidance.company.structuredFieldFormat")}
-        </p>
-        <textarea
-          value={domainAndStack}
-          onChange={(e) => {
-            setDomainAndStack(e.target.value);
-            if (fieldErrors.domainAndStack) {
-              setFieldErrors((errors) => ({
-                ...errors,
-                domainAndStack: undefined,
-              }));
-            }
-          }}
-          rows={10}
-          aria-invalid={Boolean(fieldErrors.domainAndStack)}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono outline-none focus:border-muted"
-        />
-        <FieldExamples
-          t={t}
-          good={tLines("guidance.company.domainStackGood")}
-          bad={t("guidance.company.domainStackBad")}
-          multiline
-        />
-        <p className="text-xs text-muted">
-          {t("guidance.descriptionAsResumePrompt")}
-        </p>
-        <p className="text-xs text-muted">{t("guidance.autoMarkdownFormat")}</p>
-        <FieldError message={fieldErrors.domainAndStack} />
       </label>
 
       <p className="text-xs text-muted">{t("guidance.company.shared")}</p>

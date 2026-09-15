@@ -90,8 +90,7 @@ Use \`jobContext\` as the only scoring rubric.
 When it is Verdict Markdown, read these sections first: Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
 Map Role.title to the target job title. Treat Technical Requirements as skills. Treat Critical JD Terminology as exact keywords to reuse when the materials support them.
 When jobContext is a filtered job description (no Verdict), use the same rubric from the raw text.
-Every summary sentence and experience bullet should map to at least one item from that rubric.
-Do not treat company or experience fields as the job target.
+Summary and Skills use the full JD rubric. Experience bullets only are tiered by company selection order (see Experience Synthesis). Do not treat company or experience fields as the job target.
 
 ## Input Meanings
 - \`run.emphasis\`: Persona and emphasis for this run.
@@ -99,10 +98,11 @@ Do not treat company or experience fields as the job target.
 - \`companies[]\` order: Resume experience order. Keep it.
 - \`companies[].name\`: Employer name on the resume. Do not use \`alias\` in output.
 - \`companies[].alias\`: Internal label only. Ignore for writing.
-- \`companies[].whatCompanyIs\`: One-sentence scene (industry, product, customer). Do not paste as bullets.
-- \`companies[].domainAndStack\`: Domain, product scope, tech. Bullet list with bold labels; use for wording and grounding; do not paste as bullets.
-- \`companies[].roleContext\`: Nature of the role held there. Primary hint for \`title\`. Not achievements.
-- \`companies[].keywordContext\`: Optional steering for this employer block in this run. Use with the JD rubric to choose emphasis and compress bullets. When filled, prioritize linked cards that match those keywords; compress or omit cards with no keyword and rubric overlap unless \`run.emphasis\` says otherwise. When empty or "(none — match from job context only)", use the JD rubric and role context only (Auto).
+- \`companies[].whatCompanyIs\`: Company scene (industry, product, customer). Grounds every bullet at that employer. Do not paste as bullets.
+- \`companies[].roleContext\`: Nature of the role held there. Primary hint for \`title\`. Caps JD tailoring — never write bullets that exceed what role context allows. Strongest constraint per company.
+- \`companies[].keywordContext\`: Optional steering for this employer block in this run. When filled, keyword context has priority within that company's JD/keyword budget; keyword steering intensity scales with the company's JD tailoring weight. When empty or "(none — match from job context only)", use the JD rubric and role context only (Auto).
+- \`companies[].jdTailoringWeight\`: Experience-bullet JD tailoring for this company (by selection order; tier chain depends on configured JD tier decay). Summary and Skills ignore this and stay full JD.
+- \`generationPolicy.experienceDimensionMode\`: When the same capability appears at multiple companies, emphasize different dimensions per this mode.
 - \`companies[].startDate\` / \`endDate\`: Employment dates. Copy as-is. They mark tenure only; they do not mean every tool named under that company was used for the full period.
 - \`companies[].experiences[]\`: Materials already assigned to that company. Do not move them. Do not drop a linked experience unless it has zero overlap with the rubric and \`run.emphasis\` says to omit.
 - \`experiences[].category\`: Work cluster; use when choosing \`title\` and grouping skills.
@@ -112,28 +112,39 @@ Do not treat company or experience fields as the job target.
 
 ## Experience Synthesis
 For each company, emit one experience object.
+- Priority stack (per company Experience block): (1) \`whatCompanyIs\` grounds every bullet in that employer's scene; (2) \`roleContext\` caps JD tailoring; (3) \`jdTailoringWeight\` (tier by selection order — see each company's JD tailoring weight line); (4) \`keywordContext\` steers within the slot and scales with \`jdTailoringWeight\`.
+- Cross-company dimension: when the same capability (\`category\`) appears at multiple companies, emphasize a different dimension per \`generationPolicy.experienceDimensionMode\`; do not repeat the same framing.
 - \`company\`: \`companies[].name\`
-- \`title\`: Honest blend of \`roleContext\` + scene (\`whatCompanyIs\`, \`domainAndStack\`) + linked \`category\`s, angled toward Role.title. Do not copy the JD title onto every company.
+- \`title\`: Honest blend of \`roleContext\` + scene (\`whatCompanyIs\`) + linked \`category\`s, angled toward Role.title within the role-context cap. Do not copy the JD title onto every company.
 - \`bullets\`: One linked experience card → its own bullet(s). Do not merge tech, metrics, or outcomes from different cards into one bullet.
   - When \`keywordContext\` is filled: prefer 1–2 bullets per linked card; keep the company block focused on keyword + rubric overlap.
   - When \`keywordContext\` is empty: 1–3 bullets per linked card.
   - Prefer this shape:
     - Lead with an action from that card's \`actions\`.
-    - Ground the scene with company domain wording only (not a stack dump from \`domainAndStack\`).
+    - Ground the scene with company domain wording from \`whatCompanyIs\`. The bullet must read as work at that employer — do not surface niche domain terms from the card that contradict the company scene.
     - Close with that card's \`outcome\` when present.
     - Keep the problem visible only when it clarifies impact.
 - Card isolation: each bullet must trace to exactly one linked experience card. Never move a tool or metric from card A into a bullet derived from card B.
 - Tech density: name at most 2–3 technologies per bullet, taken only from that card's \`actions\`. If the source lists more, paraphrase around the capability instead of inventorying frameworks, agents, or clouds.
 - No stack laundry lists: do not enumerate multiple agent frameworks, LLM SDKs, or cloud platforms in one bullet (for example LangGraph, LangChain, CrewAI, AutoGen together). Use the 1–2 tools explicitly named on that card's action line.
-- \`domainAndStack\` is scene tone only. Do not treat it as a tech source for bullets and do not paste it as bullets.
 - Tenure wording: employment dates describe tenure only. Write capability-led bullets ("Built agentic workflows with LangGraph for …"). Do not write period-wide inventories ("Used X, Y, Z throughout tenure") and do not synthesize all linked cards into one concurrent operating stack for the full employment period.
 - Multi-cloud / platform: at most one primary cloud or Kubernetes platform per bullet, from that card's \`actions\`. Across the whole company block, include at most two distinct cloud/platform families grounded in linked cards for that company. Do not combine EKS, GKE, Vertex AI, Azure, or similar into one bullet unless a single linked card explicitly describes that multi-cloud setup.
 - Cross-company metrics: each quantified before→after outcome (same metric and baseline) may appear only once in the entire resume. When the same outcome appears in materials for multiple companies, keep the numbers on the most specific card in resume company order; elsewhere rephrase qualitatively without repeating the same numbers or baseline.
 - Ground tools, products, and metrics only if they appear in that card's \`actions\` or \`outcome\`, or in \`whatCompanyIs\` for scene wording only.
 - Prefer: company-domain wording (scene) + STAR facts (materials) + JD keywords (rubric).
+- Company scene grounding example:
+  - Employer scene: retail SaaS platform / retail operations.
+  - Avoid: "Built an ingestion pipeline for inconsistent Illumina CSV imports, normalizing probe names, resolving duplicate mappings and rsIDs, and validating allele encodings …"
+  - Prefer: "Built an ingestion pipeline for inconsistent retail-operations CSV imports, normalizing identifiers, resolving duplicate mappings, and validating encodings to produce stable, validated operational data."
+- One accomplishment per bullet: do not chain pipeline stages or JD rubric items in one bullet (for example extraction → validation → transformation → loading). Use at most 1–2 JD-relevant terms per bullet when they fit naturally; paraphrase the rest as capabilities.
+- JD naturalness example:
+  - Avoid: "Designed … covering extraction, validation, transformation, loading, schema differences, duplicate records, incremental updates … analytics, applications, and AI/ML workloads."
+  - Prefer: "Designed end-to-end ETL pipelines for heterogeneous retail-operations sources, handling schema variation, duplicate records, validation, and incremental updates to produce consistent data for analytics and AI/ML workloads."
+- Lower \`jdTailoringWeight\`: stay grounded in \`roleContext\` and STAR materials with reduced JD keyword density; do not insert bullets unrelated to both the JD and the materials — keep the employer block coherent with the overall resume narrative.
 
 ## Summary
-Write 3–5 sentences. The first sentence MUST open with "+{N} years of experience" (or the equivalent in \`run.language\`), where N is the total derived from the sum of each company's employment period (\`companies[].startDate\`–\`endDate\`). Express that total accurately; do not inflate it to match JD requirements. Continue the first sentence with target role fit from Role, then add 2–3 proofs taken from the rewritten experiences that match Top Hiring Signals and Technical Requirements.
+Write 3–5 sentences. The first sentence MUST open with "+{N} years of experience" (or the equivalent in \`run.language\`), where N is the total derived from the sum of each company's employment period (\`companies[].startDate\`–\`endDate\`). Express that total accurately; do not inflate it to match JD requirements. Continue the first sentence with core expertise and domain focus from the materials (what you build or deliver), not job-search phrasing. Sentences 2–4 demonstrate role fit through concrete proofs from rewritten experiences that match Top Hiring Signals and Technical Requirements.
+Do not write meta job-search language (for example "targeting [Role.title] roles", "seeking", "applying for", or "open to"). The resume shows fit through expertise and proofs; it does not announce application intent.
 Do not introduce skills that are not in the materials.
 
 ## Skills

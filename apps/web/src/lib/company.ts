@@ -4,7 +4,6 @@ export type CompanyDetail = {
   alias: string;
   name: string;
   whatCompanyIs: string;
-  domainAndStack: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -14,7 +13,6 @@ export type CompanyWritePayload = {
   alias: string;
   name: string;
   whatCompanyIs: string;
-  domainAndStack: string;
 };
 
 export function sortCompaniesByDisplayPriority<

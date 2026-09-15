@@ -19,7 +19,11 @@ export const openAiResumeProvider: AiResumeProvider = {
   id: "openai",
 
   async run(input: AiResumeRequest): Promise<AiResumeProviderResult> {
-    const instructions = getAiResumeSystemPrompt("openai", input.generatePrompt);
+    const instructions = getAiResumeSystemPrompt(
+      "openai",
+      input.generatePrompt,
+      input.input.generationPolicy.experienceJdTierDecayPercent,
+    );
     const user = buildAiResumeUserPrompt(input.input);
 
     const response = await runOpenAiResumeResponse(

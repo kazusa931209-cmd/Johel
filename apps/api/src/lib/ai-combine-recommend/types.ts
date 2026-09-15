@@ -1,10 +1,13 @@
 export type CombineRecommendRunCompany = {
   companyId: string;
   name: string;
+  whatCompanyIs: string;
   startDate: string;
   endDate: string;
   roleContext: string;
   keywordContext?: string;
+  resumeOrderIndex: number;
+  jdTierPercent: string;
 };
 
 export type CombineRecommendCompanyInput = {

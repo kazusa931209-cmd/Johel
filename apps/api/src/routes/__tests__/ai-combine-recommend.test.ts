@@ -95,7 +95,6 @@ describe("ai-combine-recommend route", () => {
         alias: "Acme",
         name: "Acme Corp",
         whatCompanyIs: "Software",
-        domainAndStack: "Web APIs",
       },
     });
     companyId = company.id;

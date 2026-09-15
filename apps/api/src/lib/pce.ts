@@ -56,7 +56,6 @@ export async function loadPce(userId: string) {
       alias: row.alias,
       name: row.name,
       whatCompanyIs: row.whatCompanyIs,
-      domainAndStack: row.domainAndStack,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     })),

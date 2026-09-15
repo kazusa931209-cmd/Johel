@@ -6,7 +6,6 @@ export type MarkdownFormatKind =
   | "generate"
   | "evaluate"
   | "companyWhatItIs"
-  | "companyDomainAndStack"
   | "experienceProblem"
   | "experienceActions"
   | "experienceOutcome";
@@ -33,18 +32,6 @@ export type ExperienceFieldsMarkdownFormatResult = {
   problem: string;
   actions: string;
   outcome: string;
-  usage: AiVerdictUsage;
-};
-
-export type CompanyFieldsMarkdownFormatRequest = {
-  whatCompanyIs: string;
-  domainAndStack: string;
-  apiKey: string;
-};
-
-export type CompanyFieldsMarkdownFormatResult = {
-  whatCompanyIs: string;
-  domainAndStack: string;
   usage: AiVerdictUsage;
 };
 

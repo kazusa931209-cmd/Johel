@@ -41,16 +41,6 @@ export function CompanyDetailDialog({
           <div className="text-foreground">{t("crud.common.emDash")}</div>
         )}
       </div>
-      <div className="space-y-1">
-        <div className="text-xs font-medium tracking-wide text-muted uppercase">
-          {t("crud.companies.columns.domainAndStack")}
-        </div>
-        {company.domainAndStack ? (
-          <AiVerdictMarkdown markdown={company.domainAndStack} />
-        ) : (
-          <div className="text-foreground">{t("crud.common.emDash")}</div>
-        )}
-      </div>
       <DetailField
         label={t("crud.common.created")}
         value={new Date(company.createdAt).toLocaleString()}

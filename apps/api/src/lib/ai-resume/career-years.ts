@@ -20,6 +20,10 @@ const CAREER_YEARS_PATTERNS: Record<string, RegExp> = {
   "zh-CN": /\+\s*\d+\s*年(?:以上)?(?:的)?(?:工作)?经验/i,
 };
 
+function careerYearsPattern(language: string): RegExp {
+  return CAREER_YEARS_PATTERNS[language] ?? CAREER_YEARS_PATTERNS.en;
+}
+
 function parsePeriodLabel(label: string): PeriodLabel | null {
   const trimmed = label.trim();
   if (!trimmed) {
@@ -94,8 +98,20 @@ export function summaryAlreadyHasCareerYears(
   summary: string,
   language: string,
 ): boolean {
-  const pattern = CAREER_YEARS_PATTERNS[language] ?? CAREER_YEARS_PATTERNS.en;
-  return pattern.test(summary.trim());
+  return careerYearsPattern(language).test(summary.trim());
+}
+
+export function replaceSummaryCareerYearsLead(
+  summary: string,
+  totalYears: number,
+  language: string,
+): string {
+  const lead = formatCareerYearsLead(totalYears, language);
+  const pattern = careerYearsPattern(language);
+  if (pattern.test(summary)) {
+    return summary.replace(pattern, lead);
+  }
+  return summary;
 }
 
 export function ensureSummaryCareerYears(
@@ -108,13 +124,14 @@ export function ensureSummaryCareerYears(
   }
 
   const body = summary?.trim() ?? "";
-  if (body && summaryAlreadyHasCareerYears(body, language)) {
-    return body;
-  }
-
   const lead = formatCareerYearsLead(totalYears, language);
+
   if (!body) {
     return `${lead}.`;
+  }
+
+  if (summaryAlreadyHasCareerYears(body, language)) {
+    return replaceSummaryCareerYearsLead(body, totalYears, language);
   }
 
   return `${lead}, ${lowercaseFirst(body)}`;

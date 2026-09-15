@@ -1,11 +1,11 @@
-import type { ResumeGenerationInput } from "../ai-resume/types.js";
+import type { AssembledResumeGenerationInput } from "../ai-resume/types.js";
 import {
   assembleFromCombineSnapshot,
   type CombineSnapshot,
 } from "./assemble-input.js";
 
 export function combineContentFingerprintFromInput(
-  input: Pick<ResumeGenerationInput, "profile" | "companies" | "run">,
+  input: Pick<AssembledResumeGenerationInput, "profile" | "companies" | "run">,
 ): string {
   return JSON.stringify({
     profile: input.profile,

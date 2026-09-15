@@ -6,6 +6,11 @@ import {
   runCombineRecommend,
 } from "../lib/ai-combine-recommend/index.js";
 import { normalizeCombineExperiencesPerCompanyMax } from "../lib/combine-experiences-per-company.js";
+import {
+  buildCompanyTierContext,
+  normalizeExperienceJdTierDecayPercent,
+  normalizeExperienceDimensionMode,
+} from "../lib/resume-generation-policy.js";
 import { withTokenUsed } from "../lib/ai-token-used-response.js";
 import { prisma } from "../lib/prisma.js";
 import { getUserAiSettings } from "../lib/user-ai-settings.js";
@@ -111,6 +116,18 @@ aiCombineRecommendRoutes.post("/", async (c) => {
   const combineExperiencesPerCompanyMax = normalizeCombineExperiencesPerCompanyMax(
     generationProcess?.combineExperiencesPerCompanyMax,
   );
+  const experienceDimensionMode = normalizeExperienceDimensionMode(
+    generationProcess?.experienceDimensionMode,
+  );
+  const experienceJdTierDecayPercent = normalizeExperienceJdTierDecayPercent(
+    generationProcess?.experienceJdTierDecayPercent,
+  );
+  const companyTierById = new Map(
+    loaded.input.companies.map((entry, index) => [
+      entry.companyId,
+      buildCompanyTierContext(index, experienceJdTierDecayPercent),
+    ]),
+  );
 
   try {
     const runInput = {
@@ -123,13 +140,20 @@ aiCombineRecommendRoutes.post("/", async (c) => {
         if (!company) {
           throw new Error("Company was not found.");
         }
+        const tier = companyTierById.get(entry.companyId);
+        if (!tier) {
+          throw new Error("Company tier context was not found.");
+        }
         return {
           companyId: entry.companyId,
           name: company.name,
+          whatCompanyIs: company.whatCompanyIs,
           startDate: entry.startDate,
           endDate: entry.endDate,
           roleContext: entry.roleContext,
           keywordContext: entry.keywordContext,
+          resumeOrderIndex: tier.resumeOrderIndex,
+          jdTierPercent: tier.jdTierPercent,
         };
       }),
       experienceIndex,
@@ -138,6 +162,8 @@ aiCombineRecommendRoutes.post("/", async (c) => {
     const result = await runCombineRecommend(
       runInput,
       combineExperiencesPerCompanyMax,
+      experienceDimensionMode,
+      experienceJdTierDecayPercent,
     );
 
     await recordAiUsage({

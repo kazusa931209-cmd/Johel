@@ -50,32 +50,6 @@ Use this company when the JD asks for startup experience.
 
 The first bad example is a personal achievement. The second is a routing instruction. Generate will treat both as scene and may paste them as if the *employer* did that work.
 
-### Domain & stack
-
-What the company handles, which tech it uses, regulation/scale. Snapshot numbers (what the product bears) are fine. Improvement arrows (`3s → 200ms`) are not.
-
-Good:
-
-```text
-- **Domain**
-  Web3, blockchain transactions, messaging, and high-volume event processing
-- **Stack**
-  Backend, databases, cloud infrastructure, blockchain, and AI (OpenAI)
-- **Scale**
-  50K+ events/day, 10K blockchain transactions/day
-```
-
-Bad:
-
-```text
-- **Latency**
-  I reduced processing latency from 3s to 200ms.
-- **Ownership**
-  Took end-to-end ownership of every product.
-```
-
-Those sentences will repeat on every company that later links the same shared experience, or leak AllWeb3 numbers onto ScalyX if you copy the block.
-
 ### Role context (Combine company entry)
 
 Nature of the role in that employment. Primary hint for the resume `title`. Not achievements.
@@ -250,9 +224,10 @@ Default Generate Prompt (`@johel/prompt-defaults`) maps fields like this:
 
 | Workspace field | Generate use |
 | --- | --- |
-| `whatCompanyIs` / `domainAndStack` | Scene tone only. Not pasted as bullets; not a tech source for bullets. |
-| `roleContext` | Primary hint for experience `title`. |
-| `keywordContext` (Combine company entry) | Steers Suggest card selection and Generate bullet focus/compression for that employer block. |
+| `whatCompanyIs` | **Scene grounding** for every bullet at that employer. Not pasted as bullets; not a tech source for bullets. Generate reframes linked cards to fit this scene; Combine Suggest must not link scene-mismatched cards. |
+| `roleContext` | Primary hint for experience `title`. **Caps** JD tailoring — bullets must not exceed what the role allows. |
+| `keywordContext` (Combine company entry) | Priority steering within that company's JD/keyword budget on Suggest and Generate; intensity scales with JD tier decay. |
+| Settings **Experience dimension mode** | When the same capability appears at multiple companies, Suggest and Generate emphasize different facets per mode: STAR axis, JD signal, technical facet, or problem item. |
 | `experiences[].category` | Title blend and skill grouping. |
 | `problem` | Situation, only when it clarifies impact. |
 | `actions` | Lead of each bullet (verb + object + tech). One card's actions must not supply tech for another card's bullet. |
@@ -262,7 +237,20 @@ Default Generate Prompt (`@johel/prompt-defaults`) maps fields like this:
 
 Changing Prompts changes *how* materials are read. It does not add missing facts. If ScalyX has no Outcome numbers, no Generate Prompt will honestly create them.
 
-**Custom Generate Prompts:** Sign-up seeds defaults from `@johel/prompt-defaults`. If you edit Generate Prompt in Settings, keep it aligned with the default quality principles (card-scoped bullets, no cross-company metric duplication, concise tech naming, Skills 12–20 grounded items) or resume output may regress.
+**Custom Generate Prompts:** Sign-up seeds defaults from `@johel/prompt-defaults`. If you edit Generate Prompt in Settings, keep it aligned with the default quality principles (card-scoped bullets, company-scene grounding per employer, no cross-company metric duplication, concise tech naming, one accomplishment per bullet without JD keyword chains, Summary without meta job-search phrasing, Skills 12–20 grounded items, JD tier decay on Experience bullets with full JD on Summary/Skills, role-context cap, dimension mode) or resume output may regress.
+
+### Experience dimension mode (Settings / Generation)
+
+When the same capability (`category`) is linked to multiple companies, JoHEL tries to show **different dimensions** per company instead of repeating the same JD angle:
+
+| Mode | Differentiate by |
+| --- | --- |
+| **STAR axis** | Problem vs actions vs outcome emphasis |
+| **JD signal** | Different JD rubric items (hiring signals, technical requirements, terminology) |
+| **Technical facet** | Scale, reliability, security, cost, latency, operability |
+| **Problem item** | Distinct Problem bullet items or failure modes |
+
+Combine **selection order** sets JD tier for Experience bullets using Settings **Experience JD tier decay** (default 80%: first selected company 100%, second 80%, third 64%, and so on). Summary and Skills always use full JD fit regardless of tier.
 
 **Do not** put authoring rules that belong here into Experience Actions (“Use this when the JD lists startup experience”). That is prompt logic, not STAR material.
 
@@ -282,7 +270,7 @@ Good split:
 
 - AllWeb3 links on-chain sync, notifications, AI matching (or fraud), production ops, and (optionally) Web3 frontend — **one stack variant each**.
 - ScalyX links retail APIs and AI storefronts only.
-- AllWeb3 scale snapshots stay on AllWeb3 Domain & Stack.
+- AllWeb3 scale snapshots stay on AllWeb3 **What this company is** (or linked experience cards), not on other companies.
 - AllWeb3 improvement arrows stay on the AllWeb3 card that produced them.
 
 Bad split:

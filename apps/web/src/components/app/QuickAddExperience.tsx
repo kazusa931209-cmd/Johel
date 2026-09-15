@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { ExperienceFactFormFields } from "@/components/ExperienceFactFormFields";
 import { ExperienceSuggestionContent } from "@/components/ExperienceSuggestionContent";
@@ -37,13 +36,8 @@ export function QuickAddExperience({
     onApplySuccess: () => onOpenChange(false),
   });
 
-  useEffect(() => {
-    if (!open) {
-      resetFlow();
-    }
-  }, [open, resetFlow]);
-
   const actionable = isExperienceSuggestionActionable(displayOperations);
+  const hasDraft = userFacts.trim().length > 0 || result !== null;
 
   function closeMainDrawer() {
     onOpenChange(false);
@@ -56,33 +50,44 @@ export function QuickAddExperience({
         open={open}
         onClose={closeMainDrawer}
         footer={
-          <div className="flex justify-end gap-2">
+          <div className="flex items-center justify-between gap-2">
             <button
               type="button"
-              onClick={() => void handleSuggest()}
-              className={
-                actionable
-                  ? "rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted/40 disabled:opacity-60"
-                  : "rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
-              }
+              onClick={resetFlow}
+              disabled={!hasDraft}
+              aria-label={t("quickAddExperience.resetAria")}
+              className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted/40 disabled:opacity-40"
             >
-              {advising
-                ? t("crud.experiences.advisor.running")
-                : actionable
-                  ? t("crud.experiences.advisor.suggestAgain")
-                  : t("crud.experiences.advisor.suggest")}
+              {t("quickAddExperience.reset")}
             </button>
-            {actionable ? (
+            <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => void handleApply()}
-                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+                onClick={() => void handleSuggest()}
+                className={
+                  actionable
+                    ? "rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted/40 disabled:opacity-60"
+                    : "rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+                }
               >
-                {applying
-                  ? t("crud.experiences.advisor.applying")
-                  : t("crud.experiences.advisor.apply")}
+                {advising
+                  ? t("crud.experiences.advisor.running")
+                  : actionable
+                    ? t("crud.experiences.advisor.suggestAgain")
+                    : t("crud.experiences.advisor.suggest")}
               </button>
-            ) : null}
+              {actionable ? (
+                <button
+                  type="button"
+                  onClick={() => void handleApply()}
+                  className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+                >
+                  {applying
+                    ? t("crud.experiences.advisor.applying")
+                    : t("crud.experiences.advisor.apply")}
+                </button>
+              ) : null}
+            </div>
           </div>
         }
       >

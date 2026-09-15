@@ -2,6 +2,14 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { normalizeCombineExperiencesPerCompanyMax } from "../lib/combine-experiences-per-company.js";
 import { EXPERIENCE_ADVISE_POOL_DEPTHS } from "../lib/experience-embedding/pool-depth.js";
+import {
+  DEFAULT_EXPERIENCE_DIMENSION_MODE,
+  DEFAULT_EXPERIENCE_JD_TIER_DECAY_PERCENT,
+  EXPERIENCE_DIMENSION_MODES,
+  EXPERIENCE_JD_TIER_DECAY_PERCENTS,
+  normalizeExperienceDimensionMode,
+  normalizeExperienceJdTierDecayPercent,
+} from "../lib/resume-generation-policy.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 
@@ -15,6 +23,13 @@ const putSchema = z.object({
   downloadFormat: z.enum(DOWNLOAD_FORMATS),
   experienceAdvisePoolDepth: z.enum(EXPERIENCE_ADVISE_POOL_DEPTHS),
   combineExperiencesPerCompanyMax: z.number().int().min(1).max(10),
+  experienceDimensionMode: z.enum(EXPERIENCE_DIMENSION_MODES),
+  experienceJdTierDecayPercent: z.union([
+    z.literal(30),
+    z.literal(50),
+    z.literal(70),
+    z.literal(80),
+  ]),
 });
 
 export const DEFAULT_GENERATION_PROCESS = {
@@ -24,6 +39,8 @@ export const DEFAULT_GENERATION_PROCESS = {
   downloadFormat: "docx",
   experienceAdvisePoolDepth: "normal",
   combineExperiencesPerCompanyMax: 5,
+  experienceDimensionMode: DEFAULT_EXPERIENCE_DIMENSION_MODE,
+  experienceJdTierDecayPercent: DEFAULT_EXPERIENCE_JD_TIER_DECAY_PERCENT,
 } as const;
 
 export function normalizeDownloadFormat(
@@ -48,6 +65,8 @@ function toProcessResponse(
     downloadFormat?: string;
     experienceAdvisePoolDepth: string;
     combineExperiencesPerCompanyMax?: number | null;
+    experienceDimensionMode?: string | null;
+    experienceJdTierDecayPercent?: number | null;
   } | null,
 ) {
   const resumeLanguage = process?.resumeLanguage ?? DEFAULT_GENERATION_PROCESS.resumeLanguage;
@@ -74,6 +93,12 @@ function toProcessResponse(
       : DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
     combineExperiencesPerCompanyMax: normalizeCombineExperiencesPerCompanyMax(
       process?.combineExperiencesPerCompanyMax,
+    ),
+    experienceDimensionMode: normalizeExperienceDimensionMode(
+      process?.experienceDimensionMode,
+    ),
+    experienceJdTierDecayPercent: normalizeExperienceJdTierDecayPercent(
+      process?.experienceJdTierDecayPercent,
     ),
   };
 }
@@ -120,6 +145,8 @@ settingsProcessRoutes.put("/", async (c) => {
       downloadFormat,
       experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
       combineExperiencesPerCompanyMax: parsed.data.combineExperiencesPerCompanyMax,
+      experienceDimensionMode: parsed.data.experienceDimensionMode,
+      experienceJdTierDecayPercent: parsed.data.experienceJdTierDecayPercent,
     },
     update: {
       doVerdict: parsed.data.doVerdict,
@@ -128,6 +155,8 @@ settingsProcessRoutes.put("/", async (c) => {
       downloadFormat,
       experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
       combineExperiencesPerCompanyMax: parsed.data.combineExperiencesPerCompanyMax,
+      experienceDimensionMode: parsed.data.experienceDimensionMode,
+      experienceJdTierDecayPercent: parsed.data.experienceJdTierDecayPercent,
     },
   });
 

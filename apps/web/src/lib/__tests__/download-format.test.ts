@@ -11,6 +11,7 @@ describe("resolveDownloadFormat", () => {
         downloadFormat: "pdf",
         experienceAdvisePoolDepth: "normal",
         combineExperiencesPerCompanyMax: 5,
+        experienceDimensionMode: "technical_facet",
       }),
     ).toBe("docx");
   });
@@ -24,6 +25,7 @@ describe("resolveDownloadFormat", () => {
         downloadFormat: "pdf",
         experienceAdvisePoolDepth: "normal",
         combineExperiencesPerCompanyMax: 5,
+        experienceDimensionMode: "technical_facet",
       }),
     ).toBe("pdf");
   });

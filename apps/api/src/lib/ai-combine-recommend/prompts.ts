@@ -1,6 +1,13 @@
 import {
   resolveCombineExperiencesPerCompanyRange,
 } from "../combine-experiences-per-company.js";
+import {
+  getCompanySceneCombineRules,
+  getDimensionModePromptText,
+  getExperienceDimensionModeLabel,
+  getJdTierCombineRules,
+  type ExperienceDimensionMode,
+} from "../resume-generation-policy.js";
 import type { CombineRecommendRunCompany } from "./types.js";
 import { buildCombineRecommendRefMaps } from "./refs.js";
 
@@ -15,7 +22,11 @@ const JSON_SCHEMA = `{
   "warnings": ["string"]
 }`;
 
-function buildSharedRules(maxPerCompany: number): string {
+function buildSharedRules(
+  maxPerCompany: number,
+  experienceDimensionMode: ExperienceDimensionMode,
+  decayPercent: number,
+): string {
   const { minPerCompany, maxPerCompany: max, thinOverlapMaxPerCompany } =
     resolveCombineExperiencesPerCompanyRange(maxPerCompany);
 
@@ -31,16 +42,19 @@ function buildSharedRules(maxPerCompany: number): string {
 
   return `You are an AI Combine advisor for JoHEL resume generation.
 
-Given job context, a profile, company entries (with employment period, role context, and optional keyword context), and an experience index, recommend which experience cards to link to each company for this run.
+Given job context, a profile, company entries (with employment period, role context, optional keyword context, and JD selection weight), and an experience index, recommend which experience cards to link to each company for this run.
 
 Rules:
 ${pickRule}
 - Do not link stack variants of the same capability to the same company (e.g. NestJS and Go twins for the same story).
 - Only use companyRef and experienceRef tokens exactly as shown in the index (e.g. C01, E02). Do not invent refs.
-- Per company: if Keyword context is provided, prioritize experience cards that match those keywords (category and problem text) while still fitting the job context and that company's role context. Keywords steer emphasis; the JD still constrains relevance.
-- Per company: if Keyword context is empty or "(none)", choose the best set from the full index using job context and that company's role context only (Auto).
+${getJdTierCombineRules(decayPercent)}
+${getCompanySceneCombineRules()}
+- Dimension mode (${getExperienceDimensionModeLabel(experienceDimensionMode)}): ${getDimensionModePromptText(experienceDimensionMode)}
+- Per company: if Keyword context is provided, prioritize experience cards that match those keywords (category and problem text) within that company's JD/keyword budget. Keyword steering intensity scales with the company's JD selection weight.
+- Per company: if Keyword context is empty or "(none)", choose the best set from the full index using job context and that company's role context only (Auto), respecting the JD selection weight.
 ${thinOverlapRule}
-- warnings: note stack-variant conflicts, empty selections, keyword/JD mismatches, or thin overlap.
+- warnings: note stack-variant conflicts, empty selections, keyword/JD mismatches, thin overlap, or role-context cap conflicts.
 
 Return ONLY valid JSON matching the schema. Do NOT wrap in a code fence.
 
@@ -50,8 +64,10 @@ ${JSON_SCHEMA}`;
 
 export function getCombineRecommendSystemPrompt(
   maxPerCompany = 5,
+  experienceDimensionMode: ExperienceDimensionMode = "technical_facet",
+  decayPercent = 80,
 ): string {
-  return `${buildSharedRules(maxPerCompany)}\n\nProvider notes (OpenAI): Return ONLY valid JSON.`;
+  return `${buildSharedRules(maxPerCompany, experienceDimensionMode, decayPercent)}\n\nProvider notes (OpenAI): Return ONLY valid JSON.`;
 }
 
 function formatKeywordContext(keywordContext?: string): string {
@@ -65,6 +81,7 @@ export type CombineRecommendPromptInput = {
   profileId: string;
   jobDescription: string;
   acceptedMarkdown?: string;
+  experienceDimensionMode: ExperienceDimensionMode;
   experienceIndex: Array<{
     id: string;
     category: string;
@@ -107,7 +124,7 @@ export function buildCombineRecommendUserPrompt(
   const companiesBlock = input.companies
     .map(
       (company) =>
-        `### ${company.name} [${companyRefById.get(company.companyId)}]\nPeriod: ${company.startDate} – ${company.endDate}\nRole context: ${company.roleContext}\nKeyword context: ${formatKeywordContext(company.keywordContext)}`,
+        `### ${company.name} [${companyRefById.get(company.companyId)}]\nResume order index: ${company.resumeOrderIndex} (1 = first selected)\nJD selection weight: ${company.jdTierPercent}\nDimension mode: ${getExperienceDimensionModeLabel(input.experienceDimensionMode)}\nPeriod: ${company.startDate} – ${company.endDate}\nRole context: ${company.roleContext}\nKeyword context: ${formatKeywordContext(company.keywordContext)}\nWhat this company is:\n${company.whatCompanyIs.trim()}`,
     )
     .join("\n\n");
 

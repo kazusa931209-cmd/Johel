@@ -150,22 +150,19 @@ function CompaniesPageContent() {
               <th className="px-3 py-2 font-medium">
                 {t("crud.companies.columns.whatCompanyIs")}
               </th>
-              <th className="px-3 py-2 font-medium">
-                {t("crud.companies.columns.domainAndStack")}
-              </th>
               <th className="px-3 py-2 font-medium" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-muted">
+                <td colSpan={6} className="px-3 py-8 text-center text-muted">
                   {t("crud.common.loading")}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-muted">
+                <td colSpan={6} className="px-3 py-8 text-center text-muted">
                   {t("crud.companies.empty")}
                 </td>
               </tr>
@@ -193,9 +190,6 @@ function CompaniesPageContent() {
                   <td className="px-3 py-2">{row.name}</td>
                   <td className="max-w-40 truncate px-3 py-2 text-muted">
                     {row.whatCompanyIs}
-                  </td>
-                  <td className="max-w-70 truncate px-3 py-2 text-muted">
-                    {row.domainAndStack || t("crud.common.emDash")}
                   </td>
                   <td
                     className="cursor-default px-3 py-2"

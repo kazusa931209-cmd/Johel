@@ -142,6 +142,31 @@ export const ko: MessageTree = {
         label: "회사당 최대",
         option: "{count}장",
       },
+      experienceJdTierDecayPercent: {
+        title: "경험 JD tier decay",
+        description:
+          "Experience bullet에만 적용되는 회사 순서별 JD tailoring 강도입니다(Summary와 Skills는 항상 full JD). 80%일 때 1번째 회사 100%, 2번째 80%, 3번째 64%입니다. 50%(이전 기본값)일 때는 100% → 50% → 25%로, 1번째 회사는 키워드가 과하고 3번째 회사는 JD와 거의 무관한 bullet이 나오는 경우가 많았습니다.",
+        label: "JD tier decay",
+        options: {
+          "30": "30% ::: 100% → 30% → 9% (급격한 감소)",
+          "50": "50% ::: 100% → 50% → 25% (표준)",
+          "70": "70% ::: 100% → 70% → 49% (완만)",
+          "80": "80% ::: 100% → 80% → 64% (기본값, 권장)",
+        },
+      },
+      experienceDimensionMode: {
+        title: "경험 dimension 모드",
+        description:
+          "같은 capability가 여러 회사에 나타날 때 Generate와 Combine Suggest가 회사마다 다른 facet을 강조해 이력서 bullet 반복을 줄이는 방식입니다.",
+        label: "Dimension 모드",
+        options: {
+          star_axis: "STAR 축 (problem / actions / outcome)",
+          jd_signal: "JD signal (회사마다 다른 rubric 항목)",
+          technical_facet:
+            "Technical facet (scale / reliability / security / cost)",
+          problem_item: "Problem item (서로 다른 Problem bullet 항목)",
+        },
+      },
     },
     prompts: {
       title: "프롬프트",
@@ -276,7 +301,6 @@ export const ko: MessageTree = {
         alias: "별칭",
         companyName: "회사명",
         whatCompanyIs: "회사 소개",
-        domainAndStack: "분야 및 기술",
       },
       delete: {
         title: "회사 삭제",
@@ -294,7 +318,6 @@ export const ko: MessageTree = {
         alias: "별칭",
         companyName: "회사명",
         whatCompanyIs: "회사 소개",
-        domainAndStack: "분야 및 기술",
         exampleLabel: "예시:",
         goodLabel: "좋은 예:",
         badLabel: "나쁜 예:",
@@ -699,6 +722,8 @@ export const ko: MessageTree = {
   quickAddExperience: {
     fabAria: "빠른 경험 추가",
     drawerTitle: "빠른 경험 추가",
+    reset: "초기화",
+    resetAria: "입력 내용과 제안 초기화",
   },
   aiUsage: {
     fabAria: "AI 사용 기록",
@@ -858,7 +883,6 @@ export const ko: MessageTree = {
     displayPriorityMin: "표시 우선순위는 1 이상이어야 합니다.",
     companyNameRequired: "회사명은 필수입니다.",
     whatCompanyIsRequired: "회사 소개는 필수입니다.",
-    domainAndStackRequired: "분야 및 기술은 필수입니다.",
     profileRequired: "프로필을 하나 선택해 주세요.",
     graduationYearRequired: "졸업 연도는 필수입니다.",
     graduationMonthRequired: "졸업 월은 필수입니다.",
@@ -899,19 +923,6 @@ export const ko: MessageTree = {
       whatItIsGuideline: "(한 문장: 업종, 제품, 고객)",
       whatItIsGood: "B2B 결제 인프라로 대규모 가맹점에 서비스를 제공합니다.",
       whatItIsBad: "여기서 마이크로서비스를 설계하고 지연 시간을 30% 줄였습니다.",
-      domainStackGuideline:
-        "(담당 영역, 기술, 규제/규모 — 굵은 글씨 라벨이 있는 bullet 목록)",
-      structuredFieldFormat:
-        "각 항목을 굵은 글씨 라벨이 있는 bullet과 들여쓴 본문이 있는 bullet로 작성해 주세요. 예: - **Payments** 다음 줄에 설명을 들여쓰기합니다.",
-      domainStackGood: [
-        "- **Payments**",
-        "  카드 결제, 청산, 위험 관리",
-        "- **Stack**",
-        "  Java, Kafka, AWS",
-        "- **Scale**",
-        "  PCI 규제, 대용량 처리",
-      ],
-      domainStackBad: "여기서 마이크로서비스를 설계하고 지연 시간을 30% 줄였습니다.",
     },
   },
 } satisfies MessageTree;

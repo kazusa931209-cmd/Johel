@@ -28,7 +28,6 @@ Go, PostgreSQL`,
       alias: "InternalAcme",
       name: "Acme Corp",
       whatCompanyIs: "B2B payments platform",
-      domainAndStack: "Go, PostgreSQL",
       startDate: "2020",
       endDate: "Present",
       roleContext: "Backend engineer",
@@ -46,6 +45,10 @@ Go, PostgreSQL`,
   run: {
     language: "en",
     emphasis: "Emphasize distributed systems",
+  },
+  generationPolicy: {
+    experienceDimensionMode: "technical_facet",
+    experienceJdTierDecayPercent: 80,
   },
 };
 
@@ -67,6 +70,9 @@ describe("buildAiResumeUserPrompt", () => {
     expect(prompt).not.toContain("2018-06");
     expect(prompt).toContain("## Companies (resume order)");
     expect(prompt).toContain("### 1. Acme Corp (2020 – Present)");
+    expect(prompt).toContain("JD tailoring weight: 100% (Experience bullets only)");
+    expect(prompt).toContain("Dimension mode: Technical facet");
+    expect(prompt).toContain("Cross-company dimension");
     expect(prompt).toContain("Role context: Backend engineer");
     expect(prompt).toContain("What this company is:");
     expect(prompt).toContain("Problem:");
@@ -124,7 +130,11 @@ describe("buildAiResumeUserPrompt", () => {
 
 describe("getAiResumeSystemPrompt", () => {
   it("mirrors resume quality execution rules", () => {
-    const prompt = getAiResumeSystemPrompt("openai", "Custom generate prompt");
+    const prompt = getAiResumeSystemPrompt(
+      "openai",
+      "Custom generate prompt",
+      80,
+    );
 
     expect(prompt).toContain("Custom generate prompt");
     expect(prompt).toContain("Keep bullets card-scoped");
@@ -136,5 +146,13 @@ describe("getAiResumeSystemPrompt", () => {
     expect(prompt).toContain(
       'The summary\'s first sentence MUST open with "+{N} years of experience"',
     );
+    expect(prompt).toContain(
+      'Do not write meta job-search language in the summary',
+    );
+    expect(prompt).toContain("Summary and Skills: use the full JD rubric");
+    expect(prompt).toContain("Experience bullets only");
+    expect(prompt).toContain("index 2 = 80%");
+    expect(prompt).toContain("Company scene grounding");
+    expect(prompt).toContain("Illumina probes");
   });
 });

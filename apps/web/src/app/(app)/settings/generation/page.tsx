@@ -11,6 +11,8 @@ import {
   saveGenerationProcess,
   type DownloadFormat,
   type ExperienceAdvisePoolDepth,
+  type ExperienceDimensionMode,
+  type ExperienceJdTierDecayPercent,
 } from "@/lib/api";
 import { formatThousandsSeparated } from "@/lib/helper";
 import {
@@ -49,6 +51,16 @@ const COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
 ] as const;
 
+const EXPERIENCE_JD_TIER_DECAY_PERCENT_OPTIONS: ExperienceJdTierDecayPercent[] =
+  [30, 50, 70, 80];
+
+const EXPERIENCE_DIMENSION_MODE_OPTIONS: ExperienceDimensionMode[] = [
+  "star_axis",
+  "jd_signal",
+  "technical_facet",
+  "problem_item",
+];
+
 const DOWNLOAD_FORMAT_OPTIONS: DownloadFormat[] = ["docx", "pdf"];
 
 const DEFAULT_SETTINGS = {
@@ -58,6 +70,8 @@ const DEFAULT_SETTINGS = {
   downloadFormat: "docx" as DownloadFormat,
   experienceAdvisePoolDepth: "normal" as ExperienceAdvisePoolDepth,
   combineExperiencesPerCompanyMax: 5,
+  experienceDimensionMode: "technical_facet" as ExperienceDimensionMode,
+  experienceJdTierDecayPercent: 80 as ExperienceJdTierDecayPercent,
 };
 
 export default function GenerationSettingsPage() {
@@ -79,6 +93,14 @@ export default function GenerationSettingsPage() {
     );
   const [combineExperiencesPerCompanyMax, setCombineExperiencesPerCompanyMax] =
     useState(DEFAULT_SETTINGS.combineExperiencesPerCompanyMax);
+  const [experienceDimensionMode, setExperienceDimensionMode] =
+    useState<ExperienceDimensionMode>(
+      DEFAULT_SETTINGS.experienceDimensionMode,
+    );
+  const [experienceJdTierDecayPercent, setExperienceJdTierDecayPercent] =
+    useState<ExperienceJdTierDecayPercent>(
+      DEFAULT_SETTINGS.experienceJdTierDecayPercent,
+    );
   const [savedDoVerdict, setSavedDoVerdict] = useState(DEFAULT_SETTINGS.doVerdict);
   const [savedDoEvaluate, setSavedDoEvaluate] = useState(DEFAULT_SETTINGS.doEvaluate);
   const [savedResumeLanguage, setSavedResumeLanguage] = useState<ResumeLanguage>(
@@ -91,6 +113,16 @@ export default function GenerationSettingsPage() {
     useState<ExperienceAdvisePoolDepth>(
       DEFAULT_SETTINGS.experienceAdvisePoolDepth,
     );
+  const [savedExperienceDimensionMode, setSavedExperienceDimensionMode] =
+    useState<ExperienceDimensionMode>(
+      DEFAULT_SETTINGS.experienceDimensionMode,
+    );
+  const [
+    savedExperienceJdTierDecayPercent,
+    setSavedExperienceJdTierDecayPercent,
+  ] = useState<ExperienceJdTierDecayPercent>(
+    DEFAULT_SETTINGS.experienceJdTierDecayPercent,
+  );
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -105,6 +137,12 @@ export default function GenerationSettingsPage() {
         setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
         setCombineExperiencesPerCompanyMax(
           res.data.combineExperiencesPerCompanyMax,
+        );
+        setExperienceDimensionMode(res.data.experienceDimensionMode);
+        setExperienceJdTierDecayPercent(res.data.experienceJdTierDecayPercent);
+        setSavedExperienceDimensionMode(res.data.experienceDimensionMode);
+        setSavedExperienceJdTierDecayPercent(
+          res.data.experienceJdTierDecayPercent,
         );
         setSavedDoVerdict(res.data.doVerdict);
         setSavedDoEvaluate(res.data.doEvaluate);
@@ -134,6 +172,8 @@ export default function GenerationSettingsPage() {
       downloadFormat,
       experienceAdvisePoolDepth,
       combineExperiencesPerCompanyMax,
+      experienceDimensionMode,
+      experienceJdTierDecayPercent,
     });
     setSaving(false);
     if (res.error || !res.data) {
@@ -147,11 +187,16 @@ export default function GenerationSettingsPage() {
     setDownloadFormat(res.data.downloadFormat);
     setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
     setCombineExperiencesPerCompanyMax(res.data.combineExperiencesPerCompanyMax);
+    setExperienceDimensionMode(res.data.experienceDimensionMode);
+    setExperienceJdTierDecayPercent(res.data.experienceJdTierDecayPercent);
     const settingsChanged =
       res.data.doVerdict !== savedDoVerdict ||
       res.data.doEvaluate !== savedDoEvaluate ||
       res.data.resumeLanguage !== savedResumeLanguage ||
-      res.data.experienceAdvisePoolDepth !== savedExperienceAdvisePoolDepth;
+      res.data.experienceAdvisePoolDepth !== savedExperienceAdvisePoolDepth ||
+      res.data.experienceDimensionMode !== savedExperienceDimensionMode ||
+      res.data.experienceJdTierDecayPercent !==
+        savedExperienceJdTierDecayPercent;
     if (settingsChanged && userId) {
       clearGenerateSession(userId);
     }
@@ -160,6 +205,10 @@ export default function GenerationSettingsPage() {
     setSavedResumeLanguage(res.data.resumeLanguage);
     setSavedDownloadFormat(res.data.downloadFormat);
     setSavedExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
+    setSavedExperienceDimensionMode(res.data.experienceDimensionMode);
+    setSavedExperienceJdTierDecayPercent(
+      res.data.experienceJdTierDecayPercent,
+    );
     toast(t("toast.generationSaved"), "success");
   }
 
@@ -365,6 +414,86 @@ export default function GenerationSettingsPage() {
                       {t(
                         "settings.generation.combineExperiencesPerCompanyMax.option",
                         { count: formatThousandsSeparated(option) },
+                      )}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
+              </div>
+            </label>
+          )}
+        </div>
+
+        <div className="space-y-3 border-t border-border pt-4">
+          <h2 className="text-sm font-medium">
+            {t("settings.generation.experienceJdTierDecayPercent.title")}
+          </h2>
+          <p className="text-sm text-muted">
+            {t("settings.generation.experienceJdTierDecayPercent.description")}
+          </p>
+          {loading ? (
+            <p className="text-sm text-muted">
+              {t("settings.generation.process.loading")}
+            </p>
+          ) : (
+            <label className="block max-w-md space-y-1 text-sm">
+              <span>
+                {t("settings.generation.experienceJdTierDecayPercent.label")}
+              </span>
+              <div className="relative">
+                <select
+                  value={experienceJdTierDecayPercent}
+                  onChange={(e) =>
+                    setExperienceJdTierDecayPercent(
+                      Number(e.target.value) as ExperienceJdTierDecayPercent,
+                    )
+                  }
+                  className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
+                >
+                  {EXPERIENCE_JD_TIER_DECAY_PERCENT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {t(
+                        `settings.generation.experienceJdTierDecayPercent.options.${option}`,
+                      )}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
+              </div>
+            </label>
+          )}
+        </div>
+
+        <div className="space-y-3 border-t border-border pt-4">
+          <h2 className="text-sm font-medium">
+            {t("settings.generation.experienceDimensionMode.title")}
+          </h2>
+          <p className="text-sm text-muted">
+            {t("settings.generation.experienceDimensionMode.description")}
+          </p>
+          {loading ? (
+            <p className="text-sm text-muted">
+              {t("settings.generation.process.loading")}
+            </p>
+          ) : (
+            <label className="block max-w-md space-y-1 text-sm">
+              <span>
+                {t("settings.generation.experienceDimensionMode.label")}
+              </span>
+              <div className="relative">
+                <select
+                  value={experienceDimensionMode}
+                  onChange={(e) =>
+                    setExperienceDimensionMode(
+                      e.target.value as ExperienceDimensionMode,
+                    )
+                  }
+                  className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
+                >
+                  {EXPERIENCE_DIMENSION_MODE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {t(
+                        `settings.generation.experienceDimensionMode.options.${option}`,
                       )}
                     </option>
                   ))}

@@ -1,6 +1,10 @@
 import type { GeneratedResume } from "@johel/resume";
 
 import type { AiProviderId } from "../ai-provider.js";
+import type {
+  ExperienceDimensionMode,
+  ExperienceJdTierDecayPercent,
+} from "../resume-generation-policy.js";
 
 export type { AiProviderId };
 
@@ -39,7 +43,6 @@ export type ResumeGenerationCompany = {
   alias: string;
   name: string;
   whatCompanyIs: string;
-  domainAndStack: string;
   startDate: string;
   endDate: string;
   roleContext: string;
@@ -52,11 +55,20 @@ export type ResumeGenerationRun = {
   emphasis: string;
 };
 
-export type ResumeGenerationInput = {
+export type ResumeGenerationPolicy = {
+  experienceDimensionMode: ExperienceDimensionMode;
+  experienceJdTierDecayPercent: ExperienceJdTierDecayPercent;
+};
+
+export type AssembledResumeGenerationInput = {
   jobContext: string;
   profile: ResumeGenerationProfile;
   companies: ResumeGenerationCompany[];
   run: ResumeGenerationRun;
+};
+
+export type ResumeGenerationInput = AssembledResumeGenerationInput & {
+  generationPolicy: ResumeGenerationPolicy;
 };
 
 export type AiResumeRequest = {

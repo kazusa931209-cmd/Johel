@@ -1,6 +1,6 @@
 import { liveExperienceWhere } from "../experience-live.js";
 import { prisma } from "../prisma.js";
-import type { ResumeGenerationInput } from "../ai-resume/types.js";
+import type { AssembledResumeGenerationInput } from "../ai-resume/types.js";
 
 export type CombineCompanySnapshot = {
   companyId: string;
@@ -28,7 +28,7 @@ type AssembleFromCombineParams = {
 
 export async function assembleFromCombineSnapshot(
   params: AssembleFromCombineParams,
-): Promise<ResumeGenerationInput> {
+): Promise<AssembledResumeGenerationInput> {
   const { combine, userId, jobContext } = params;
 
   if (!VALID_LANGUAGES.has(combine.language)) {
@@ -97,7 +97,6 @@ export async function assembleFromCombineSnapshot(
       alias: company.alias,
       name: company.name,
       whatCompanyIs: company.whatCompanyIs,
-      domainAndStack: company.domainAndStack,
       startDate: entry.startDate,
       endDate: entry.endDate,
       roleContext: entry.roleContext,

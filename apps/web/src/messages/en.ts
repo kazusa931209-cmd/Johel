@@ -140,6 +140,31 @@ export const en = {
         label: "Max per company",
         option: "{count} cards",
       },
+      experienceJdTierDecayPercent: {
+        title: "Experience JD tier decay",
+        description:
+          "Controls how much JD tailoring carries to older employers in Experience bullets (Summary and Skills stay full JD). At 80%, the 1st company gets 100%, 2nd gets 80%, 3rd gets 64%. At 50% (the previous default), tiers were 100% → 50% → 25% — the 1st company often felt keyword-heavy while the 3rd produced bullets with little JD relevance.",
+        label: "JD tier decay",
+        options: {
+          "30": "30% ::: 100% → 30% → 9% (steep drop)",
+          "50": "50% ::: 100% → 50% → 25% (standard)",
+          "70": "70% ::: 100% → 70% → 49% (gentle)",
+          "80": "80% ::: 100% → 80% → 64% (default, recommended)",
+        },
+      },
+      experienceDimensionMode: {
+        title: "Experience dimension mode",
+        description:
+          "When the same capability appears at multiple companies, how Generate and Combine Suggest should emphasize different facets per company to avoid repetitive resume bullets.",
+        label: "Dimension mode",
+        options: {
+          star_axis: "STAR axis (problem / actions / outcome)",
+          jd_signal: "JD signal (different rubric items per company)",
+          technical_facet:
+            "Technical facet (scale / reliability / security / cost)",
+          problem_item: "Problem item (distinct Problem bullet items)",
+        },
+      },
     },
     prompts: {
       title: "Prompts",
@@ -274,7 +299,6 @@ export const en = {
         alias: "Alias",
         companyName: "Company Name",
         whatCompanyIs: "What this company is",
-        domainAndStack: "Domain & Stack",
       },
       delete: {
         title: "Delete company",
@@ -292,7 +316,6 @@ export const en = {
         alias: "Alias",
         companyName: "Company Name",
         whatCompanyIs: "What this company is",
-        domainAndStack: "Domain & Stack",
         exampleLabel: "Example:",
         goodLabel: "Good:",
         badLabel: "Bad:",
@@ -698,6 +721,8 @@ export const en = {
   quickAddExperience: {
     fabAria: "Quick Add Experience",
     drawerTitle: "Quick Add Experience",
+    reset: "Reset",
+    resetAria: "Reset facts and suggestions",
   },
   aiUsage: {
     fabAria: "AI usage history",
@@ -855,7 +880,6 @@ export const en = {
     displayPriorityMin: "Display Priority must be at least 1.",
     companyNameRequired: "Company Name is required.",
     whatCompanyIsRequired: "What this company is is required.",
-    domainAndStackRequired: "Domain & Stack is required.",
     profileRequired: "Select one profile.",
     graduationYearRequired: "Graduation year is required.",
     graduationMonthRequired: "Graduation month is required.",
@@ -897,19 +921,6 @@ export const en = {
       whatItIsGuideline: "(One sentence: industry, product, customer)",
       whatItIsGood: "B2B payment infrastructure serving enterprise merchants.",
       whatItIsBad: "Here I designed microservices and reduced latency by 30%.",
-      domainStackGuideline:
-        "(What they handle, tech, regulation/scale — bullet list with bold labels)",
-      structuredFieldFormat:
-        "Format each item as a bullet with a bold label and indented body, e.g. - **Payments** followed by the description on the next line, indented.",
-      domainStackGood: [
-        "- **Payments**",
-        "  Card acquiring, settlement, and risk",
-        "- **Stack**",
-        "  Java, Kafka, AWS",
-        "- **Scale**",
-        "  PCI-regulated, high-volume processing",
-      ],
-      domainStackBad: "Here I designed microservices and reduced latency by 30%.",
     },
   },
 } as const;

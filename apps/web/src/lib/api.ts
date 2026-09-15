@@ -139,6 +139,14 @@ export function saveSettings(apiKey: string) {
 export type ResumeLanguage = "en" | "ja" | "zh-TW" | "zh-CN" | "ko";
 export type DownloadFormat = "docx" | "pdf";
 
+export type ExperienceDimensionMode =
+  | "star_axis"
+  | "jd_signal"
+  | "technical_facet"
+  | "problem_item";
+
+export type ExperienceJdTierDecayPercent = 30 | 50 | 70 | 80;
+
 export type GenerationProcessSettings = {
   doVerdict: boolean;
   doEvaluate: boolean;
@@ -146,6 +154,8 @@ export type GenerationProcessSettings = {
   downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
   combineExperiencesPerCompanyMax: number;
+  experienceDimensionMode: ExperienceDimensionMode;
+  experienceJdTierDecayPercent: ExperienceJdTierDecayPercent;
 };
 
 export function getGenerationProcess() {
@@ -159,6 +169,8 @@ export function saveGenerationProcess(payload: {
   downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
   combineExperiencesPerCompanyMax: number;
+  experienceDimensionMode: ExperienceDimensionMode;
+  experienceJdTierDecayPercent: ExperienceJdTierDecayPercent;
 }) {
   return request<GenerationProcessSettings>("/settings/process", {
     method: "PUT",
