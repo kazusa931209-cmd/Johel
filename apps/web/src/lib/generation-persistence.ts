@@ -127,6 +127,7 @@ async function hydrateSessionCacheKeys(
           generatePrompt: detail.generatePrompt,
           evaluatePrompt: detail.evaluatePrompt,
         },
+        session.resume,
       )
     : null;
 

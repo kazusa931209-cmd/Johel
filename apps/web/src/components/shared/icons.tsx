@@ -217,6 +217,31 @@ export function GripVerticalIcon({ className }: IconProps) {
   );
 }
 
+export function SplitIcon({ className }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M16 3h5v5" />
+      <path d="M8 3H3v5" />
+      <path d="M21 8l-7 7" />
+      <path d="M3 8l7 7" />
+      <path d="M16 21h5v-5" />
+      <path d="M8 21H3v-5" />
+      <path d="M21 16l-7-7" />
+      <path d="M3 16l7-7" />
+    </svg>
+  );
+}
+
 export function CopyIcon({ className }: IconProps) {
   return (
     <svg

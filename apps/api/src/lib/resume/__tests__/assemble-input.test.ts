@@ -79,6 +79,13 @@ describe("assembleFromCombineSnapshot", () => {
     });
 
     expect(result.companies[0]?.keywordContext).toBe("AWS, AI agents");
+    expect(experienceFindMany).toHaveBeenCalledWith({
+      where: {
+        userId: "user-1",
+        deletedAt: null,
+        id: { in: ["experience-1"] },
+      },
+    });
   });
 
   it("omits keywordContext when blank", async () => {

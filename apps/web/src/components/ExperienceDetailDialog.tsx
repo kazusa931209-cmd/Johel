@@ -1,7 +1,10 @@
 "use client";
 
 import { useT } from "@/components/app/LocaleProvider";
+import { SplitButton } from "@/components/shared/action-icon-buttons";
 import { DetailDialog, DetailField } from "@/components/shared/detail-dialog";
+import { ExperienceDensityIndicator } from "@/components/ExperienceDensityIndicator";
+import { isDenseExperience } from "@/lib/experience-density";
 import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { Drawer } from "@/components/shared/drawer";
 import type { ExperienceDetail } from "@/lib/api";
@@ -9,6 +12,7 @@ import type { ExperienceDetail } from "@/lib/api";
 type ExperienceDetailDialogProps = {
   experience: ExperienceDetail;
   onClose: () => void;
+  onSplit?: () => void;
 };
 
 function MarkdownField({
@@ -43,6 +47,19 @@ function ExperienceDetailFields({ experience }: { experience: ExperienceDetail }
         label={t("crud.experiences.columns.category")}
         value={experience.category}
       />
+      <div className="space-y-1">
+        <div className="text-xs font-medium tracking-wide text-muted uppercase">
+          {t("crud.experiences.columns.density")}
+        </div>
+        <ExperienceDensityIndicator
+          fields={{
+            problem: experience.problem,
+            actions: experience.actions,
+            outcome: experience.outcome,
+          }}
+          isDense={experience.isDense}
+        />
+      </div>
       <MarkdownField
         label={t("crud.experiences.columns.problem")}
         markdown={experience.problem}
@@ -73,8 +90,16 @@ function ExperienceDetailFields({ experience }: { experience: ExperienceDetail }
 export function ExperienceDetailDialog({
   experience,
   onClose,
+  onSplit,
 }: ExperienceDetailDialogProps) {
   const t = useT();
+  const dense =
+    experience.isDense ??
+    isDenseExperience({
+      problem: experience.problem,
+      actions: experience.actions,
+      outcome: experience.outcome,
+    });
 
   return (
     <DetailDialog
@@ -82,6 +107,11 @@ export function ExperienceDetailDialog({
       onClose={onClose}
     >
       <ExperienceDetailFields experience={experience} />
+      {onSplit && dense ? (
+        <div className="flex justify-end border-t border-border pt-4">
+          <SplitButton showLabel onClick={onSplit} />
+        </div>
+      ) : null}
     </DetailDialog>
   );
 }

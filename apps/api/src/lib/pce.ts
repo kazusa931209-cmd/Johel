@@ -1,3 +1,4 @@
+import { liveExperienceWhere } from "./experience-live.js";
 import { prisma } from "./prisma.js";
 
 const profileLinksInclude = {
@@ -27,7 +28,7 @@ export async function loadPce(userId: string) {
       orderBy: [{ displayPriority: "asc" }, { name: "asc" }, { id: "asc" }],
     }),
     prisma.experience.findMany({
-      where: { userId },
+      where: liveExperienceWhere(userId),
       orderBy: { category: "asc" },
     }),
   ]);

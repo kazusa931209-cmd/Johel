@@ -13,6 +13,7 @@ import { getAiUsageSummary } from "@/lib/api";
 
 type AiUsageContextValue = {
   tokenUsed: number;
+  todayTokenUsed: number;
   refreshTokenUsed: () => Promise<void>;
   setTokenUsed: (value: number) => void;
 };
@@ -21,11 +22,13 @@ const AiUsageContext = createContext<AiUsageContextValue | null>(null);
 
 export function AiUsageProvider({ children }: { children: ReactNode }) {
   const [tokenUsed, setTokenUsed] = useState(0);
+  const [todayTokenUsed, setTodayTokenUsed] = useState(0);
 
   const refreshTokenUsed = useCallback(async () => {
     const res = await getAiUsageSummary();
     if (res.data) {
       setTokenUsed(res.data.tokenUsed);
+      setTodayTokenUsed(res.data.todayTokenUsed ?? 0);
     }
   }, []);
 
@@ -34,8 +37,8 @@ export function AiUsageProvider({ children }: { children: ReactNode }) {
   }, [refreshTokenUsed]);
 
   const value = useMemo(
-    () => ({ tokenUsed, refreshTokenUsed, setTokenUsed }),
-    [tokenUsed, refreshTokenUsed],
+    () => ({ tokenUsed, todayTokenUsed, refreshTokenUsed, setTokenUsed }),
+    [tokenUsed, todayTokenUsed, refreshTokenUsed],
   );
 
   return (

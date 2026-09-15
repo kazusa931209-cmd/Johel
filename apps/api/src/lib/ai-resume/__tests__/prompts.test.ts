@@ -63,6 +63,8 @@ describe("buildAiResumeUserPrompt", () => {
     expect(prompt).toContain("Emphasize distributed systems");
     expect(prompt).toContain("## Profile");
     expect(prompt).toContain("- Name: Jane Doe");
+    expect(prompt).toContain("- Graduation year: 2018");
+    expect(prompt).not.toContain("2018-06");
     expect(prompt).toContain("## Companies (resume order)");
     expect(prompt).toContain("### 1. Acme Corp (2020 – Present)");
     expect(prompt).toContain("Role context: Backend engineer");
@@ -129,5 +131,10 @@ describe("getAiResumeSystemPrompt", () => {
     expect(prompt).toContain("Each quantified before→after outcome may appear only once");
     expect(prompt).toContain("When Keyword context is provided for a company");
     expect(prompt).toContain("Build Skills with 12–20 grounded items");
+    expect(prompt).toContain("use graduation year only");
+    expect(prompt).toContain("Do not include graduation month");
+    expect(prompt).toContain(
+      'The summary\'s first sentence MUST open with "+{N} years of experience"',
+    );
   });
 });

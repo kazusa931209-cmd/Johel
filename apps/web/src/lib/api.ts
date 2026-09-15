@@ -417,6 +417,7 @@ export type AiJdMetaResult = {
 
 export type AiUsageSummary = {
   tokenUsed: number;
+  todayTokenUsed?: number;
 };
 
 export type AiUsageListItem = {
@@ -730,6 +731,58 @@ export function runExperienceAdvise(payload: ExperienceAdviseRequest) {
 
 export function applyExperienceAdvise(payload: ExperienceAdviseApplyRequest) {
   return request<ExperienceAdviseApplyResult>("/ai-experience-advise/apply", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export type ExperienceSplitOperation = {
+  placement: "create_experience";
+  rationale: string;
+  draft: ExperienceAdviseDraft;
+  warnings: string[];
+};
+
+export type ExperienceSplitResult = {
+  rationale: string;
+  questions: string[];
+  operations: ExperienceSplitOperation[];
+  warnings: string[];
+};
+
+export type ExperienceSplitApiResult = {
+  result: ExperienceSplitResult;
+  workspaceFingerprint: string;
+  tokenUsed: number;
+};
+
+export type ExperienceSplitApplyRequest = {
+  experienceId: string;
+  workspaceFingerprint: string;
+  operations: Array<{
+    placement: "create_experience";
+    draft: ExperienceAdviseDraft;
+  }>;
+};
+
+export type ExperienceSplitApplyResult = {
+  ok: boolean;
+  experienceIds: string[];
+  archivedId: string;
+  warnings: string[];
+};
+
+export function runExperienceSplit(payload: { experienceId: string }) {
+  return request<ExperienceSplitApiResult>("/ai-experience-split", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export function applyExperienceSplit(payload: ExperienceSplitApplyRequest) {
+  return request<ExperienceSplitApplyResult>("/ai-experience-split/apply", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,

@@ -28,7 +28,11 @@ import {
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { usePce } from "@/lib/pce";
-import { sanitizeCombineSelection } from "@/lib/combine-defaults";
+import {
+  countRemovedExperienceLinks,
+  sanitizeCombineSelection,
+} from "@/lib/combine-defaults";
+import { useToast } from "@/components/app/ToastProvider";
 import { reclampCombineCompanyPeriods } from "@/lib/combine-period";
 import { resolveProfileGraduation } from "@/lib/profile";
 
@@ -56,6 +60,7 @@ export function GenerateCombineStep({
   onFooterChange,
 }: GenerateCombineStepProps) {
   const t = useT();
+  const { toast } = useToast();
   const { locale } = useLocale();
   const {
     profiles,
@@ -79,7 +84,11 @@ export function GenerateCombineStep({
       new Set(workspaceExperiences.map((experience) => experience.id)),
     );
     if (sanitized) {
+      const removedLinks = countRemovedExperienceLinks(combine, sanitized);
       onCombineChange(sanitized);
+      if (removedLinks > 0) {
+        toast(t("toast.experienceArchivedLinkRemoved"), "warning");
+      }
     }
   }, [
     combine,
@@ -88,6 +97,8 @@ export function GenerateCombineStep({
     profiles,
     workspaceCompanies,
     workspaceExperiences,
+    toast,
+    t,
   ]);
 
   useEffect(() => {

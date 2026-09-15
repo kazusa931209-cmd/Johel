@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   buildAiUsageGroupKey,
+  formatGenerateType,
   sortAiUsageGroupsByLatest,
   sortAiUsageItemsByCreatedAt,
 } from "../ai-usage";
+
+describe("formatGenerateType", () => {
+  it("labels experienceSplit for AI Usage History", () => {
+    expect(formatGenerateType("experienceSplit")).toBe("Experience Split");
+  });
+});
 
 describe("ai-usage group helpers", () => {
   it("builds generation group key from generationId", () => {

@@ -30,6 +30,7 @@ import { resumeRoutes } from "./routes/resume.js";
 import { aiUsageRoutes } from "./routes/ai-usage.js";
 import { promptsRoutes } from "./routes/prompts.js";
 import { aiExperienceAdviseRoutes } from "./routes/ai-experience-advise.js";
+import { aiExperienceSplitRoutes } from "./routes/ai-experience-split.js";
 import { generationsRoutes } from "./routes/generations.js";
 import { pceRoutes } from "./routes/pce.js";
 
@@ -93,6 +94,7 @@ export function createApp() {
   app.use("/ai-resume/*", aiRoutes);
   app.use("/ai-evaluate/*", aiRoutes);
   app.use("/ai-experience-advise/*", aiRoutes);
+  app.use("/ai-experience-split/*", aiRoutes);
   app.use("/ai-combine-recommend/*", aiRoutes);
 
   app.route("/settings", settingsRoutes);
@@ -104,6 +106,7 @@ export function createApp() {
   app.route("/ai-jd-meta", aiJdMetaRoutes);
   app.route("/ai-evaluate", aiEvaluateRoutes);
   app.route("/ai-experience-advise", aiExperienceAdviseRoutes);
+  app.route("/ai-experience-split", aiExperienceSplitRoutes);
   app.route("/ai-combine-recommend", aiCombineRecommendRoutes);
   app.route("/resume", resumeRoutes);
   app.route("/ai-usage", aiUsageRoutes);

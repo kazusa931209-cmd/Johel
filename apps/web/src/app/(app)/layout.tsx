@@ -19,7 +19,7 @@ function AppShell({
   user: User;
   children: React.ReactNode;
 }) {
-  const { tokenUsed } = useAiUsage();
+  const { tokenUsed, todayTokenUsed } = useAiUsage();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarMotion, setSidebarMotion] = useState(false);
 
@@ -48,6 +48,7 @@ function AppShell({
         <StudioHeader
           userName={user.loginId}
           tokenUsage={tokenUsed}
+          todayTokenUsage={todayTokenUsed}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={onToggleSidebar}
         />

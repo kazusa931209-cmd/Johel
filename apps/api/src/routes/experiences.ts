@@ -2,6 +2,11 @@ import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { finalizeExperienceFieldsForAdvisorApply } from "../lib/ai-experience-advise/apply.js";
+import { isDenseExperience } from "../lib/experience-density.js";
+import {
+  archiveExperience,
+  liveExperienceWhere,
+} from "../lib/experience-live.js";
 import { syncExperienceEmbeddingAfterSave } from "../lib/experience-embedding/sync-after-save.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
@@ -38,6 +43,7 @@ function toDetail(row: ExperienceRow) {
     problem: row.problem,
     actions: row.actions,
     outcome: row.outcome,
+    isDense: isDenseExperience(row),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -68,7 +74,7 @@ experiencesRoutes.get("/", async (c) => {
     : {};
 
   const where: Prisma.ExperienceWhereInput = {
-    userId: user.id,
+    ...liveExperienceWhere(user.id),
     ...searchFilter,
   };
 
@@ -95,7 +101,7 @@ experiencesRoutes.get("/:id", async (c) => {
 
   const id = c.req.param("id");
   const row = await prisma.experience.findFirst({
-    where: { id, userId: user.id },
+    where: { id, ...liveExperienceWhere(user.id) },
   });
   if (!row) {
     return c.json({ error: "Not found" }, 404);
@@ -160,7 +166,7 @@ experiencesRoutes.put("/:id", async (c) => {
 
   const id = c.req.param("id");
   const existing = await prisma.experience.findFirst({
-    where: { id, userId: user.id },
+    where: { id, ...liveExperienceWhere(user.id) },
   });
   if (!existing) {
     return c.json({ error: "Not found" }, 404);
@@ -215,13 +221,14 @@ experiencesRoutes.delete("/:id", async (c) => {
   }
 
   const id = c.req.param("id");
-  const existing = await prisma.experience.findFirst({
-    where: { id, userId: user.id },
-  });
-  if (!existing) {
-    return c.json({ error: "Not found" }, 404);
+  try {
+    await archiveExperience({ userId: user.id, experienceId: id });
+    return c.json({ ok: true });
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Experience was not found.";
+    return c.json({ error: message }, 404);
   }
-
-  await prisma.experience.delete({ where: { id } });
-  return c.json({ ok: true });
 });

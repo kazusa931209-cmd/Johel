@@ -21,6 +21,9 @@ describe("resolveAiModelName", () => {
     expect(resolveAiModelName("openai", "authorAdvise")).toBe(
       OPENAI_VERDICT_MODEL,
     );
+    expect(resolveAiModelName("openai", "experienceSplit")).toBe(
+      OPENAI_VERDICT_MODEL,
+    );
     expect(resolveAiModelName("openai", "markdownFormat")).toBe(
       OPENAI_FORMAT_MODEL,
     );

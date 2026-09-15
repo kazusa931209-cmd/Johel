@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 
 type GenerateStepLayoutProps = {
-  previousTitle?: string;
+  previousTitle?: ReactNode;
   previous?: ReactNode;
   previousHeaderRight?: ReactNode;
   currentTitle?: string;
@@ -22,7 +22,7 @@ function StepPanel({
   children,
   fill,
 }: {
-  title?: string;
+  title?: ReactNode;
   headerRight?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
@@ -38,7 +38,13 @@ function StepPanel({
       {showHeader ? (
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
           {title ? (
-            <h2 className="text-xl font-semibold tracking-tight leading-8">{title}</h2>
+            typeof title === "string" ? (
+              <h2 className="text-xl font-semibold tracking-tight leading-8">
+                {title}
+              </h2>
+            ) : (
+              <div className="min-w-0">{title}</div>
+            )
           ) : (
             <span />
           )}

@@ -8,6 +8,7 @@ import {
   PencilIcon,
   PlayIcon,
   PlusIcon,
+  SplitIcon,
   TrashIcon,
   XIcon,
 } from "@/components/shared/icons";
@@ -74,6 +75,33 @@ export function EditButton({
       {...props}
     >
       <PencilIcon className="h-4 w-4" />
+      {showLabel ? <span>{resolvedLabel}</span> : null}
+    </button>
+  );
+}
+
+export function SplitButton({
+  label,
+  showLabel = false,
+  className,
+  ...props
+}: ActionButtonProps) {
+  const t = useT();
+  const resolvedLabel = label ?? t("crud.experiences.split.actionAria");
+  return (
+    <button
+      type="button"
+      aria-label={resolvedLabel}
+      title={resolvedLabel}
+      className={
+        className ??
+        (showLabel
+          ? "inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-60"
+          : rowActionButtonClass)
+      }
+      {...props}
+    >
+      <SplitIcon className="h-4 w-4" />
       {showLabel ? <span>{resolvedLabel}</span> : null}
     </button>
   );

@@ -90,6 +90,28 @@ function sanitizeExperienceIds(
   return experienceIds.filter((id) => validExperienceIds.has(id));
 }
 
+export function countRemovedExperienceLinks(
+  before: CombineSnapshot,
+  after: CombineSnapshot,
+): number {
+  let removed = 0;
+  const afterByCompany = new Map(
+    after.companies.map((entry) => [entry.companyId, entry.experienceIds]),
+  );
+
+  for (const entry of before.companies) {
+    const nextIds = afterByCompany.get(entry.companyId) ?? [];
+    const nextSet = new Set(nextIds);
+    for (const id of entry.experienceIds) {
+      if (!nextSet.has(id)) {
+        removed += 1;
+      }
+    }
+  }
+
+  return removed;
+}
+
 export function sanitizeCombineSelection(
   combine: CombineSnapshot,
   validProfileIds: Set<string>,

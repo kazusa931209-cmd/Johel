@@ -7,7 +7,7 @@ import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { GenerateHistoryStepView } from "@/components/generate/GenerateHistoryStepView";
-import { GeneratePanelCopyActions } from "@/components/generate/GeneratePanelCopyActions";
+import { GeneratePanelHeaderActions } from "@/components/generate/GeneratePanelHeaderActions";
 import { useGeneratePreviousStepPanel } from "@/components/generate/GeneratePreviousStepPanel";
 import { GenerateCircleIconButton } from "@/components/generate/GenerateStepNav";
 import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
@@ -300,6 +300,7 @@ export function GenerationHistoryDrawer({
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
+      doVerdict: detail?.doVerdict ?? false,
       job,
       combine,
       resume,
@@ -365,7 +366,7 @@ export function GenerationHistoryDrawer({
                   previous={previousContent}
                   previousHeaderRight={
                     isJobStep ? (
-                      <GeneratePanelCopyActions
+                      <GeneratePanelHeaderActions
                         text={filteredJobText}
                         trailing={
                           <span>
@@ -385,7 +386,7 @@ export function GenerationHistoryDrawer({
                   )}
                   currentHeaderRight={
                     isJobStep ? (
-                      <GeneratePanelCopyActions text={rawJobText} />
+                      <GeneratePanelHeaderActions text={rawJobText} />
                     ) : undefined
                   }
                   swapColumns={isJobStep}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyCombineDefaults,
+  countRemovedExperienceLinks,
   extractCombineDefaults,
   isCombineSelectionEmpty,
   sanitizeCombineSelection,
@@ -104,6 +105,36 @@ describe("combine-defaults", () => {
       profileId: "prof-current",
     };
     expect(seedCombineFromDefaults(current, "user-1")).toBe(current);
+  });
+
+  it("counts removed experience links after sanitize", () => {
+    const before = {
+      profileId: "prof-1",
+      language: "en",
+      emphasis: "",
+      companies: [
+        {
+          companyId: "co-1",
+          startDate: "Jan 2022",
+          endDate: "Present",
+          roleContext: "Lead",
+          keywordContext: "",
+          experienceIds: ["exp-1", "exp-missing"],
+        },
+      ],
+    };
+
+    const after = {
+      ...before,
+      companies: [
+        {
+          ...before.companies[0],
+          experienceIds: ["exp-1"],
+        },
+      ],
+    };
+
+    expect(countRemovedExperienceLinks(before, after)).toBe(1);
   });
 
   it("sanitizes deleted profile, company, and experience references", () => {

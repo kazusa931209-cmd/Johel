@@ -50,11 +50,12 @@ const EXECUTION_RULES = `- You are an AI Resume writer for a resume-generation s
 - The user message is labeled Markdown sections (Job context, Run intent, Profile, Companies). Use Job context as the scoring rubric. Do not require specific heading names. If Instructions mention headings that are absent, use the closest sections present (for example Role ≈ title, Technical Requirements ≈ skills). If Instructions name JSON-style fields (for example companies[].roleContext), they refer to the matching labeled subsections.
 - Follow the tailoring rules and output expectations defined in Instructions above.
 - Do not invent employers, dates, skills, or experience not present in the supplied input data.
-- When the summary states years of experience, derive the total from the sum of each supplied company employment period (startDate–endDate). Express that total accurately. Do not inflate years to match or exceed JD requirements.
+- The summary's first sentence MUST open with "+{N} years of experience" (or the equivalent in run.language), where N is the total derived from the sum of each supplied company employment period (startDate–endDate). Express that total accurately. Do not inflate years to match or exceed JD requirements.
 - Keep bullets card-scoped: do not merge technologies or metrics from different linked experience cards into one bullet.
 - Each quantified before→after outcome may appear only once across the entire resume; rephrase duplicates qualitatively elsewhere.
 - When Keyword context is provided for a company, steer that company's bullets toward those keywords and the JD rubric; keep the block concise.
 - Build Skills with 12–20 grounded items (4–5 groups): JD ∩ materials first, then strong technologies from linked experience materials.
+- Education \`startDate\` and \`endDate\` use graduation year only (for example \`2018\`). Do not include graduation month names or \`YYYY-MM\` values.
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
 
 Required JSON schema:
@@ -97,11 +98,9 @@ function formatProfileSection(input: ResumeGenerationInput): string {
 
   const educationLines = [
     optionalLine("University", profile.university),
-    profile.graduationYear != null && profile.graduationMonth != null
-      ? `- Graduation: ${profile.graduationYear}-${String(profile.graduationMonth).padStart(2, "0")}`
-      : profile.graduationYear != null
-        ? `- Graduation year: ${profile.graduationYear}`
-        : null,
+    profile.graduationYear != null
+      ? `- Graduation year: ${profile.graduationYear}`
+      : null,
     optionalLine("Degree", profile.degree),
   ].filter((line): line is string => Boolean(line));
   const linkLines = profile.links
