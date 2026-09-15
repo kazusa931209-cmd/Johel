@@ -16,6 +16,26 @@ export const en = {
       statusStepUnknown: "Unknown step",
       account: "Account",
       signOut: "Sign out",
+      tokenMetrics: {
+        aria: "Token usage",
+        today: "Today",
+        total: "Total",
+      },
+      search: {
+        title: "Search",
+        placeholder: "Search…",
+        openAria: "Open search",
+        close: "Close search",
+        loading: "Searching…",
+        noResults: "No results",
+        kind: {
+          navigation: "Navigation",
+          profile: "Profile",
+          company: "Company",
+          experience: "Experience",
+          generation: "Generation",
+        },
+      },
     },
     sidebar: {
       workspace: "Workspace",

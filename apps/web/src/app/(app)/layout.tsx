@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AiUsageProvider, useAiUsage } from "@/components/app/AiUsageProvider";
+import { AiUsageProvider } from "@/components/app/AiUsageProvider";
 import { GenerateStatusProvider } from "@/components/app/GenerateStatusProvider";
+import { GlobalSearchProvider } from "@/components/app/GlobalSearch";
 import { useT } from "@/components/app/LocaleProvider";
 import { StudioBottomFabCluster } from "@/components/app/StudioBottomFabCluster";
 import { StudioHeader } from "@/components/app/StudioHeader";
 import { StudioSidebar } from "@/components/app/StudioSidebar";
+import { StudioTokenMetricsFloater } from "@/components/app/StudioTokenMetricsFloater";
 import type { User } from "@/lib/api";
 import { loadMe } from "@/lib/cached-settings";
 import { getStoredSidebar, persistSidebar } from "@/lib/sidebar";
@@ -19,7 +21,6 @@ function AppShell({
   user: User;
   children: React.ReactNode;
 }) {
-  const { tokenUsed, todayTokenUsed } = useAiUsage();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarMotion, setSidebarMotion] = useState(false);
 
@@ -38,24 +39,25 @@ function AppShell({
   }
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-background">
-      <StudioSidebar
-        open={sidebarOpen}
-        motion={sidebarMotion}
-        onToggleSidebar={onToggleSidebar}
-      />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <StudioHeader
-          userName={user.loginId}
-          tokenUsage={tokenUsed}
-          todayTokenUsage={todayTokenUsed}
-          sidebarOpen={sidebarOpen}
+    <GlobalSearchProvider>
+      <div className="fixed inset-0 flex overflow-hidden bg-background">
+        <StudioSidebar
+          open={sidebarOpen}
+          motion={sidebarMotion}
           onToggleSidebar={onToggleSidebar}
         />
-        <main className="min-h-0 flex-1 overflow-y-auto p-6">{children}</main>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <StudioHeader
+            userName={user.loginId}
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={onToggleSidebar}
+          />
+          <main className="min-h-0 flex-1 overflow-y-auto p-6">{children}</main>
+        </div>
+        <StudioBottomFabCluster />
+        <StudioTokenMetricsFloater />
       </div>
-      <StudioBottomFabCluster />
-    </div>
+    </GlobalSearchProvider>
   );
 }
 

@@ -4,26 +4,22 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
+import { GlobalSearchTrigger } from "@/components/app/GlobalSearch";
 import { StudioHeaderStatus } from "@/components/app/StudioHeaderStatus";
 import { MenuIcon } from "@/components/shared/icons";
 import { logout } from "@/lib/api";
 import { clearAllCrudListCaches } from "@/lib/cached-crud-list";
 import { clearAllSettingsCaches } from "@/lib/cached-settings";
 import { clearPceCache } from "@/lib/pce";
-import { formatTokenUsed } from "@/lib/tokens";
 
 type StudioHeaderProps = {
   userName: string;
-  tokenUsage?: number;
-  todayTokenUsage?: number;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
 };
 
 export function StudioHeader({
   userName,
-  tokenUsage = 0,
-  todayTokenUsage = 0,
   sidebarOpen,
   onToggleSidebar,
 }: StudioHeaderProps) {
@@ -69,20 +65,7 @@ export function StudioHeader({
         <StudioHeaderStatus />
       </div>
       <div className="flex shrink-0 items-center justify-end gap-3">
-        <span
-          className="text-sm text-muted"
-          title={t("nav.header.todayTokenUsageTitle")}
-        >
-          {t("nav.header.todayTokenUsed", {
-            count: formatTokenUsed(todayTokenUsage),
-          })}
-        </span>
-        <span
-          className="text-sm text-muted"
-          title={t("nav.header.tokenUsageTitle")}
-        >
-          {t("nav.header.tokenUsed", { count: formatTokenUsed(tokenUsage) })}
-        </span>
+        <GlobalSearchTrigger />
         <div className="relative" ref={menuRef}>
           <button
             type="button"

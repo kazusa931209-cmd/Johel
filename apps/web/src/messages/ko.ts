@@ -18,6 +18,26 @@ export const ko: MessageTree = {
       statusStepUnknown: "알 수 없는 단계",
       account: "계정",
       signOut: "로그아웃",
+      tokenMetrics: {
+        aria: "토큰 사용량",
+        today: "오늘",
+        total: "전체",
+      },
+      search: {
+        title: "검색",
+        placeholder: "검색…",
+        openAria: "검색 열기",
+        close: "검색 닫기",
+        loading: "검색 중…",
+        noResults: "결과 없음",
+        kind: {
+          navigation: "탐색",
+          profile: "프로필",
+          company: "회사",
+          experience: "경험",
+          generation: "생성",
+        },
+      },
     },
     sidebar: {
       workspace: "작업 공간",
