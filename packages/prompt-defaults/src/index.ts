@@ -4,6 +4,9 @@ Answer each question about job fit. Use a ### heading per question, then the ans
 ### Is this position fully remote?
 Yes or No, followed by a one-sentence reason, or Not found.
 
+### What is the company size or stage?
+One sentence only. Use explicit JD wording when present (for example startup, scale-up, mid-market, enterprise, global). If the JD does not state size or stage, answer: Not found.
+
 ## JD analysis
 Analyze the Job Description and produce a concise structured representation for resume generation.
 
@@ -87,7 +90,8 @@ Use Not found for missing items.`;
 export const DEFAULT_GENERATE_PROMPT = `## Targeting
 The user message is labeled Markdown (Job context, Run intent, Profile, Companies). Field names below map to those labels.
 Use \`jobContext\` as the only scoring rubric.
-When it is Verdict Markdown, read these sections first: Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
+When it is Verdict Markdown, read these sections first: Fit questions, Role, Core Objective, Top Hiring Signals, Responsibilities, Technical Requirements, Domain / Industry, Experience & Qualifications, Critical JD Terminology, and Final Verdict.
+When Fit questions include company size or stage and it is not Not found, use it to angle Summary and Experience toward the employer context (for example startup agility vs enterprise scale) when the materials support it.
 Map Role.title to the target job title. Treat Technical Requirements as skills. Treat Critical JD Terminology as exact keywords to reuse when the materials support them.
 When jobContext is a filtered job description (no Verdict), use the same rubric from the raw text.
 Summary and Skills use the full JD rubric. Experience bullets only are tiered by company selection order (see Experience Synthesis). Do not treat company or experience fields as the job target.
