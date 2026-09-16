@@ -6,7 +6,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CompanyDetailDialog } from "@/components/CompanyDetailDialog";
@@ -24,7 +23,6 @@ import {
 import { useCombineExperienceSuggest } from "@/components/generate/useCombineExperienceSuggest";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { CombineSuggestConfirmDialogs } from "@/components/generate/CombineSuggestConfirmDialogs";
-import { CombineSuggestFooter } from "@/components/generate/CombineSuggestFooter";
 import {
   buildPeriodWindow,
   clampPeriodToWindow,
@@ -54,7 +52,6 @@ type CombineCompanyCardsProps = {
   error?: string;
   onClearError?: () => void;
   onRegisterContextFlush?: (flush: () => void) => void;
-  onFooterChange?: (footer: ReactNode | null) => void;
 };
 
 function normalizeIncludedEntries(
@@ -79,7 +76,6 @@ export function CombineCompanyCards({
   error,
   onClearError,
   onRegisterContextFlush,
-  onFooterChange,
 }: CombineCompanyCardsProps) {
   const t = useT();
   const { locale } = useLocale();
@@ -349,37 +345,7 @@ export function CombineCompanyCards({
   }, [suggestingCompanyId, workspaceCompanies]);
 
   const companiesError = error ?? suggestFieldErrors.companies;
-  const showSuggestFooter = !loading && workspaceCompanies.length > 0;
   const runReady = isCombineRunReady(combine, profileGraduation);
-
-  useEffect(() => {
-    if (!onFooterChange) return;
-
-    if (!showSuggestFooter) {
-      onFooterChange(null);
-      return;
-    }
-
-    onFooterChange(
-      <CombineSuggestFooter
-        runReady={runReady}
-        suggesting={suggesting}
-        disabled={cardsDisabled}
-        onRequestSuggest={requestSuggest}
-      />,
-    );
-
-    return () => onFooterChange(null);
-  }, [
-    cardsDisabled,
-    combine,
-    onFooterChange,
-    profileGraduation,
-    requestSuggest,
-    runReady,
-    showSuggestFooter,
-    suggesting,
-  ]);
 
   if (loading) {
     return <p className="text-sm text-muted">{t("shared.detail.loading")}</p>;
@@ -399,6 +365,15 @@ export function CombineCompanyCards({
 
   return (
     <>
+      {runReady ? (
+        <div
+          role="alert"
+          className="rounded-md border border-border bg-toast-success-bg px-3 py-2 text-sm text-toast-success-fg"
+        >
+          {t("generate.combine.suggestRunGuidance")}
+        </div>
+      ) : null}
+
       <section className={COMBINE_SECTION_CLASS}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1">
@@ -427,6 +402,16 @@ export function CombineCompanyCards({
               className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
             >
               {t("generate.combine.resetCompanies")}
+            </button>
+            <button
+              type="button"
+              onClick={requestSuggest}
+              disabled={suggesting || cardsDisabled}
+              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+            >
+              {suggesting
+                ? t("generate.combine.suggesting")
+                : t("generate.combine.suggestExperiences")}
             </button>
           </div>
         </div>

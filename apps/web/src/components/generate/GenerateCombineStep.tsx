@@ -6,7 +6,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { CombineCompanyCards } from "@/components/generate/CombineCompanyCards";
@@ -45,7 +44,6 @@ type GenerateCombineStepProps = {
   generationId?: string | null;
   onSaveBeforeSuggest: () => Promise<{ error?: string }>;
   onRunFromCombine: () => void | Promise<void>;
-  onFooterChange?: (footer: ReactNode | null) => void;
 };
 
 export function GenerateCombineStep({
@@ -57,7 +55,6 @@ export function GenerateCombineStep({
   generationId,
   onSaveBeforeSuggest,
   onRunFromCombine,
-  onFooterChange,
 }: GenerateCombineStepProps) {
   const t = useT();
   const { toast } = useToast();
@@ -293,7 +290,6 @@ export function GenerateCombineStep({
         error={fieldErrors.companies}
         onClearError={clearCompaniesError}
         onRegisterContextFlush={registerContextFlush}
-        onFooterChange={onFooterChange}
       />
 
       <CombineEmphasisField

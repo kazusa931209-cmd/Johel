@@ -30,5 +30,5 @@ export function studioFabClusterClass(position: DrawerPosition): string {
 /** Fixed bottom cluster on the side opposite the FAB stack. */
 export function studioOppositeFabClass(position: DrawerPosition): string {
   const horizontal = position === "left" ? "right-8" : "left-8";
-  return `fixed bottom-12 ${horizontal} z-40`;
+  return `fixed bottom-14 ${horizontal} z-40`;
 }

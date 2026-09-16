@@ -476,6 +476,7 @@ export const ko: MessageTree = {
     },
     layout: {
       emptyPrevious: "이전 단계 내용 없음",
+      resizePanels: "패널 크기 조절",
     },
     previous: {
       jobTitle: "채용 공고",
@@ -665,7 +666,7 @@ export const ko: MessageTree = {
         "이 세션에 생성된 이력서가 없습니다. 조합 단계로 돌아가 이력서 생성을 다시 실행해 주세요.",
       pending: "이력서 생성 중…",
       title: "생성된 이력서",
-      referenceTabsAria: "조합 및 판정 참고",
+      referenceTabsAria: "판정 및 조합 참고",
       editMode: "편집",
       previewMode: "미리보기",
       editHint:
@@ -679,6 +680,7 @@ export const ko: MessageTree = {
       },
     },
     evaluateStep: {
+      referenceTabsAria: "판정, 조합, 생성된 이력서 참고",
       noEvaluation:
         "이 세션에 평가 결과가 없습니다. 생성 단계로 돌아가 평가를 다시 실행해 주세요.",
       pending: "이력서 평가 중…",

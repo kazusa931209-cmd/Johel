@@ -1,4 +1,4 @@
-import { extractJdMetaFromVerdictMarkdown } from "./extract-from-verdict.js";
+import { extractJdMetaFromVerdictMarkdown } from "./extract-from-verdict";
 
 export type JobJdMetaFields = {
   acceptedMarkdown?: string | null;

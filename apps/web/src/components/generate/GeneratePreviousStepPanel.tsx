@@ -25,7 +25,7 @@ type GeneratePreviousStepPanelProps = {
   resume: GeneratedResume | null;
 };
 
-type GenerateReferenceView = "Combine" | "Verdict";
+type GenerateReferenceView = "Verdict" | "Combine" | "Resume";
 
 const PREVIOUS_STEP_TITLE_KEYS: Record<GenerateStep, string> = {
   Job: "generate.previous.jobTitle",
@@ -36,26 +36,26 @@ const PREVIOUS_STEP_TITLE_KEYS: Record<GenerateStep, string> = {
 };
 
 const REFERENCE_TAB_LABEL_KEYS: Record<GenerateReferenceView, string> = {
-  Combine: "generate.steps.combine",
   Verdict: "generate.steps.verdict",
+  Combine: "generate.steps.combine",
+  Resume: "generate.previous.resumeTitle",
 };
 
 function GenerateReferenceTabs({
+  tabs,
   active,
+  ariaLabel,
   onChange,
 }: {
+  tabs: GenerateReferenceView[];
   active: GenerateReferenceView;
+  ariaLabel: string;
   onChange: (view: GenerateReferenceView) => void;
 }) {
   const t = useT();
-  const tabs: GenerateReferenceView[] = ["Combine", "Verdict"];
 
   return (
-    <div
-      className="flex gap-1"
-      role="tablist"
-      aria-label={t("generate.generateStep.referenceTabsAria")}
-    >
+    <div className="flex gap-1" role="tablist" aria-label={ariaLabel}>
       {tabs.map((tab) => {
         const selected = active === tab;
         return (
@@ -102,6 +102,50 @@ function VerdictReferenceContent({ job }: { job: GenerateJobState }) {
   );
 }
 
+function ResumeReferenceContent({ resume }: { resume: GeneratedResume | null }) {
+  const t = useT();
+
+  return resume ? (
+    <ResumeMarkdown markdown={resumeToMarkdown(resume)} />
+  ) : (
+    <p className="text-sm text-muted">{t("generate.previous.resumeEmpty")}</p>
+  );
+}
+
+function ReferenceTabPanel({
+  active,
+  children,
+}: {
+  active: GenerateReferenceView;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      id="generate-reference-tabpanel"
+      role="tabpanel"
+      aria-labelledby={`generate-reference-tab-${active}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function renderReferenceViewContent(
+  view: GenerateReferenceView,
+  job: GenerateJobState,
+  combine: CombineSnapshot,
+  resume: GeneratedResume | null,
+): ReactNode {
+  switch (view) {
+    case "Verdict":
+      return <VerdictReferenceContent job={job} />;
+    case "Combine":
+      return <GenerateCombineSummary combine={combine} />;
+    case "Resume":
+      return <ResumeReferenceContent resume={resume} />;
+  }
+}
+
 export function useGeneratePreviousStepPanel({
   currentStep,
   visibleSteps,
@@ -119,8 +163,12 @@ export function useGeneratePreviousStepPanel({
     useState<GenerateReferenceView>("Combine");
 
   useEffect(() => {
-    if (currentStep !== "Generate") {
+    if (currentStep === "Generate") {
       setReferenceView("Combine");
+      return;
+    }
+    if (currentStep === "Evaluate") {
+      setReferenceView("Resume");
     }
   }, [currentStep]);
 
@@ -138,15 +186,40 @@ export function useGeneratePreviousStepPanel({
   const isFilteredJobPanel =
     currentStep === "Job" || previousStep === "Job";
 
-  const showGenerateReferenceTabs =
-    currentStep === "Generate" && doVerdict;
+  const generateReferenceTabs = useMemo(() => {
+    if (currentStep !== "Generate" || !doVerdict) {
+      return null;
+    }
+    return ["Verdict", "Combine"] as const;
+  }, [currentStep, doVerdict]);
+
+  const evaluateReferenceTabs = useMemo(() => {
+    if (currentStep !== "Evaluate") {
+      return null;
+    }
+    const tabs: GenerateReferenceView[] = [];
+    if (doVerdict) {
+      tabs.push("Verdict");
+    }
+    tabs.push("Combine", "Resume");
+    return tabs;
+  }, [currentStep, doVerdict]);
+
+  const activeReferenceTabs =
+    generateReferenceTabs ?? evaluateReferenceTabs ?? null;
 
   const previousTitle = isFilteredJobPanel
     ? t("generate.job.filteredPreviewTitle")
-    : showGenerateReferenceTabs
+    : activeReferenceTabs
       ? (
           <GenerateReferenceTabs
+            tabs={[...activeReferenceTabs]}
             active={referenceView}
+            ariaLabel={
+              currentStep === "Evaluate"
+                ? t("generate.evaluateStep.referenceTabsAria")
+                : t("generate.generateStep.referenceTabsAria")
+            }
             onChange={setReferenceView}
           />
         )
@@ -172,32 +245,16 @@ export function useGeneratePreviousStepPanel({
       );
     }
 
-    if (currentStep === "Generate") {
-      if (doVerdict && referenceView === "Verdict") {
-        return (
-          <div
-            id="generate-reference-tabpanel"
-            role="tabpanel"
-            aria-labelledby={`generate-reference-tab-${referenceView}`}
-          >
-            <VerdictReferenceContent job={job} />
-          </div>
-        );
-      }
-
+    if (activeReferenceTabs) {
       return (
-        <div
-          id={showGenerateReferenceTabs ? "generate-reference-tabpanel" : undefined}
-          role={showGenerateReferenceTabs ? "tabpanel" : undefined}
-          aria-labelledby={
-            showGenerateReferenceTabs
-              ? `generate-reference-tab-${referenceView}`
-              : undefined
-          }
-        >
-          <GenerateCombineSummary combine={combine} />
-        </div>
+        <ReferenceTabPanel active={referenceView}>
+          {renderReferenceViewContent(referenceView, job, combine, resume)}
+        </ReferenceTabPanel>
       );
+    }
+
+    if (currentStep === "Generate") {
+      return <GenerateCombineSummary combine={combine} />;
     }
 
     if (!previousStep) {
@@ -216,23 +273,18 @@ export function useGeneratePreviousStepPanel({
           <GenerateCombineSummary combine={combine} />
         );
       case "Generate":
-        return resume ? (
-          <ResumeMarkdown markdown={resumeToMarkdown(resume)} />
-        ) : (
-          <p className="text-sm text-muted">{t("generate.previous.resumeEmpty")}</p>
-        );
+        return <ResumeReferenceContent resume={resume} />;
       default:
         return null;
     }
   }, [
+    activeReferenceTabs,
     combine,
     currentStep,
-    doVerdict,
     job,
     previousStep,
     referenceView,
     resume,
-    showGenerateReferenceTabs,
     t,
   ]);
 

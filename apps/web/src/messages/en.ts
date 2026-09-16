@@ -473,6 +473,7 @@ export const en = {
     },
     layout: {
       emptyPrevious: "No previous step content",
+      resizePanels: "Resize panels",
     },
     previous: {
       jobTitle: "Job Description",
@@ -664,7 +665,7 @@ export const en = {
         "No generated resume is available for this session. Go back to Combine and run resume generation again.",
       pending: "Generating your resume…",
       title: "Generated Resume",
-      referenceTabsAria: "Combine and Verdict reference",
+      referenceTabsAria: "Verdict and Combine reference",
       editMode: "Edit",
       previewMode: "Preview",
       editHint:
@@ -678,6 +679,7 @@ export const en = {
       },
     },
     evaluateStep: {
+      referenceTabsAria: "Verdict, Combine, and Generated resume reference",
       noEvaluation:
         "No evaluation is available for this session. Go back to Generate and run evaluation again.",
       pending: "Evaluating your resume…",
