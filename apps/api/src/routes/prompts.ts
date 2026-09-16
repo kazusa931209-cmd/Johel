@@ -7,10 +7,10 @@ import type { MarkdownFormatKind } from "../lib/ai-markdown-format/types.js";
 import { prisma } from "../lib/prisma.js";
 import { requireUser } from "../lib/session.js";
 
-const PROMPT_MAX = 10_000;
+const EXTENSION_MAX = 10_000;
 
-const promptFieldSchema = z.string().trim().min(1).max(PROMPT_MAX);
-const extensionFieldSchema = z.string().trim().max(PROMPT_MAX);
+const promptFieldSchema = z.string().trim().min(1);
+const extensionFieldSchema = z.string().trim().max(EXTENSION_MAX);
 
 const PROMPT_KIND_CONFIG = {
   verdict: {
@@ -91,7 +91,6 @@ async function savePromptKind(
     kind: config.formatKind,
     submitted,
     stored: existing?.[config.dbKey],
-    maxLen: PROMPT_MAX,
   });
 
   const prompts = await prisma.prompt.upsert({
@@ -202,7 +201,7 @@ for (const [kind, config] of Object.entries(PROMPT_KIND_CONFIG) as [
     if (!parsed.success) {
       return c.json(
         {
-          error: `Invalid prompt payload (max ${PROMPT_MAX} characters).`,
+          error: "Invalid prompt payload.",
         },
         400,
       );

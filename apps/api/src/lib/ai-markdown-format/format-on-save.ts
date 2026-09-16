@@ -35,7 +35,7 @@ export type FormatMarkdownOnSaveInput = {
   kind: MarkdownFormatKind;
   submitted: string;
   stored: string | null | undefined;
-  maxLen: number;
+  maxLen?: number;
 };
 
 export type FormatMarkdownOnSaveResult = {
@@ -73,7 +73,7 @@ export async function formatMarkdownOnSave(
   if (!formatted.trim()) {
     throw new Error("Markdown conversion returned empty text.");
   }
-  if (formatted.length > input.maxLen) {
+  if (input.maxLen !== undefined && formatted.length > input.maxLen) {
     throw new Error(
       `Markdown conversion exceeded the maximum length of ${input.maxLen} characters.`,
     );

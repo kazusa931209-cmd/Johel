@@ -4,8 +4,6 @@ import { useState } from "react";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 import { formatThousandsSeparated } from "@/lib/helper";
 
-const PROMPT_MAX = 10_000;
-
 type PromptEditDialogProps = {
   title: string;
   value: string;
@@ -33,7 +31,6 @@ export function PromptEditDialog({
 }: PromptEditDialogProps) {
   const [draft, setDraft] = useState(value);
   const length = draft.length;
-  const overLimit = length > PROMPT_MAX;
 
   function apply() {
     onApply(draft);
@@ -66,15 +63,8 @@ export function PromptEditDialog({
           aria-describedby="prompt-edit-length"
           className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
         />
-        <p
-          id="prompt-edit-length"
-          className={[
-            "text-xs tabular-nums",
-            overLimit ? "text-danger" : "text-muted",
-          ].join(" ")}
-        >
-          {formatThousandsSeparated(length)} /{" "}
-          {formatThousandsSeparated(PROMPT_MAX)} characters
+        <p id="prompt-edit-length" className="text-xs tabular-nums text-muted">
+          {formatThousandsSeparated(length)} characters
         </p>
       </label>
       <div className="flex items-center justify-between gap-4">
