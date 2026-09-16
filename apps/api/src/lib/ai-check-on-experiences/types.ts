@@ -1,28 +1,28 @@
 import type { AiProviderId } from "../ai-provider.js";
 import type { ExperienceAdviseGraph } from "../ai-experience-advise/types.js";
 
-export type CheckGapsVerdict =
+export type CheckOnExperiencesVerdict =
   | "gap_confirmed"
   | "exists_not_linked"
   | "exists_and_linked";
 
-export type CheckGapsParsedResponse = {
-  verdict: CheckGapsVerdict;
+export type CheckOnExperiencesParsedResponse = {
+  verdict: CheckOnExperiencesVerdict;
   matchedExperienceIds: string[];
   explanation: string;
 };
 
-export type CheckGapsRunInput = {
+export type CheckOnExperiencesRunInput = {
   apiKey: string;
-  gapQuery: string;
+  searchText: string;
   graph: ExperienceAdviseGraph;
   expandedIds: Set<string>;
   indexIds: Set<string>;
   linkedExperienceIds: Set<string> | null;
 };
 
-export type CheckGapsRunResult = {
-  verdict: CheckGapsVerdict;
+export type CheckOnExperiencesRunResult = {
+  verdict: CheckOnExperiencesVerdict;
   matchedExperienceIds: string[];
   markdown: string;
   usage: {
@@ -33,7 +33,7 @@ export type CheckGapsRunResult = {
   };
 };
 
-export type CheckGapsProvider = {
+export type CheckOnExperiencesProvider = {
   id: AiProviderId;
-  run(input: CheckGapsRunInput): Promise<CheckGapsRunResult>;
+  run(input: CheckOnExperiencesRunInput): Promise<CheckOnExperiencesRunResult>;
 };

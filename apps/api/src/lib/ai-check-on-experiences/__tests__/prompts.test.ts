@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCheckGapsUserPrompt } from "../prompts.js";
+import { buildCheckOnExperiencesUserPrompt } from "../prompts.js";
 
 const graph = {
   experiences: [
@@ -15,11 +15,11 @@ const graph = {
   targetExperienceId: null,
 };
 
-describe("buildCheckGapsUserPrompt", () => {
+describe("buildCheckOnExperiencesUserPrompt", () => {
   it("includes linked ids when generation context is present", () => {
-    const prompt = buildCheckGapsUserPrompt({
+    const prompt = buildCheckOnExperiencesUserPrompt({
       apiKey: "test",
-      gapQuery: "No CI/CD experience mentioned",
+      searchText: "No CI/CD experience mentioned",
       graph,
       expandedIds: new Set(["exp-1"]),
       indexIds: new Set(),
@@ -32,9 +32,9 @@ describe("buildCheckGapsUserPrompt", () => {
   });
 
   it("omits linked ids section without generation context", () => {
-    const prompt = buildCheckGapsUserPrompt({
+    const prompt = buildCheckOnExperiencesUserPrompt({
       apiKey: "test",
-      gapQuery: "Missing leadership examples",
+      searchText: "Missing leadership examples",
       graph,
       expandedIds: new Set(["exp-1"]),
       indexIds: new Set(),

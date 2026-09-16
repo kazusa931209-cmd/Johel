@@ -1,4 +1,4 @@
-export type AiAssistantCategory = "check-gaps";
+export type AiAssistantCategory = "check-on-experiences";
 
 export type AiAssistantOpenOptions = {
   query?: string;
@@ -17,7 +17,7 @@ export function normalizeAiAssistantOpenOptions(
 ): NormalizedAiAssistantOpenOptions {
   return {
     query: options?.query?.trim() ?? "",
-    category: options?.category ?? "check-gaps",
+    category: options?.category ?? "check-on-experiences",
     generationId: options?.generationId ?? null,
   };
 }

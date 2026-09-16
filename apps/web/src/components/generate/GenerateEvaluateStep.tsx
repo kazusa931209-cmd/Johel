@@ -7,12 +7,13 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { TextSelectionToolbar } from "@/components/shared/TextSelectionToolbar";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
-import type { ResumeDownloadLabel } from "@/lib/api";
+import type { ResumeDownloadLabel, ResumeLanguage } from "@/lib/api";
 
 type GenerateEvaluateStepProps = {
   generationId: string | null;
   resume: GeneratedResume | null;
   downloadLabel?: ResumeDownloadLabel;
+  resumeLanguage: ResumeLanguage;
   evaluationMarkdown: string | null;
   evaluating: boolean;
   onDownloaded?: () => void | Promise<void>;
@@ -22,18 +23,30 @@ export function GenerateEvaluateStep({
   generationId,
   resume,
   downloadLabel,
+  resumeLanguage,
   evaluationMarkdown,
   evaluating,
   onDownloaded,
 }: GenerateEvaluateStepProps) {
   const t = useT();
   const { openAiAssistant } = useAiAssistant();
-  const { onDownload, downloading } = useResumeDownload(resume, downloadLabel, {
-    onDownloaded,
-  });
+  const { downloadAs, downloading, pdfDisabled } = useResumeDownload(
+    resume,
+    downloadLabel,
+    {
+      resumeLanguage,
+      onDownloaded,
+    },
+  );
 
   useRegisterGenerateStepNav({
-    onDownload: resume ? () => void onDownload() : undefined,
+    downloadMenu: resume
+      ? {
+          onDownloadDocx: () => void downloadAs("docx"),
+          onDownloadPdf: () => void downloadAs("pdf"),
+          pdfDisabled,
+        }
+      : undefined,
     downloadBusy: downloading,
   });
 
@@ -72,7 +85,7 @@ export function GenerateEvaluateStep({
       onCheck={(selectedText) =>
         openAiAssistant({
           query: selectedText,
-          category: "check-gaps",
+          category: "check-on-experiences",
           generationId,
         })
       }

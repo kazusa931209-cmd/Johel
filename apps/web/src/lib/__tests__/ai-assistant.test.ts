@@ -5,7 +5,7 @@ describe("normalizeAiAssistantOpenOptions", () => {
   it("defaults category and clears missing fields", () => {
     expect(normalizeAiAssistantOpenOptions()).toEqual({
       query: "",
-      category: "check-gaps",
+      category: "check-on-experiences",
       generationId: null,
     });
   });
@@ -14,12 +14,12 @@ describe("normalizeAiAssistantOpenOptions", () => {
     expect(
       normalizeAiAssistantOpenOptions({
         query: "  Missing cloud experience  ",
-        category: "check-gaps",
+        category: "check-on-experiences",
         generationId: "gen-123",
       }),
     ).toEqual({
       query: "Missing cloud experience",
-      category: "check-gaps",
+      category: "check-on-experiences",
       generationId: "gen-123",
     });
   });

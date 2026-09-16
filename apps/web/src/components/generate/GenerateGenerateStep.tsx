@@ -3,7 +3,7 @@
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { EditableResumePanel } from "@/components/generate/EditableResumePanel";
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
-import type { ResumeDownloadLabel } from "@/lib/api";
+import type { ResumeDownloadLabel, ResumeLanguage } from "@/lib/api";
 import type { GeneratedResume } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
 import type { ReactNode } from "react";
@@ -12,6 +12,7 @@ type GenerateGenerateStepProps = {
   resume: GeneratedResume | null;
   aiResumeSnapshot: GeneratedResume | null;
   downloadLabel?: ResumeDownloadLabel;
+  resumeLanguage: ResumeLanguage;
   doEvaluate: boolean;
   generating: boolean;
   onRun: () => void;
@@ -24,6 +25,7 @@ export function GenerateGenerateStep({
   resume,
   aiResumeSnapshot,
   downloadLabel,
+  resumeLanguage,
   doEvaluate,
   generating,
   onRun,
@@ -32,9 +34,14 @@ export function GenerateGenerateStep({
   onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
-  const { onDownload, downloading } = useResumeDownload(resume, downloadLabel, {
-    onDownloaded,
-  });
+  const { downloadAs, downloading, pdfDisabled } = useResumeDownload(
+    resume,
+    downloadLabel,
+    {
+      resumeLanguage,
+      onDownloaded,
+    },
+  );
 
   useRegisterGenerateStepNav({
     onRun:
@@ -45,7 +52,14 @@ export function GenerateGenerateStep({
             }
           }
         : undefined,
-    onDownload: resume && !doEvaluate ? () => void onDownload() : undefined,
+    downloadMenu:
+      resume && !doEvaluate
+        ? {
+            onDownloadDocx: () => void downloadAs("docx"),
+            onDownloadPdf: () => void downloadAs("pdf"),
+            pdfDisabled,
+          }
+        : undefined,
     runBusy: generating,
     downloadBusy: downloading,
   });

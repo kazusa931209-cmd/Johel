@@ -1,32 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { resolveDownloadFormat } from "@/lib/api";
+import { isPdfDownloadAvailable } from "@/lib/api";
 
-describe("resolveDownloadFormat", () => {
-  it("returns docx when resume language is not English", () => {
-    expect(
-      resolveDownloadFormat({
-        doVerdict: true,
-        doEvaluate: true,
-        resumeLanguage: "ja",
-        downloadFormat: "pdf",
-        experienceAdvisePoolDepth: "normal",
-        combineExperiencesPerCompanyMax: 5,
-        experienceDimensionMode: "technical_facet",
-      }),
-    ).toBe("docx");
+describe("isPdfDownloadAvailable", () => {
+  it("returns false when resume language is not English", () => {
+    expect(isPdfDownloadAvailable("ja")).toBe(false);
   });
 
-  it("returns saved format when resume language is English", () => {
-    expect(
-      resolveDownloadFormat({
-        doVerdict: true,
-        doEvaluate: true,
-        resumeLanguage: "en",
-        downloadFormat: "pdf",
-        experienceAdvisePoolDepth: "normal",
-        combineExperiencesPerCompanyMax: 5,
-        experienceDimensionMode: "technical_facet",
-      }),
-    ).toBe("pdf");
+  it("returns true when resume language is English", () => {
+    expect(isPdfDownloadAvailable("en")).toBe(true);
   });
 });

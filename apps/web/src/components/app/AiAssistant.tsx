@@ -20,7 +20,7 @@ import {
   type AiAssistantCategory,
   type AiAssistantOpenOptions,
 } from "@/lib/ai-assistant";
-import { runAiCheckGaps } from "@/lib/api";
+import { runAiCheckOnExperiences } from "@/lib/api";
 import {
   getSearchShortcutLabel,
   isGlobalSearchShortcut,
@@ -42,7 +42,7 @@ export function useAiAssistant() {
 }
 
 const CATEGORY_LABEL_KEYS: Record<AiAssistantCategory, string> = {
-  "check-gaps": "aiAssistant.checkGaps.category",
+  "check-on-experiences": "aiAssistant.checkOnExperiences.category",
 };
 
 export function AiAssistantProvider({
@@ -142,10 +142,10 @@ function AiAssistantDialog({
     textareaRef.current?.focus();
   }, []);
 
-  const submitCheckGaps = useCallback(async () => {
+  const submitCheckOnExperiences = useCallback(async () => {
     const trimmed = query.trim();
     if (!trimmed) {
-      setQueryError(t("aiAssistant.checkGaps.queryRequired"));
+      setQueryError(t("aiAssistant.checkOnExperiences.queryRequired"));
       return;
     }
 
@@ -153,26 +153,26 @@ function AiAssistantDialog({
     setLoading(true);
     setResponseMarkdown(null);
 
-    const res = await runAiCheckGaps({
-      gapQuery: trimmed,
+    const res = await runAiCheckOnExperiences({
+      searchText: trimmed,
       generationId,
     });
 
     setLoading(false);
 
     if (res.error || !res.data) {
-      toast(res.error ?? t("aiAssistant.checkGaps.failed"), "error");
+      toast(res.error ?? t("aiAssistant.checkOnExperiences.failed"), "error");
       return;
     }
 
     setResponseMarkdown(res.data.markdown);
     await refreshTokenUsed();
-    toast(t("aiAssistant.checkGaps.success"), "success");
+    toast(t("aiAssistant.checkOnExperiences.success"), "success");
   }, [generationId, query, refreshTokenUsed, t, toast]);
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    void submitCheckGaps();
+    void submitCheckOnExperiences();
   }
 
   return (
@@ -220,7 +220,7 @@ function AiAssistantDialog({
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
             <label className="block space-y-1 text-sm">
-              <span>{t("aiAssistant.checkGaps.inputLabel")}</span>
+              <span>{t("aiAssistant.checkOnExperiences.inputLabel")}</span>
               <textarea
                 ref={textareaRef}
                 value={query}
@@ -229,7 +229,7 @@ function AiAssistantDialog({
                   if (queryError) setQueryError(null);
                 }}
                 rows={4}
-                placeholder={t("aiAssistant.checkGaps.inputPlaceholder")}
+                placeholder={t("aiAssistant.checkOnExperiences.inputPlaceholder")}
                 aria-invalid={Boolean(queryError)}
                 className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
               />

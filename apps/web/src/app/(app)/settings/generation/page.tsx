@@ -61,8 +61,6 @@ const EXPERIENCE_DIMENSION_MODE_OPTIONS: ExperienceDimensionMode[] = [
   "problem_item",
 ];
 
-const DOWNLOAD_FORMAT_OPTIONS: DownloadFormat[] = ["docx", "pdf"];
-
 const DEFAULT_SETTINGS = {
   doVerdict: true,
   doEvaluate: true,
@@ -83,9 +81,6 @@ export default function GenerationSettingsPage() {
   const [doEvaluate, setDoEvaluate] = useState(DEFAULT_SETTINGS.doEvaluate);
   const [resumeLanguage, setResumeLanguage] = useState<ResumeLanguage>(
     DEFAULT_SETTINGS.resumeLanguage,
-  );
-  const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>(
-    DEFAULT_SETTINGS.downloadFormat,
   );
   const [experienceAdvisePoolDepth, setExperienceAdvisePoolDepth] =
     useState<ExperienceAdvisePoolDepth>(
@@ -133,7 +128,6 @@ export default function GenerationSettingsPage() {
         setDoVerdict(res.data.doVerdict);
         setDoEvaluate(res.data.doEvaluate);
         setResumeLanguage(res.data.resumeLanguage);
-        setDownloadFormat(res.data.downloadFormat);
         setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
         setCombineExperiencesPerCompanyMax(
           res.data.combineExperiencesPerCompanyMax,
@@ -169,7 +163,7 @@ export default function GenerationSettingsPage() {
       doVerdict,
       doEvaluate,
       resumeLanguage,
-      downloadFormat,
+      downloadFormat: savedDownloadFormat,
       experienceAdvisePoolDepth,
       combineExperiencesPerCompanyMax,
       experienceDimensionMode,
@@ -184,7 +178,6 @@ export default function GenerationSettingsPage() {
     setDoVerdict(res.data.doVerdict);
     setDoEvaluate(res.data.doEvaluate);
     setResumeLanguage(res.data.resumeLanguage);
-    setDownloadFormat(res.data.downloadFormat);
     setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
     setCombineExperiencesPerCompanyMax(res.data.combineExperiencesPerCompanyMax);
     setExperienceDimensionMode(res.data.experienceDimensionMode);
@@ -276,13 +269,9 @@ export default function GenerationSettingsPage() {
               <div className="relative">
                 <select
                   value={resumeLanguage}
-                  onChange={(e) => {
-                    const nextLanguage = e.target.value as RunLanguage;
-                    setResumeLanguage(nextLanguage);
-                    if (nextLanguage !== "en") {
-                      setDownloadFormat("docx");
-                    }
-                  }}
+                  onChange={(e) =>
+                    setResumeLanguage(e.target.value as RunLanguage)
+                  }
                   className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
                 >
                   {RUN_LANGUAGES.map((option) => (
@@ -294,50 +283,6 @@ export default function GenerationSettingsPage() {
                 <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
               </div>
             </label>
-          )}
-        </div>
-
-        <div className="space-y-3 border-t border-border pt-4">
-          <h2 className="text-sm font-medium">
-            {t("settings.generation.downloadFormat.title")}
-          </h2>
-          <p className="text-sm text-muted">
-            {t("settings.generation.downloadFormat.description")}
-          </p>
-          {loading ? (
-            <p className="text-sm text-muted">
-              {t("settings.generation.process.loading")}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {DOWNLOAD_FORMAT_OPTIONS.map((option) => {
-                const pdfDisabled = resumeLanguage !== "en" && option === "pdf";
-                return (
-                  <label
-                    key={option}
-                    className={`flex items-center gap-2 text-sm ${pdfDisabled ? "text-muted" : ""}`}
-                  >
-                    <input
-                      type="radio"
-                      name="downloadFormat"
-                      value={option}
-                      checked={downloadFormat === option}
-                      disabled={pdfDisabled}
-                      onChange={() => setDownloadFormat(option)}
-                      className="h-4 w-4 border-border"
-                    />
-                    <span>
-                      {t(`settings.generation.downloadFormat.options.${option}`)}
-                    </span>
-                  </label>
-                );
-              })}
-              {resumeLanguage !== "en" ? (
-                <p className="text-xs text-muted">
-                  {t("settings.generation.downloadFormat.pdfEnglishOnly")}
-                </p>
-              ) : null}
-            </div>
           )}
         </div>
 

@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import {
   extractLinkedExperienceIds,
-  runAiCheckGaps,
-} from "../lib/ai-check-gaps/index.js";
+  runAiCheckOnExperiences,
+} from "../lib/ai-check-on-experiences/index.js";
 import { loadExperienceAdviseContext } from "../lib/ai-experience-advise/load-context.js";
 import {
   ensureExperienceEmbeddings,
@@ -21,16 +21,16 @@ import { withTokenUsed } from "../lib/ai-token-used-response.js";
 import { sumTokenUsed } from "../lib/sum-token-used.js";
 import { requireUser } from "../lib/session.js";
 
-const GAP_QUERY_MAX = 2_000;
+const SEARCH_TEXT_MAX = 2_000;
 
 const postSchema = z.object({
-  gapQuery: z.string().trim().min(1).max(GAP_QUERY_MAX),
+  searchText: z.string().trim().min(1).max(SEARCH_TEXT_MAX),
   generationId: z.string().trim().min(1).optional(),
 });
 
-export const aiCheckGapsRoutes = new Hono();
+export const aiCheckOnExperiencesRoutes = new Hono();
 
-aiCheckGapsRoutes.post("/", async (c) => {
+aiCheckOnExperiencesRoutes.post("/", async (c) => {
   const user = await requireUser(c);
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
@@ -41,7 +41,7 @@ aiCheckGapsRoutes.post("/", async (c) => {
   if (!parsed.success) {
     return c.json(
       {
-        error: "Gap description is required (max 2,000 characters).",
+        error: "Search text is required (max 2,000 characters).",
       },
       400,
     );
@@ -89,7 +89,7 @@ aiCheckGapsRoutes.post("/", async (c) => {
 
     const queryEmbedding = await createOpenAiEmbedding(
       aiSettings.apiKey,
-      parsed.data.gapQuery,
+      parsed.data.searchText,
     );
 
     await recordAiUsage({
@@ -100,7 +100,7 @@ aiCheckGapsRoutes.post("/", async (c) => {
       usage: {
         inputToken: queryEmbedding.inputToken,
         outputToken: 0,
-        input: parsed.data.gapQuery,
+        input: parsed.data.searchText,
         output: "",
       },
     });
@@ -129,9 +129,9 @@ aiCheckGapsRoutes.post("/", async (c) => {
       ? new Set(extractLinkedExperienceIds(generationRow.combineJson))
       : null;
 
-    const result = await runAiCheckGaps(provider, {
+    const result = await runAiCheckOnExperiences(provider, {
       apiKey: aiSettings.apiKey,
-      gapQuery: parsed.data.gapQuery,
+      searchText: parsed.data.searchText,
       graph,
       expandedIds,
       indexIds,
@@ -141,7 +141,7 @@ aiCheckGapsRoutes.post("/", async (c) => {
     await recordAiUsage({
       userId: user.id,
       aiProvider: provider,
-      generateType: "checkGaps",
+      generateType: "checkOnExperiences",
       generationId,
       usage: result.usage,
     });
@@ -162,7 +162,7 @@ aiCheckGapsRoutes.post("/", async (c) => {
     const message =
       err instanceof Error && err.message
         ? err.message
-        : "Gap check failed. Please try again.";
+        : "Check on Experiences failed. Please try again.";
     return c.json({ error: message }, 502);
   }
 });

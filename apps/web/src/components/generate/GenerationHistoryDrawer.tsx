@@ -10,6 +10,7 @@ import { GenerateHistoryStepView } from "@/components/generate/GenerateHistorySt
 import { GeneratePanelHeaderActions } from "@/components/generate/GeneratePanelHeaderActions";
 import { useGeneratePreviousStepPanel } from "@/components/generate/GeneratePreviousStepPanel";
 import { GenerateCircleIconButton } from "@/components/generate/GenerateStepNav";
+import { ResumeDownloadDropdown } from "@/components/generate/ResumeDownloadDropdown";
 import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
 import {
   GenerateTimeline,
@@ -18,7 +19,8 @@ import {
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Drawer } from "@/components/shared/drawer";
-import { DownloadIcon, PlayIcon } from "@/components/shared/icons";
+import { PlayIcon } from "@/components/shared/icons";
+import type { ResumeLanguage } from "@/lib/api";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import {
   getGeneration,
@@ -248,9 +250,14 @@ export function GenerationHistoryDrawer({
     }
   }
 
-  const { onDownload, downloading } = useResumeDownload(resume, downloadLabel, {
-    onDownloaded: handleHistoryDownloaded,
-  });
+  const { downloadAs, downloading, pdfDisabled } = useResumeDownload(
+    resume,
+    downloadLabel,
+    {
+      resumeLanguage: combine.language as ResumeLanguage,
+      onDownloaded: handleHistoryDownloaded,
+    },
+  );
   const showDownload = resume != null;
 
   async function confirmResume() {
@@ -343,12 +350,13 @@ export function GenerationHistoryDrawer({
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {showDownload ? (
-                    <GenerateCircleIconButton
-                      onClick={() => void onDownload()}
-                      disabled={downloading}
+                    <ResumeDownloadDropdown
+                      onDownloadDocx={() => void downloadAs("docx")}
+                      onDownloadPdf={() => void downloadAs("pdf")}
+                      pdfDisabled={pdfDisabled}
                       busy={downloading}
                       ariaLabel={t("generate.nav.download")}
-                      icon={<DownloadIcon className="h-6 w-6" />}
+                      menuPlacement="bottom"
                     />
                   ) : null}
                   <GenerateCircleIconButton

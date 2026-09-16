@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { parseCheckGapsResponse } from "../parse-response.js";
+import { parseCheckOnExperiencesResponse } from "../parse-response.js";
 
-describe("parseCheckGapsResponse", () => {
-  it("parses a valid response", () => {
-    const parsed = parseCheckGapsResponse(
+describe("parseCheckOnExperiencesResponse", () => {
+  it("parses a valid response with matched ids", () => {
+    const parsed = parseCheckOnExperiencesResponse(
       JSON.stringify({
         verdict: "exists_not_linked",
         matchedExperienceIds: ["exp-1"],
-        explanation: "A matching card exists.",
+        explanation: "A CI/CD card covers this.",
       }),
       true,
     );
@@ -15,16 +15,16 @@ describe("parseCheckGapsResponse", () => {
     expect(parsed).toEqual({
       verdict: "exists_not_linked",
       matchedExperienceIds: ["exp-1"],
-      explanation: "A matching card exists.",
+      explanation: "A CI/CD card covers this.",
     });
   });
 
   it("downgrades exists_and_linked without generation context", () => {
-    const parsed = parseCheckGapsResponse(
+    const parsed = parseCheckOnExperiencesResponse(
       JSON.stringify({
         verdict: "exists_and_linked",
         matchedExperienceIds: ["exp-1"],
-        explanation: "Already linked.",
+        explanation: "Linked card found.",
       }),
       false,
     );
@@ -33,8 +33,8 @@ describe("parseCheckGapsResponse", () => {
   });
 
   it("throws on invalid json", () => {
-    expect(() => parseCheckGapsResponse("not-json", false)).toThrow(
-      "invalid JSON",
+    expect(() => parseCheckOnExperiencesResponse("not-json", false)).toThrow(
+      "OpenAI returned invalid JSON for check on experiences.",
     );
   });
 });

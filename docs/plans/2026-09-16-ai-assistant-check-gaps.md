@@ -10,8 +10,8 @@ Replace header global search with **AI Assistant** — categorized assistance pa
 
 - `AiAssistantProvider` / `AiAssistantTrigger` / dialog with **Check the Gaps** category chip
 - `TextSelectionToolbar` on Generate Evaluate step — **Ask** disabled, **Check** opens AI Assistant prefilled with selection + current `generationId`
-- `POST /ai-check-gaps` — embedding-ranked experience pool, optional Combine linkage, structured verdict, Markdown response
-- i18n (`nav.header.aiAssistant.*`, `aiAssistant.checkGaps.*`, evaluate selection labels)
+- `POST /ai-check-on-experiences` (renamed from `/ai-check-gaps`) — embedding-ranked experience pool, optional Combine linkage, structured verdict, Markdown response
+- i18n (`nav.header.aiAssistant.*`, `aiAssistant.checkOnExperiences.*`, evaluate selection labels)
 - Docs: `specification.md`, `technology.md`
 
 ## Out of scope

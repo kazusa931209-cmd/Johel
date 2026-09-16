@@ -30,7 +30,7 @@ export const ko: MessageTree = {
         close: "AI Assistant 닫기",
         loading: "확인 중…",
         sending: "확인 중…",
-        send: "확인",
+        send: "경험에서 확인",
       },
     },
     sidebar: {
@@ -687,7 +687,7 @@ export const ko: MessageTree = {
       selection: {
         toolbarAria: "선택 작업",
         ask: "Ask",
-        check: "Check",
+        check: "경험에서 확인",
       },
     },
     pceSection: {
@@ -700,6 +700,9 @@ export const ko: MessageTree = {
       failed: "다운로드에 실패했습니다.",
       success: "이력서를 다운로드했습니다.",
       downloading: "다운로드 중…",
+      asDocx: "DOCX로 다운로드",
+      asPdf: "PDF로 다운로드",
+      pdfEnglishOnly: "PDF는 이력서 언어가 영어일 때만 사용할 수 있습니다.",
     },
   },
   history: {
@@ -797,6 +800,7 @@ export const ko: MessageTree = {
       combineRecommend: "조합 추천",
       promptHelper: "프롬프트 도우미",
       markdownFormat: "마크다운 서식",
+      checkOnExperiences: "경험에서 확인",
     },
   },
   shared: {
@@ -945,14 +949,13 @@ export const ko: MessageTree = {
     },
   },
   aiAssistant: {
-    checkGaps: {
-      category: "Check the Gaps",
-      inputLabel: "Gap description",
-      inputPlaceholder:
-        "Describe the gap to check against your experience cards…",
-      queryRequired: "Enter a gap description to check.",
-      success: "Gap check complete.",
-      failed: "Gap check failed.",
+    checkOnExperiences: {
+      category: "경험에서 확인",
+      inputLabel: "검색 텍스트",
+      inputPlaceholder: "경험 카드에서 검색할 텍스트를 입력하세요…",
+      queryRequired: "경험 카드에서 검색할 텍스트를 입력하세요.",
+      success: "경험 확인이 완료되었습니다.",
+      failed: "경험 확인에 실패했습니다.",
     },
   },
 } satisfies MessageTree;

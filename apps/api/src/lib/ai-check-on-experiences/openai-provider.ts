@@ -1,17 +1,24 @@
 import { runOpenAiJdMetaResponse } from "../openai/responses.js";
 import { buildUsage } from "../ai-verdict/types.js";
-import { buildCheckGapsUserPrompt, getCheckGapsSystemPrompt } from "./prompts.js";
-import { parseCheckGapsResponse } from "./parse-response.js";
-import { formatCheckGapsMarkdown } from "./format-markdown.js";
-import type { CheckGapsProvider, CheckGapsRunInput, CheckGapsRunResult } from "./types.js";
+import {
+  buildCheckOnExperiencesUserPrompt,
+  getCheckOnExperiencesSystemPrompt,
+} from "./prompts.js";
+import { parseCheckOnExperiencesResponse } from "./parse-response.js";
+import { formatCheckOnExperiencesMarkdown } from "./format-markdown.js";
+import type {
+  CheckOnExperiencesProvider,
+  CheckOnExperiencesRunInput,
+  CheckOnExperiencesRunResult,
+} from "./types.js";
 
-export const openAiCheckGapsProvider: CheckGapsProvider = {
+export const openAiCheckOnExperiencesProvider: CheckOnExperiencesProvider = {
   id: "openai",
 
-  async run(input: CheckGapsRunInput): Promise<CheckGapsRunResult> {
+  async run(input: CheckOnExperiencesRunInput): Promise<CheckOnExperiencesRunResult> {
     const hasGenerationContext = input.linkedExperienceIds !== null;
-    const instructions = getCheckGapsSystemPrompt(hasGenerationContext);
-    const user = buildCheckGapsUserPrompt(input);
+    const instructions = getCheckOnExperiencesSystemPrompt(hasGenerationContext);
+    const user = buildCheckOnExperiencesUserPrompt(input);
 
     const response = await runOpenAiJdMetaResponse(
       input.apiKey,
@@ -24,7 +31,10 @@ export const openAiCheckGapsProvider: CheckGapsProvider = {
       throw new Error("OpenAI returned empty JSON.");
     }
 
-    const parsed = parseCheckGapsResponse(outputText, hasGenerationContext);
+    const parsed = parseCheckOnExperiencesResponse(
+      outputText,
+      hasGenerationContext,
+    );
 
     const experienceById = new Map(
       input.graph.experiences.map((experience) => [experience.id, experience]),
@@ -39,7 +49,7 @@ export const openAiCheckGapsProvider: CheckGapsProvider = {
         category: experience.category,
       }));
 
-    const markdown = formatCheckGapsMarkdown(
+    const markdown = formatCheckOnExperiencesMarkdown(
       parsed.verdict,
       parsed.explanation,
       matchedExperiences,

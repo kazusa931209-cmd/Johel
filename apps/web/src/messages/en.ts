@@ -28,7 +28,7 @@ export const en = {
         close: "Close AI Assistant",
         loading: "Checking…",
         sending: "Checking…",
-        send: "Check",
+        send: "Check on Experiences",
       },
     },
     sidebar: {
@@ -686,7 +686,7 @@ export const en = {
       selection: {
         toolbarAria: "Selection actions",
         ask: "Ask",
-        check: "Check",
+        check: "Check on Experiences",
       },
     },
     pceSection: {
@@ -699,6 +699,9 @@ export const en = {
       failed: "Download failed.",
       success: "Resume downloaded.",
       downloading: "Downloading…",
+      asDocx: "Download as DOCX",
+      asPdf: "Download as PDF",
+      pdfEnglishOnly: "PDF is available only when Resume Language is English.",
     },
   },
   history: {
@@ -796,6 +799,7 @@ export const en = {
       combineRecommend: "Combine recommend",
       promptHelper: "Prompt Helper",
       markdownFormat: "Markdown Format",
+      checkOnExperiences: "Check on Experiences",
     },
   },
   shared: {
@@ -943,13 +947,13 @@ export const en = {
     },
   },
   aiAssistant: {
-    checkGaps: {
-      category: "Check the Gaps",
-      inputLabel: "Gap description",
-      inputPlaceholder: "Describe the gap to check against your experience cards…",
-      queryRequired: "Enter a gap description to check.",
-      success: "Gap check complete.",
-      failed: "Gap check failed.",
+    checkOnExperiences: {
+      category: "Check on Experiences",
+      inputLabel: "Search text",
+      inputPlaceholder: "Enter text to search across your experience cards…",
+      queryRequired: "Enter text to search on your experience cards.",
+      success: "Check on Experiences complete.",
+      failed: "Check on Experiences failed.",
     },
   },
 } as const;

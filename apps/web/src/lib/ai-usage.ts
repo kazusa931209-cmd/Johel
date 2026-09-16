@@ -18,6 +18,8 @@ const GENERATE_TYPE_KEYS: Record<string, string> = {
   promptHelper: "aiUsage.generateTypes.promptHelper",
   markdownFormat: "aiUsage.generateTypes.markdownFormat",
   embedding: "aiUsage.generateTypes.embedding",
+  checkOnExperiences: "aiUsage.generateTypes.checkOnExperiences",
+  checkGaps: "aiUsage.generateTypes.checkOnExperiences",
 };
 
 export function formatAiProvider(aiProvider: string, locale: Locale = "en"): string {

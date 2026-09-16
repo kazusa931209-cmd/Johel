@@ -1,18 +1,18 @@
-import type { CheckGapsVerdict } from "./types.js";
+import type { CheckOnExperiencesVerdict } from "./types.js";
 
 type MatchedExperience = {
   id: string;
   category: string;
 };
 
-const VERDICT_HEADINGS: Record<CheckGapsVerdict, string> = {
+const VERDICT_HEADINGS: Record<CheckOnExperiencesVerdict, string> = {
   gap_confirmed: "### Gap confirmed",
   exists_not_linked: "### Experience exists but is not linked",
   exists_and_linked: "### Already linked to this Generate",
 };
 
-export function formatCheckGapsMarkdown(
-  verdict: CheckGapsVerdict,
+export function formatCheckOnExperiencesMarkdown(
+  verdict: CheckOnExperiencesVerdict,
   explanation: string,
   matchedExperiences: MatchedExperience[],
   hasGenerationContext: boolean,

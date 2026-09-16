@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { CheckGapsParsedResponse, CheckGapsVerdict } from "./types.js";
+import type {
+  CheckOnExperiencesParsedResponse,
+  CheckOnExperiencesVerdict,
+} from "./types.js";
 
 const responseSchema = z.object({
   verdict: z.enum([
@@ -11,23 +14,23 @@ const responseSchema = z.object({
   explanation: z.string().trim().min(1),
 });
 
-export function parseCheckGapsResponse(
+export function parseCheckOnExperiencesResponse(
   outputText: string,
   hasGenerationContext: boolean,
-): CheckGapsParsedResponse {
+): CheckOnExperiencesParsedResponse {
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(outputText);
   } catch {
-    throw new Error("OpenAI returned invalid JSON for gap check.");
+    throw new Error("OpenAI returned invalid JSON for check on experiences.");
   }
 
   const parsed = responseSchema.safeParse(parsedJson);
   if (!parsed.success) {
-    throw new Error("OpenAI returned invalid gap check shape.");
+    throw new Error("OpenAI returned invalid check on experiences shape.");
   }
 
-  let verdict: CheckGapsVerdict = parsed.data.verdict;
+  let verdict: CheckOnExperiencesVerdict = parsed.data.verdict;
   if (!hasGenerationContext && verdict === "exists_and_linked") {
     verdict = "exists_not_linked";
   }

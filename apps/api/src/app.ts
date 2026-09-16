@@ -31,7 +31,7 @@ import { aiUsageRoutes } from "./routes/ai-usage.js";
 import { promptsRoutes } from "./routes/prompts.js";
 import { aiExperienceAdviseRoutes } from "./routes/ai-experience-advise.js";
 import { aiExperienceSplitRoutes } from "./routes/ai-experience-split.js";
-import { aiCheckGapsRoutes } from "./routes/ai-check-gaps.js";
+import { aiCheckOnExperiencesRoutes } from "./routes/ai-check-on-experiences.js";
 import { generationsRoutes } from "./routes/generations.js";
 import { pceRoutes } from "./routes/pce.js";
 
@@ -97,7 +97,7 @@ export function createApp() {
   app.use("/ai-experience-advise/*", aiRoutes);
   app.use("/ai-experience-split/*", aiRoutes);
   app.use("/ai-combine-recommend/*", aiRoutes);
-  app.use("/ai-check-gaps/*", aiRoutes);
+  app.use("/ai-check-on-experiences/*", aiRoutes);
 
   app.route("/settings", settingsRoutes);
   app.route("/profiles", profilesRoutes);
@@ -110,7 +110,7 @@ export function createApp() {
   app.route("/ai-experience-advise", aiExperienceAdviseRoutes);
   app.route("/ai-experience-split", aiExperienceSplitRoutes);
   app.route("/ai-combine-recommend", aiCombineRecommendRoutes);
-  app.route("/ai-check-gaps", aiCheckGapsRoutes);
+  app.route("/ai-check-on-experiences", aiCheckOnExperiencesRoutes);
   app.route("/resume", resumeRoutes);
   app.route("/ai-usage", aiUsageRoutes);
   app.route("/prompts", promptsRoutes);

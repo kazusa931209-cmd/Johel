@@ -10,6 +10,16 @@ describe("formatGenerateType", () => {
   it("labels experienceSplit for AI Usage History", () => {
     expect(formatGenerateType("experienceSplit")).toBe("Experience Split");
   });
+
+  it("labels checkOnExperiences for AI Usage History", () => {
+    expect(formatGenerateType("checkOnExperiences")).toBe(
+      "Check on Experiences",
+    );
+  });
+
+  it("labels legacy checkGaps rows for AI Usage History", () => {
+    expect(formatGenerateType("checkGaps")).toBe("Check on Experiences");
+  });
 });
 
 describe("ai-usage group helpers", () => {

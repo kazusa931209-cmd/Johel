@@ -11,11 +11,20 @@ import {
   type ReactNode,
 } from "react";
 import { useT } from "@/components/app/LocaleProvider";
-import { DownloadIcon, PlayIcon, PlusIcon } from "@/components/shared/icons";
+import { GenerateCircleBusySpinner } from "@/components/generate/GenerateCircleBusySpinner";
+import { generateCircleButtonClass } from "@/components/generate/generate-nav-button";
+import {
+  ResumeDownloadDropdown,
+  type ResumeDownloadMenuActions,
+} from "@/components/generate/ResumeDownloadDropdown";
+import { PlayIcon, PlusIcon } from "@/components/shared/icons";
+
+export { generateCircleButtonClass } from "@/components/generate/generate-nav-button";
+export { GenerateCircleBusySpinner } from "@/components/generate/GenerateCircleBusySpinner";
 
 export type GenerateStepNavState = {
   onRun?: () => void;
-  onDownload?: () => void;
+  downloadMenu?: ResumeDownloadMenuActions;
   runBusy?: boolean;
   downloadBusy?: boolean;
   runDisabled?: boolean;
@@ -39,7 +48,7 @@ const emptyMeta: GenerateStepNavMeta = {
 
 type GenerateStepNavContextValue = {
   onRunRef: React.RefObject<(() => void) | undefined>;
-  onDownloadRef: React.RefObject<(() => void) | undefined>;
+  downloadMenuRef: React.RefObject<ResumeDownloadMenuActions | undefined>;
   meta: GenerateStepNavMeta;
   setMeta: (meta: GenerateStepNavMeta) => void;
 };
@@ -48,19 +57,7 @@ const GenerateStepNavContext = createContext<GenerateStepNavContextValue | null>
   null,
 );
 
-export const generateCircleButtonClass =
-  "flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-surface shadow-lg transition-colors hover:bg-surface-muted disabled:opacity-60";
-
 const navSlotClass = "flex h-14 w-14 shrink-0 items-center justify-center";
-
-export function GenerateCircleBusySpinner() {
-  return (
-    <span
-      className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-foreground"
-      aria-hidden
-    />
-  );
-}
 
 export function GenerateCircleIconButton({
   icon,
@@ -90,7 +87,9 @@ export function GenerateCircleIconButton({
 
 export function GenerateStepNavProvider({ children }: { children: ReactNode }) {
   const onRunRef = useRef<(() => void) | undefined>(undefined);
-  const onDownloadRef = useRef<(() => void) | undefined>(undefined);
+  const downloadMenuRef = useRef<ResumeDownloadMenuActions | undefined>(
+    undefined,
+  );
   const [meta, setMetaState] = useState<GenerateStepNavMeta>(emptyMeta);
 
   const setMeta = useCallback((next: GenerateStepNavMeta) => {
@@ -109,7 +108,7 @@ export function GenerateStepNavProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ onRunRef, onDownloadRef, meta, setMeta }),
+    () => ({ onRunRef, downloadMenuRef, meta, setMeta }),
     [meta, setMeta],
   );
 
@@ -125,11 +124,11 @@ export function useRegisterGenerateStepNav(nav: GenerateStepNavState) {
 
   if (ctx) {
     ctx.onRunRef.current = nav.onRun;
-    ctx.onDownloadRef.current = nav.onDownload;
+    ctx.downloadMenuRef.current = nav.downloadMenu;
   }
 
   const showRun = Boolean(nav.onRun);
-  const showDownload = Boolean(nav.onDownload);
+  const showDownload = Boolean(nav.downloadMenu);
   const runBusy = nav.runBusy ?? false;
   const downloadBusy = nav.downloadBusy ?? false;
   const runDisabled = nav.runDisabled ?? false;
@@ -182,7 +181,7 @@ export function GenerateNewButton({
 }
 
 export function GenerateStepNavRunButton() {
-  const { onRunRef, onDownloadRef, meta } = useGenerateStepNavContext();
+  const { onRunRef, downloadMenuRef, meta } = useGenerateStepNavContext();
   const t = useT();
   const showRight = meta.showRun || meta.showDownload;
 
@@ -190,27 +189,25 @@ export function GenerateStepNavRunButton() {
     return <div className={navSlotClass} aria-hidden />;
   }
 
+  if (meta.showDownload && downloadMenuRef.current) {
+    const menu = downloadMenuRef.current;
+    return (
+      <ResumeDownloadDropdown
+        {...menu}
+        busy={meta.downloadBusy}
+        ariaLabel={t("generate.nav.download")}
+        menuPlacement="bottom"
+      />
+    );
+  }
+
   return (
     <GenerateCircleIconButton
-      onClick={() => {
-        if (meta.showDownload) {
-          onDownloadRef.current?.();
-          return;
-        }
-        onRunRef.current?.();
-      }}
+      onClick={() => onRunRef.current?.()}
       disabled={meta.runBusy || meta.downloadBusy || meta.runDisabled}
       busy={meta.runBusy || meta.downloadBusy}
-      ariaLabel={
-        meta.showDownload ? t("generate.nav.download") : t("generate.nav.run")
-      }
-      icon={
-        meta.showDownload ? (
-          <DownloadIcon className="h-6 w-6" />
-        ) : (
-          <PlayIcon className="h-6 w-6" />
-        )
-      }
+      ariaLabel={t("generate.nav.run")}
+      icon={<PlayIcon className="h-6 w-6" />}
     />
   );
 }

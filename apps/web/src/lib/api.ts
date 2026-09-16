@@ -541,28 +541,28 @@ export function runAiEvaluate(
   });
 }
 
-export type CheckGapsVerdict =
+export type CheckOnExperiencesVerdict =
   | "gap_confirmed"
   | "exists_not_linked"
   | "exists_and_linked";
 
-export type AiCheckGapsRequest = {
-  gapQuery: string;
+export type AiCheckOnExperiencesRequest = {
+  searchText: string;
   generationId?: string | null;
 };
 
-export type AiCheckGapsResult = {
+export type AiCheckOnExperiencesResult = {
   markdown: string;
-  verdict: CheckGapsVerdict;
+  verdict: CheckOnExperiencesVerdict;
   matchedExperienceIds: string[];
   tokenUsed: number;
 };
 
-export function runAiCheckGaps(payload: AiCheckGapsRequest) {
-  return request<AiCheckGapsResult>("/ai-check-gaps", {
+export function runAiCheckOnExperiences(payload: AiCheckOnExperiencesRequest) {
+  return request<AiCheckOnExperiencesResult>("/ai-check-on-experiences", {
     method: "POST",
     body: JSON.stringify({
-      gapQuery: payload.gapQuery,
+      searchText: payload.searchText,
       ...(payload.generationId ? { generationId: payload.generationId } : {}),
     }),
     timeoutMs: AI_API_TIMEOUT_MS,
@@ -879,13 +879,10 @@ type ResumeDownloadResult = {
   status: number;
 };
 
-export function resolveDownloadFormat(
-  settings: GenerationProcessSettings,
-): DownloadFormat {
-  if (settings.resumeLanguage !== "en") {
-    return "docx";
-  }
-  return settings.downloadFormat;
+export function isPdfDownloadAvailable(
+  resumeLanguage: ResumeLanguage,
+): boolean {
+  return resumeLanguage === "en";
 }
 
 async function downloadResumeExport(

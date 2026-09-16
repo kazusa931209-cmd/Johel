@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
+import { CloseButton } from "@/components/shared/action-icon-buttons";
 
 type TextSelectionToolbarProps = {
   children: React.ReactNode;
@@ -97,6 +98,11 @@ export function TextSelectionToolbar({
     clearToolbar();
   }
 
+  function handleClose() {
+    window.getSelection()?.removeAllRanges();
+    clearToolbar();
+  }
+
   return (
     <div ref={wrapperRef} className="relative">
       {children}
@@ -105,7 +111,7 @@ export function TextSelectionToolbar({
           ref={toolbarRef}
           role="toolbar"
           aria-label={t("generate.evaluateStep.selection.toolbarAria")}
-          className="fixed z-50 flex -translate-x-1/2 items-center gap-1 rounded-md border border-border bg-surface px-1 py-1 shadow-lg"
+          className="fixed z-50 flex -translate-x-1/2 items-center gap-1 rounded-md border border-border bg-surface py-1 pr-1 pl-1 shadow-lg"
           style={{ top: position.top, left: position.left }}
         >
           <button
@@ -123,6 +129,11 @@ export function TextSelectionToolbar({
           >
             {t("generate.evaluateStep.selection.check")}
           </button>
+          <div className="mx-0.5 h-4 w-px bg-border" aria-hidden />
+          <CloseButton
+            onClick={handleClose}
+            className="inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded hover:bg-surface-muted"
+          />
         </div>
       ) : null}
     </div>

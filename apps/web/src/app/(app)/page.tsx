@@ -914,6 +914,7 @@ export default function GeneratePage() {
                 resume={resume}
                 aiResumeSnapshot={resumeAiSnapshot}
                 downloadLabel={downloadLabel}
+                resumeLanguage={processSettings.resumeLanguage}
                 doEvaluate={processSettings.doEvaluate}
                 generating={generatingResume}
                 onRun={runFromGenerate}
@@ -928,6 +929,7 @@ export default function GeneratePage() {
                 generationId={generationId}
                 resume={resume}
                 downloadLabel={downloadLabel}
+                resumeLanguage={processSettings.resumeLanguage}
                 evaluationMarkdown={evaluationMarkdown}
                 evaluating={evaluating}
                 onDownloaded={handleResumeDownloaded}

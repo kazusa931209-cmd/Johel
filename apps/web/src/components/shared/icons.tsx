@@ -161,6 +161,68 @@ export function PlayIcon({ className }: IconProps) {
   );
 }
 
+export function DocxFileIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+        fill="#2B579A"
+      />
+      <path d="M14 3v5h5" fill="#1E3F6F" />
+      <path
+        d="M8.5 13.5h7M8.5 16h5"
+        stroke="#fff"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <text
+        x="12"
+        y="11.5"
+        fill="#fff"
+        fontSize="4.5"
+        fontWeight="700"
+        textAnchor="middle"
+        fontFamily="ui-sans-serif, system-ui, sans-serif"
+      >
+        W
+      </text>
+    </svg>
+  );
+}
+
+export function PdfFileIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+        fill="#D93831"
+      />
+      <path d="M14 3v5h5" fill="#A82822" />
+      <text
+        x="12"
+        y="16"
+        fill="#fff"
+        fontSize="4.5"
+        fontWeight="700"
+        textAnchor="middle"
+        fontFamily="ui-sans-serif, system-ui, sans-serif"
+      >
+        PDF
+      </text>
+    </svg>
+  );
+}
+
 export function DownloadIcon({ className }: IconProps) {
   return (
     <svg
