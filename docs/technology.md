@@ -240,8 +240,8 @@ User browser (:4041)
 ## Prompts settings (Phase 18, 23, 34, 39, 40, 43)
 
 - `GET /prompts` → `{ verdictPrompt, generatePrompt, evaluatePrompt }` — empty strings when no row yet (owner only); new sign-ups receive defaults from `@johel/prompt-defaults` via `POST /auth/register` (Verdict default uses Role / Technical Requirements / Final Verdict sections; Generate default maps those headings and caps skills at 3–5 groups and 12 items; Evaluate default scores the same Verdict dimensions)
-- `PUT /prompts/verdict` → body `{ verdictPrompt }`; `PUT /prompts/generate` → `{ generatePrompt }`; `PUT /prompts/evaluate` → `{ evaluatePrompt }` (each trim, min 1, max 10,000 chars); upsert by `userId`; on write, only the submitted prompt is converted to markdown via AI when changed (unchanged skip conversion); requires Settings provider/apiKey when conversion runs; each endpoint returns all three prompts
-- Web route `/settings/prompts`: **Verdict**, **Generate**, and **Evaluate** tabs (`?tab=verdict|generate|evaluate`, default Verdict); page copy states that system prompt changes directly affect resume generation quality; each tab shows one read-only `AiVerdictMarkdown` preview (muted placeholder when empty); **Edit** (pencil) opens `PromptEditDialog` (textarea + **Apply**, local until that tab’s **Save**); auto-markdown notice and resume-context hints where applicable; fullscreen `BusyOverlay` when conversion runs; per-tab **Reset to Default** (secondary, confirm dialog, persists `@johel/prompt-defaults` for that tab) and **Save** (always enabled; inline validation on submit); toast on API result; refreshes header Token Used after save
+- `PUT /prompts/verdict` → body `{ verdictPrompt?, verdictExtension? }`; `PUT /prompts/generate` → `{ generatePrompt?, generateExtension? }`; `PUT /prompts/evaluate` → `{ evaluatePrompt?, evaluateExtension? }` (system prompt trim, min 1 when provided, max 10,000 chars; extension optional, max 10,000 chars; at least one field required); upsert by `userId`; on write, only the submitted system prompt is converted to markdown via AI when changed (unchanged skip conversion); requires Settings provider/apiKey when conversion runs; each endpoint returns all prompts and extensions
+- Web route `/settings/prompts`: **Verdict**, **Generate**, and **Evaluate** tabs (`?tab=verdict|generate|evaluate`, default Verdict); page copy states that system prompt changes directly affect resume generation quality; each tab shows two sections — system prompt (read-only `AiVerdictMarkdown` preview, muted placeholder when empty) and optional extension (textarea); **Edit** (pencil) opens `PromptEditDialog` (textarea + left-aligned system-impact notice, **Reset** to `@johel/prompt-defaults` draft, **Apply** — local until that tab’s **Save**); auto-markdown notice and resume-context hints where applicable; fullscreen `BusyOverlay` when conversion runs; per-tab **Save** (always enabled; inline validation on submit); toast on API result; refreshes header Token Used after save
 - Legacy web routes `/prompts` and `/verdict` redirect to `/settings/prompts`
 - Company editor form (`CompanyForm`): alias, company name, what this company is, and domain & stack; prompt fields show auto-markdown notice; fullscreen `BusyOverlay` when conversion runs; detail dialog renders prompt fields with `AiVerdictMarkdown`. Experience editor form (`ExperienceForm`): Description textarea with the same auto-markdown behavior.
 - Client: `getPrompts`, `savePrompt` in `apps/web/src/lib/api.ts`; placeholders in `apps/web/src/lib/prompts.ts`
@@ -364,7 +364,7 @@ User browser (:4041)
 - `POST /ai-resume` — body `{ jobContext, combine }` where `combine.emphasis` is Run guidance for this run; each `combine.companies[]` entry may include optional `keywordContext` (max 500 chars), passed through `assembleFromCombineSnapshot` into the Generate user prompt (`Keyword context:` line per company, same Auto placeholder as Combine Suggest when empty); server attaches `generationPolicy` (`experienceDimensionMode`, `experienceJdTierDecayPercent`) from `generationProcess`; Generate execution rules and user prompt apply JD tier decay to Experience bullets only (Summary/Skills full JD), Summary naturalness rules, **company scene grounding** (`whatCompanyIs` per employer), role-context cap, and keyword priority within each company slot
 - `POST /resume/combine-fingerprint` — fingerprint for Combine snapshot (replaces workflow fingerprint)
 - `GET /auth/me` includes `role` (`admin` | `user`)
-- `GET /prompts` returns `*Extension` fields; `PUT /prompts/{kind}/extension` for all users; full prompt `PUT` for admins only
+- `GET /prompts` returns system prompts and `*Extension` fields; `PUT /prompts/{kind}` accepts the system prompt and/or extension for any signed-in user
 - Removed: `GET/POST /workflows`, `POST /ai-workflow-recommend`, `POST /ai-author-advise`, `PUT /settings/process/last-workflow`
 
 ### Schema
@@ -390,7 +390,7 @@ User browser (:4041)
 - Session: `combine: CombineSnapshot` instead of `workflow`
 - Experiences: `ExperienceFactForm` (full page), `ExperienceSuggestionDialog`; **Quick Add Experience:** `QuickAddExperience` drawer reuses `useExperienceAdviseFlow`, `ExperienceFactFormFields`, `ExperienceSuggestionDrawer` (create-only; same `POST /ai-experience-advise` + apply as `/experiences/new`)
 - `StudioBottomFabCluster`: Quick Add Experience plus FAB + AI Usage History FAB (column layout)
-- Settings Prompts: admin full edit vs user extensions; `compileInstruction` appends extensions
+- Settings Prompts: each tab edits system prompt + optional extension; `compileInstruction` appends extensions
 
 ### Resume assembly
 

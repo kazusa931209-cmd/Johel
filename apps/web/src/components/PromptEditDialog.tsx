@@ -9,8 +9,12 @@ const PROMPT_MAX = 10_000;
 type PromptEditDialogProps = {
   title: string;
   value: string;
+  defaultValue: string;
   rows: number;
   placeholder: string;
+  impactNotice: string;
+  resetLabel: string;
+  applyLabel: string;
   onClose: () => void;
   onApply: (value: string) => void;
 };
@@ -18,8 +22,12 @@ type PromptEditDialogProps = {
 export function PromptEditDialog({
   title,
   value,
+  defaultValue,
   rows,
   placeholder,
+  impactNotice,
+  resetLabel,
+  applyLabel,
   onClose,
   onApply,
 }: PromptEditDialogProps) {
@@ -30,6 +38,10 @@ export function PromptEditDialog({
   function apply() {
     onApply(draft);
     onClose();
+  }
+
+  function resetDraft() {
+    setDraft(defaultValue);
   }
 
   return (
@@ -65,14 +77,29 @@ export function PromptEditDialog({
           {formatThousandsSeparated(PROMPT_MAX)} characters
         </p>
       </label>
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={apply}
-          className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
+      <div className="flex items-center justify-between gap-4">
+        <div
+          role="alert"
+          className="min-w-0 flex-1 rounded-md border border-border bg-toast-warning-bg px-3 py-2 text-left text-sm text-toast-warning-fg"
         >
-          Apply
-        </button>
+          {impactNotice}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={resetDraft}
+            className="rounded-md border border-border bg-surface-muted px-3 py-2 text-sm font-medium text-foreground hover:opacity-90"
+          >
+            {resetLabel}
+          </button>
+          <button
+            type="button"
+            onClick={apply}
+            className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
+          >
+            {applyLabel}
+          </button>
+        </div>
       </div>
     </DetailDialog>
   );

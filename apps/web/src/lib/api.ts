@@ -219,6 +219,31 @@ export function savePromptExtension(kind: PromptKind, extension: string) {
   });
 }
 
+export function savePromptTab(
+  kind: PromptKind,
+  payload: { prompt: string; extension: string },
+) {
+  const body =
+    kind === "verdict"
+      ? {
+          verdictPrompt: payload.prompt,
+          verdictExtension: payload.extension,
+        }
+      : kind === "generate"
+        ? {
+            generatePrompt: payload.prompt,
+            generateExtension: payload.extension,
+          }
+        : {
+            evaluatePrompt: payload.prompt,
+            evaluateExtension: payload.extension,
+          };
+  return request<PromptSettings>(`/prompts/${kind}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
 export type CombineSnapshot = {
   profileId: string;
   language: string;

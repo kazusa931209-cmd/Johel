@@ -76,10 +76,6 @@ function serializePrompts(prompts: {
   };
 }
 
-function isAdminRole(role: string | undefined): boolean {
-  return role === "admin";
-}
-
 async function savePromptKind(
   userId: string,
   kind: PromptKind,
@@ -197,54 +193,63 @@ for (const [kind, config] of Object.entries(PROMPT_KIND_CONFIG) as [
     }
 
     const body = await c.req.json().catch(() => null);
-    const admin = isAdminRole(user.role);
-
-    if (admin) {
-      const parsed = z
-        .object({
-          [config.bodyKey]: promptFieldSchema,
-        })
-        .safeParse(body);
-      if (!parsed.success) {
-        return c.json(
-          {
-            error: `${config.label} is required (max ${PROMPT_MAX} characters).`,
-          },
-          400,
-        );
-      }
-
-      try {
-        const submitted =
-          parsed.data[config.bodyKey as keyof typeof parsed.data];
-        const prompts = await savePromptKind(user.id, kind, submitted);
-        return c.json(prompts);
-      } catch (err) {
-        const message =
-          err instanceof Error && err.message
-            ? err.message
-            : "Markdown conversion failed. Please try again.";
-        return c.json({ error: message }, 502);
-      }
-    }
-
     const parsed = z
       .object({
-        [config.extensionKey]: extensionFieldSchema,
+        [config.bodyKey]: promptFieldSchema.optional(),
+        [config.extensionKey]: extensionFieldSchema.optional(),
       })
       .safeParse(body);
     if (!parsed.success) {
       return c.json(
         {
-          error: `${config.extensionLabel} must be at most ${PROMPT_MAX} characters.`,
+          error: `Invalid prompt payload (max ${PROMPT_MAX} characters).`,
         },
         400,
       );
     }
 
-    const submitted =
+    const promptSubmitted =
+      parsed.data[config.bodyKey as keyof typeof parsed.data];
+    const extensionSubmitted =
       parsed.data[config.extensionKey as keyof typeof parsed.data];
-    const prompts = await savePromptExtension(user.id, kind, submitted);
-    return c.json(prompts);
+
+    if (promptSubmitted === undefined && extensionSubmitted === undefined) {
+      return c.json(
+        {
+          error: `Provide ${config.label} and/or ${config.extensionLabel}.`,
+        },
+        400,
+      );
+    }
+
+    try {
+      let prompts =
+        promptSubmitted !== undefined
+          ? await savePromptKind(user.id, kind, promptSubmitted)
+          : serializePrompts(
+              (await prisma.prompt.findUnique({
+                where: { userId: user.id },
+              })) ?? {
+                verdictPrompt: "",
+                generatePrompt: "",
+                evaluatePrompt: "",
+                verdictExtension: "",
+                generateExtension: "",
+                evaluateExtension: "",
+              },
+            );
+
+      if (extensionSubmitted !== undefined) {
+        prompts = await savePromptExtension(user.id, kind, extensionSubmitted);
+      }
+
+      return c.json(prompts);
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Markdown conversion failed. Please try again.";
+      return c.json({ error: message }, 502);
+    }
   });
 }

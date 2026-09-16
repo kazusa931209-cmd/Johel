@@ -184,7 +184,7 @@ export const en = {
       title: "Prompts",
       loading: "Loading…",
       description:
-        "Configure system prompts used when checking Job Descriptions, generating resumes, and evaluating resumes. Each tab saves independently.",
+        "Configure system prompts and optional extensions for checking Job Descriptions, generating resumes, and evaluating resumes. Each tab saves independently.",
       tablistAria: "Prompt types",
       tabs: {
         verdict: "Verdict",
@@ -209,6 +209,9 @@ export const en = {
         generate: "Edit Generate Prompt",
         evaluate: "Edit Evaluate Prompt",
         dialogTitle: "Edit {label}",
+        systemImpactNotice:
+          "Changes to system prompts directly affect the whole system. Review carefully before applying.",
+        reset: "Reset",
       },
       resetToDefault: "Reset to Default",
       resetting: "Resetting…",

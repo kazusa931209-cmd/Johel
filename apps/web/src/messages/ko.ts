@@ -186,7 +186,7 @@ export const ko: MessageTree = {
       title: "프롬프트",
       loading: "불러오는 중…",
       description:
-        "채용 공고 검토, 이력서 생성, 이력서 평가에 사용되는 시스템 프롬프트를 설정합니다. 각 탭은 독립적으로 저장됩니다.",
+        "채용 공고 검토, 이력서 생성, 이력서 평가에 사용되는 시스템 프롬프트와 선택 확장을 설정합니다. 각 탭은 독립적으로 저장됩니다.",
       tablistAria: "프롬프트 유형",
       tabs: {
         verdict: "판정",
@@ -211,6 +211,9 @@ export const ko: MessageTree = {
         generate: "생성 프롬프트 편집",
         evaluate: "평가 프롬프트 편집",
         dialogTitle: "{label} 편집",
+        systemImpactNotice:
+          "시스템 프롬프트 변경은 전체 시스템에 직접적인 영향을 줍니다. 적용 전에 신중히 검토해 주세요.",
+        reset: "재설정",
       },
       resetToDefault: "기본값으로 재설정",
       resetting: "재설정 중…",
