@@ -59,7 +59,7 @@ import {
   isAutoRunInFlight,
   releaseAutoRun,
 } from "@/lib/generate-auto-run";
-import { extractJdMetaFromVerdictMarkdown } from "@johel/jd-meta";
+import { hydrateJobJdMetaFromVerdict } from "@johel/jd-meta";
 import {
   getCombineGenerationFingerprint,
   runAiEvaluate,
@@ -373,11 +373,11 @@ export default function GeneratePage() {
     const inputKey = buildVerdictInputKey(job, promptCacheContext);
     if (canReuseStoredVerdict({ job, verdictInputKey }, inputKey)) {
       if (job.acceptedMarkdown) {
-        const jdMeta = extractJdMetaFromVerdictMarkdown(job.acceptedMarkdown);
+        const hydrated = hydrateJobJdMetaFromVerdict(job);
         setJob({
           ...job,
-          jdCompanyName: jdMeta.jdCompanyName,
-          jdJobRole: jdMeta.jdJobRole,
+          jdCompanyName: hydrated.jdCompanyName ?? "",
+          jdJobRole: hydrated.jdJobRole ?? "",
         });
       }
       return;
@@ -399,9 +399,14 @@ export default function GeneratePage() {
         return;
       }
 
-      setVerdictResult(res.data.markdown, inputKey, {
+      const hydrated = hydrateJobJdMetaFromVerdict({
+        acceptedMarkdown: res.data.markdown,
         jdCompanyName: res.data.jdCompanyName,
         jdJobRole: res.data.jdJobRole,
+      });
+      setVerdictResult(res.data.markdown, inputKey, {
+        jdCompanyName: hydrated.jdCompanyName ?? "",
+        jdJobRole: hydrated.jdJobRole ?? "",
       });
       setTokenUsed(res.data.tokenUsed);
       await refreshTokenUsed();

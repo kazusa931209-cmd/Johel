@@ -13,34 +13,84 @@ const MISSING_VALUES = new Set([
   "none",
 ]);
 
+const ROLE_SECTION_HEADINGS = ["Role", "Job Role", "Position"];
+const COMPANY_SECTION_HEADINGS = [
+  "Company & Contacts",
+  "Company and Contacts",
+  "Company",
+];
+
 function normalizeExtractedValue(raw: string): string {
-  const trimmed = raw.trim();
+  const trimmed = stripInlineMarkdown(raw);
   if (MISSING_VALUES.has(trimmed.toLowerCase())) {
     return "";
   }
   return trimmed;
 }
 
+function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/_(.+?)_/g, "$1")
+    .replace(/`(.+?)`/g, "$1")
+    .trim();
+}
+
+function normalizeHeading(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/\band\b/g, "&")
+    .replace(/\s+/g, " ");
+}
+
+function normalizeLineForLabelMatch(line: string): string {
+  return stripInlineMarkdown(line).trim();
+}
+
 function extractLabeledValue(
   sectionBody: string,
-  labelPattern: RegExp,
+  labelPatterns: RegExp[],
 ): string {
   const lines = sectionBody.split("\n");
-  for (const line of lines) {
-    const match = line.match(labelPattern);
-    if (!match) continue;
-    return normalizeExtractedValue(match[1] ?? "");
+  for (let index = 0; index < lines.length; index += 1) {
+    const normalized = normalizeLineForLabelMatch(lines[index] ?? "");
+    for (const labelPattern of labelPatterns) {
+      const match = normalized.match(labelPattern);
+      if (!match) continue;
+
+      const inline = normalizeExtractedValue(match[1] ?? "");
+      if (inline) {
+        return inline;
+      }
+
+      for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex += 1) {
+        const rawNext = lines[nextIndex] ?? "";
+        const trimmedNext = rawNext.trim();
+        if (!trimmedNext) continue;
+        if (/^#{1,6}\s+/.test(trimmedNext)) break;
+        if (/^-\s+/.test(trimmedNext)) break;
+        return normalizeExtractedValue(normalizeLineForLabelMatch(rawNext));
+      }
+
+      return "";
+    }
   }
   return "";
 }
 
-function extractSection(markdown: string, heading: string): string | null {
+function extractSection(markdown: string, headings: string[]): string | null {
   const lines = markdown.split("\n");
-  const target = `## ${heading}`.trim().toLowerCase();
+  const targets = new Set(headings.map((heading) => normalizeHeading(heading)));
   let startIndex = -1;
 
   for (let index = 0; index < lines.length; index += 1) {
-    if (lines[index]?.trim().toLowerCase() === target) {
+    const line = lines[index]?.trim() ?? "";
+    const headingMatch = line.match(/^#{1,6}\s+(.+)$/);
+    if (!headingMatch) continue;
+    const heading = normalizeHeading(headingMatch[1] ?? "");
+    if (targets.has(heading)) {
       startIndex = index + 1;
       break;
     }
@@ -53,7 +103,7 @@ function extractSection(markdown: string, heading: string): string | null {
   const bodyLines: string[] = [];
   for (let index = startIndex; index < lines.length; index += 1) {
     const line = lines[index] ?? "";
-    if (/^##\s+/.test(line)) {
+    if (/^#{1,6}\s+/.test(line.trim())) {
       break;
     }
     bodyLines.push(line);
@@ -73,27 +123,22 @@ export function extractJdMetaFromVerdictMarkdown(markdown: string): JdMeta {
     return { ...EMPTY_META };
   }
 
-  const roleSection = extractSection(trimmed, "Role");
-  const companySection = extractSection(trimmed, "Company & Contacts");
+  const roleSection = extractSection(trimmed, ROLE_SECTION_HEADINGS);
+  const companySection = extractSection(trimmed, COMPANY_SECTION_HEADINGS);
 
-  let jdCompanyName = companySection
-    ? extractLabeledValue(companySection, /^-\s*Company name:\s*(.*)$/i)
+  const jdJobRole = roleSection
+    ? extractLabeledValue(roleSection, [
+        /^-\s*Title:\s*(.*)$/i,
+        /^Title:\s*(.*)$/i,
+      ])
     : "";
 
-  if (!jdCompanyName && companySection) {
-    jdCompanyName = extractLabeledValue(
-      companySection,
-      /^Company name:\s*(.*)$/i,
-    );
-  }
-
-  let jdJobRole = roleSection
-    ? extractLabeledValue(roleSection, /^-\s*Title:\s*(.*)$/i)
+  const jdCompanyName = companySection
+    ? extractLabeledValue(companySection, [
+        /^-\s*Company name:\s*(.*)$/i,
+        /^Company name:\s*(.*)$/i,
+      ])
     : "";
-
-  if (!jdJobRole && roleSection) {
-    jdJobRole = extractLabeledValue(roleSection, /^Title:\s*(.*)$/i);
-  }
 
   return { jdCompanyName, jdJobRole };
 }

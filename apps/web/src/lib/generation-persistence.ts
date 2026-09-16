@@ -1,3 +1,4 @@
+import { hydrateJobJdMetaFromVerdict } from "@johel/jd-meta";
 import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
@@ -62,10 +63,11 @@ export async function allocateNewGeneration() {
 export function generationDetailToSession(
   detail: GenerationDetail,
 ): GenerateSession {
-  const job =
+  const job = hydrateJobJdMetaFromVerdict(
     detail.verdictMarkdown && !detail.job.acceptedMarkdown
       ? { ...detail.job, acceptedMarkdown: detail.verdictMarkdown }
-      : detail.job;
+      : detail.job,
+  );
 
   const session =
     parseGenerateSession({

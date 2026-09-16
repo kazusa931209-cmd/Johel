@@ -60,4 +60,45 @@ Company name: Globex`;
       jdJobRole: "Platform Engineer",
     });
   });
+
+  it("extracts from bold markdown labels", () => {
+    const markdown = `## Role
+- **Title:** Senior Software Engineer
+
+## Company & Contacts
+- **Company name:** Acme Corp`;
+
+    expect(extractJdMetaFromVerdictMarkdown(markdown)).toEqual({
+      jdCompanyName: "Acme Corp",
+      jdJobRole: "Senior Software Engineer",
+    });
+  });
+
+  it("reads value on the next line when the label line is empty", () => {
+    const markdown = `## Role
+- Title:
+Senior Software Engineer
+
+## Company & Contacts
+- Company name:
+Acme Corp`;
+
+    expect(extractJdMetaFromVerdictMarkdown(markdown)).toEqual({
+      jdCompanyName: "Acme Corp",
+      jdJobRole: "Senior Software Engineer",
+    });
+  });
+
+  it("accepts Company and Contacts heading alias", () => {
+    const markdown = `## Role
+- Title: Backend Engineer
+
+## Company and Contacts
+- Company name: Globex`;
+
+    expect(extractJdMetaFromVerdictMarkdown(markdown)).toEqual({
+      jdCompanyName: "Globex",
+      jdJobRole: "Backend Engineer",
+    });
+  });
 });

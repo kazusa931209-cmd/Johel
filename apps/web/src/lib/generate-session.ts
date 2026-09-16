@@ -1,3 +1,4 @@
+import { hydrateJobJdMetaFromVerdict } from "@johel/jd-meta";
 import type { GeneratedResume } from "@johel/resume";
 import { parseGeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
@@ -333,7 +334,7 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
   if (legacyOneTimePrompt && !combine.emphasis.trim()) {
     combine = { ...combine, emphasis: legacyOneTimePrompt };
   }
-  const job = parseJobState(raw.job);
+  const job = hydrateJobJdMetaFromVerdict(parseJobState(raw.job));
   let verdictInputKey =
     typeof raw.verdictInputKey === "string" ? raw.verdictInputKey : null;
   if (job.acceptedMarkdown && !verdictInputKey) {
