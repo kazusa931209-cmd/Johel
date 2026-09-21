@@ -25,7 +25,7 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | Resume export | `docx`; `pdf-lib` (PDF) | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
 | Package manager | pnpm workspaces | Monorepo (`apps/web`, `packages/*`) |
-| Testing | Vitest; GitHub Actions CI (Phase 83) | Unit + auth/security integration tests; Playwright smoke deferred |
+| Testing | Vitest; GitHub Actions CI (Phase 83, Phase 94) | Web + `@johel/resume` / `@johel/jd-meta` tests; auth/security integration tests; Playwright smoke deferred |
 
 ## Architecture sketch
 
@@ -334,6 +334,12 @@ User browser (:4041 local, Vercel in prod)
 - **Replace database:** copy a local SQLite file (e.g. `apps/web/prisma/dev.db`) into `/data/johel.db` on `johel-data` — see [`docker.md`](./docker.md)
 - **Secrets:** `JWT_SECRET` from root `.env` via Compose (not in image)
 
+## CI/CD (Phase 94)
+
+- Workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): parallel **web**, **packages**, and conditional **docker** jobs; no Turso secrets in CI
+- CD: Vercel Preview (PR) and Production (`main`); migrations run during Vercel build via `prisma migrate deploy`
+- Operator runbook: [`ci-cd.md`](./ci-cd.md) (branch protection, rollback, local `pnpm test` parity)
+
 ## Vercel + Turso (Phase 93 — production)
 
 - **Deploy:** root `vercel.json`; build `pnpm --filter web build` (includes `prisma migrate deploy`)
@@ -502,16 +508,9 @@ Public deployment adds security and operability without paid SaaS. Plan: [`plans
 
 ### Test coverage + CI
 
-- `.github/workflows/ci.yml` — install, api test, web test, lint, web build
-- API integration tests: auth, settings encryption, rate limit, owner isolation
-- `.github/workflows/ci.yml` — install, Prisma generate, api test, web test, web lint, web build
-- Integration: `apps/api/src/routes/__tests__/auth-security.test.ts` (encrypted settings, session invalidation)
-
-### Backups
-
-- `scripts/backup-db.sh` — SQLite backup to `BACKUP_DIR` (default `./backups`); Docker or local dev DB
-- `scripts/restore-db.sh` — restore with `RESTORE` confirmation prompt
-- `BACKUP_RETENTION_DAYS` (default 14) prunes old files
+- `.github/workflows/ci.yml` — **web** (Prisma generate, Vitest, ESLint, `next build` with CI SQLite), **packages** (`@johel/resume`, `@johel/jd-meta`), optional **docker** image verify
+- Server tests under `apps/web/src/server/**/__tests__` (auth, settings encryption, rate limit, deploy-config, AI lib units)
+- Root `pnpm test` matches CI package + web test scope; details in [`ci-cd.md`](./ci-cd.md)
 
 ## Plans
 

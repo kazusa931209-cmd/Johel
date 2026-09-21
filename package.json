@@ -4,7 +4,7 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "db:migrate": "pnpm --filter web exec prisma migrate dev",
-    "test": "pnpm --filter web test"
+    "test": "pnpm --filter web test && pnpm --filter @johel/resume test && pnpm --filter @johel/jd-meta test"
   },
   "engines": {
     "node": ">=20"

@@ -99,6 +99,14 @@ Use [`apps/web/.env`](../apps/web/.env) (from [`.env.example`](../apps/web/.env.
 
 ## Smoke test after deploy
 
+Quick health check (replace host with Preview or Production URL):
+
+```bash
+curl -fsS "https://YOUR_DEPLOYMENT_HOST/backend/health"
+```
+
+Expect JSON `{ "ok": true }`.
+
 - `GET /backend/health` → `{ "ok": true }`
 - Register or log in with migrated user
 - **Settings → Environment** — saved OpenAI/Cursor key still works (encryption key correct)

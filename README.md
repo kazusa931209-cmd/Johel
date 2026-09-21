@@ -8,6 +8,7 @@ Local customized Resume / CV builder.
 
 - [Specification](docs/specification.md)
 - [Technology](docs/technology.md)
+- [CI/CD](docs/ci-cd.md)
 - [Vercel deployment](docs/vercel-deploy.md)
 - [Docker deployment](docs/docker.md) (legacy self-hosted; production target is Vercel + Turso)
 - [Plans](docs/plans/)
