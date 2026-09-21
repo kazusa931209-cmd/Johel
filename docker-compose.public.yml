@@ -17,10 +17,7 @@ services:
       PUBLIC_DEPLOY: "true"
       TRUST_PROXY: "true"
       PUBLIC_URL: https://${PUBLIC_DOMAIN:?Set PUBLIC_DOMAIN in .env}
-      HOST: "127.0.0.1"
-      PORT: "4042"
       WEB_PORT: "4321"
-      API_ORIGIN: http://127.0.0.1:4042
       HOSTNAME: "0.0.0.0"
     volumes:
       - johel-data:/data

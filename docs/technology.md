@@ -15,34 +15,35 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | Layer | Choice | Why |
 | --- | --- | --- |
 | Language / runtime | TypeScript on Node.js (LTS) | Single language for UI and API; fits Cursor SDK TypeScript package |
-| API | **Hono** (standalone process) | Local API separate from UI; lightweight TypeScript server |
+| API | **Next.js Route Handler** (`/backend/*`) + **Hono** router in-process | Single deployable app; same route logic as former standalone API |
 | UI | Next.js (App Router) + Tailwind CSS | Frontend only; no paid UI SaaS |
-| Database | SQLite via Prisma | On-disk multi-user data; no hosted DB cost |
+| Database | **SQLite file** (local dev) / **Turso libSQL** (production on Vercel) via Prisma | Dev: `file:./prisma/dev.db`; prod: `libsql://` + `TURSO_AUTH_TOKEN` |
 | Auth | Login ID + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP. API field `loginId`; DB column `users.email` stores the login ID (no email-format validation). |
 | Secrets / API keys | Per-user `Setting.apiKey` — **AES-256-GCM at rest** when `ENCRYPTION_KEY` is set (Phase 83); plaintext only in local dev without the key | Masked on read; decrypt via `getUserAiSettings` |
-| LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `apps/api` | User-owned keys; Anthropic adapters later |
+| LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `apps/web/src/server` | User-owned keys; Anthropic adapters later |
 | JD ingest (later) | Manual / URL (`fetch` + cheerio) / file (`pdf-parse`, `mammoth`) | No scraping or parse SaaS |
 | Resume export | `docx`; `pdf-lib` (PDF) | Server-side generation on the API |
 | Templates / formats (later) | Natural-language settings in SQLite via LLM prompts | Spec requirement |
-| Package manager | pnpm workspaces | Monorepo (`apps/api`, `apps/web`) |
+| Package manager | pnpm workspaces | Monorepo (`apps/web`, `packages/*`) |
 | Testing | Vitest; GitHub Actions CI (Phase 83) | Unit + auth/security integration tests; Playwright smoke deferred |
 
 ## Architecture sketch
 
 ```text
-User browser (:4041)
-    → Next.js UI (apps/web)
-        → rewrite /backend/* → Hono API (:4042)
+User browser (:4041 local, Vercel in prod)
+    → Next.js (apps/web)
+        → /backend/* → Hono app (apps/web/src/server)
             → Email/password + JWT (httpOnly cookie on UI origin)
-            → SQLite (Prisma)
-            → LLM / export / JD ingest (later)
+            → SQLite file (dev) or Turso (prod)
+            → LLM / export / JD ingest
 ```
 
-## API (Phase 2)
+## API (in Next.js — Phase 93)
 
-- Package: `apps/api`
-- Listen: `http://127.0.0.1:4042`
-- Env: `DATABASE_URL`, `JWT_SECRET` (see `apps/api/.env.example`)
+- Code: `apps/web/src/server/` (Hono routes + lib)
+- Public path: `/backend/*` (catch-all Route Handler → Hono)
+- Runtime: Node.js (`maxDuration` 300s on `/backend/*` for long AI calls)
+- Env: `DATABASE_URL`, `JWT_SECRET`, optional `TURSO_AUTH_TOKEN`, `ENCRYPTION_KEY` (see `apps/web/.env.example`)
 - Endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `PUT /auth/password`, `GET /auth/me`, `GET /settings`, `PUT /settings`, `GET /settings/process`, `PUT /settings/process`, `PUT /settings/process/last-workflow`, `GET/POST /workflows`, `GET /workflows/:id/generation-fingerprint`, `GET/PUT/DELETE /workflows/:id`, `GET/POST /profiles`, `GET/PUT/DELETE /profiles/:id`, `GET/POST /companies`, `GET/PUT/DELETE /companies/:id`, `GET/POST /experiences`, `GET/PUT/DELETE /experiences/:id`, `POST /ai-verdict`, `POST /ai-jd-meta`, `POST /ai-workflow-recommend`, `POST /ai-resume`, `POST /ai-evaluate`, `POST /ai-author-advise`, `POST /ai-author-advise/apply`, `POST /resume/docx`, `POST /resume/pdf`, `GET /ai-usage/summary`, `GET /ai-usage`, `GET /ai-usage/:id`, `GET /prompts`, `PUT /prompts/verdict`, `PUT /prompts/generate`, `PUT /prompts/evaluate`
 - Prisma `User` → table `users`: `id`, `email` (login ID), `passwordHash`, `createdAt`, `updatedAt`
 - **Phase 76:** `PUT /auth/password` `{ currentPassword, newPassword }` (min 8); verifies current hash then updates `passwordHash` only; `changePassword` in `apps/web/src/lib/api.ts`
@@ -60,13 +61,14 @@ User browser (:4041)
 - **Phase 36:** `PromptOptimization` / `promptOptimizations` and `usePromptOptimizationAi` removed; AI routes use deterministic `compileInstruction` only (see `apps/api/src/lib/prompt-optimize/compile.ts`)
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
-- **Migrations:** squashed to a single migration `20260908100000_init` (2026-09-08). Fresh installs and Docker entrypoint use `prisma migrate deploy`. If a database already applied the pre-squash migration history, reset before deploy: local `pnpm --filter api exec prisma migrate reset` (or delete `apps/api/prisma/dev.db` and run `migrate deploy`); Docker `docker compose down -v` then `docker compose up -d` (wipes `johel-data`)
+- **Migrations:** under `apps/web/prisma/migrations/`. Local: `pnpm db:migrate`. Production build / Docker entrypoint: `prisma migrate deploy`. Fresh Docker volume: `docker compose down -v` then `up` wipes `johel-data`.
+- **Turso cutover:** backup SQLite → `scripts/prepare-sqlite-for-turso-import.sh` (sets `journal_mode=WAL`) → `turso db import`. Copy `JWT_SECRET` and `ENCRYPTION_KEY` from the source environment. Run `pnpm --filter web db:migrate-keys` once if plaintext API keys remain.
 
 ## Frontend (Phase 3)
 
 - Package: `apps/web`
 - Listen: `http://127.0.0.1:4041`
-- Same-origin proxy: Next.js route handler `/backend/[...path]` → `API_ORIGIN` (default `http://127.0.0.1:4042`); proxy and client fetch timeout **300 seconds** (10× 30s baseline) via `apps/web/src/lib/api-timeout.ts`
+- Same-origin API: `/backend/*` handled in-process (no separate API port or `API_ORIGIN` proxy)
 - Client calls `/backend/...` with `credentials: "include"` so the JWT cookie is set on the UI origin
 - Route groups:
   - `(auth)` — `/login`, `/register`
@@ -321,20 +323,23 @@ User browser (:4041)
 - Generate Job **Next** runs noise filter silently before `POST /ai-verdict` (no separate Noise Filter button)
 - Tests: Vitest (`pnpm --filter web test`); per-filter unit tests + BIT / Golang Engineer regression fixture under `__tests__/`
 
-## Docker (Phase 33)
+## Docker (Phase 33 — optional LAN)
 
-- **Image:** one container runs API (Hono) + web (Next.js standalone); platform `linux/arm64` for Docker Desktop on Apple Silicon
+- **Image:** one container runs Next.js standalone (UI + in-process `/backend/*` API); platform `linux/arm64` for Docker Desktop on Apple Silicon
 - **Files:** root `Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh`, `.dockerignore`; ops guide [`docker.md`](./docker.md)
-- **Publish:** `4321:4321` on all host interfaces (LAN access); API listens on `127.0.0.1:4042` inside the container only (`HOST` env on API)
-- **Web bind:** `HOSTNAME=0.0.0.0` in Compose (Docker sets `HOSTNAME` to the container name; Next standalone must override)
-- **Proxy:** `API_ORIGIN=http://127.0.0.1:4042` for `/backend/*` route handler
-- **Database:** SQLite at `file:/data/johel.db` on named volume `johel-data` (Docker Desktop VM — do not bind-mount to macOS for SQLite)
-- **Start:** entrypoint runs `prisma migrate deploy`, starts API, waits for `GET /health`, then starts Next on `:4321` (`WEB_PORT`)
-- **Update image:** rebuild and `docker compose up -d --force-recreate` (never `down -v`); Case B also uses `docker save` / `docker load` between Macs
-- **Replace database:** copy a local SQLite file (e.g. `apps/api/prisma/dev.db`) into `/data/johel.db` on `johel-data` — see [`docker.md` — Replace the Docker database with a local file](./docker.md#replace-the-docker-database-with-a-local-file)
+- **Publish:** `4321:4321` on all host interfaces (LAN access)
+- **Web bind:** `HOSTNAME=0.0.0.0` in Compose
+- **Database:** SQLite at `file:/data/johel.db` on named volume `johel-data`
+- **Start:** entrypoint runs `prisma migrate deploy` in `apps/web`, then starts Next on `:4321` (`WEB_PORT`)
+- **Replace database:** copy a local SQLite file (e.g. `apps/web/prisma/dev.db`) into `/data/johel.db` on `johel-data` — see [`docker.md`](./docker.md)
 - **Secrets:** `JWT_SECRET` from root `.env` via Compose (not in image)
-- **Next build:** `output: "standalone"` and `outputFileTracingRoot` in `apps/web/next.config.ts` for monorepo tracing; `transpilePackages` includes `@johel/jd-meta`, `@johel/resume`, and `@johel/prompt-defaults`; image build copies those workspace packages under `packages/`
-- **pnpm in Docker:** `pnpm install --store-dir /pnpm/store` with pnpm **9.15.9** in the image (pnpm 12 blocks build scripts without approve-builds)
+
+## Vercel + Turso (Phase 93 — production)
+
+- **Deploy:** root `vercel.json`; build `pnpm --filter web build` (includes `prisma migrate deploy`)
+- **Env checklist (Preview vs Production):** [`vercel-deploy.md`](./vercel-deploy.md)
+- **SQLite → Turso:** `scripts/backup-db.sh` → `scripts/prepare-sqlite-for-turso-import.sh` → `turso db import`
+- **Plaintext API keys:** `pnpm --filter web db:migrate-keys` once after cutover if needed
 
 ## UI locale (Phase 50)
 

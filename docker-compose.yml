@@ -14,10 +14,7 @@ services:
       DATABASE_URL: file:/data/johel.db
       JWT_SECRET: ${JWT_SECRET:-change-me-in-local-docker}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
-      HOST: "127.0.0.1"
-      PORT: "4042"
       WEB_PORT: "4321"
-      API_ORIGIN: http://127.0.0.1:4042
       HOSTNAME: "0.0.0.0"
     volumes:
       - johel-data:/data

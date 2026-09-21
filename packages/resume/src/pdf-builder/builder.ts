@@ -26,5 +26,5 @@ export async function buildResumePdfBlob(
   style: ResumePdfStyle = DEFAULT_RESUME_PDF_STYLE,
 ): Promise<Blob> {
   const buffer = await buildResumePdfBuffer(resume, style);
-  return new Blob([buffer], { type: "application/pdf" });
+  return new Blob([new Uint8Array(buffer)], { type: "application/pdf" });
 }

@@ -1,100 +1,30 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { API_TIMEOUT_MS } from "@/lib/api-timeout";
+import { type NextRequest } from "next/server";
+import { handle } from "hono/vercel";
+import { createApp } from "@/server/app";
 
-const apiOrigin = process.env.API_ORIGIN ?? "http://127.0.0.1:4042";
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
-const HOP_BY_HOP_HEADERS = new Set([
-  "connection",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailers",
-  "transfer-encoding",
-  "upgrade",
-  "host",
-  "content-length",
-]);
-
-function buildTargetUrl(path: string[], search: string) {
-  const suffix = path.length > 0 ? path.join("/") : "";
-  return `${apiOrigin}/${suffix}${search}`;
-}
-
-function forwardRequestHeaders(request: NextRequest): Headers {
-  const headers = new Headers();
-  request.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP_HEADERS.has(key.toLowerCase())) {
-      headers.set(key, value);
-    }
-  });
-
-  if (!headers.has("x-forwarded-proto")) {
-    headers.set("x-forwarded-proto", request.nextUrl.protocol.replace(":", ""));
-  }
-  if (!headers.has("x-forwarded-host")) {
-    headers.set("x-forwarded-host", request.headers.get("host") ?? request.nextUrl.host);
-  }
-
-  return headers;
-}
-
-function forwardResponseHeaders(response: Response): Headers {
-  const headers = new Headers();
-  response.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP_HEADERS.has(key.toLowerCase())) {
-      headers.set(key, value);
-    }
-  });
-  return headers;
-}
-
-async function proxyRequest(request: NextRequest, path: string[]) {
-  const targetUrl = buildTargetUrl(path, request.nextUrl.search);
-  const method = request.method.toUpperCase();
-  const hasBody = method !== "GET" && method !== "HEAD";
-
-  try {
-    const upstream = await fetch(targetUrl, {
-      method,
-      headers: forwardRequestHeaders(request),
-      body: hasBody ? await request.arrayBuffer() : undefined,
-      signal: AbortSignal.timeout(API_TIMEOUT_MS),
-      cache: "no-store",
-    });
-
-    return new NextResponse(upstream.body, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers: forwardResponseHeaders(upstream),
-    });
-  } catch (error) {
-    const timedOut =
-      error instanceof Error &&
-      (error.name === "TimeoutError" || error.name === "AbortError");
-    if (timedOut) {
-      return NextResponse.json(
-        { error: "Request timed out. Please try again." },
-        { status: 504 },
-      );
-    }
-    return NextResponse.json({ error: "API proxy request failed." }, { status: 502 });
-  }
-}
+const app = createApp();
+const honoHandler = handle(app);
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 
-async function handle(
+async function dispatch(
   request: NextRequest,
   context: RouteContext,
-): Promise<NextResponse> {
+): Promise<Response> {
   const { path } = await context.params;
-  return proxyRequest(request, path);
+  const apiPath = path.length > 0 ? `/${path.join("/")}` : "/";
+  const url = new URL(request.url);
+  url.pathname = apiPath;
+  const rewritten = new Request(url, request);
+  return honoHandler(rewritten);
 }
 
-export const GET = handle;
-export const POST = handle;
-export const PUT = handle;
-export const PATCH = handle;
-export const DELETE = handle;
-export const OPTIONS = handle;
+export const GET = dispatch;
+export const POST = dispatch;
+export const PUT = dispatch;
+export const PATCH = dispatch;
+export const DELETE = dispatch;
+export const OPTIONS = dispatch;
