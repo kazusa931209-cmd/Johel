@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { runAiJdMetaExtract } from "../lib/ai-jd-meta/index";
-import { prisma } from "../lib/prisma";
 import { getUserAiSettings } from "../lib/user-ai-settings";
 import { recordAiUsage } from "../lib/record-ai-usage";
 import { resolveOwnedGenerationId } from "../lib/resolve-generation-id";

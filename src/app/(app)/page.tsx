@@ -604,22 +604,16 @@ export default function GeneratePage() {
     }
   }, [
     combine,
-    evaluationInputKey,
-    evaluationMarkdown,
     generationId,
-    generationPublicId,
-    generationInputKey,
     job,
-    normalizedActiveStep,
     processSettings.doVerdict,
     promptCacheContext,
     refreshTokenUsed,
-    resume,
+    sessionSnapshot,
     setResumeResult,
     setTokenUsed,
     t,
     toast,
-    verdictInputKey,
   ]);
 
   const runFromCombine = useCallback(() => {
@@ -716,22 +710,18 @@ export default function GeneratePage() {
     }
   }, [
     combine,
-    evaluationInputKey,
-    evaluationMarkdown,
     generationId,
-    generationPublicId,
     generationInputKey,
     job,
-    normalizedActiveStep,
     processSettings.doVerdict,
     promptCacheContext,
     refreshTokenUsed,
     resume,
+    sessionSnapshot,
     setEvaluationResult,
     setTokenUsed,
     t,
     toast,
-    verdictInputKey,
   ]);
 
   const runFromGenerate = useCallback(() => {

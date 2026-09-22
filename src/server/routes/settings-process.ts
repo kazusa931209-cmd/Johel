@@ -6,7 +6,6 @@ import {
   DEFAULT_EXPERIENCE_DIMENSION_MODE,
   DEFAULT_EXPERIENCE_JD_TIER_DECAY_PERCENT,
   EXPERIENCE_DIMENSION_MODES,
-  EXPERIENCE_JD_TIER_DECAY_PERCENTS,
   normalizeExperienceDimensionMode,
   normalizeExperienceJdTierDecayPercent,
 } from "../lib/resume-generation-policy";

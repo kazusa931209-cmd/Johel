@@ -29,7 +29,7 @@ import {
 } from "@/lib/api";
 import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
 import { loadGenerateSession, type GenerateJobState } from "@/lib/generate-session";
-import { loadGenerationProcess, loadMe } from "@/lib/cached-settings";
+import { loadMe } from "@/lib/cached-settings";
 import { resumeGenerationFromHistory } from "@/lib/generation-persistence";
 import {
   getGenerateCurrentPanelTitle,
@@ -132,27 +132,21 @@ export function GenerationHistoryDrawer({
   const [detail, setDetail] = useState<GenerationDetail | null>(null);
   const [activeStep, setActiveStep] = useState<GenerateStep>("Job");
   const [userId, setUserId] = useState<string | null>(null);
-  const [doEvaluate, setDoEvaluate] = useState(true);
   const [currentPublicId, setCurrentPublicId] = useState<string | null>(null);
   const [resumeConfirmOpen, setResumeConfirmOpen] = useState(false);
   const [resuming, setResuming] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([loadMe(), loadGenerationProcess()]).then(
-      ([meRes, processRes]) => {
-        if (cancelled) return;
-        const id = meRes.data?.id ?? null;
-        setUserId(id);
-        if (processRes.data) {
-          setDoEvaluate(processRes.data.doEvaluate);
-        }
-        if (id) {
-          const session = loadGenerateSession(id);
-          setCurrentPublicId(session?.generationPublicId ?? null);
-        }
-      },
-    );
+    void loadMe().then((meRes) => {
+      if (cancelled) return;
+      const id = meRes.data?.id ?? null;
+      setUserId(id);
+      if (id) {
+        const session = loadGenerateSession(id);
+        setCurrentPublicId(session?.generationPublicId ?? null);
+      }
+    });
     return () => {
       cancelled = true;
     };
