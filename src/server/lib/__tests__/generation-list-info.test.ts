@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatGeneralResumeInformation,
   formatGenerationInformation,
+  parseGenerationCombinePlatform,
   parseGenerationCombineProfileId,
   parseGenerationJobJson,
 } from "../generation-list-info";
@@ -36,5 +38,22 @@ describe("generation-list-info", () => {
         jdJobRole: "Backend Engineer",
       }),
     ).toBe("Jane Doe · Acme Corp · Backend Engineer");
+  });
+
+  it("parses combine platform", () => {
+    expect(
+      parseGenerationCombinePlatform(
+        JSON.stringify({ platform: "LinkedIn" }),
+      ),
+    ).toBe("LinkedIn");
+  });
+
+  it("formats general resume information for history list", () => {
+    expect(
+      formatGeneralResumeInformation({
+        platform: "LinkedIn",
+        profileName: "Jane Doe",
+      }),
+    ).toBe("LinkedIn · Jane Doe");
   });
 });

@@ -15,6 +15,7 @@ const GENERATE_TYPE_KEYS: Record<string, string> = {
   experienceAdvise: "aiUsage.generateTypes.experienceAdvise",
   experienceSplit: "aiUsage.generateTypes.experienceSplit",
   combineRecommend: "aiUsage.generateTypes.combineRecommend",
+  generalCombineRecommend: "aiUsage.generateTypes.generalCombineRecommend",
   promptHelper: "aiUsage.generateTypes.promptHelper",
   markdownFormat: "aiUsage.generateTypes.markdownFormat",
   embedding: "aiUsage.generateTypes.embedding",

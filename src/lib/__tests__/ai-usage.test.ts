@@ -20,6 +20,12 @@ describe("formatGenerateType", () => {
   it("labels legacy checkGaps rows for AI Usage History", () => {
     expect(formatGenerateType("checkGaps")).toBe("Check on Experiences");
   });
+
+  it("labels generalCombineRecommend for AI Usage History", () => {
+    expect(formatGenerateType("generalCombineRecommend")).toBe(
+      "General Resume Combine Recommend",
+    );
+  });
 });
 
 describe("ai-usage group helpers", () => {

@@ -12,12 +12,14 @@ const combineCompanySchema = z.object({
 const combineSchema = z.object({
   profileId: z.string().trim().min(1),
   userInstruction: z.string().optional(),
+  platform: z.string().optional(),
   companies: z.array(combineCompanySchema).min(1),
 });
 
 export type LoadedGeneralCombineRecommendInput = {
   profileId: string;
   userInstruction: string;
+  platform: string;
   companies: Array<{
     companyId: string;
     startDate: string;
@@ -52,6 +54,7 @@ export function loadGeneralCombineRecommendInputFromGeneration(generation: {
     input: {
       profileId: combine.data.profileId,
       userInstruction: combine.data.userInstruction?.trim() ?? "",
+      platform: combine.data.platform?.trim() ?? "",
       companies: combine.data.companies.map((company) => ({
         companyId: company.companyId,
         startDate: company.startDate,

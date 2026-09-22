@@ -22,6 +22,7 @@ export type GeneralCombineRecommendRunInput = {
   apiKey: string;
   profileId: string;
   userInstruction: string;
+  platform: string;
   companies: CombineRecommendRunCompany[];
   experienceIndex: Array<{
     id: string;
@@ -47,6 +48,7 @@ export async function runGeneralCombineRecommend(
   const user = buildGeneralCombineRecommendUserPrompt({
     profileId: input.profileId,
     userInstruction: input.userInstruction,
+    platform: input.platform,
     companies: input.companies,
     experienceIndex: input.experienceIndex,
     experienceDimensionMode,

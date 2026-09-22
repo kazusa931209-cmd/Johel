@@ -120,6 +120,7 @@ function parseCombine(value: unknown): CombineSnapshot {
     emphasis: typeof raw.emphasis === "string" ? raw.emphasis : "",
     userInstruction:
       typeof raw.userInstruction === "string" ? raw.userInstruction : "",
+    platform: typeof raw.platform === "string" ? raw.platform : "",
     companies,
   };
 }

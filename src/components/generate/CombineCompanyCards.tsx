@@ -44,7 +44,9 @@ type CombineCompanyCardsProps = {
   job: GenerateJobState;
   doVerdict: boolean;
   generationId?: string | null;
-  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
+  onSaveBeforeSuggest: (
+    snapshot: CombineSnapshot,
+  ) => Promise<{ error?: string }>;
   companies: CombineCompanyEntry[];
   onChange: (companies: CombineCompanyEntry[]) => void;
   disabled?: boolean;

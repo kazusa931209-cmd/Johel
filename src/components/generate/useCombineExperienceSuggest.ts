@@ -34,7 +34,9 @@ type UseCombineExperienceSuggestOptions = {
   doVerdict: boolean;
   profileGraduation: ProfileGraduation | null;
   generationId?: string | null;
-  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
+  onSaveBeforeSuggest: (
+    snapshot: CombineSnapshot,
+  ) => Promise<{ error?: string }>;
   suggestVariant?: "jd" | "general";
 };
 
@@ -148,7 +150,7 @@ export function useCombineExperienceSuggest({
 
       setSuggesting(true);
       setSuggestingCompanyId(companyId ?? null);
-      const saveRes = await onSaveBeforeSuggest();
+      const saveRes = await onSaveBeforeSuggest(snapshot);
       if (saveRes.error) {
         setSuggesting(false);
         setSuggestingCompanyId(null);

@@ -41,6 +41,18 @@ export async function persistGeneralResumeSnapshot(snapshot: GeneralResumeSnapsh
   );
 }
 
+export function persistGeneralResumeSnapshotKeepalive(
+  snapshot: GeneralResumeSnapshot,
+): void {
+  void fetch(`/backend/general-generations/${snapshot.generationId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(buildGeneralResumeUpdatePayload(snapshot)),
+    keepalive: true,
+  });
+}
+
 export function generalGenerationDetailToSession(
   detail: GeneralGenerationDetail,
 ): GenerateSession {

@@ -41,7 +41,7 @@ export function ExperienceFactForm({
 
   return (
     <>
-      <section className="mx-auto max-w-3xl space-y-6">
+      <section className="w-full max-w-3xl space-y-6">
         <BackButton
           href="/experiences"
           preferHistoryBack

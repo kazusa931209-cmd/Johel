@@ -455,6 +455,11 @@ export const ko: MessageTree = {
     },
     combine: {
       userInstructionTitle: "사용자 지시",
+      userInstructionFieldLabel: "사용자 지시",
+      platformLabel: "플랫폼",
+      platformHint:
+        "선택 입력입니다. 제안 목록은 이력서(일반 이력서 실행)에 사용한 플랫폼 값에서 가져옵니다.",
+      platformPlaceholder: "예: LinkedIn · 시니어 백엔드",
       userInstructionHint:
         "이 일반 이력서 실행의 방향입니다. 경험 제안과 생성은 프로필·회사·경험과 함께 이 내용을 강하게 따릅니다.",
       userInstructionPlaceholder:
@@ -825,6 +830,7 @@ export const ko: MessageTree = {
       experienceAdvise: "경험 어드바이저",
       experienceSplit: "경험 분할",
       combineRecommend: "조합 추천",
+      generalCombineRecommend: "일반 이력서 조합 추천",
       promptHelper: "프롬프트 도우미",
       markdownFormat: "마크다운 서식",
       checkOnExperiences: "경험에서 확인",

@@ -250,6 +250,7 @@ export type CombineSnapshot = {
   language: string;
   emphasis: string;
   userInstruction?: string;
+  platform?: string;
   companies: Array<{
     companyId: string;
     startDate: string;
@@ -557,6 +558,20 @@ export function runAiResume(
   });
 }
 
+export type AiGeneralResumeRequest = {
+  combine: CombineSnapshot;
+};
+
+export function runAiGeneralResume(
+  payload: AiGeneralResumeRequest & GenerationScopedRequest,
+) {
+  return request<AiResumeResult>("/ai-general-resume", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
 export type AiEvaluateRequest = {
   jobContext: string;
   resume: import("@johel/resume").GeneratedResume;
@@ -571,6 +586,20 @@ export function runAiEvaluate(
   payload: AiEvaluateRequest & GenerationScopedRequest,
 ) {
   return request<AiEvaluateResult>("/ai-evaluate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export type AiGeneralEvaluateRequest = {
+  resume: import("@johel/resume").GeneratedResume;
+};
+
+export function runAiGeneralEvaluate(
+  payload: AiGeneralEvaluateRequest & GenerationScopedRequest,
+) {
+  return request<AiEvaluateResult>("/ai-general-evaluate", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,
@@ -727,6 +756,12 @@ export function updateGeneralGeneration(
 
 export function getCurrentGeneralGeneration() {
   return request<GeneralGenerationDetail | null>("/general-generations/current");
+}
+
+export function listGeneralResumePlatformSuggestions() {
+  return request<{ platforms: string[] }>(
+    "/general-generations/platform-suggestions",
+  );
 }
 
 export type GeneralGenerationResumePayload = {

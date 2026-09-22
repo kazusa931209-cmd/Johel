@@ -56,6 +56,18 @@ export async function persistGenerationSnapshot(snapshot: GenerationSnapshot) {
   );
 }
 
+export function persistGenerationSnapshotKeepalive(
+  snapshot: GenerationSnapshot,
+): void {
+  void fetch(`/backend/generations/${snapshot.generationId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(buildGenerationUpdatePayload(snapshot)),
+    keepalive: true,
+  });
+}
+
 export async function allocateNewGeneration() {
   return startGeneration();
 }

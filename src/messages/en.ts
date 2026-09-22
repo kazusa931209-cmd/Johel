@@ -453,6 +453,11 @@ export const en = {
     },
     combine: {
       userInstructionTitle: "User Instruction",
+      userInstructionFieldLabel: "User instruction",
+      platformLabel: "Platform",
+      platformHint:
+        "Optional label for this run. Suggestions come from Platform values used on your Resumes (General Resume runs).",
+      platformPlaceholder: "e.g. LinkedIn · Senior backend",
       userInstructionHint:
         "Steering for this General Resume run. Suggest experiences and generation follow this strongly, together with your profile, companies, and experiences.",
       userInstructionPlaceholder:
@@ -824,6 +829,7 @@ export const en = {
       experienceAdvise: "Experience advisor",
       experienceSplit: "Experience Split",
       combineRecommend: "Combine recommend",
+      generalCombineRecommend: "General Resume Combine Recommend",
       promptHelper: "Prompt Helper",
       markdownFormat: "Markdown Format",
       checkOnExperiences: "Check on Experiences",

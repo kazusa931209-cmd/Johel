@@ -4,6 +4,7 @@ import { z } from "zod";
 import { deriveProcessedStep } from "../lib/generation-processed-step";
 import {
   allocateGenerationPublicId,
+  GENERATION_KIND_GENERAL,
   GENERATION_KIND_JD,
   incrementGenerationPublicId,
 } from "../lib/generation-public-id";
@@ -20,8 +21,10 @@ import {
   setUserCurrentGeneration,
 } from "../lib/current-generation";
 import {
+  formatGeneralResumeInformation,
   formatGenerationInformation,
   formatProfileName,
+  parseGenerationCombinePlatform,
   parseGenerationCombineProfileId,
   parseGenerationJobJson,
 } from "../lib/generation-list-info";
@@ -79,6 +82,15 @@ function toListItem(
   const profileName = profileId
     ? (profileNameById.get(profileId) ?? null)
     : null;
+  const platform = parseGenerationCombinePlatform(generation.combineJson);
+  const information =
+    generation.kind === GENERATION_KIND_GENERAL
+      ? formatGeneralResumeInformation({ platform, profileName })
+      : formatGenerationInformation({
+          profileName,
+          jdCompanyName: job.jdCompanyName,
+          jdJobRole: job.jdJobRole,
+        });
 
   return {
     id: generation.id,
@@ -95,11 +107,7 @@ function toListItem(
     profileName,
     jdCompanyName: job.jdCompanyName,
     jdJobRole: job.jdJobRole,
-    information: formatGenerationInformation({
-      profileName,
-      jdCompanyName: job.jdCompanyName,
-      jdJobRole: job.jdJobRole,
-    }),
+    information,
   };
 }
 
@@ -260,6 +268,7 @@ generationsRoutes.post("/start", async (c) => {
       language: settings.resumeLanguage,
       emphasis: "",
       userInstruction: "",
+      platform: "",
       companies: [],
     }),
     kind: GENERATION_KIND_JD,

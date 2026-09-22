@@ -77,6 +77,7 @@ function formatKeywordContext(keywordContext?: string): string {
 export type GeneralCombineRecommendPromptInput = {
   profileId: string;
   userInstruction: string;
+  platform: string;
   experienceDimensionMode: ExperienceDimensionMode;
   experienceIndex: Array<{
     id: string;
@@ -108,6 +109,9 @@ export function buildGeneralCombineRecommendUserPrompt(
     input.userInstruction.trim() ||
     "(none — use role context and keyword context per company)";
 
+  const platformBlock =
+    input.platform.trim() || "(none — no platform label for this run)";
+
   const indexBlock = input.experienceIndex.length
     ? input.experienceIndex
         .map(
@@ -126,6 +130,9 @@ export function buildGeneralCombineRecommendUserPrompt(
 
   return [
     `Profile id: ${input.profileId}`,
+    "",
+    "## Platform",
+    platformBlock,
     "",
     "## User instruction",
     instructionBlock,

@@ -14,6 +14,7 @@ import { useToast } from "@/components/app/ToastProvider";
 import { BusyOverlay } from "@/components/shared/BusyOverlay";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { CombineTotalTenureHeader } from "@/components/generate/CombineTotalTenureHeader";
+import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
@@ -270,25 +271,6 @@ export default function GeneratePage() {
     }
   }, [normalizedActiveStep]);
 
-  useEffect(() => {
-    if (!sessionReady || loading || !generationId) return;
-    const timer = window.setTimeout(() => {
-      void saveSnapshot(finalized ? true : undefined);
-    }, 500);
-    return () => window.clearTimeout(timer);
-  }, [
-    combine,
-    evaluationMarkdown,
-    finalized,
-    generationId,
-    job,
-    loading,
-    normalizedActiveStep,
-    resume,
-    saveSnapshot,
-    sessionReady,
-  ]);
-
   const handleResumeDownloaded = useCallback(async () => {
     markFinalized();
     await saveSnapshot(true);
@@ -353,13 +335,17 @@ export default function GeneratePage() {
     [promptSettings],
   );
 
-  const onSaveBeforeSuggest = useCallback(async () => {
-    const res = await saveSnapshot();
-    if (res?.error) {
-      return { error: res.error ?? t("toast.generationSaveFailed") };
-    }
-    return {};
-  }, [saveSnapshot, t]);
+  const onSaveBeforeSuggest = useCallback(
+    async (snapshot: CombineSnapshot) => {
+      setCombine(snapshot);
+      const res = await saveSnapshot();
+      if (res?.error) {
+        return { error: res.error ?? t("toast.generationSaveFailed") };
+      }
+      return {};
+    },
+    [saveSnapshot, setCombine, t],
+  );
 
   const runVerdict = useCallback(async () => {
     const filtered = noiseFilter(job.jobText.trim()).text;

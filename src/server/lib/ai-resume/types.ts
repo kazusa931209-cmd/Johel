@@ -53,6 +53,8 @@ export type ResumeGenerationCompany = {
 export type ResumeGenerationRun = {
   language: string;
   emphasis: string;
+  userInstruction?: string;
+  platform?: string;
 };
 
 export type ResumeGenerationPolicy = {

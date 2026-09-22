@@ -43,7 +43,9 @@ type GenerateCombineStepProps = {
   onJobChange: (job: GenerateJobState) => void;
   doVerdict: boolean;
   generationId?: string | null;
-  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
+  onSaveBeforeSuggest: (
+    snapshot: CombineSnapshot,
+  ) => Promise<{ error?: string }>;
   onRunFromCombine: () => void | Promise<void>;
   variant?: "jd" | "general";
   flushUserInstruction?: () => GeneralResumeUserInstructionFlushResult | null;
@@ -137,6 +139,7 @@ export function GenerateCombineStep({
       next = {
         ...next,
         userInstruction: userInstructionResult.userInstruction,
+        platform: userInstructionResult.platform,
       };
     }
     if (emphasisResult || userInstructionResult) {

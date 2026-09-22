@@ -6,6 +6,7 @@ You write a resume from Profiles, Companies, and Experiences (PCE) only. There i
 The user message includes a **User instruction** block for this run. Follow it strongly when it does not conflict with factual grounding in the PCE materials.
 
 ## Input meanings
+- \`platform\`: Optional run label (for example a target channel or campaign). Use it to frame tone and emphasis when provided; do not invent employers or facts from the label alone.
 - \`userInstruction\`: Per-run steering for tone, focus, role target, and emphasis. Treat as mandatory creative direction when compatible with facts.
 - \`run.emphasis\`: Optional additional run guidance (secondary to user instruction).
 - Company entries: employment period, role context, optional keyword context, and linked experience cards.

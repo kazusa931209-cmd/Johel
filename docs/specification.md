@@ -40,12 +40,12 @@ Job Description → Filtering → Verdict? → Combine → Generate → Evaluate
 **Resume Builder** produces a **General Resume** — separate from **JD-Resume Builder** (home route).
 
 * **Input** — PCE only; no Job Description or Verdict.
-* **User instruction** — Per-run field on **Combine** (left panel); not stored in Settings and not required. **Run guidance** is not shown on General Resume Combine. Generation and **Suggest experiences** follow user instruction strongly when provided, together with PCE and per-company **Keyword context**. Resume language follows Settings **Generation** (not a Combine control).
+* **User instruction** panel on **Combine** (left column) — Optional **Platform** (free text with autocomplete from Platform values on past General Resume runs in **Resumes**) and optional **User instruction**; neither is stored in Settings. **Run guidance** is not shown on General Resume Combine. Generation and **Suggest experiences** follow platform and user instruction when provided, together with PCE and per-company **Keyword context**. Resume language follows Settings **Generation** (not a Combine control).
 * **Steps** — **Combine** → **Generate** → **Evaluate** always (not gated by Settings **Do Evaluate**).
 * **History** — Separate `generalResume` generation records from JD runs. Public IDs use prefix **GEN** (General Resume) vs **JDR** (JD-Resume Builder). The Resume Builder header does not show the public ID. **New** uses the same confirm → finalize-current → start-new behavior as JD-Resume Builder.
-* **APIs** — Dedicated routes (`/general-generations`, `/ai-general-combine-recommend`, and separate general generate/evaluate routes when implemented); do not reuse JD AI endpoints.
+* **APIs** — Dedicated routes (`/general-generations`, `/ai-general-combine-recommend`, `/ai-general-resume`, `/ai-general-evaluate`); do not reuse JD `/ai-resume` or `/ai-evaluate`.
 
-Step bodies and general generate/evaluate UI are implemented incrementally after the shared shell.
+* **Generate** — Same **Generated Resume** panel behavior as JD-Resume Builder (edit/preview, revert to AI, copy); **Run** advances to **Evaluate** (always on for General Resume).
 
 ### Workspace authoring
 

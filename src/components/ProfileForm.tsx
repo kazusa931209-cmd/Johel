@@ -132,7 +132,7 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
     <form
       noValidate
       onSubmit={onSubmit}
-      className="mx-auto flex max-w-3xl flex-col gap-6"
+      className="flex w-full max-w-3xl flex-col gap-6"
     >
       <div className="space-y-1">
         <BackButton

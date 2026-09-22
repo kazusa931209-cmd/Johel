@@ -136,6 +136,7 @@ aiGeneralCombineRecommendRoutes.post("/", async (c) => {
       apiKey: aiSettings.apiKey,
       profileId: loaded.input.profileId,
       userInstruction: loaded.input.userInstruction,
+      platform: loaded.input.platform,
       companies: scopedCompanies.map((entry) => {
         const company = companyById.get(entry.companyId);
         if (!company) {

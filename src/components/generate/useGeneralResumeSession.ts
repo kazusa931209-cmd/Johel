@@ -18,12 +18,14 @@ import {
   allocateNewGeneralResume,
   fetchCurrentGeneralResumeSession,
   persistGeneralResumeSnapshot,
+  persistGeneralResumeSnapshotKeepalive,
   type GeneralResumeSnapshot,
 } from "@/lib/general-resume-persistence";
 import {
   persistCombineDefaultsFromSnapshot,
   seedCombineFromDefaults,
 } from "@/lib/combine-defaults";
+import { usePersistSnapshotOnLeave } from "@/lib/use-persist-snapshot-on-leave";
 
 function toSnapshot(
   session: GenerateSession,
@@ -241,13 +243,21 @@ export function useGeneralResumeSession() {
     setSession(next);
   }, []);
 
-  useEffect(() => {
-    if (!ready || !session.generationId) return;
-    const timer = window.setTimeout(() => {
-      void saveSnapshot();
-    }, 400);
-    return () => window.clearTimeout(timer);
-  }, [ready, saveSnapshot, session]);
+  const markFinalized = useCallback(() => {
+    setSession((current) => ({ ...current, finalized: true }));
+  }, []);
+
+  const saveKeepalive = useCallback(() => {
+    const snapshot = toSnapshot(sessionRef.current);
+    if (!snapshot) return;
+    persistGeneralResumeSnapshotKeepalive(snapshot);
+  }, []);
+
+  usePersistSnapshotOnLeave({
+    enabled: ready && Boolean(session.generationId),
+    saveSnapshot,
+    saveKeepalive,
+  });
 
   return {
     ready,
@@ -265,8 +275,11 @@ export function useGeneralResumeSession() {
     evaluationMarkdown: session.evaluationMarkdown,
     setEvaluationResult,
     clearDownstreamFromGenerateSession,
+    generationInputKey: session.generationInputKey,
+    evaluationInputKey: session.evaluationInputKey,
     saveSnapshot,
     resetSession,
+    markFinalized,
     finalized: session.finalized,
     restoreSession,
     job: session.job,

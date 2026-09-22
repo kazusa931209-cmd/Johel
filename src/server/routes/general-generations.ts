@@ -16,6 +16,7 @@ import {
   getUserCurrentGeneralGeneration,
   setUserCurrentGeneralGeneration,
 } from "../lib/current-general-generation";
+import { listDistinctGeneralResumePlatforms } from "../lib/general-resume-platform-suggestions";
 import { requireUser } from "../lib/session";
 
 const GENERAL_GENERATION_STEPS = ["Combine", "Generate", "Evaluate"] as const;
@@ -132,6 +133,7 @@ generalGenerationsRoutes.post("/start", async (c) => {
       language: resumeLanguage,
       emphasis: "",
       userInstruction: "",
+      platform: "",
       companies: [],
     }),
     doVerdict: false,
@@ -229,6 +231,16 @@ generalGenerationsRoutes.put("/:id", async (c) => {
   await setUserCurrentGeneralGeneration(user.id, generation.id);
 
   return c.json(toDetailResponse(generation));
+});
+
+generalGenerationsRoutes.get("/platform-suggestions", async (c) => {
+  const user = await requireUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const platforms = await listDistinctGeneralResumePlatforms(user.id);
+  return c.json({ platforms });
 });
 
 generalGenerationsRoutes.get("/current", async (c) => {

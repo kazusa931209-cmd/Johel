@@ -89,6 +89,8 @@ export function EditableResumePanel({
     return () => {
       if (debounceRef.current != null) {
         window.clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+        commitDraft(draft);
       }
     };
   }, [commitDraft, draft, mode]);
