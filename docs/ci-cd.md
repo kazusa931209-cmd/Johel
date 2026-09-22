@@ -8,7 +8,7 @@ Related: [`vercel-deploy.md`](./vercel-deploy.md), [`.github/workflows/ci.yml`](
 
 | Environment | Where | Database |
 | --- | --- | --- |
-| **Local development** | `pnpm dev` on a developer machine | SQLite `file:./prisma/dev.db` |
+| **Local development** | `pnpm dev` on a developer machine | SQLite `prisma/dev.db` (`DATABASE_URL=file:./dev.db` — path is relative to `prisma/schema.prisma`) |
 | **Production** | Vercel (production branch, typically `main`) | Turso (`libsql://` + `TURSO_AUTH_TOKEN` on Vercel) |
 
 Docker files remain in the repo for optional self-hosted/LAN use ([`docker.md`](./docker.md)); they are **not** built in GitHub Actions.
@@ -19,7 +19,7 @@ Workflow **CI** runs on every pull request and on pushes to `main` / `master`.
 
 | Job | What it checks |
 | --- | --- |
-| **ci** | Prisma generate, Vitest (app + inlined `src/packages/*`), ESLint, `next build` with ephemeral SQLite (`DATABASE_URL=file:./prisma/ci-build.db`) — no Turso secrets |
+| **ci** | Prisma generate, Vitest (app + inlined `src/packages/*`), ESLint, `next build` with ephemeral SQLite (`DATABASE_URL=file:./ci-build.db` → `prisma/ci-build.db`) — no Turso secrets |
 
 Local equivalent:
 

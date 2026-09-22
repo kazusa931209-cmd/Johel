@@ -44,5 +44,5 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: 1
-          DATABASE_URL: file:./prisma/ci-build.db
+          DATABASE_URL: file:./ci-build.db
           JWT_SECRET: ci-build-jwt-secret-minimum-32-characters

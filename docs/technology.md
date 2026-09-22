@@ -17,7 +17,7 @@ Phase 1 approved a Next.js monolith. **Phase 2** introduced a standalone Hono AP
 | Language / runtime | TypeScript on Node.js (LTS) | Single language for UI and API; fits Cursor SDK TypeScript package |
 | API | **Next.js Route Handler** (`/backend/*`) + **Hono** router in-process | Single deployable app; same route logic as former standalone API |
 | UI | Next.js (App Router) + Tailwind CSS | Frontend only; no paid UI SaaS |
-| Database | **SQLite file** (local dev) / **Turso libSQL** (production on Vercel) via Prisma | Dev: `file:./prisma/dev.db`; prod: `libsql://` + `TURSO_AUTH_TOKEN` |
+| Database | **SQLite file** (local dev) / **Turso libSQL** (production on Vercel) via Prisma | Dev: `file:./dev.db` (file `prisma/dev.db`; SQLite URLs are relative to `prisma/schema.prisma`); prod: `libsql://` + `TURSO_AUTH_TOKEN` |
 | Auth | Login ID + password on the **API**; JWT in httpOnly cookie | Multi-user local login; no Auth.js / OAuth IdP. API field `loginId`; DB column `users.email` stores the login ID (no email-format validation). |
 | Secrets / API keys | Per-user `Setting.apiKey` — **AES-256-GCM at rest** when `ENCRYPTION_KEY` is set (Phase 83); plaintext only in local dev without the key | Masked on read; decrypt via `getUserAiSettings` |
 | LLM | Provider interface; `@cursor/sdk` (Cursor) and `openai` SDK (OpenAI) in `src/server` | User-owned keys; Anthropic adapters later |
@@ -348,6 +348,7 @@ User browser (:4041 local, Vercel in prod)
 - **Deploy:** Vercel **Root Directory** `.` + [`vercel.json`](../vercel.json); `pnpm build` runs Turso migrate script or `prisma migrate deploy`, then `next build`
 - **Env checklist (Production):** [`vercel-deploy.md`](./vercel-deploy.md)
 - **SQLite → Turso:** `scripts/backup-db.sh` → `scripts/prepare-sqlite-for-turso-import.sh` → `turso db import`
+- **Turso → local dev:** `pnpm db:export-turso` (`turso db export johel --overwrite --output-file prisma/dev.db` from repo root; script [`scripts/export-turso-to-dev.sh`](../scripts/export-turso-to-dev.sh))
 - **Plaintext API keys:** `pnpm db:migrate-keys` once after cutover if needed
 
 ## UI locale (Phase 50)
@@ -506,7 +507,7 @@ Public deployment adds security and operability without paid SaaS. Plan: [`plans
 
 ### Backups
 
-- `scripts/backup-db.sh` / `scripts/restore-db.sh` — timestamped SQLite copies to `BACKUP_DIR`
+- `pnpm db:backup` / `pnpm db:restore <file>` — [`scripts/backup-db.sh`](../scripts/backup-db.sh) / [`scripts/restore-db.sh`](../scripts/restore-db.sh); timestamped SQLite copies to `BACKUP_DIR`
 - Documented in [`docker.md`](./docker.md); retention via `BACKUP_RETENTION_DAYS`
 
 ### Test coverage + CI

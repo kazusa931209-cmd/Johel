@@ -63,16 +63,32 @@ With `PUBLIC_DEPLOY=true`, the app **fails fast at runtime** if `JWT_SECRET`, `E
 
 Use [`.env`](../.env) (from [`.env.example`](../.env.example)):
 
-- `DATABASE_URL="file:./prisma/dev.db"`
+- `DATABASE_URL="file:./dev.db"` (on disk: `prisma/dev.db`)
 - `JWT_SECRET` — weak default OK
 - **Do not** set `PUBLIC_DEPLOY` locally unless testing hardening
 - **Do not** set `TURSO_*` for normal local dev
+
+### Refresh local dev from Turso production
+
+From the **repository root**, with the [Turso CLI](https://docs.turso.tech/cli) installed and authenticated (`turso auth login`):
+
+```bash
+pnpm db:export-turso
+```
+
+Equivalent:
+
+```bash
+turso db export johel --overwrite --output-file prisma/dev.db
+```
+
+Overwrites `prisma/dev.db` with the remote **`johel`** database. Override the DB name or path with `TURSO_DB_NAME` or `TURSO_EXPORT_OUTPUT` (see [`scripts/export-turso-to-dev.sh`](../scripts/export-turso-to-dev.sh)). This reads **production** data; it does not change Turso. Back up local data first if you need to keep it: `pnpm db:backup` ([`docker.md`](./docker.md)).
 
 ## Local vs Production
 
 | Concern | Local (`pnpm dev`) | Vercel Production |
 | --- | --- | --- |
-| Database | SQLite `file:./prisma/dev.db` | Turso (`libsql://` + token) |
+| Database | SQLite `prisma/dev.db` | Turso (`libsql://` + token) |
 | Migrations | `pnpm db:migrate` | Turso migrate script on production build |
 | Secrets | Dev defaults in `.env` | Strong secrets on Vercel (Production scope) |
 | `PUBLIC_URL` | Not required | Production custom domain |
@@ -81,8 +97,8 @@ Use [`.env`](../.env) (from [`.env.example`](../.env.example)):
 
 Prisma CLI `migrate deploy` only accepts `file:` URLs. On Vercel Production, the build runs [`scripts/migrate-deploy-turso.ts`](../scripts/migrate-deploy-turso.ts): it applies pending `prisma/migrations/*/migration.sql` via `@libsql/client` and updates `_prisma_migrations` (same checksums as Prisma).
 
-- **Author migrations locally:** `pnpm db:migrate` against `file:./prisma/dev.db`.
-- **Before merging to `main`:** GitHub Actions runs `prisma migrate deploy` against ephemeral SQLite (`file:./prisma/ci-build.db`) to prove migrations apply.
+- **Author migrations locally:** `pnpm db:migrate` against `file:./dev.db` (`prisma/dev.db`).
+- **Before merging to `main`:** GitHub Actions runs `prisma migrate deploy` against ephemeral SQLite (`file:./ci-build.db`) to prove migrations apply.
 - **On merge / production deploy:** the Turso script runs against the **production** Turso DB configured on Vercel.
 - **Optional dry run against Turso from a laptop:** set production `DATABASE_URL` + `TURSO_AUTH_TOKEN` in `.env` and run `pnpm db:migrate-deploy` only when you accept touching production data.
 - **After SQLite import:** `_prisma_migrations` is already populated; the Turso script applies nothing until a **new** migration lands in git.

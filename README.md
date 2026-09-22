@@ -22,6 +22,16 @@ pnpm db:migrate        # first time / after schema changes
 pnpm dev               # http://127.0.0.1:4041
 ```
 
+**Database (optional):**
+
+```bash
+pnpm db:backup                              # local prisma/dev.db or Docker → ./backups/
+pnpm db:restore ./backups/johel-....db      # type RESTORE to confirm
+pnpm db:export-turso                        # Turso prod → prisma/dev.db (overwrites)
+```
+
+Details: [docker.md](docs/docker.md) (backup/restore), [vercel-deploy.md](docs/vercel-deploy.md) (Turso export).
+
 Optional: `pnpm install` enables a Husky **pre-push** `typecheck` (see [CI/CD](docs/ci-cd.md)). Merge still requires green GitHub **ci** on the PR.
 
 Open `http://127.0.0.1:4041` — register or log in. The UI and API share one Next.js process; browser calls go to `/backend/*`.
