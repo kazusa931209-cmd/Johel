@@ -15,13 +15,15 @@ if docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   docker cp "$CONTAINER:/tmp/johel-backup.db" "$OUT_FILE"
   docker exec "$CONTAINER" rm -f /tmp/johel-backup.db
 else
-  SRC="${LOCAL_DB_PATH:-./apps/api/prisma/dev.db}"
+  SRC="${LOCAL_DB_PATH:-./apps/web/prisma/dev.db}"
   if command -v sqlite3 >/dev/null 2>&1; then
     sqlite3 "$SRC" ".backup '$OUT_FILE'"
   else
     cp "$SRC" "$OUT_FILE"
   fi
 fi
+
+# After backup, prepare for Turso: scripts/prepare-sqlite-for-turso-import.sh "$OUT_FILE"
 
 find "$BACKUP_DIR" -type f -name 'johel-*.db' -mtime +"$RETENTION_DAYS" -delete
 

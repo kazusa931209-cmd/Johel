@@ -1,6 +1,6 @@
 # Docker deployment
 
-JoHEL runs as **one Docker image** (API + web) on **Docker Desktop** for **macOS Apple Silicon** (`linux/arm64`). Port **4321** is published so **other devices on your LAN** can open the app.
+JoHEL runs as **one Docker image** (Next.js UI + in-process API) on **Docker Desktop** for **macOS Apple Silicon** (`linux/arm64`). Port **4321** is published so **other devices on your LAN** can open the app.
 
 The **database** (SQLite) lives in a Docker Desktop **named volume** on whichever Mac runs the container. When you update the image, **replace the container only** — do not remove the volume.
 
@@ -28,7 +28,7 @@ http://<LAN-IP-of-host-Mac>:4321
 
 If the page does not load from another device, allow incoming connections for Docker Desktop or port **4321** in the Mac firewall.
 
-The API (`:4042`) is **not** published — browsers use the web UI and `/backend/*` proxy only.
+The API is served on the same port as the UI (`/backend/*`). There is no separate `:4042` process.
 
 ---
 
@@ -151,7 +151,7 @@ Use this when you want the container to use your **local working SQLite file** i
 
 | Location | Path |
 | --- | --- |
-| Local dev (default) | `apps/api/prisma/dev.db` |
+| Local dev (default) | `apps/web/prisma/dev.db` |
 | Inside the container | `/data/johel.db` (on volume `johel-data`) |
 
 Run all commands from the **repo root** (Case A) or from the folder that contains `docker-compose.yml` (Case B).

@@ -2,10 +2,9 @@
   "name": "johel",
   "private": true,
   "scripts": {
-    "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
-    "db:migrate": "pnpm --filter api prisma migrate dev",
-    "test": "pnpm --filter api test && pnpm --filter web test"
+    "db:migrate": "pnpm --filter web exec prisma migrate dev",
+    "test": "pnpm --filter web test && pnpm --filter @johel/resume test && pnpm --filter @johel/jd-meta test"
   },
   "engines": {
     "node": ">=20"
