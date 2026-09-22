@@ -296,6 +296,14 @@ export function runAiCombineRecommend(payload: CombineRecommendRequest) {
   });
 }
 
+export function runAiGeneralCombineRecommend(payload: CombineRecommendRequest) {
+  return request<CombineRecommendResult>("/ai-general-combine-recommend", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
 function appendListParams(
   params: URLSearchParams,
   q: string,

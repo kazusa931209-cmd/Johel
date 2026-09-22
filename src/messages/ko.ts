@@ -453,6 +453,15 @@ export const ko: MessageTree = {
     steps: {
       ariaLabel: "이력서 빌더 단계",
     },
+    combine: {
+      userInstructionTitle: "사용자 지시",
+      userInstructionHint:
+        "이 일반 이력서 실행의 방향입니다. 경험 제안과 생성은 프로필·회사·경험과 함께 이 내용을 강하게 따릅니다.",
+      userInstructionPlaceholder:
+        "예: 시니어 백엔드 역할을 목표로, 플랫폼 안정성과 온콜 리더십을 강조, 이력서는 1페이지로 유지.",
+      description:
+        "이 실행에 사용할 프로필과 포함할 회사·경험을 선택합니다. 이력서 언어는 설정 → 생성을 따릅니다.",
+    },
   },
   generate: {
     title: "JD-이력서 빌더",

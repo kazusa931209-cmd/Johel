@@ -40,7 +40,7 @@ Job Description → Filtering → Verdict? → Combine → Generate → Evaluate
 **Resume Builder** produces a **General Resume** — separate from **JD-Resume Builder** (home route).
 
 * **Input** — PCE only; no Job Description or Verdict.
-* **User instruction** — Per-run field on **Combine** (like Run guidance); not stored in Settings. Generation and **Suggest experiences** follow it strongly, together with PCE and per-company **Keyword context** (AI-guided suggest when keywords are set).
+* **User instruction** — Per-run field on **Combine** (left panel); not stored in Settings and not required. **Run guidance** is not shown on General Resume Combine. Generation and **Suggest experiences** follow user instruction strongly when provided, together with PCE and per-company **Keyword context**. Resume language follows Settings **Generation** (not a Combine control).
 * **Steps** — **Combine** → **Generate** → **Evaluate** always (not gated by Settings **Do Evaluate**).
 * **History** — Separate `generalResume` generation records from JD runs. Public IDs use prefix **GEN** (General Resume) vs **JDR** (JD-Resume Builder). The Resume Builder header does not show the public ID. **New** uses the same confirm → finalize-current → start-new behavior as JD-Resume Builder.
 * **APIs** — Dedicated routes (`/general-generations`, `/ai-general-combine-recommend`, and separate general generate/evaluate routes when implemented); do not reuse JD AI endpoints.

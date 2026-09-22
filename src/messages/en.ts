@@ -451,6 +451,15 @@ export const en = {
     steps: {
       ariaLabel: "Resume Builder steps",
     },
+    combine: {
+      userInstructionTitle: "User Instruction",
+      userInstructionHint:
+        "Steering for this General Resume run. Suggest experiences and generation follow this strongly, together with your profile, companies, and experiences.",
+      userInstructionPlaceholder:
+        "e.g. Target senior backend roles; emphasize platform reliability and on-call leadership; keep the resume to one page.",
+      description:
+        "Choose a profile and included companies and experiences for this run. Resume language follows Settings → Generation.",
+    },
   },
   generate: {
     title: "JD-Resume Builder",

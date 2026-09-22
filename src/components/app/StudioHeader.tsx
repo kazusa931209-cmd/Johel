@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/app/LocaleProvider";
 import { AiAssistantTrigger } from "@/components/app/AiAssistant";
-import { StudioHeaderStatus } from "@/components/app/StudioHeaderStatus";
 import { MenuIcon } from "@/components/shared/icons";
 import { logout } from "@/lib/api";
 import { clearAllCrudListCaches } from "@/lib/cached-crud-list";
@@ -61,10 +60,7 @@ export function StudioHeader({
           <MenuIcon className="h-5 w-5" />
         </button>
       ) : null}
-      <div className="min-w-0 flex-1">
-        <StudioHeaderStatus />
-      </div>
-      <div className="flex shrink-0 items-center justify-end gap-3">
+      <div className="ml-auto flex shrink-0 items-center justify-end gap-3">
         <AiAssistantTrigger />
         <div className="relative" ref={menuRef}>
           <button

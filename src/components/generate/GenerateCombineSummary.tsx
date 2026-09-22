@@ -59,6 +59,17 @@ export function GenerateCombineSummary({
         <dd className="text-muted">{languageLabel(combine.language)}</dd>
       </div>
 
+      {combine.userInstruction.trim() ? (
+        <div className="space-y-1">
+          <dt className="font-medium">
+            {t("resumeBuilder.combine.userInstructionTitle")}
+          </dt>
+          <dd className="whitespace-pre-wrap font-mono text-muted">
+            {combine.userInstruction}
+          </dd>
+        </div>
+      ) : null}
+
       {combine.emphasis.trim() ? (
         <div className="space-y-1">
           <dt className="font-medium">{t("generate.combine.emphasis")}</dt>

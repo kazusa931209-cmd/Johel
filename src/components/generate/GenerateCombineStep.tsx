@@ -25,6 +25,7 @@ import {
   type GenerateJdMetaFieldErrors,
 } from "@/lib/jd-meta-validation";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
+import type { GeneralResumeUserInstructionFlushResult } from "@/components/generate/GeneralResumeUserInstructionPanel";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { usePce } from "@/lib/pce";
 import {
@@ -44,6 +45,8 @@ type GenerateCombineStepProps = {
   generationId?: string | null;
   onSaveBeforeSuggest: () => Promise<{ error?: string }>;
   onRunFromCombine: () => void | Promise<void>;
+  variant?: "jd" | "general";
+  flushUserInstruction?: () => GeneralResumeUserInstructionFlushResult | null;
 };
 
 export function GenerateCombineStep({
@@ -55,6 +58,8 @@ export function GenerateCombineStep({
   generationId,
   onSaveBeforeSuggest,
   onRunFromCombine,
+  variant = "jd",
+  flushUserInstruction,
 }: GenerateCombineStepProps) {
   const t = useT();
   const { toast } = useToast();
@@ -121,16 +126,24 @@ export function GenerateCombineStep({
 
   const flushPendingFields = useCallback(() => {
     flushCompanyContextRef.current();
-    const emphasisResult = flushEmphasisRef.current();
+    const emphasisResult =
+      variant === "jd" ? flushEmphasisRef.current() : null;
+    const userInstructionResult = flushUserInstruction?.() ?? null;
+    let next = combineRef.current;
     if (emphasisResult) {
-      const next = {
-        ...combineRef.current,
-        emphasis: emphasisResult.emphasis,
+      next = { ...next, emphasis: emphasisResult.emphasis };
+    }
+    if (userInstructionResult) {
+      next = {
+        ...next,
+        userInstruction: userInstructionResult.userInstruction,
       };
+    }
+    if (emphasisResult || userInstructionResult) {
       combineRef.current = next;
       onCombineChange(next);
     }
-  }, [onCombineChange]);
+  }, [flushUserInstruction, onCombineChange, variant]);
 
   const resolveCombineSnapshot = useCallback(() => {
     flushPendingFields();
@@ -138,7 +151,7 @@ export function GenerateCombineStep({
   }, [flushPendingFields]);
 
   const handleRun = useCallback(() => {
-    if (!doVerdict) {
+    if (variant === "jd" && !doVerdict) {
       const metaErrors = validateGenerateJdMetaFields(
         job.jdCompanyName,
         job.jdJobRole,
@@ -167,6 +180,7 @@ export function GenerateCombineStep({
     profileGraduation,
     resolveCombineSnapshot,
     t,
+    variant,
   ]);
 
   const runReady = isCombineRunReady(combine, profileGraduation);
@@ -243,7 +257,7 @@ export function GenerateCombineStep({
 
   return (
     <div className="space-y-6">
-      {!doVerdict ? (
+      {variant === "jd" && !doVerdict ? (
         <GenerateJdMetaFields
           jdCompanyName={job.jdCompanyName}
           jdJobRole={job.jdJobRole}
@@ -266,7 +280,11 @@ export function GenerateCombineStep({
         />
       ) : null}
 
-      <p className="text-sm text-muted">{t("generate.combine.description")}</p>
+      <p className="text-sm text-muted">
+        {variant === "general"
+          ? t("resumeBuilder.combine.description")
+          : t("generate.combine.description")}
+      </p>
 
       <CombineProfilePicker
         profileId={combine.profileId}
@@ -290,13 +308,16 @@ export function GenerateCombineStep({
         error={fieldErrors.companies}
         onClearError={clearCompaniesError}
         onRegisterContextFlush={registerContextFlush}
+        suggestVariant={variant}
       />
 
-      <CombineEmphasisField
-        emphasis={combine.emphasis}
-        onEmphasisChange={(emphasis) => patchCombine({ emphasis })}
-        onRegisterFlush={registerEmphasisFlush}
-      />
+      {variant === "jd" ? (
+        <CombineEmphasisField
+          emphasis={combine.emphasis}
+          onEmphasisChange={(emphasis) => patchCombine({ emphasis })}
+          onRegisterFlush={registerEmphasisFlush}
+        />
+      ) : null}
     </div>
   );
 }
