@@ -7,7 +7,6 @@ import {
   type CombineSnapshot,
 } from "@/components/generate/combine-types";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
-import { notifyGenerateSessionChanged } from "@/lib/generate-session-events";
 import { hashPromptForCache } from "@/lib/prompt-hash";
 
 export type GenerateJobInputMethod = "url" | "file" | "manual";
@@ -41,6 +40,17 @@ export type GenerateSession = {
 };
 
 const STORAGE_KEY_PREFIX = "johel:generate-session:";
+const LOCAL_OVERLAY_STORAGE_KEY_PREFIX = "johel:generate-session-local:";
+const LEGACY_STORAGE_KEY_PREFIX = STORAGE_KEY_PREFIX;
+
+export type GenerateSessionLocalOverlay = {
+  generationId: string;
+  verdictInputKey: string | null;
+  generationInputKey: string | null;
+  evaluationInputKey: string | null;
+  resumeAiSnapshot: GeneratedResume | null;
+  jobDuplicateDismissedHash: string | null;
+};
 
 /** Bumps Generate/Evaluate cache when the AI user-message layout changes. */
 export const LABELED_USER_MESSAGE_VERSION = 1;
@@ -75,7 +85,163 @@ export function buildJobDuplicateCheckHash(jobText: string): string {
 }
 
 function storageKey(userId: string) {
-  return `${STORAGE_KEY_PREFIX}${userId}`;
+  return `${LOCAL_OVERLAY_STORAGE_KEY_PREFIX}${userId}`;
+}
+
+function legacyStorageKey(userId: string) {
+  return `${LEGACY_STORAGE_KEY_PREFIX}${userId}`;
+}
+
+function overlayFromSession(
+  generationId: string,
+  session: GenerateSession,
+): GenerateSessionLocalOverlay {
+  return {
+    generationId,
+    verdictInputKey: session.verdictInputKey,
+    generationInputKey: session.generationInputKey,
+    evaluationInputKey: session.evaluationInputKey,
+    resumeAiSnapshot: session.resumeAiSnapshot,
+    jobDuplicateDismissedHash: session.jobDuplicateDismissedHash,
+  };
+}
+
+function applyLocalOverlay(
+  session: GenerateSession,
+  overlay: GenerateSessionLocalOverlay | null,
+): GenerateSession {
+  if (!overlay || overlay.generationId !== session.generationId) {
+    return session;
+  }
+  return {
+    ...session,
+    verdictInputKey: overlay.verdictInputKey,
+    generationInputKey: overlay.generationInputKey,
+    evaluationInputKey: overlay.evaluationInputKey,
+    resumeAiSnapshot: overlay.resumeAiSnapshot,
+    jobDuplicateDismissedHash: overlay.jobDuplicateDismissedHash,
+  };
+}
+
+function parseLocalOverlay(value: unknown): GenerateSessionLocalOverlay | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.generationId !== "string" || !raw.generationId) {
+    return null;
+  }
+  return {
+    generationId: raw.generationId,
+    verdictInputKey:
+      typeof raw.verdictInputKey === "string" ? raw.verdictInputKey : null,
+    generationInputKey:
+      typeof raw.generationInputKey === "string"
+        ? raw.generationInputKey
+        : null,
+    evaluationInputKey:
+      typeof raw.evaluationInputKey === "string"
+        ? raw.evaluationInputKey
+        : null,
+    resumeAiSnapshot: parseStoredResume(raw.resumeAiSnapshot),
+    jobDuplicateDismissedHash:
+      typeof raw.jobDuplicateDismissedHash === "string"
+        ? raw.jobDuplicateDismissedHash
+        : null,
+  };
+}
+
+/** @deprecated Legacy full-session storage; migrated into local overlay on read. */
+export function loadGenerateSession(userId: string): GenerateSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(legacyStorageKey(userId));
+    if (!raw) return null;
+    return parseGenerateSession(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+export function loadGenerateSessionLocalOverlay(
+  userId: string,
+  generationId: string | null,
+): GenerateSessionLocalOverlay | null {
+  if (typeof window === "undefined" || !generationId) return null;
+  try {
+    const raw = sessionStorage.getItem(storageKey(userId));
+    if (raw) {
+      const overlay = parseLocalOverlay(JSON.parse(raw));
+      if (overlay?.generationId === generationId) {
+        return overlay;
+      }
+    }
+  } catch {
+    // fall through to legacy migration
+  }
+
+  const legacy = loadGenerateSession(userId);
+  if (!legacy?.generationId || legacy.generationId !== generationId) {
+    return null;
+  }
+
+  const overlay = overlayFromSession(generationId, legacy);
+  saveGenerateSessionLocalOverlay(userId, generationId, legacy);
+  try {
+    sessionStorage.removeItem(legacyStorageKey(userId));
+  } catch {
+    // ignore
+  }
+  return overlay;
+}
+
+export function mergeServerSessionWithLocalOverlay(
+  userId: string,
+  session: GenerateSession,
+): GenerateSession {
+  if (!session.generationId) {
+    return session;
+  }
+  const overlay = loadGenerateSessionLocalOverlay(userId, session.generationId);
+  return applyLocalOverlay(session, overlay);
+}
+
+export function saveGenerateSessionLocalOverlay(
+  userId: string,
+  generationId: string | null,
+  session: GenerateSession,
+) {
+  if (typeof window === "undefined") return;
+  try {
+    if (!generationId || !isGenerateInProgress(session)) {
+      sessionStorage.removeItem(storageKey(userId));
+      return;
+    }
+    sessionStorage.setItem(
+      storageKey(userId),
+      JSON.stringify(overlayFromSession(generationId, session)),
+    );
+  } catch {
+    // Ignore quota / private-mode errors.
+  }
+}
+
+export function clearGenerateSessionLocalOverlay(userId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(storageKey(userId));
+    sessionStorage.removeItem(legacyStorageKey(userId));
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
+/** @deprecated Use saveGenerateSessionLocalOverlay; kept for call-site migration. */
+export function saveGenerateSession(userId: string, session: GenerateSession) {
+  saveGenerateSessionLocalOverlay(userId, session.generationId, session);
+}
+
+/** @deprecated Use clearGenerateSessionLocalOverlay. */
+export function clearGenerateSession(userId: string) {
+  clearGenerateSessionLocalOverlay(userId);
 }
 
 function normalizeActiveStep(value: unknown): GenerateStep {
@@ -386,40 +552,4 @@ export function isGenerateInProgress(session: GenerateSession): boolean {
   if (session.combine.companies.length > 0) return true;
   if (session.combine.emphasis.trim()) return true;
   return false;
-}
-
-export function loadGenerateSession(userId: string): GenerateSession | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(storageKey(userId));
-    if (!raw) return null;
-    return parseGenerateSession(JSON.parse(raw));
-  } catch {
-    return null;
-  }
-}
-
-export function saveGenerateSession(userId: string, session: GenerateSession) {
-  if (typeof window === "undefined") return;
-  try {
-    if (!isGenerateInProgress(session)) {
-      sessionStorage.removeItem(storageKey(userId));
-      notifyGenerateSessionChanged(userId);
-      return;
-    }
-    sessionStorage.setItem(storageKey(userId), JSON.stringify(session));
-    notifyGenerateSessionChanged(userId);
-  } catch {
-    // Ignore quota / private-mode errors.
-  }
-}
-
-export function clearGenerateSession(userId: string) {
-  if (typeof window === "undefined") return;
-  try {
-    sessionStorage.removeItem(storageKey(userId));
-    notifyGenerateSessionChanged(userId);
-  } catch {
-    // Ignore storage errors.
-  }
 }

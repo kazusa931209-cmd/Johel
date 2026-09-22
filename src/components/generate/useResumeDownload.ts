@@ -6,6 +6,7 @@ import { buildResumeExportFileName } from "@johel/resume";
 import {
   downloadResumeDocx,
   downloadResumePdf,
+  downloadResumeZip,
   isPdfDownloadAvailable,
   type DownloadFormat,
   type ResumeDownloadLabel,
@@ -63,5 +64,31 @@ export function useResumeDownload(
     [downloading, label, options, pdfDisabled, resume, t, toast],
   );
 
-  return { downloadAs, downloading, pdfDisabled };
+  const downloadAsZip = useCallback(async () => {
+    if (!resume || downloading || pdfDisabled) return;
+
+    setDownloading(true);
+    try {
+      const res = await downloadResumeZip(resume, label);
+      if (!res.blob) {
+        toast(res.error ?? t("generate.download.failed"), "error");
+        return;
+      }
+
+      const url = URL.createObjectURL(res.blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = res.fileName ?? "resume.zip";
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast(t("generate.download.success"), "success");
+      await options?.onDownloaded?.();
+    } catch {
+      toast(t("generate.download.failed"), "error");
+    } finally {
+      setDownloading(false);
+    }
+  }, [downloading, label, options, pdfDisabled, resume, t, toast]);
+
+  return { downloadAs, downloadAsZip, downloading, pdfDisabled };
 }

@@ -9,11 +9,13 @@ import {
   type ResumeExportFormat,
 } from "@johel/resume";
 import { buildCombineGenerationFingerprint } from "../lib/resume/generation-fingerprint";
+import { buildResumeZipBuffer } from "../lib/resume-export-zip";
 import { requireUser } from "../lib/session";
 
 const DOCX_MEDIA_TYPE =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const PDF_MEDIA_TYPE = "application/pdf";
+const ZIP_MEDIA_TYPE = "application/zip";
 
 const combineCompanySchema = z.object({
   companyId: z.string().trim().min(1),
@@ -147,5 +149,37 @@ resumeRoutes.post("/pdf", async (c) => {
     });
   } catch {
     return c.json({ error: "PDF generation failed." }, 500);
+  }
+});
+
+resumeRoutes.post("/zip", async (c) => {
+  const user = await requireUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const body = await c.req.json().catch(() => null);
+  const parsed = exportPostSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid resume data." }, 400);
+  }
+
+  const resume = parsed.data.resume;
+  if (!isNonEmptyResume(resume)) {
+    return c.json({ error: "Generated resume is empty." }, 400);
+  }
+
+  try {
+    const { buffer, fileName } = await buildResumeZipBuffer(resume, {
+      publicId: parsed.data.publicId,
+      jdCompanyName: parsed.data.jdCompanyName,
+      jdJobRole: parsed.data.jdJobRole,
+    });
+    return c.body(new Uint8Array(buffer), 200, {
+      "Content-Type": ZIP_MEDIA_TYPE,
+      "Content-Disposition": `attachment; filename="${fileName}"`,
+    });
+  } catch {
+    return c.json({ error: "ZIP generation failed." }, 500);
   }
 });

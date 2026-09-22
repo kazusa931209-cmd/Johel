@@ -34,14 +34,11 @@ export function GenerateGenerateStep({
   onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
-  const { downloadAs, downloading, pdfDisabled } = useResumeDownload(
-    resume,
-    downloadLabel,
-    {
+  const { downloadAs, downloadAsZip, downloading, pdfDisabled } =
+    useResumeDownload(resume, downloadLabel, {
       resumeLanguage,
       onDownloaded,
-    },
-  );
+    });
 
   useRegisterGenerateStepNav({
     onRun:
@@ -57,6 +54,7 @@ export function GenerateGenerateStep({
         ? {
             onDownloadDocx: () => void downloadAs("docx"),
             onDownloadPdf: () => void downloadAs("pdf"),
+            onDownloadZip: () => void downloadAsZip(),
             pdfDisabled,
           }
         : undefined,

@@ -13,6 +13,8 @@ model User {
   passwordHash   String
   role           String     @default("user")
   sessionVersion Int        @default(0)
+  currentGenerationId String?
+  currentGeneration   Generation? @relation("UserCurrentGeneration", fields: [currentGenerationId], references: [id], onDelete: SetNull)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   setting      Setting?
@@ -165,6 +167,7 @@ model Generation {
   updatedAt          DateTime                @updatedAt
   aiUsages           AiUsage[]
   jobEmbedding       GenerationJobEmbedding?
+  currentForUsers    User[]                  @relation("UserCurrentGeneration")
 
   @@unique([userId, publicId])
   @@index([userId, createdAt])

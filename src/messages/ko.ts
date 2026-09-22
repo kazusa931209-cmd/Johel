@@ -707,7 +707,10 @@ export const ko: MessageTree = {
       downloading: "다운로드 중…",
       asDocx: "DOCX로 다운로드",
       asPdf: "PDF로 다운로드",
+      asZip: "ZIP으로 다운로드",
       pdfEnglishOnly: "PDF는 이력서 언어가 영어일 때만 사용할 수 있습니다.",
+      zipEnglishOnly:
+        "ZIP(DOCX 및 PDF)은 이력서 언어가 영어일 때만 사용할 수 있습니다.",
     },
   },
   history: {

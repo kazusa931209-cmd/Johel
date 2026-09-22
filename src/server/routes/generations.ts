@@ -15,6 +15,10 @@ import {
 import { prisma } from "../lib/prisma";
 import { DEFAULT_GENERATION_PROCESS } from "./settings-process";
 import {
+  getUserCurrentGeneration,
+  setUserCurrentGeneration,
+} from "../lib/current-generation";
+import {
   formatGenerationInformation,
   formatProfileName,
   parseGenerationCombineProfileId,
@@ -271,6 +275,8 @@ generationsRoutes.post("/start", async (c) => {
         },
       });
 
+      await setUserCurrentGeneration(user.id, generation.id);
+
       return c.json({
         id: generation.id,
         publicId: generation.publicId,
@@ -352,6 +358,8 @@ generationsRoutes.put("/:id", async (c) => {
   } catch (err) {
     console.error("Job embedding sync skipped after generation save:", err);
   }
+
+  await setUserCurrentGeneration(user.id, generation.id);
 
   return c.json(toDetailResponse(generation));
 });
@@ -462,6 +470,8 @@ generationsRoutes.post("/:publicId/resume", async (c) => {
     data: { finalized: false },
   });
 
+  await setUserCurrentGeneration(user.id, generation.id);
+
   return c.json(toDetailResponse(generation));
 });
 
@@ -471,13 +481,7 @@ generationsRoutes.get("/current", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const generation = await prisma.generation.findFirst({
-    where: {
-      userId: user.id,
-      finalized: false,
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+  const generation = await getUserCurrentGeneration(user.id);
   if (!generation) {
     return c.json(null);
   }

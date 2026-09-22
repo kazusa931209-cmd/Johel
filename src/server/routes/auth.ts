@@ -75,7 +75,12 @@ authRoutes.post("/register", async (c) => {
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions(c));
 
   return c.json(
-    { id: user.id, loginId: user.email, role: user.role },
+    {
+      id: user.id,
+      loginId: user.email,
+      role: user.role,
+      currentGenerationPublicId: null,
+    },
     201,
   );
 });
@@ -96,7 +101,12 @@ authRoutes.post("/login", async (c) => {
   const token = await signSessionToken(user.id, user.email, user.sessionVersion);
   setCookie(c, COOKIE_NAME, token, sessionCookieOptions(c));
 
-  return c.json({ id: user.id, loginId: user.email, role: user.role });
+  return c.json({
+    id: user.id,
+    loginId: user.email,
+    role: user.role,
+    currentGenerationPublicId: null,
+  });
 });
 
 authRoutes.put("/password", async (c) => {
@@ -163,5 +173,23 @@ authRoutes.get("/me", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  return c.json({ id: user.id, loginId: user.email, role: user.role });
+  const row = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      currentGeneration: { select: { publicId: true } },
+    },
+  });
+  if (!row) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  return c.json({
+    id: row.id,
+    loginId: row.email,
+    role: row.role,
+    currentGenerationPublicId: row.currentGeneration?.publicId ?? null,
+  });
 });
