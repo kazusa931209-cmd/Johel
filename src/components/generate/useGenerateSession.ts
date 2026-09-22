@@ -7,7 +7,7 @@ import {
   EMPTY_COMBINE_SNAPSHOT,
   type CombineSnapshot,
 } from "@/components/generate/combine-types";
-import { loadMe } from "@/lib/cached-settings";
+import { clearMeCache, loadMe } from "@/lib/cached-settings";
 import {
   clearDownstreamFromGenerate,
   clearDownstreamFromVerdict,
@@ -15,10 +15,11 @@ import {
   EMPTY_JOB_STATE,
   type GenerateJobState,
   type GenerateSession,
-  clearGenerateSession,
-  loadGenerateSession,
-  saveGenerateSession,
+  clearGenerateSessionLocalOverlay,
+  saveGenerateSessionLocalOverlay,
 } from "@/lib/generate-session";
+import { notifyGenerateSessionChanged } from "@/lib/generate-session-events";
+import { deriveProcessedStepFromSession } from "@/lib/generation-step-progress";
 import {
   persistCombineDefaultsFromSnapshot,
   seedCombineFromDefaults,
@@ -80,17 +81,7 @@ export function useGenerateSession() {
         return;
       }
 
-      const stored = loadGenerateSession(id);
-      if (stored?.generationId) {
-        setSession({
-          ...stored,
-          combine: seedCombineFromDefaults(stored.combine, id),
-        });
-        setReady(true);
-        return;
-      }
-
-      const restored = await fetchCurrentGenerationSession();
+      const restored = await fetchCurrentGenerationSession(id);
       if (cancelled) return;
       if (restored?.generationId) {
         setSession({
@@ -148,7 +139,13 @@ export function useGenerateSession() {
 
   useEffect(() => {
     if (!ready || !userId) return;
-    saveGenerateSession(userId, session);
+    saveGenerateSessionLocalOverlay(userId, session.generationId, session);
+    notifyGenerateSessionChanged(userId, {
+      generationId: session.generationId,
+      generationPublicId: session.generationPublicId,
+      processedStep: deriveProcessedStepFromSession(session),
+      finalized: session.finalized,
+    });
   }, [ready, session, userId]);
 
   const saveSnapshot = useCallback(async (finalized?: boolean) => {
@@ -300,7 +297,8 @@ export function useGenerateSession() {
     allocationEpochRef.current += 1;
     await saveSnapshot();
     if (userId) {
-      clearGenerateSession(userId);
+      clearGenerateSessionLocalOverlay(userId);
+      clearMeCache();
     }
     const res = await allocateNewGeneration();
     const started = res.data;
@@ -323,7 +321,7 @@ export function useGenerateSession() {
     setSession((current) => {
       const next = { ...current, finalized: true };
       if (userId) {
-        saveGenerateSession(userId, next);
+        saveGenerateSessionLocalOverlay(userId, next.generationId, next);
       }
       return next;
     });

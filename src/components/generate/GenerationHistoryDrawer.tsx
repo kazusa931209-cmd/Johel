@@ -28,8 +28,8 @@ import {
   type GenerationDetail,
 } from "@/lib/api";
 import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
-import { loadGenerateSession, type GenerateJobState } from "@/lib/generate-session";
-import { loadMe } from "@/lib/cached-settings";
+import type { GenerateJobState } from "@/lib/generate-session";
+import { loadMe, clearMeCache } from "@/lib/cached-settings";
 import { resumeGenerationFromHistory } from "@/lib/generation-persistence";
 import {
   getGenerateCurrentPanelTitle,
@@ -142,15 +142,20 @@ export function GenerationHistoryDrawer({
       if (cancelled) return;
       const id = meRes.data?.id ?? null;
       setUserId(id);
-      if (id) {
-        const session = loadGenerateSession(id);
-        setCurrentPublicId(session?.generationPublicId ?? null);
-      }
+      setCurrentPublicId(meRes.data?.currentGenerationPublicId ?? null);
     });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    clearMeCache();
+    void loadMe().then((meRes) => {
+      setCurrentPublicId(meRes.data?.currentGenerationPublicId ?? null);
+    });
+  }, [open]);
 
   useEffect(() => {
     if (!open || !publicId) {
@@ -244,14 +249,11 @@ export function GenerationHistoryDrawer({
     }
   }
 
-  const { downloadAs, downloading, pdfDisabled } = useResumeDownload(
-    resume,
-    downloadLabel,
-    {
+  const { downloadAs, downloadAsZip, downloading, pdfDisabled } =
+    useResumeDownload(resume, downloadLabel, {
       resumeLanguage: combine.language as ResumeLanguage,
       onDownloaded: handleHistoryDownloaded,
-    },
-  );
+    });
   const showDownload = resume != null;
 
   async function confirmResume() {
@@ -347,6 +349,7 @@ export function GenerationHistoryDrawer({
                     <ResumeDownloadDropdown
                       onDownloadDocx={() => void downloadAs("docx")}
                       onDownloadPdf={() => void downloadAs("pdf")}
+                      onDownloadZip={() => void downloadAsZip()}
                       pdfDisabled={pdfDisabled}
                       busy={downloading}
                       ariaLabel={t("generate.nav.download")}

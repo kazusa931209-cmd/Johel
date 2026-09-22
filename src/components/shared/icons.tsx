@@ -223,6 +223,38 @@ export function PdfFileIcon({ className }: IconProps) {
   );
 }
 
+export function ZipFileIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+        fill="#F4B400"
+      />
+      <path d="M14 3v5h5" fill="#C49000" />
+      <path
+        d="M11 8.5h2v1.5h-2V8.5ZM11 11h2v1.5h-2V11ZM11 13.5h2V15h-2v-1.5Z"
+        fill="#fff"
+      />
+      <text
+        x="12"
+        y="18.5"
+        fill="#fff"
+        fontSize="3.8"
+        fontWeight="700"
+        textAnchor="middle"
+        fontFamily="ui-sans-serif, system-ui, sans-serif"
+      >
+        ZIP
+      </text>
+    </svg>
+  );
+}
+
 export function DownloadIcon({ className }: IconProps) {
   return (
     <svg

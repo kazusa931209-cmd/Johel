@@ -21,7 +21,7 @@ import {
   setGenerationProcessCache,
 } from "@/lib/cached-settings";
 import type { ResumeLanguage } from "@/lib/api";
-import { clearGenerateSession } from "@/lib/generate-session";
+import { clearGenerateSessionLocalOverlay } from "@/lib/generate-session";
 
 function ChevronDownIcon({ className }: { className?: string }) {
   return (
@@ -191,7 +191,7 @@ export default function GenerationSettingsPage() {
       res.data.experienceJdTierDecayPercent !==
         savedExperienceJdTierDecayPercent;
     if (settingsChanged && userId) {
-      clearGenerateSession(userId);
+      clearGenerateSessionLocalOverlay(userId);
     }
     setSavedDoVerdict(res.data.doVerdict);
     setSavedDoEvaluate(res.data.doEvaluate);

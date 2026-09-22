@@ -706,7 +706,10 @@ export const en = {
       downloading: "Downloading…",
       asDocx: "Download as DOCX",
       asPdf: "Download as PDF",
+      asZip: "Download as ZIP",
       pdfEnglishOnly: "PDF is available only when Resume Language is English.",
+      zipEnglishOnly:
+        "ZIP (DOCX and PDF) is available only when Resume Language is English.",
     },
   },
   history: {

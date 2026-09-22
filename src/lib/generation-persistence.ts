@@ -8,6 +8,7 @@ import {
   buildVerdictInputKey,
   EMPTY_GENERATE_SESSION,
   parseGenerateSession,
+  mergeServerSessionWithLocalOverlay,
   type GenerateJobState,
   type GenerateSession,
 } from "@/lib/generate-session";
@@ -21,7 +22,6 @@ import {
   type GenerationDetail,
   type GenerationResumePayload,
 } from "@/lib/api";
-import { loadGenerateSession, saveGenerateSession } from "@/lib/generate-session";
 
 export type GenerationSnapshot = {
   generationId: string;
@@ -140,18 +140,21 @@ async function hydrateSessionCacheKeys(
   };
 }
 
-export async function fetchCurrentGenerationSession(): Promise<GenerateSession | null> {
+export async function fetchCurrentGenerationSession(
+  userId: string,
+): Promise<GenerateSession | null> {
   const res = await getCurrentGeneration();
   if (!res.data) {
     return null;
   }
 
-  const session = generationDetailToSession(res.data);
+  let session = generationDetailToSession(res.data);
   if (!session.generationId) {
     return null;
   }
 
-  return hydrateSessionCacheKeys(session, res.data);
+  session = await hydrateSessionCacheKeys(session, res.data);
+  return mergeServerSessionWithLocalOverlay(userId, session);
 }
 
 function sessionToSnapshot(
@@ -186,7 +189,10 @@ export async function resumeGenerationFromHistory(
   targetPublicId: string,
   userId: string,
 ): Promise<{ error?: string; session?: GenerateSession }> {
-  const current = loadGenerateSession(userId);
+  const currentRes = await getCurrentGeneration();
+  const current = currentRes.data
+    ? generationDetailToSession(currentRes.data)
+    : null;
   const archive =
     current?.generationId &&
     current.generationPublicId &&
@@ -202,6 +208,6 @@ export async function resumeGenerationFromHistory(
   let session = generationDetailToSession(res.data);
   session = { ...session, finalized: false };
   session = await hydrateSessionCacheKeys(session, res.data);
-  saveGenerateSession(userId, session);
+  session = mergeServerSessionWithLocalOverlay(userId, session);
   return { session };
 }

@@ -24,6 +24,7 @@ export type User = {
   id: string;
   loginId: string;
   role: string;
+  currentGenerationPublicId: string | null;
 };
 
 type ApiError = {
@@ -911,7 +912,7 @@ export function isPdfDownloadAvailable(
 }
 
 async function downloadResumeExport(
-  path: "/backend/resume/docx" | "/backend/resume/pdf",
+  path: "/backend/resume/docx" | "/backend/resume/pdf" | "/backend/resume/zip",
   resume: import("@johel/resume").GeneratedResume,
   label: ResumeDownloadLabel | undefined,
   fallbackFileName: string,
@@ -983,5 +984,18 @@ export async function downloadResumePdf(
     label,
     "resume.pdf",
     "PDF download failed.",
+  );
+}
+
+export async function downloadResumeZip(
+  resume: import("@johel/resume").GeneratedResume,
+  label?: ResumeDownloadLabel,
+): Promise<ResumeDownloadResult> {
+  return downloadResumeExport(
+    "/backend/resume/zip",
+    resume,
+    label,
+    "resume.zip",
+    "ZIP download failed.",
   );
 }
