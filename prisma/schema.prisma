@@ -215,6 +215,7 @@ model GenerationProcess {
   downloadFormat            String   @default("docx")
   experienceAdvisePoolDepth        String   @default("normal")
   combineExperiencesPerCompanyMax  Int      @default(5)
+  combineExperiencesPerCompanyMin  Int      @default(2)
   experienceDimensionMode          String   @default("technical_facet")
   experienceJdTierDecayPercent     Int      @default(80)
   createdAt                        DateTime @default(now())

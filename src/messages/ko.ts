@@ -156,8 +156,9 @@ export const ko: MessageTree = {
       combineExperiencesPerCompanyMax: {
         title: "회사당 조합 경험 수",
         description:
-          "Generate / Combine에서 경험 제안(Suggest) 시 AI가 포함된 각 회사에 연결할 수 있는 최대 경험 카드 수입니다. 채용 공고와의 겹침이 적을 때는 더 적은 카드를 우선합니다.",
+          "Generate / Combine에서 경험 제안(Suggest) 시 AI가 포함된 각 회사에 연결할 최소·최대 경험 카드 수입니다(JD 및 일반 이력서). 채용 공고나 사용자 지시와의 겹침이 적을 때는 더 적은 카드를 우선합니다.",
         label: "회사당 최대",
+        minLabel: "회사당 최소",
         option: "{count}장",
       },
       experienceJdTierDecayPercent: {
@@ -618,6 +619,9 @@ export const ko: MessageTree = {
       companiesAndExperiences: "회사 및 경험",
       companiesAndExperiencesHint:
         "포함할 회사를 선택하고 기간·맥락을 설정한 뒤, 회사별로 역량 카드를 연결하거나 경험 제안을 사용하세요.",
+      companiesAndExperiencesReadOnlyHint:
+        "이 실행에 포함된 회사와 연결된 경험입니다. 경험 행을 클릭하면 상세를 볼 수 있습니다.",
+      readOnlyContextEmpty: "—",
       resetCompanies: "초기화",
       resetCompaniesAria: "선택한 회사 모두 해제",
       selectProfileFirst: "회사를 선택하기 전에 프로필을 선택해 주세요.",

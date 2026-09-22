@@ -154,8 +154,9 @@ export const en = {
       combineExperiencesPerCompanyMax: {
         title: "Combine experiences per company",
         description:
-          "Maximum experience cards the AI may link to each included company when you Suggest experiences on Generate / Combine. The advisor still prefers fewer cards when job overlap is thin.",
+          "Minimum and maximum experience cards the AI should link to each included company when you Suggest experiences on Generate / Combine (JD and General Resume). The advisor may return fewer cards when overlap with the job or user instruction is thin.",
         label: "Max per company",
+        minLabel: "Min per company",
         option: "{count} cards",
       },
       experienceJdTierDecayPercent: {
@@ -616,6 +617,9 @@ export const en = {
       companiesAndExperiences: "Companies & Experiences",
       companiesAndExperiencesHint:
         "Toggle companies to include, set periods and context, link capability cards per company, or use Suggest experiences.",
+      companiesAndExperiencesReadOnlyHint:
+        "Included companies and linked experiences for this run. Click an experience row to view details.",
+      readOnlyContextEmpty: "—",
       resetCompanies: "Reset",
       resetCompaniesAria: "Deselect all companies",
       selectProfileFirst: "Select a profile before choosing companies.",

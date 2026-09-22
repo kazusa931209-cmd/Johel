@@ -35,6 +35,7 @@ export async function runGeneralCombineRecommend(
   input: GeneralCombineRecommendRunInput,
   maxExperiencesPerCompany = 5,
   experienceDimensionMode: ExperienceDimensionMode = "technical_facet",
+  minExperiencesPerCompany?: number | null,
 ): Promise<CombineRecommendProviderResult> {
   const refMaps = buildCombineRecommendRefMaps({
     experienceIds: input.experienceIndex.map((item) => item.id),
@@ -44,6 +45,7 @@ export async function runGeneralCombineRecommend(
   const instructions = getGeneralCombineRecommendSystemPrompt(
     maxExperiencesPerCompany,
     experienceDimensionMode,
+    minExperiencesPerCompany,
   );
   const user = buildGeneralCombineRecommendUserPrompt({
     profileId: input.profileId,

@@ -36,6 +36,7 @@ export async function runCombineRecommend(
   maxExperiencesPerCompany = 5,
   experienceDimensionMode: ExperienceDimensionMode = "technical_facet",
   decayPercent = 80,
+  minExperiencesPerCompany?: number | null,
 ): Promise<CombineRecommendProviderResult> {
   const refMaps = buildCombineRecommendRefMaps({
     experienceIds: input.experienceIndex.map((item) => item.id),
@@ -46,6 +47,7 @@ export async function runCombineRecommend(
     maxExperiencesPerCompany,
     experienceDimensionMode,
     decayPercent,
+    minExperiencesPerCompany,
   );
   const user = buildCombineRecommendUserPrompt({
     ...input,

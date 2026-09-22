@@ -41,6 +41,7 @@ type CombineCompanyExperienceListProps = {
   experienceIds: string[];
   rationale?: string;
   disabled?: boolean;
+  readOnly?: boolean;
   onChange: (experienceIds: string[]) => void;
 };
 
@@ -48,6 +49,7 @@ export function CombineCompanyExperienceList({
   experienceIds,
   rationale,
   disabled = false,
+  readOnly = false,
   onChange,
 }: CombineCompanyExperienceListProps) {
   const t = useT();
@@ -74,7 +76,7 @@ export function CombineCompanyExperienceList({
   }
 
   function handleDragStart(index: number, event: DragEvent<HTMLButtonElement>) {
-    if (disabled) return;
+    if (disabled || readOnly) return;
     setDragIndex(index);
     setDropIndex(index);
     event.dataTransfer.effectAllowed = "move";
@@ -82,7 +84,7 @@ export function CombineCompanyExperienceList({
   }
 
   function handleDragOver(index: number, event: DragEvent<HTMLLIElement>) {
-    if (disabled || dragIndex === null) return;
+    if (disabled || readOnly || dragIndex === null) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
     if (dropIndex !== index) {
@@ -92,7 +94,7 @@ export function CombineCompanyExperienceList({
 
   function handleDrop(index: number, event: DragEvent<HTMLLIElement>) {
     event.preventDefault();
-    if (disabled || dragIndex === null) return;
+    if (disabled || readOnly || dragIndex === null) return;
     onChange(reorderExperienceIds(experienceIds, dragIndex, index));
     setDragIndex(null);
     setDropIndex(null);
@@ -109,13 +111,15 @@ export function CombineCompanyExperienceList({
         {t("generate.combine.linkedExperiences")}
       </span>
       <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex justify-end">
-          <AddButton
-            label={t("generate.combine.linkExperienceAria")}
-            disabled={disabled}
-            onClick={() => setPickerOpen(true)}
-          />
-        </div>
+        {!readOnly ? (
+          <div className="flex justify-end">
+            <AddButton
+              label={t("generate.combine.linkExperienceAria")}
+              disabled={disabled}
+              onClick={() => setPickerOpen(true)}
+            />
+          </div>
+        ) : null}
 
         {experienceIds.length === 0 ? (
           <p className="text-sm text-muted">{t("generate.combine.experiencesEmpty")}</p>
@@ -129,6 +133,23 @@ export function CombineCompanyExperienceList({
               const isDragging = dragIndex === index;
               const isDropTarget =
                 dropIndex === index && dragIndex !== null && dragIndex !== index;
+
+              if (readOnly) {
+                return (
+                  <li key={id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (experience) setViewExperience(experience);
+                      }}
+                      disabled={!experience}
+                      className={`${experienceRowClass} w-full cursor-pointer text-left hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60`}
+                    >
+                      <span className="min-w-0 flex-1 truncate">{label}</span>
+                    </button>
+                  </li>
+                );
+              }
 
               return (
                 <li
@@ -201,12 +222,14 @@ export function CombineCompanyExperienceList({
         />
       ) : null}
 
-      <CombineExperiencePickerDrawer
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        linkedExperienceIds={experienceIds}
-        onSelect={addExperience}
-      />
+      {!readOnly ? (
+        <CombineExperiencePickerDrawer
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          linkedExperienceIds={experienceIds}
+          onSelect={addExperience}
+        />
+      ) : null}
     </div>
   );
 }

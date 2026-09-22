@@ -6,7 +6,10 @@ import {
   loadExperienceIndex,
   runGeneralCombineRecommend,
 } from "../lib/ai-general-combine-recommend/index";
-import { normalizeCombineExperiencesPerCompanyMax } from "../lib/combine-experiences-per-company";
+import {
+  normalizeCombineExperiencesPerCompanyMax,
+  normalizeCombineExperiencesPerCompanyMin,
+} from "../lib/combine-experiences-per-company";
 import {
   buildCompanyTierContext,
   normalizeExperienceDimensionMode,
@@ -118,6 +121,10 @@ aiGeneralCombineRecommendRoutes.post("/", async (c) => {
   const combineExperiencesPerCompanyMax = normalizeCombineExperiencesPerCompanyMax(
     generationProcess?.combineExperiencesPerCompanyMax,
   );
+  const combineExperiencesPerCompanyMin = normalizeCombineExperiencesPerCompanyMin(
+    generationProcess?.combineExperiencesPerCompanyMin,
+    combineExperiencesPerCompanyMax,
+  );
   const experienceDimensionMode = normalizeExperienceDimensionMode(
     generationProcess?.experienceDimensionMode,
   );
@@ -165,6 +172,7 @@ aiGeneralCombineRecommendRoutes.post("/", async (c) => {
       runInput,
       combineExperiencesPerCompanyMax,
       experienceDimensionMode,
+      combineExperiencesPerCompanyMin,
     );
 
     await recordAiUsage({

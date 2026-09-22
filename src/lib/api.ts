@@ -155,6 +155,7 @@ export type GenerationProcessSettings = {
   downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
   combineExperiencesPerCompanyMax: number;
+  combineExperiencesPerCompanyMin: number;
   experienceDimensionMode: ExperienceDimensionMode;
   experienceJdTierDecayPercent: ExperienceJdTierDecayPercent;
 };
@@ -170,6 +171,7 @@ export function saveGenerationProcess(payload: {
   downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
   combineExperiencesPerCompanyMax: number;
+  combineExperiencesPerCompanyMin: number;
   experienceDimensionMode: ExperienceDimensionMode;
   experienceJdTierDecayPercent: ExperienceJdTierDecayPercent;
 }) {

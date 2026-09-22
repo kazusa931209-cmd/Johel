@@ -5,7 +5,10 @@ import {
   loadExperienceIndex,
   runCombineRecommend,
 } from "../lib/ai-combine-recommend/index";
-import { normalizeCombineExperiencesPerCompanyMax } from "../lib/combine-experiences-per-company";
+import {
+  normalizeCombineExperiencesPerCompanyMax,
+  normalizeCombineExperiencesPerCompanyMin,
+} from "../lib/combine-experiences-per-company";
 import {
   buildCompanyTierContext,
   normalizeExperienceJdTierDecayPercent,
@@ -116,6 +119,10 @@ aiCombineRecommendRoutes.post("/", async (c) => {
   const combineExperiencesPerCompanyMax = normalizeCombineExperiencesPerCompanyMax(
     generationProcess?.combineExperiencesPerCompanyMax,
   );
+  const combineExperiencesPerCompanyMin = normalizeCombineExperiencesPerCompanyMin(
+    generationProcess?.combineExperiencesPerCompanyMin,
+    combineExperiencesPerCompanyMax,
+  );
   const experienceDimensionMode = normalizeExperienceDimensionMode(
     generationProcess?.experienceDimensionMode,
   );
@@ -164,6 +171,7 @@ aiCombineRecommendRoutes.post("/", async (c) => {
       combineExperiencesPerCompanyMax,
       experienceDimensionMode,
       experienceJdTierDecayPercent,
+      combineExperiencesPerCompanyMin,
     );
 
     await recordAiUsage({

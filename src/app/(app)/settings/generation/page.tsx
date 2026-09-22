@@ -68,6 +68,7 @@ const DEFAULT_SETTINGS = {
   downloadFormat: "docx" as DownloadFormat,
   experienceAdvisePoolDepth: "normal" as ExperienceAdvisePoolDepth,
   combineExperiencesPerCompanyMax: 5,
+  combineExperiencesPerCompanyMin: 2,
   experienceDimensionMode: "technical_facet" as ExperienceDimensionMode,
   experienceJdTierDecayPercent: 80 as ExperienceJdTierDecayPercent,
 };
@@ -88,6 +89,8 @@ export default function GenerationSettingsPage() {
     );
   const [combineExperiencesPerCompanyMax, setCombineExperiencesPerCompanyMax] =
     useState(DEFAULT_SETTINGS.combineExperiencesPerCompanyMax);
+  const [combineExperiencesPerCompanyMin, setCombineExperiencesPerCompanyMin] =
+    useState(DEFAULT_SETTINGS.combineExperiencesPerCompanyMin);
   const [experienceDimensionMode, setExperienceDimensionMode] =
     useState<ExperienceDimensionMode>(
       DEFAULT_SETTINGS.experienceDimensionMode,
@@ -132,6 +135,9 @@ export default function GenerationSettingsPage() {
         setCombineExperiencesPerCompanyMax(
           res.data.combineExperiencesPerCompanyMax,
         );
+        setCombineExperiencesPerCompanyMin(
+          res.data.combineExperiencesPerCompanyMin,
+        );
         setExperienceDimensionMode(res.data.experienceDimensionMode);
         setExperienceJdTierDecayPercent(res.data.experienceJdTierDecayPercent);
         setSavedExperienceDimensionMode(res.data.experienceDimensionMode);
@@ -166,6 +172,7 @@ export default function GenerationSettingsPage() {
       downloadFormat: savedDownloadFormat,
       experienceAdvisePoolDepth,
       combineExperiencesPerCompanyMax,
+      combineExperiencesPerCompanyMin,
       experienceDimensionMode,
       experienceJdTierDecayPercent,
     });
@@ -180,6 +187,7 @@ export default function GenerationSettingsPage() {
     setResumeLanguage(res.data.resumeLanguage);
     setExperienceAdvisePoolDepth(res.data.experienceAdvisePoolDepth);
     setCombineExperiencesPerCompanyMax(res.data.combineExperiencesPerCompanyMax);
+    setCombineExperiencesPerCompanyMin(res.data.combineExperiencesPerCompanyMin);
     setExperienceDimensionMode(res.data.experienceDimensionMode);
     setExperienceJdTierDecayPercent(res.data.experienceJdTierDecayPercent);
     const settingsChanged =
@@ -334,32 +342,68 @@ export default function GenerationSettingsPage() {
               {t("settings.generation.process.loading")}
             </p>
           ) : (
-            <label className="block max-w-md space-y-1 text-sm">
-              <span>
-                {t(
-                  "settings.generation.combineExperiencesPerCompanyMax.label",
-                )}
-              </span>
-              <div className="relative">
-                <select
-                  value={combineExperiencesPerCompanyMax}
-                  onChange={(e) =>
-                    setCombineExperiencesPerCompanyMax(Number(e.target.value))
-                  }
-                  className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
-                >
-                  {COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {t(
-                        "settings.generation.combineExperiencesPerCompanyMax.option",
-                        { count: formatThousandsSeparated(option) },
-                      )}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
-              </div>
-            </label>
+            <div className="grid max-w-md gap-4 sm:grid-cols-2">
+              <label className="block space-y-1 text-sm">
+                <span>
+                  {t(
+                    "settings.generation.combineExperiencesPerCompanyMax.minLabel",
+                  )}
+                </span>
+                <div className="relative">
+                  <select
+                    value={combineExperiencesPerCompanyMin}
+                    onChange={(e) =>
+                      setCombineExperiencesPerCompanyMin(Number(e.target.value))
+                    }
+                    className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
+                  >
+                    {COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS.map((option) => (
+                      <option
+                        key={option}
+                        value={option}
+                        disabled={option > combineExperiencesPerCompanyMax}
+                      >
+                        {t(
+                          "settings.generation.combineExperiencesPerCompanyMax.option",
+                          { count: formatThousandsSeparated(option) },
+                        )}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
+                </div>
+              </label>
+              <label className="block space-y-1 text-sm">
+                <span>
+                  {t(
+                    "settings.generation.combineExperiencesPerCompanyMax.label",
+                  )}
+                </span>
+                <div className="relative">
+                  <select
+                    value={combineExperiencesPerCompanyMax}
+                    onChange={(e) => {
+                      const nextMax = Number(e.target.value);
+                      setCombineExperiencesPerCompanyMax(nextMax);
+                      if (combineExperiencesPerCompanyMin > nextMax) {
+                        setCombineExperiencesPerCompanyMin(nextMax);
+                      }
+                    }}
+                    className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
+                  >
+                    {COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {t(
+                          "settings.generation.combineExperiencesPerCompanyMax.option",
+                          { count: formatThousandsSeparated(option) },
+                        )}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
+                </div>
+              </label>
+            </div>
           )}
         </div>
 

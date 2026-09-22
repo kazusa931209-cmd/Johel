@@ -24,9 +24,10 @@ const JSON_SCHEMA = `{
 function buildSharedRules(
   maxPerCompany: number,
   experienceDimensionMode: ExperienceDimensionMode,
+  minPerCompanySetting?: number | null,
 ): string {
   const { minPerCompany, maxPerCompany: max, thinOverlapMaxPerCompany } =
-    resolveCombineExperiencesPerCompanyRange(maxPerCompany);
+    resolveCombineExperiencesPerCompanyRange(maxPerCompany, minPerCompanySetting);
 
   const pickRule =
     minPerCompany === max
@@ -63,8 +64,13 @@ ${JSON_SCHEMA}`;
 export function getGeneralCombineRecommendSystemPrompt(
   maxPerCompany = 5,
   experienceDimensionMode: ExperienceDimensionMode = "technical_facet",
+  minPerCompany?: number | null,
 ): string {
-  return `${buildSharedRules(maxPerCompany, experienceDimensionMode)}\n\nProvider notes (OpenAI): Return ONLY valid JSON.`;
+  return `${buildSharedRules(
+    maxPerCompany,
+    experienceDimensionMode,
+    minPerCompany,
+  )}\n\nProvider notes (OpenAI): Return ONLY valid JSON.`;
 }
 
 function formatKeywordContext(keywordContext?: string): string {

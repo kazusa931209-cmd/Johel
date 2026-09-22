@@ -509,7 +509,6 @@ export default function ResumeBuilderPage() {
                 previousHeaderRight
               )
             }
-            previousFill={isCombineStep}
             currentTitle={getGenerateCurrentPanelTitle(
               normalizedActiveStep,
               t,
@@ -521,9 +520,7 @@ export default function ResumeBuilderPage() {
                 generateHeaderRight
               ) : undefined
             }
-            currentFill={
-              isCombineStep || (isGenerateStep && Boolean(resume))
-            }
+            currentFill={isGenerateStep && Boolean(resume)}
           >
             {isCombineStep ? (
               <GenerateCombineStep

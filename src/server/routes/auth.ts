@@ -55,6 +55,8 @@ authRoutes.post("/register", async (c) => {
             DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
           combineExperiencesPerCompanyMax:
             DEFAULT_GENERATION_PROCESS.combineExperiencesPerCompanyMax,
+          combineExperiencesPerCompanyMin:
+            DEFAULT_GENERATION_PROCESS.combineExperiencesPerCompanyMin,
           experienceDimensionMode:
             DEFAULT_GENERATION_PROCESS.experienceDimensionMode,
           experienceJdTierDecayPercent:
