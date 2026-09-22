@@ -84,6 +84,9 @@ importers:
       eslint-config-next:
         specifier: 15.5.25
         version: 15.5.25(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
       prisma:
         specifier: ^6.5.0
         version: 6.19.3(typescript@5.9.3)
@@ -2088,6 +2091,11 @@ packages:
 
   html-url-attributes@3.0.1:
     resolution: {integrity: sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ==}
+
+  husky@9.1.7:
+    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
@@ -5136,6 +5144,8 @@ snapshots:
   hono@4.13.5: {}
 
   html-url-attributes@3.0.1: {}
+
+  husky@9.1.7: {}
 
   ignore@5.3.2: {}
 

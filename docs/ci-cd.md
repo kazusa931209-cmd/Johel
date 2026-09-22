@@ -32,6 +32,18 @@ pnpm build   # set DATABASE_URL / JWT_SECRET like CI if needed
 
 CI uses **concurrency** to cancel in-progress runs on the same branch when new commits are pushed.
 
+**CI is the merge gate** — require the **ci** status check on `main` (see [Branch protection](#branch-protection-repository-settings)). A green PR run is what blocks bad merges.
+
+### Optional local pre-push (Husky)
+
+After `pnpm install`, Husky installs a **pre-push** hook that runs `pnpm typecheck` (`prisma generate` + `next build` with the same minimal env as CI). It catches TypeScript / Next compile errors (e.g. invalid API path unions) before you push; it does **not** run Vitest, ESLint, or `prisma migrate deploy` — only GitHub Actions does the full pipeline.
+
+| Command | When |
+| --- | --- |
+| `pnpm typecheck` | Pre-push hook (or run manually) |
+| `pnpm build` | Full local CI build step (includes migrations via [`scripts/build-web.ts`](../scripts/build-web.ts)) |
+| `SKIP_PREPUSH_CHECKS=1 git push` | Bypass the hook once (`git push --no-verify` also works) |
+
 ## Continuous delivery (Vercel Production)
 
 | Trigger | What happens |
