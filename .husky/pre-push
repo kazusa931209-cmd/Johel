@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Optional local gate (CI remains authoritative). Skip: SKIP_PREPUSH_CHECKS=1 git push
+# Full CI locally: pnpm test && pnpm lint && pnpm build
+if [ -n "${SKIP_PREPUSH_CHECKS:-}" ]; then
+  exit 0
+fi
+
+export NEXT_TELEMETRY_DISABLED=1
+export DATABASE_URL="${DATABASE_URL:-file:./prisma/ci-build.db}"
+export JWT_SECRET="${JWT_SECRET:-local-pre-push-jwt-secret-minimum-32-characters}"
+
+pnpm typecheck
