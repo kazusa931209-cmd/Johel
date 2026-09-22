@@ -8,7 +8,7 @@ Related: [`vercel-deploy.md`](./vercel-deploy.md), [`.github/workflows/ci.yml`](
 
 | Environment | Where | Database |
 | --- | --- | --- |
-| **Local development** | `pnpm dev:web` on a developer machine | SQLite `file:./prisma/dev.db` |
+| **Local development** | `pnpm dev` on a developer machine | SQLite `file:./prisma/dev.db` |
 | **Production** | Vercel (production branch, typically `main`) | Turso (`libsql://` + `TURSO_AUTH_TOKEN` on Vercel) |
 
 Docker files remain in the repo for optional self-hosted/LAN use ([`docker.md`](./docker.md)); they are **not** built in GitHub Actions.
@@ -19,16 +19,15 @@ Workflow **CI** runs on every pull request and on pushes to `main` / `master`.
 
 | Job | What it checks |
 | --- | --- |
-| **web** | Prisma generate, Vitest (`apps/web`), ESLint, `next build` with ephemeral SQLite (`DATABASE_URL=file:./prisma/ci-build.db`) — no Turso secrets |
-| **packages** | Vitest for `@johel/resume` and `@johel/jd-meta` |
+| **ci** | Prisma generate, Vitest (app + inlined `src/packages/*`), ESLint, `next build` with ephemeral SQLite (`DATABASE_URL=file:./prisma/ci-build.db`) — no Turso secrets |
 
 Local equivalent:
 
 ```bash
 pnpm install
-pnpm test          # web + workspace package tests
-pnpm --filter web lint
-pnpm --filter web build   # set DATABASE_URL / JWT_SECRET like CI if needed
+pnpm test
+pnpm lint
+pnpm build   # set DATABASE_URL / JWT_SECRET like CI if needed
 ```
 
 CI uses **concurrency** to cancel in-progress runs on the same branch when new commits are pushed.
@@ -41,7 +40,7 @@ CI uses **concurrency** to cancel in-progress runs on the same branch when new c
 
 Disable **Preview Deployments** in Vercel Git settings so PRs do not create branch deployments ([`vercel-deploy.md`](./vercel-deploy.md)).
 
-Production build runs [`apps/web/scripts/build-web.ts`](../apps/web/scripts/build-web.ts): `prisma generate` → [`migrate-deploy-turso.ts`](../apps/web/scripts/migrate-deploy-turso.ts) → `next build`.
+Production build runs [`scripts/build-web.ts`](../scripts/build-web.ts): `prisma generate` → [`migrate-deploy-turso.ts`](../scripts/migrate-deploy-turso.ts) → `next build`.
 
 **Migration policy:** Ship backward-compatible Prisma migrations on `main`. CI proves they apply to SQLite before merge; the production Vercel build applies pending SQL to **production Turso**. Breaking schema changes need a documented maintenance window or expand → deploy → contract release.
 
@@ -58,11 +57,11 @@ Production build runs [`apps/web/scripts/build-web.ts`](../apps/web/scripts/buil
 On the production branch (`main`), enable in **GitHub → Settings → Branches**:
 
 - Require a pull request before merging
-- Require status checks **web** and **packages** (job names from the CI workflow)
+- Require status check **ci** (job name from the CI workflow)
 - Optionally require branches to be up to date before merge
 - Restrict direct pushes to `main`
 
-A green **web** + **packages** CI run is the pre-merge gate; production Vercel success confirms the live deploy after merge.
+A green **ci** run is the pre-merge gate; production Vercel success confirms the live deploy after merge.
 
 ## Post-deploy smoke
 

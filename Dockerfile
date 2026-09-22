@@ -10,25 +10,18 @@ RUN apt-get update \
 
 RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY apps/web/package.json apps/web/
-COPY packages/resume/package.json packages/resume/
-COPY packages/prompt-defaults/package.json packages/prompt-defaults/
-COPY packages/jd-meta/package.json packages/jd-meta/
+COPY package.json pnpm-lock.yaml .npmrc ./
 
 RUN pnpm install --frozen-lockfile --store-dir /pnpm/store --ignore-scripts
 
-COPY apps/web apps/web
-COPY packages/resume packages/resume
-COPY packages/prompt-defaults packages/prompt-defaults
-COPY packages/jd-meta packages/jd-meta
+COPY . .
 
-RUN pnpm --filter web exec prisma generate
+RUN pnpm exec prisma generate
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL=file:./prisma/docker-build.db
 ENV JWT_SECRET=docker-build-placeholder-min-32-chars
-RUN pnpm --filter web build
+RUN pnpm build
 
 FROM --platform=linux/arm64 node:20-bookworm-slim AS runtime
 
@@ -43,12 +36,11 @@ ENV DATABASE_URL=file:/data/johel.db
 ENV HOSTNAME=0.0.0.0
 
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json /app/pnpm-workspace.yaml ./
-COPY --from=build /app/apps/web ./apps/web
-COPY --from=build /app/packages ./packages
-COPY --from=build /app/apps/web/.next/standalone ./
-COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=build /app/apps/web/public ./apps/web/public
+COPY --from=build /app/package.json ./
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh

@@ -1,12 +1,9 @@
-const GENERATION_STEPS = [
-  "Job",
-  "Verdict",
-  "Combine",
-  "Generate",
-  "Evaluate",
-] as const;
-
-export type GenerationProcessedStep = (typeof GENERATION_STEPS)[number];
+export type GenerationProcessedStep =
+  | "Job"
+  | "Verdict"
+  | "Combine"
+  | "Generate"
+  | "Evaluate";
 
 function normalizeStep(value: string): GenerationProcessedStep {
   if (

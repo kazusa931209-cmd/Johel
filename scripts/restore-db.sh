@@ -28,7 +28,7 @@ if docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   docker exec "$CONTAINER" rm -f /tmp/johel-restore.db
   echo "Restore complete. Restart the container if the app was running."
 else
-  DEST="${LOCAL_DB_PATH:-./apps/web/prisma/dev.db}"
+  DEST="${LOCAL_DB_PATH:-./prisma/dev.db}"
   cp "$BACKUP_FILE" "$DEST"
   echo "Restore complete: $DEST"
 fi

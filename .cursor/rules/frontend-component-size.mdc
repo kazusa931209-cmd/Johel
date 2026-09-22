@@ -1,14 +1,14 @@
 ---
 description: Ask to optimize frontend components over 500 lines
 alwaysApply: true
-globs: apps/web/**/*.{tsx,ts,jsx,js}
+globs: src/**/*.{tsx,ts,jsx,js}
 ---
 
 # Frontend Component Size
 
 ## Rule
 
-If a frontend component file (under `apps/web`) has **more than 500 lines of code**, do **not** keep growing it silently.
+If a frontend component file (under `src/`) has **more than 500 lines of code**, do **not** keep growing it silently.
 
 1. **Stop and ask the user** whether to optimize / split the component before adding substantial new logic or UI.
 2. Suggest concrete splits when asking (e.g. extract dialogs, field groups, hooks, or shared pieces under `components/`).
@@ -16,7 +16,7 @@ If a frontend component file (under `apps/web`) has **more than 500 lines of cod
 
 ## What counts
 
-- Primary targets: React components in `apps/web/src/components/**` and page files under `apps/web/src/app/**`.
+- Primary targets: React components in `src/components/**` and page files under `src/app/**`.
 - Line count is the file’s total lines (including imports and helpers in that file).
 
 ## Example prompt to the user

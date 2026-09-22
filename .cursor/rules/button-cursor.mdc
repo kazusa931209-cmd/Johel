@@ -9,7 +9,7 @@ Apply to every clickable **button** in the web UI (`<button>`, including icon-on
 
 ## Rules
 
-1. **Pointer cursor** — Buttons must show `cursor: pointer`. Global styles in `apps/web/src/app/globals.css` set this on all `button` elements.
+1. **Pointer cursor** — Buttons must show `cursor: pointer`. Global styles in `src/app/globals.css` set this on all `button` elements.
 
 2. **Disabled state** — Disabled buttons use `cursor: not-allowed` (also set globally on `button:disabled`).
 

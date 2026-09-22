@@ -137,7 +137,7 @@ export function useRegisterGenerateStepNav(nav: GenerateStepNavState) {
     if (!ctx) return;
     ctx.setMeta({ showRun, showDownload, runBusy, downloadBusy, runDisabled });
   }, [
-    ctx?.setMeta,
+    ctx,
     showRun,
     showDownload,
     runBusy,
@@ -148,7 +148,7 @@ export function useRegisterGenerateStepNav(nav: GenerateStepNavState) {
   useEffect(() => {
     if (!ctx) return;
     return () => ctx.setMeta(emptyMeta);
-  }, [ctx?.setMeta]);
+  }, [ctx]);
 }
 
 function useGenerateStepNavContext() {

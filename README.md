@@ -17,9 +17,9 @@ Local customized Resume / CV builder.
 
 ```bash
 pnpm install
-cp apps/web/.env.example apps/web/.env   # first time
-pnpm db:migrate                          # first time / after schema changes
-pnpm dev:web                             # http://127.0.0.1:4041
+cp .env.example .env   # first time
+pnpm db:migrate        # first time / after schema changes
+pnpm dev               # http://127.0.0.1:4041
 ```
 
 Open `http://127.0.0.1:4041` — register or log in. The UI and API share one Next.js process; browser calls go to `/backend/*`.
@@ -29,7 +29,7 @@ Open `http://127.0.0.1:4041` — register or log in. The UI and API share one Ne
 See **[docs/vercel-deploy.md](docs/vercel-deploy.md)** for Production environment variables, disabling Preview deployments, and smoke tests.
 
 - Set `DATABASE_URL` (`libsql://…`), `TURSO_AUTH_TOKEN`, `JWT_SECRET`, `ENCRYPTION_KEY`, `PUBLIC_DEPLOY=true`, `TRUST_PROXY=true`, and `PUBLIC_URL` on Vercel (**Production** scope only).
-- Production build runs [`apps/web/scripts/build-web.ts`](apps/web/scripts/build-web.ts) (Turso migrations + `next build`).
+- Production build runs [`scripts/build-web.ts`](scripts/build-web.ts) (Turso migrations + `next build`).
 - Migrate existing SQLite data: backup → [`scripts/prepare-sqlite-for-turso-import.sh`](scripts/prepare-sqlite-for-turso-import.sh) → `turso db import`. Details in [`docs/technology.md`](docs/technology.md).
 
 ## Run with Docker Desktop (optional / LAN)

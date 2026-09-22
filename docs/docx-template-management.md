@@ -26,17 +26,17 @@ Generate step (web)
 
 | Step | Location | Notes |
 | --- | --- | --- |
-| Session storage | `apps/web/src/lib/generate-session.ts` | Resume JSON persisted per user until Job/PCEW inputs change |
-| Preview | `apps/web/src/components/generate/GenerateGenerateStep.tsx` | `resumeToMarkdown(resume)` for on-screen Markdown |
-| Download trigger | `apps/web/src/lib/api.ts` → `downloadResumeDocx` | `POST /backend/resume/docx` with stored JSON |
-| API route | `apps/api/src/routes/resume.ts` | Auth required; validates JSON; returns binary attachment |
-| Builder | `packages/resume/src/docx-builder/` | Canonical implementation (exported as `@johel/resume/docx`) |
+| Session storage | `src/lib/generate-session.ts` | Resume JSON persisted per user until Job/PCEW inputs change |
+| Preview | `src/components/generate/GenerateGenerateStep.tsx` | `resumeToMarkdown(resume)` for on-screen Markdown |
+| Download trigger | `src/lib/api.ts` → `downloadResumeDocx` | `POST /backend/resume/docx` with stored JSON |
+| API route | `src/server/routes/resume.ts` | Auth required; validates JSON; returns binary attachment |
+| Builder | `src/packages/resume/src/docx-builder/` | Canonical implementation (exported as `@johel/resume/docx`) |
 
 The download filename is derived from `resume.header.name` (sanitized to lowercase alphanumeric segments, default `resume.docx`).
 
 ## Canonical data model
 
-All templates consume the same input: **`GeneratedResume`** (Zod schema in `packages/resume/src/domain/generated-resume.ts`).
+All templates consume the same input: **`GeneratedResume`** (Zod schema in `src/packages/resume/src/domain/generated-resume.ts`).
 
 | Section | JSON path | Required | DOCX section builder |
 | --- | --- | --- | --- |
@@ -57,7 +57,7 @@ Markdown preview (`resumeToMarkdown`) uses the **same section order and field ma
 Templates are **TypeScript modules**, not uploaded `.docx` files. A template is a function that maps `GeneratedResume` + `ResumeDocxStyle` → `docx` `Paragraph[]`.
 
 ```text
-packages/resume/src/docx-builder/
+src/packages/resume/src/docx-builder/
 ├── builder.ts              # Document + Packer entry points
 ├── styles.ts               # ResumeDocxStyle tokens + DEFAULT_RESUME_DOCX_STYLE
 ├── templates/
@@ -115,7 +115,7 @@ Font sizes use **half-points** as required by the `docx` library (e.g. `22` → 
 
 ## Style tokens (`ResumeDocxStyle`)
 
-Defined in `packages/resume/src/docx-builder/styles.ts`.
+Defined in `src/packages/resume/src/docx-builder/styles.ts`.
 
 | Token | Default | Meaning |
 | --- | --- | --- |
@@ -161,9 +161,9 @@ Until that phase ships, **one built-in default template** is always used for dow
 
 | Test | Location | What it checks |
 | --- | --- | --- |
-| DOCX buffer | `packages/resume/src/docx-builder/__tests__/builder.test.ts` | Non-empty buffer, ZIP header |
-| Schema | `packages/resume/src/domain/__tests__/generated-resume.test.ts` | `GeneratedResume` validation |
-| Markdown parity | `packages/resume/src/markdown/__tests__/resume-to-markdown.test.ts` | Deterministic Markdown from JSON |
+| DOCX buffer | `src/packages/resume/src/docx-builder/__tests__/builder.test.ts` | Non-empty buffer, ZIP header |
+| Schema | `src/packages/resume/src/domain/__tests__/generated-resume.test.ts` | `GeneratedResume` validation |
+| Markdown parity | `src/packages/resume/src/markdown/__tests__/resume-to-markdown.test.ts` | Deterministic Markdown from JSON |
 
 Run: `pnpm --filter @johel/resume test`
 
@@ -171,12 +171,12 @@ Run: `pnpm --filter @johel/resume test`
 
 | File | Role |
 | --- | --- |
-| `packages/resume/src/domain/generated-resume.ts` | Schema + parse helpers |
-| `packages/resume/src/docx-builder/` | DOCX template system |
-| `packages/resume/src/markdown/resume-to-markdown.ts` | Web preview |
-| `apps/api/src/routes/resume.ts` | `POST /resume/docx` |
-| `apps/web/src/lib/api.ts` | `downloadResumeDocx` client |
-| `apps/web/src/components/generate/GenerateGenerateStep.tsx` | Download button + toast |
+| `src/packages/resume/src/domain/generated-resume.ts` | Schema + parse helpers |
+| `src/packages/resume/src/docx-builder/` | DOCX template system |
+| `src/packages/resume/src/markdown/resume-to-markdown.ts` | Web preview |
+| `src/server/routes/resume.ts` | `POST /resume/docx` |
+| `src/lib/api.ts` | `downloadResumeDocx` client |
+| `src/components/generate/GenerateGenerateStep.tsx` | Download button + toast |
 
 ## Operational notes
 
