@@ -121,6 +121,7 @@ export function GenerateStepNavProvider({ children }: { children: ReactNode }) {
 
 export function useRegisterGenerateStepNav(nav: GenerateStepNavState) {
   const ctx = useContext(GenerateStepNavContext);
+  const setMeta = ctx?.setMeta;
 
   if (ctx) {
     ctx.onRunRef.current = nav.onRun;
@@ -134,10 +135,10 @@ export function useRegisterGenerateStepNav(nav: GenerateStepNavState) {
   const runDisabled = nav.runDisabled ?? false;
 
   useEffect(() => {
-    if (!ctx) return;
-    ctx.setMeta({ showRun, showDownload, runBusy, downloadBusy, runDisabled });
+    if (!setMeta) return;
+    setMeta({ showRun, showDownload, runBusy, downloadBusy, runDisabled });
   }, [
-    ctx,
+    setMeta,
     showRun,
     showDownload,
     runBusy,
@@ -146,9 +147,9 @@ export function useRegisterGenerateStepNav(nav: GenerateStepNavState) {
   ]);
 
   useEffect(() => {
-    if (!ctx) return;
-    return () => ctx.setMeta(emptyMeta);
-  }, [ctx]);
+    if (!setMeta) return;
+    return () => setMeta(emptyMeta);
+  }, [setMeta]);
 }
 
 function useGenerateStepNavContext() {
