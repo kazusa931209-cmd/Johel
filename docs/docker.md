@@ -147,11 +147,11 @@ Each Mac that runs the container has its **own** `johel-data` volume. Case A and
 
 ## Replace the Docker database with a local file
 
-Use this when you want the container to use your **local working SQLite file** instead of what is already in the `johel-data` volume — for example, copying `apps/api/prisma/dev.db` from dev into Docker.
+Use this when you want the container to use your **local working SQLite file** instead of what is already in the `johel-data` volume — for example, copying `prisma/dev.db` from dev into Docker.
 
 | Location | Path |
 | --- | --- |
-| Local dev (default) | `apps/web/prisma/dev.db` |
+| Local dev (default) | `prisma/dev.db` |
 | Inside the container | `/data/johel.db` (on volume `johel-data`) |
 
 Run all commands from the **repo root** (Case A) or from the folder that contains `docker-compose.yml` (Case B).
@@ -166,7 +166,7 @@ docker compose stop
 docker compose cp app:/data/johel.db ./johel-docker-backup.db
 
 # Overwrite the container database with your working file
-docker compose cp apps/api/prisma/dev.db app:/data/johel.db
+docker compose cp prisma/dev.db app:/data/johel.db
 
 # Start again (migrations run on start)
 docker compose up -d
@@ -183,7 +183,7 @@ docker compose down   # do NOT pass -v
 
 docker run --rm \
   -v johel_johel-data:/data \
-  -v "$(pwd)/apps/api/prisma/dev.db":/backup/dev.db:ro \
+  -v "$(pwd)/prisma/dev.db":/backup/dev.db:ro \
   alpine sh -c "cp /backup/dev.db /data/johel.db"
 
 docker compose up -d
@@ -305,6 +305,6 @@ Environment overrides:
 | `BACKUP_DIR` | `./backups` | Output directory |
 | `BACKUP_RETENTION_DAYS` | `14` | Delete older backup files |
 | `JOHEL_CONTAINER` | `app-johel` | Docker container name |
-| `LOCAL_DB_PATH` | `./apps/api/prisma/dev.db` | Local dev DB when Docker is not running |
+| `LOCAL_DB_PATH` | `./prisma/dev.db` | Local dev DB when Docker is not running |
 
 **Before upgrading the image**, take a backup. Treat backups as sensitive — they may contain user prompts, job descriptions, and AI usage I/O.

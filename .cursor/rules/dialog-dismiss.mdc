@@ -1,6 +1,6 @@
 ---
 description: Dialog backdrop dismiss policy for view-only vs add/edit form dialogs
-globs: apps/web/src/**/*.tsx
+globs: src/**/*.tsx
 alwaysApply: false
 ---
 

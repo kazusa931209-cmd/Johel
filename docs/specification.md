@@ -424,6 +424,9 @@ Phases are listed below as they are defined. Only the current/next Phase is full
 * [x] **Phase 94 — CI/CD pipeline** — Every change is verified in **GitHub Actions** (`web` + `packages`: tests, lint, production build) before merge; **Vercel Production** deploys from `main`. No Vercel Preview; no Docker job in CI. Local dev uses SQLite without Docker.
   * **Outcome (2026-09-22):** Multi-job `.github/workflows/ci.yml`, root `pnpm test` parity, [`docs/ci-cd.md`](./ci-cd.md), health `curl` in [`docs/vercel-deploy.md`](./vercel-deploy.md). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-22-cicd-pipeline.md`](./plans/2026-09-22-cicd-pipeline.md).
 
+* [x] **Phase 96 — Single package at repo root** — Remove the pnpm workspace layout (`apps/web`, `packages/*`). One Next.js app at the repository root; former shared libraries live under `src/packages/*` with stable `@johel/*` import aliases.
+  * **Outcome (2026-09-22):** Repo-root `src/`, `prisma/`, `pnpm build`; removed `apps/` (including legacy `apps/api`); Vercel **Root Directory** `.`. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-22-phase-96-single-package-root.md`](./plans/2026-09-22-phase-96-single-package-root.md).
+
 ## Cursor Rules (Documentation Governance)
 
 These rules apply to **all development phases** and must be followed by Cursor (and any AI agent) working on this project.

@@ -19,7 +19,12 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@johel/resume": ["./src/packages/resume/index.ts"],
+      "@johel/resume/docx": ["./src/packages/resume/docx-builder/index.ts"],
+      "@johel/resume/pdf": ["./src/packages/resume/pdf-builder/index.ts"],
+      "@johel/jd-meta": ["./src/packages/jd-meta/index.ts"],
+      "@johel/prompt-defaults": ["./src/packages/prompt-defaults/index.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

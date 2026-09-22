@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  web:
-    name: web
+  ci:
+    name: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,40 +32,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm --filter web exec prisma generate
+        run: pnpm exec prisma generate
 
-      - name: Web tests
-        run: pnpm --filter web test
+      - name: Tests
+        run: pnpm test
 
-      - name: Web lint
-        run: pnpm --filter web lint
+      - name: Lint
+        run: pnpm lint
 
-      - name: Web build
-        run: pnpm --filter web build
+      - name: Build
+        run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: 1
           DATABASE_URL: file:./prisma/ci-build.db
           JWT_SECRET: ci-build-jwt-secret-minimum-32-characters
-
-  packages:
-    name: packages
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Workspace package tests
-        run: |
-          pnpm --filter @johel/resume test
-          pnpm --filter @johel/jd-meta test

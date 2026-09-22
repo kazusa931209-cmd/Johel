@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Form Input Font
 
-Apply to every **text-like form control** in the web UI (`apps/web`): create/edit forms, dialogs, drawers, settings, auth, search filters, and generate steps.
+Apply to every **text-like form control** in the web UI (`src/`): create/edit forms, dialogs, drawers, settings, auth, search filters, and generate steps.
 
 ## Rules
 
