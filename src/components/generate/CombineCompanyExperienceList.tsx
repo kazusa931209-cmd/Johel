@@ -107,7 +107,7 @@ export function CombineCompanyExperienceList({
 
   return (
     <div className="flex items-start gap-3 text-sm">
-      <span className="w-36 shrink-0 pt-2">
+      <span className={`w-36 shrink-0 ${readOnly ? "" : "pt-2"}`}>
         {t("generate.combine.linkedExperiences")}
       </span>
       <div className="min-w-0 flex-1 space-y-2">

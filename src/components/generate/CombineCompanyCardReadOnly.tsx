@@ -38,8 +38,8 @@ export const CombineCompanyCardReadOnly = memo(function CombineCompanyCardReadOn
         </div>
 
         <div className="space-y-4 border-t border-border p-4">
-          <div className="flex items-start gap-3 text-sm">
-            <span className="w-36 shrink-0 pt-0.5">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="w-36 shrink-0">
               {t("generate.combine.period")}
             </span>
             <p className="min-w-0 flex-1 text-muted [&_span]:text-muted">
