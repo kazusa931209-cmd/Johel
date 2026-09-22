@@ -15,8 +15,10 @@ export { markdownToResume, type MarkdownToResumeResult } from "./markdown/markdo
 
 export {
   buildResumeDocxFileName,
+  buildResumeExportBaseName,
   buildResumeExportFileName,
   buildResumePdfFileName,
+  buildResumeProfileBundleFileName,
   formatCompactYmd,
   parseGenerationPublicIdParts,
   sanitizeExportFileSegment,

@@ -30,20 +30,18 @@ export function GenerateEvaluateStep({
 }: GenerateEvaluateStepProps) {
   const t = useT();
   const { openAiAssistant } = useAiAssistant();
-  const { downloadAs, downloading, pdfDisabled } = useResumeDownload(
-    resume,
-    downloadLabel,
-    {
+  const { downloadAs, downloadAsZip, downloading, pdfDisabled } =
+    useResumeDownload(resume, downloadLabel, {
       resumeLanguage,
       onDownloaded,
-    },
-  );
+    });
 
   useRegisterGenerateStepNav({
     downloadMenu: resume
       ? {
           onDownloadDocx: () => void downloadAs("docx"),
           onDownloadPdf: () => void downloadAs("pdf"),
+          onDownloadZip: () => void downloadAsZip(),
           pdfDisabled,
         }
       : undefined,

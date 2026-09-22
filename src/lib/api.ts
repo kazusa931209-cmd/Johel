@@ -986,3 +986,16 @@ export async function downloadResumePdf(
     "PDF download failed.",
   );
 }
+
+export async function downloadResumeZip(
+  resume: import("@johel/resume").GeneratedResume,
+  label?: ResumeDownloadLabel,
+): Promise<ResumeDownloadResult> {
+  return downloadResumeExport(
+    "/backend/resume/zip",
+    resume,
+    label,
+    "resume.zip",
+    "ZIP download failed.",
+  );
+}

@@ -8,11 +8,13 @@ import {
   DocxFileIcon,
   DownloadIcon,
   PdfFileIcon,
+  ZipFileIcon,
 } from "@/components/shared/icons";
 
 export type ResumeDownloadMenuActions = {
   onDownloadDocx: () => void;
   onDownloadPdf: () => void;
+  onDownloadZip: () => void;
   pdfDisabled: boolean;
 };
 
@@ -26,6 +28,7 @@ type ResumeDownloadDropdownProps = ResumeDownloadMenuActions & {
 export function ResumeDownloadDropdown({
   onDownloadDocx,
   onDownloadPdf,
+  onDownloadZip,
   pdfDisabled,
   busy = false,
   ariaLabel,
@@ -111,6 +114,23 @@ export function ResumeDownloadDropdown({
           >
             <PdfFileIcon className="h-5 w-5 shrink-0" />
             <span>{t("generate.download.asPdf")}</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={pdfDisabled}
+            title={
+              pdfDisabled ? t("generate.download.zipEnglishOnly") : undefined
+            }
+            onClick={() => {
+              if (pdfDisabled) return;
+              setOpen(false);
+              onDownloadZip();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <ZipFileIcon className="h-5 w-5 shrink-0" />
+            <span>{t("generate.download.asZip")}</span>
           </button>
         </div>
       ) : null}

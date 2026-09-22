@@ -85,6 +85,22 @@ export function buildResumeExportFileName(
   return `${dateYmd} - ${sequence} - ${company} - ${role}.${format}`;
 }
 
+/** Folder / ZIP base name (same stem as DOCX or PDF export, without extension). */
+export function buildResumeExportBaseName(
+  input: ResumeExportNameInput,
+): string {
+  return buildResumeExportFileName(input, "docx").replace(/\.docx$/i, "");
+}
+
+/** Inner bundle file name for DOCX/PDF inside a ZIP folder (profile display name). */
+export function buildResumeProfileBundleFileName(
+  profileDisplayName: string,
+  format: ResumeExportFormat,
+): string {
+  const base = sanitizeExportFileSegment(profileDisplayName.trim(), "resume");
+  return `${base}.${format}`;
+}
+
 /** @deprecated Legacy helper; prefer buildResumeExportFileName with ResumeExportNameInput. */
 export function buildResumeDocxFileName(
   resume: GeneratedResume,

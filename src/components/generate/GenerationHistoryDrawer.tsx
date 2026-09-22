@@ -249,14 +249,11 @@ export function GenerationHistoryDrawer({
     }
   }
 
-  const { downloadAs, downloading, pdfDisabled } = useResumeDownload(
-    resume,
-    downloadLabel,
-    {
+  const { downloadAs, downloadAsZip, downloading, pdfDisabled } =
+    useResumeDownload(resume, downloadLabel, {
       resumeLanguage: combine.language as ResumeLanguage,
       onDownloaded: handleHistoryDownloaded,
-    },
-  );
+    });
   const showDownload = resume != null;
 
   async function confirmResume() {
@@ -352,6 +349,7 @@ export function GenerationHistoryDrawer({
                     <ResumeDownloadDropdown
                       onDownloadDocx={() => void downloadAs("docx")}
                       onDownloadPdf={() => void downloadAs("pdf")}
+                      onDownloadZip={() => void downloadAsZip()}
                       pdfDisabled={pdfDisabled}
                       busy={downloading}
                       ariaLabel={t("generate.nav.download")}

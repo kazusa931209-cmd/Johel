@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildResumeExportBaseName,
   buildResumeExportFileName,
+  buildResumeProfileBundleFileName,
   formatCompactYmd,
   parseGenerationPublicIdParts,
   sanitizeExportFileSegment,
@@ -53,6 +55,25 @@ describe("docx-filename", () => {
   it("uses fallbacks when metadata is missing", () => {
     expect(buildResumeExportFileName({}, "pdf")).toMatch(
       /^\d{8} - 00 - Company - Role\.pdf$/,
+    );
+  });
+
+  it("builds export base name without extension", () => {
+    expect(
+      buildResumeExportBaseName({
+        publicId: "GEN-20260911-006",
+        jdCompanyName: "Acme Corp",
+        jdJobRole: "Senior Backend Engineer",
+      }),
+    ).toBe("20260911 - 06 - Acme Corp - Senior Backend Engineer");
+  });
+
+  it("builds profile bundle inner file names", () => {
+    expect(buildResumeProfileBundleFileName("Jane Q. Public", "docx")).toBe(
+      "Jane Q. Public.docx",
+    );
+    expect(buildResumeProfileBundleFileName("Jane Q. Public", "pdf")).toBe(
+      "Jane Q. Public.pdf",
     );
   });
 });
