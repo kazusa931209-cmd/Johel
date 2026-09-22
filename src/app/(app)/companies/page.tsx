@@ -24,9 +24,6 @@ function CompaniesPageFallback() {
   const t = useT();
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        {t("crud.companies.title")}
-      </h1>
       <p className="text-sm text-muted">{t("crud.common.loading")}</p>
     </section>
   );
@@ -111,9 +108,6 @@ function CompaniesPageContent() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        {t("crud.companies.title")}
-      </h1>
       <form onSubmit={onFilter} className="flex items-center gap-2">
         <input
           type="search"

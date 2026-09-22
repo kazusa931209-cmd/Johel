@@ -206,13 +206,7 @@ export default function GenerationSettingsPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("settings.generation.title")}
-        </h1>
-        <p className="text-muted">{t("settings.generation.description")}</p>
-      </div>
+    <section className="w-full max-w-3xl space-y-6">
       <form
         onSubmit={onSave}
         className="space-y-6 rounded-lg border border-border bg-surface p-4"

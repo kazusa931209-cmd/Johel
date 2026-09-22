@@ -173,21 +173,11 @@ export function CompanyForm({ mode, companyId, initial }: CompanyFormProps) {
       className="mx-auto flex max-w-3xl flex-col gap-6"
     >
       <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          <BackButton
-            href="/companies"
-            preferHistoryBack
-            aria-label={t("crud.companies.form.backAria")}
-          />
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "edit"
-              ? t("crud.companies.form.editTitle")
-              : t("crud.companies.form.addTitle")}
-          </h1>
-        </div>
-        <p className="pl-12 text-sm text-muted">
-          {t("crud.companies.form.description")}
-        </p>
+        <BackButton
+          href="/companies"
+          preferHistoryBack
+          aria-label={t("crud.companies.form.backAria")}
+        />
       </div>
 
       <label className="block space-y-1 text-sm">

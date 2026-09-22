@@ -157,17 +157,10 @@ export default function ResumeBuilderPage() {
       <section className="-m-6 flex h-[calc(100dvh-3.5rem)] w-auto flex-col overflow-hidden">
         <div className="sticky top-0 z-10 shrink-0 border-b border-border bg-background px-6 pt-6 pb-4">
           <div className="flex items-center gap-4">
-            <div className="flex shrink-0 items-start gap-3">
-              <GenerateNewButton
-                onClick={requestNewGeneration}
-                disabled={resetting}
-              />
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  {t("resumeBuilder.title")}
-                </h1>
-              </div>
-            </div>
+            <GenerateNewButton
+              onClick={requestNewGeneration}
+              disabled={resetting}
+            />
             <div className="grid min-w-0 flex-1 grid-cols-[1fr_3.5rem] items-center gap-3">
               <GenerateTimeline
                 active={normalizedActiveStep}

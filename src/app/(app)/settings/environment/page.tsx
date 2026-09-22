@@ -127,13 +127,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("settings.environment.title")}
-        </h1>
-        <p className="text-muted">{t("settings.environment.description")}</p>
-      </div>
+    <section className="w-full max-w-3xl space-y-6">
       <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
         <h2 className="text-sm font-medium">{t("settings.environment.theme.title")}</h2>
         <div className="flex gap-2">

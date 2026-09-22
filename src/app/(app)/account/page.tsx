@@ -80,13 +80,6 @@ export default function AccountPage() {
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("account.title")}
-        </h1>
-        <p className="text-muted">{t("account.description")}</p>
-      </div>
-
       <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
         <div className="space-y-1 text-sm">
           <div className="text-muted">{t("account.loginId")}</div>

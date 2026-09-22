@@ -42,18 +42,11 @@ export function ExperienceFactForm({
   return (
     <>
       <section className="mx-auto max-w-3xl space-y-6">
-        <div className="flex items-center gap-2">
-          <BackButton
-            href="/experiences"
-            preferHistoryBack
-            aria-label={t("crud.experiences.form.backAria")}
-          />
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "create"
-              ? t("crud.experiences.form.addTitle")
-              : t("crud.experiences.form.editTitle")}
-          </h1>
-        </div>
+        <BackButton
+          href="/experiences"
+          preferHistoryBack
+          aria-label={t("crud.experiences.form.backAria")}
+        />
 
         <ExperienceFactFormFields
           userFacts={userFacts}

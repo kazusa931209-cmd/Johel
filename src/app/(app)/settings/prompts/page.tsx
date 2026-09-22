@@ -102,13 +102,8 @@ function PromptsPageFallback() {
   const t = useT();
 
   return (
-    <section className="mx-auto w-full max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("settings.prompts.title")}
-        </h1>
-        <p className="text-muted">{t("settings.prompts.loading")}</p>
-      </div>
+    <section className="w-full space-y-6">
+      <p className="text-muted">{t("settings.prompts.loading")}</p>
     </section>
   );
 }
@@ -243,16 +238,10 @@ function PromptsPageContent() {
   const saveBusy = savingKind === activeTab;
 
   return (
-    <section className="mx-auto w-full max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("settings.prompts.title")}
-        </h1>
-        <p className="text-muted">{t("settings.prompts.description")}</p>
-        <p className="text-sm text-foreground">
-          {getSystemPromptQualityNotice(t)}
-        </p>
-      </div>
+    <section className="w-full space-y-6">
+      <p className="text-sm text-foreground">
+        {getSystemPromptQualityNotice(t)}
+      </p>
 
       <div
         className="flex gap-1 border-b border-border"

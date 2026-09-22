@@ -135,21 +135,11 @@ export function ProfileForm({ mode, profileId, initial }: ProfileFormProps) {
       className="mx-auto flex max-w-3xl flex-col gap-6"
     >
       <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          <BackButton
-            href="/profiles"
-            preferHistoryBack
-            aria-label={t("crud.profiles.form.backAria")}
-          />
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "edit"
-              ? t("crud.profiles.form.editTitle")
-              : t("crud.profiles.form.addTitle")}
-          </h1>
-        </div>
-        <p className="pl-12 text-sm text-muted">
-          {t("crud.profiles.form.description")}
-        </p>
+        <BackButton
+          href="/profiles"
+          preferHistoryBack
+          aria-label={t("crud.profiles.form.backAria")}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
