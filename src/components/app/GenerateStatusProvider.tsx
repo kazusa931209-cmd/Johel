@@ -10,10 +10,14 @@ import {
   type ReactNode,
 } from "react";
 import { loadGenerationProcess } from "@/lib/cached-settings";
+import { getCurrentGeneration } from "@/lib/api";
 import { GENERATION_FINALIZED_EVENT } from "@/lib/generation-finalized-events";
+import { generationDetailToSession } from "@/lib/generation-persistence";
 import { deriveProcessedStepFromSession } from "@/lib/generation-step-progress";
-import { GENERATE_SESSION_CHANGED_EVENT } from "@/lib/generate-session-events";
-import { loadGenerateSession } from "@/lib/generate-session";
+import {
+  GENERATE_SESSION_CHANGED_EVENT,
+  type GenerateSessionChangedDetail,
+} from "@/lib/generate-session-events";
 
 export type HeaderGenerationStatus = {
   generationId: string | null;
@@ -41,22 +45,21 @@ const GenerateStatusContext = createContext<GenerateStatusContextValue | null>(
   null,
 );
 
-function readSessionStatus(
-  userId: string,
+function statusFromSessionChangedDetail(
+  detail: GenerateSessionChangedDetail["status"],
   doVerdict: boolean,
   doEvaluate: boolean,
-): HeaderGenerationStatus {
-  const session = loadGenerateSession(userId);
-  if (!session?.generationPublicId) {
-    return { ...EMPTY_STATUS, doVerdict, doEvaluate };
+): HeaderGenerationStatus | null {
+  if (!detail) {
+    return null;
   }
   return {
-    generationId: session.generationId,
-    generationPublicId: session.generationPublicId,
-    processedStep: deriveProcessedStepFromSession(session),
+    generationId: detail.generationId,
+    generationPublicId: detail.generationPublicId,
+    processedStep: detail.processedStep,
     doVerdict,
     doEvaluate,
-    finalized: session.finalized ?? false,
+    finalized: detail.finalized,
   };
 }
 
@@ -83,30 +86,58 @@ export function GenerateStatusProvider({
     };
   }, []);
 
-  const syncFromSession = useCallback(() => {
-    setStatus(readSessionStatus(userId, doVerdict, doEvaluate));
-  }, [doEvaluate, doVerdict, userId]);
+  const syncFromServer = useCallback(async () => {
+    const res = await getCurrentGeneration();
+    if (!res.data) {
+      setStatus((prev) => ({
+        ...EMPTY_STATUS,
+        doVerdict: prev.doVerdict,
+        doEvaluate: prev.doEvaluate,
+      }));
+      return;
+    }
+    const session = generationDetailToSession(res.data);
+    setStatus((prev) => ({
+      generationId: session.generationId,
+      generationPublicId: session.generationPublicId,
+      processedStep: deriveProcessedStepFromSession(session),
+      doVerdict: prev.doVerdict,
+      doEvaluate: prev.doEvaluate,
+      finalized: session.finalized,
+    }));
+  }, []);
 
   useEffect(() => {
-    syncFromSession();
-  }, [syncFromSession]);
+    void syncFromServer();
+  }, [syncFromServer, userId]);
 
   useEffect(() => {
     function onSessionChanged(event: Event) {
-      const detail = (event as CustomEvent<{ userId?: string }>).detail;
+      const detail = (event as CustomEvent<GenerateSessionChangedDetail>)
+        .detail;
       if (detail?.userId !== userId) {
         return;
       }
-      syncFromSession();
+      const next = statusFromSessionChangedDetail(
+        detail.status,
+        doVerdict,
+        doEvaluate,
+      );
+      if (next) {
+        setStatus(next);
+        return;
+      }
+      void syncFromServer();
     }
 
     function onFinalized(event: Event) {
       const detail = (event as CustomEvent<{ publicId?: string }>).detail;
-      const session = loadGenerateSession(userId);
-      if (detail?.publicId !== session?.generationPublicId) {
-        return;
-      }
-      syncFromSession();
+      setStatus((prev) => {
+        if (detail?.publicId !== prev.generationPublicId) {
+          return prev;
+        }
+        return { ...prev, finalized: true };
+      });
     }
 
     window.addEventListener(GENERATE_SESSION_CHANGED_EVENT, onSessionChanged);
@@ -115,7 +146,7 @@ export function GenerateStatusProvider({
       window.removeEventListener(GENERATE_SESSION_CHANGED_EVENT, onSessionChanged);
       window.removeEventListener(GENERATION_FINALIZED_EVENT, onFinalized);
     };
-  }, [syncFromSession, userId]);
+  }, [doEvaluate, doVerdict, syncFromServer, userId]);
 
   const value = useMemo(() => ({ status }), [status]);
 

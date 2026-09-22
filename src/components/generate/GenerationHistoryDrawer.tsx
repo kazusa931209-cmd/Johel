@@ -28,8 +28,8 @@ import {
   type GenerationDetail,
 } from "@/lib/api";
 import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
-import { loadGenerateSession, type GenerateJobState } from "@/lib/generate-session";
-import { loadMe } from "@/lib/cached-settings";
+import type { GenerateJobState } from "@/lib/generate-session";
+import { loadMe, clearMeCache } from "@/lib/cached-settings";
 import { resumeGenerationFromHistory } from "@/lib/generation-persistence";
 import {
   getGenerateCurrentPanelTitle,
@@ -142,15 +142,20 @@ export function GenerationHistoryDrawer({
       if (cancelled) return;
       const id = meRes.data?.id ?? null;
       setUserId(id);
-      if (id) {
-        const session = loadGenerateSession(id);
-        setCurrentPublicId(session?.generationPublicId ?? null);
-      }
+      setCurrentPublicId(meRes.data?.currentGenerationPublicId ?? null);
     });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    clearMeCache();
+    void loadMe().then((meRes) => {
+      setCurrentPublicId(meRes.data?.currentGenerationPublicId ?? null);
+    });
+  }, [open]);
 
   useEffect(() => {
     if (!open || !publicId) {

@@ -24,6 +24,7 @@ export type User = {
   id: string;
   loginId: string;
   role: string;
+  currentGenerationPublicId: string | null;
 };
 
 type ApiError = {
