@@ -1,12 +1,64 @@
 {
   "name": "johel",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:web": "pnpm --filter web dev",
-    "db:migrate": "pnpm --filter web exec prisma migrate dev",
-    "test": "pnpm --filter web test && pnpm --filter @johel/resume test && pnpm --filter @johel/jd-meta test"
+    "dev": "next dev --turbopack -H 127.0.0.1 -p 4041",
+    "dev:web": "pnpm dev",
+    "build": "tsx scripts/build-web.ts",
+    "start": "next start -H 127.0.0.1 -p 4041",
+    "lint": "eslint",
+    "test": "vitest run",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate-deploy": "tsx --env-file=.env scripts/migrate-deploy-turso.ts",
+    "db:migrate-keys": "tsx --env-file=.env scripts/migrate-plaintext-api-keys.ts",
+    "prisma": "prisma"
   },
   "engines": {
     "node": ">=20"
+  },
+  "imports": {
+    "@johel/resume": "./src/packages/resume/index.ts",
+    "@johel/resume/docx": "./src/packages/resume/docx-builder/index.ts",
+    "@johel/resume/pdf": "./src/packages/resume/pdf-builder/index.ts",
+    "@johel/jd-meta": "./src/packages/jd-meta/index.ts",
+    "@johel/prompt-defaults": "./src/packages/prompt-defaults/index.ts"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "@prisma/adapter-libsql": "^6.5.0",
+    "@prisma/client": "^6.5.0",
+    "@tailwindcss/typography": "^0.5.20",
+    "bcryptjs": "^3.0.2",
+    "docx": "^9.5.0",
+    "hono": "^4.7.5",
+    "jose": "^6.0.10",
+    "next": "15.5.25",
+    "node-html-parser": "^9.0.3",
+    "openai": "^7.10.0",
+    "pdf-lib": "^1.17.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-markdown": "^10.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.25",
+    "prisma": "^6.5.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.3",
+    "typescript": "^5",
+    "vitest": "^5.0.0"
   }
 }

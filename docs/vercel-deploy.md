@@ -1,19 +1,21 @@
 # Vercel deployment (Turso)
 
-**Deployment model:** two environments only — **local development** (SQLite file, `pnpm dev:web`, no Docker required) and **Vercel Production** (Turso). There is no Vercel Preview / staging deployment.
+**Deployment model:** two environments only — **local development** (SQLite file, `pnpm dev`, no Docker required) and **Vercel Production** (Turso). There is no Vercel Preview / staging deployment.
 
-Related: [`technology.md`](./technology.md) (architecture), [`ci-cd.md`](./ci-cd.md), [`vercel.json`](../vercel.json), [`apps/web/.env.example`](../apps/web/.env.example), Turso data cutover in [`technology.md`](./technology.md) (Turso cutover + WAL import).
+Related: [`technology.md`](./technology.md) (architecture), [`ci-cd.md`](./ci-cd.md), [`vercel.json`](../vercel.json), [`.env.example`](../.env.example), Turso data cutover in [`technology.md`](./technology.md) (Turso cutover + WAL import).
 
 ## Vercel project settings
 
 | Setting | Value |
 | --- | --- |
-| **Root Directory** | Repository root (default) — monorepo uses root `package.json` + `pnpm-workspace.yaml` |
-| **Framework Preset** | Next.js (also set in `vercel.json`) |
+| **Root Directory** | **`.`** (repository root — single Next.js package) |
+| **Framework Preset** | Next.js (also set in [`vercel.json`](../vercel.json)) |
 | **Install Command** | `pnpm install --frozen-lockfile` |
-| **Build Command** | `pnpm --filter web build` (runs `prisma generate`, Turso migrate script, then `next build`) |
-| **Node.js** | 20.x (match root `engines`) |
+| **Build Command** | `pnpm build` (runs `prisma generate`, Turso migrate script, then `next build` via [`build-web.ts`](../scripts/build-web.ts)) |
+| **Node.js** | 20.x (match `engines`) |
 | **Production Branch** | `main` (or your chosen production branch) |
+
+After changing **Root Directory** from `apps/web` to `.`, clear any overridden Install/Build commands in **Vercel → Settings → Build & Development** so [`vercel.json`](../vercel.json) values apply (or set them to match the table).
 
 ### Disable Preview deployments
 
@@ -23,7 +25,7 @@ In **Vercel → Project → Settings → Git**:
 
 Only **Production** builds should run. Pull requests are still validated by **GitHub Actions** ([`ci-cd.md`](./ci-cd.md)); they do not need a Vercel Preview URL.
 
-[`apps/web/src/app/backend/[...path]/route.ts`](../apps/web/src/app/backend/[...path]/route.ts) exports **`maxDuration = 300`** (App Router segment config). Vercel’s root `vercel.json` `functions` globs do not apply to `app/**/route.ts`, so duration is configured in the route file only. Long AI/resume routes need a **Vercel plan** that allows 300s serverless duration (Pro or equivalent).
+[`src/app/backend/[...path]/route.ts`](../src/app/backend/[...path]/route.ts) exports **`maxDuration = 300`** (App Router segment config). Vercel’s root `vercel.json` `functions` globs do not apply to `app/**/route.ts`, so duration is configured in the route file only. Long AI/resume routes need a **Vercel plan** that allows 300s serverless duration (Pro or equivalent).
 
 ## Environment variables (Production only)
 
@@ -54,12 +56,12 @@ With `PUBLIC_DEPLOY=true`, the app **fails fast at runtime** if `JWT_SECRET`, `E
 | --- | --- | --- |
 | `SESSION_TTL` | `7d` | JWT session lifetime (`7d`, `24h`, etc.) |
 | `SESSION_COOKIE_SECURE` | inferred from `x-forwarded-proto` on Vercel | Force `true`/`false` if needed |
-| `RATE_LIMIT_*` | see `apps/web/src/server/lib/rate-limit.ts` | Override rate limits |
+| `RATE_LIMIT_*` | see `src/server/lib/rate-limit.ts` | Override rate limits |
 | `NEXT_TELEMETRY_DISABLED` | — | `1` to disable Next telemetry (CI already sets this) |
 
 ### Local development (not Vercel)
 
-Use [`apps/web/.env`](../apps/web/.env) (from [`.env.example`](../apps/web/.env.example)):
+Use [`.env`](../.env) (from [`.env.example`](../.env.example)):
 
 - `DATABASE_URL="file:./prisma/dev.db"`
 - `JWT_SECRET` — weak default OK
@@ -68,7 +70,7 @@ Use [`apps/web/.env`](../apps/web/.env) (from [`.env.example`](../apps/web/.env.
 
 ## Local vs Production
 
-| Concern | Local (`pnpm dev:web`) | Vercel Production |
+| Concern | Local (`pnpm dev`) | Vercel Production |
 | --- | --- | --- |
 | Database | SQLite `file:./prisma/dev.db` | Turso (`libsql://` + token) |
 | Migrations | `pnpm db:migrate` | Turso migrate script on production build |
@@ -77,22 +79,21 @@ Use [`apps/web/.env`](../apps/web/.env) (from [`.env.example`](../apps/web/.env.
 
 ## Schema migrations on Turso
 
-Prisma CLI `migrate deploy` only accepts `file:` URLs. On Vercel Production, the build runs [`apps/web/scripts/migrate-deploy-turso.ts`](../apps/web/scripts/migrate-deploy-turso.ts): it applies pending `prisma/migrations/*/migration.sql` via `@libsql/client` and updates `_prisma_migrations` (same checksums as Prisma).
+Prisma CLI `migrate deploy` only accepts `file:` URLs. On Vercel Production, the build runs [`scripts/migrate-deploy-turso.ts`](../scripts/migrate-deploy-turso.ts): it applies pending `prisma/migrations/*/migration.sql` via `@libsql/client` and updates `_prisma_migrations` (same checksums as Prisma).
 
 - **Author migrations locally:** `pnpm db:migrate` against `file:./prisma/dev.db`.
 - **Before merging to `main`:** GitHub Actions runs `prisma migrate deploy` against ephemeral SQLite (`file:./prisma/ci-build.db`) to prove migrations apply.
 - **On merge / production deploy:** the Turso script runs against the **production** Turso DB configured on Vercel.
-- **Optional dry run against Turso from a laptop:** set production `DATABASE_URL` + `TURSO_AUTH_TOKEN` in `apps/web/.env` and run `pnpm --filter web db:migrate-deploy` only when you accept touching production data.
+- **Optional dry run against Turso from a laptop:** set production `DATABASE_URL` + `TURSO_AUTH_TOKEN` in `.env` and run `pnpm db:migrate-deploy` only when you accept touching production data.
 - **After SQLite import:** `_prisma_migrations` is already populated; the Turso script applies nothing until a **new** migration lands in git.
 
 ## First production deploy sequence
 
 1. Create a Turso DB and import data (WAL-ready file — [`scripts/prepare-sqlite-for-turso-import.sh`](../scripts/prepare-sqlite-for-turso-import.sh)).
 2. Disable Vercel Preview deployments (see above).
-3. Add **Production** env vars on Vercel → deploy `main` → smoke test (below).
+3. Set Vercel **Root Directory** to `.` and add **Production** env vars → deploy `main` → smoke test (below).
 4. If any user still has plaintext API keys in DB, run once against Turso:
    ```bash
-   cd apps/web
    DATABASE_URL="libsql://…" TURSO_AUTH_TOKEN="…" ENCRYPTION_KEY="…" pnpm db:migrate-keys
    ```
 5. Keep a SQLite backup until production is verified.
@@ -119,5 +120,6 @@ Expect JSON `{ "ok": true }`.
 | 500 on every `/backend/*` with `PUBLIC_DEPLOY` message | Weak `JWT_SECRET`, missing `ENCRYPTION_KEY`, or `TRUST_PROXY` not `true` |
 | AI calls fail after Turso import | `ENCRYPTION_KEY` on Vercel ≠ key used when keys were saved in SQLite |
 | AI/resume times out at 60s | Plan limit; confirm `export const maxDuration = 300` in the backend catch-all route |
+| “No Next.js version detected” on build | Root Directory must be `.` (repo root); ensure `next` is in root `package.json` |
 | Turso import rejected | SQLite not `journal_mode=WAL` — run prepare script |
 | Unwanted Preview URLs | Re-disable Preview Deployments under Vercel Git settings |

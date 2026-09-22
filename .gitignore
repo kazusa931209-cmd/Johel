@@ -1,12 +1,13 @@
 node_modules
 .pnpm-store
 dist
+.next
 .env
 .env.local
 *.db
 *.db-journal
 .DS_Store
-apps/web/prisma/dev.db
-apps/web/prisma/dev.db-journal
-apps/web/prisma/ci-build.db
-apps/web/prisma/ci-build.db-journal
+prisma/dev.db
+prisma/dev.db-journal
+prisma/ci-build.db
+prisma/ci-build.db-journal
