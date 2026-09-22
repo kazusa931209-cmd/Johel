@@ -23,7 +23,7 @@ In **Vercel → Project → Settings → Git**:
 
 Only **Production** builds should run. Pull requests are still validated by **GitHub Actions** ([`ci-cd.md`](./ci-cd.md)); they do not need a Vercel Preview URL.
 
-`vercel.json` sets **300s** `maxDuration` on [`apps/web/src/app/backend/[...path]/route.ts`](../apps/web/src/app/backend/[...path]/route.ts). Long AI/resume routes need a **Vercel plan** that allows 300s serverless duration (Pro or equivalent).
+[`apps/web/src/app/backend/[...path]/route.ts`](../apps/web/src/app/backend/[...path]/route.ts) exports **`maxDuration = 300`** (App Router segment config). Vercel’s root `vercel.json` `functions` globs do not apply to `app/**/route.ts`, so duration is configured in the route file only. Long AI/resume routes need a **Vercel plan** that allows 300s serverless duration (Pro or equivalent).
 
 ## Environment variables (Production only)
 
@@ -118,6 +118,6 @@ Expect JSON `{ "ok": true }`.
 | Build fails on `prisma migrate deploy` (CI / local file URL) | Wrong `DATABASE_URL`; migration history mismatch vs database |
 | 500 on every `/backend/*` with `PUBLIC_DEPLOY` message | Weak `JWT_SECRET`, missing `ENCRYPTION_KEY`, or `TRUST_PROXY` not `true` |
 | AI calls fail after Turso import | `ENCRYPTION_KEY` on Vercel ≠ key used when keys were saved in SQLite |
-| AI/resume times out at 60s | Plan limit; confirm `maxDuration: 300` in `vercel.json` and route `export const maxDuration = 300` |
+| AI/resume times out at 60s | Plan limit; confirm `export const maxDuration = 300` in the backend catch-all route |
 | Turso import rejected | SQLite not `journal_mode=WAL` — run prepare script |
 | Unwanted Preview URLs | Re-disable Preview Deployments under Vercel Git settings |
