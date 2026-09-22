@@ -1,33 +1,33 @@
 import type { Generation } from "@prisma/client";
-import { GENERATION_KIND_JD } from "./generation-public-id";
+import { GENERATION_KIND_GENERAL } from "./generation-public-id";
 import { prisma } from "./prisma";
 
-export async function setUserCurrentGeneration(
+export async function setUserCurrentGeneralGeneration(
   userId: string,
   generationId: string,
 ): Promise<void> {
   await prisma.user.update({
     where: { id: userId },
-    data: { currentGenerationId: generationId },
+    data: { currentGeneralGenerationId: generationId },
   });
 }
 
-export async function getUserCurrentGeneration(
+export async function getUserCurrentGeneralGeneration(
   userId: string,
 ): Promise<Generation | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { currentGenerationId: true },
+    select: { currentGeneralGenerationId: true },
   });
-  if (!user?.currentGenerationId) {
+  if (!user?.currentGeneralGenerationId) {
     return null;
   }
 
   const generation = await prisma.generation.findFirst({
     where: {
-      id: user.currentGenerationId,
+      id: user.currentGeneralGenerationId,
       userId,
-      kind: GENERATION_KIND_JD,
+      kind: GENERATION_KIND_GENERAL,
     },
   });
   if (generation) {
@@ -36,7 +36,7 @@ export async function getUserCurrentGeneration(
 
   await prisma.user.update({
     where: { id: userId },
-    data: { currentGenerationId: null },
+    data: { currentGeneralGenerationId: null },
   });
   return null;
 }

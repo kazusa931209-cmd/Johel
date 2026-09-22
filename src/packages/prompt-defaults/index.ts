@@ -211,6 +211,11 @@ Which Critical JD Terminology appear in the resume, and which Required terms are
 ### Suggested improvements
 (bullet list, actionable, resume-side only)`;
 
+export {
+  DEFAULT_GENERAL_EVALUATE_PROMPT,
+  DEFAULT_GENERAL_GENERATE_PROMPT,
+} from "./general-resume-prompts";
+
 export const DEFAULT_PROMPTS = {
   verdictPrompt: DEFAULT_VERDICT_PROMPT,
   generatePrompt: DEFAULT_GENERATE_PROMPT,

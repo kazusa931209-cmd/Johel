@@ -32,14 +32,18 @@ export const en = {
       },
     },
     sidebar: {
+      foundation: "Foundation",
       workspace: "Workspace",
-      run: "Run",
       settings: "Settings",
       profiles: "Profiles",
       companies: "Companies",
       experiences: "Experiences",
-      generate: "Generate",
-      history: "History",
+      resumeBuilder: "Resume Builder",
+      jdResumeBuilder: "JD-Resume Builder",
+      applicationBuilder: "Application Builder",
+      applications: "Applications",
+      compareAndChoose: "Compare & Choose",
+      resumes: "Resumes",
       environment: "Environment",
       generation: "Generation",
       prompts: "Prompts",
@@ -442,8 +446,14 @@ export const en = {
       submitting: "Resetting…",
     },
   },
+  resumeBuilder: {
+    title: "Resume Builder",
+    steps: {
+      ariaLabel: "Resume Builder steps",
+    },
+  },
   generate: {
-    title: "Generate",
+    title: "JD-Resume Builder",
     description: "Prepare the Job Description, then compose profile, companies, and experiences for this run.",
     new: "New",
     newConfirm: {

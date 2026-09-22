@@ -7,9 +7,11 @@ import {
   getHistoryVisibleSteps,
   isProcessedThroughStep,
 } from "@/lib/generation-step-progress";
+import { RESUME_BUILDER_STEPS } from "@/lib/resume-builder-steps";
 
 type HistoryStepsCellProps = {
   processedStep: string;
+  kind?: string;
   doVerdict: boolean;
   doEvaluate: boolean;
   finalized: boolean;
@@ -17,12 +19,16 @@ type HistoryStepsCellProps = {
 
 export function HistoryStepsCell({
   processedStep,
+  kind,
   doVerdict,
   doEvaluate,
   finalized,
 }: HistoryStepsCellProps) {
   const t = useT();
-  const steps = getHistoryVisibleSteps(doEvaluate, doVerdict);
+  const steps =
+    kind === "generalResume"
+      ? [...RESUME_BUILDER_STEPS]
+      : getHistoryVisibleSteps(doEvaluate, doVerdict);
   const downloadLabel = t("generate.nav.download");
 
   return (

@@ -1,5 +1,10 @@
 import { prisma } from "./prisma";
 
+export type GenerationKind = "jdResume" | "generalResume";
+
+export const GENERATION_KIND_JD: GenerationKind = "jdResume";
+export const GENERATION_KIND_GENERAL: GenerationKind = "generalResume";
+
 function formatDatePrefix(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -38,13 +43,27 @@ export function incrementGenerationPublicId(publicId: string): string | null {
   return `${prefix}${String(seq + 1).padStart(3, "0")}`;
 }
 
-export async function allocateGenerationPublicId(userId: string): Promise<string> {
+export function publicIdPrefixForKind(kind: GenerationKind, date: Date): string {
+  const tag = kind === GENERATION_KIND_JD ? "JDR" : "GEN";
+  return `${tag}-${formatDatePrefix(date)}-`;
+}
+
+/** General Resume public IDs use the `GEN-` prefix (see `publicIdPrefixForKind`). */
+export function isGeneralResumePublicId(publicId: string): boolean {
+  return publicId.startsWith("GEN-");
+}
+
+export async function allocateGenerationPublicId(
+  userId: string,
+  kind: GenerationKind = GENERATION_KIND_JD,
+): Promise<string> {
   const now = new Date();
-  const prefix = `GEN-${formatDatePrefix(now)}-`;
+  const prefix = publicIdPrefixForKind(kind, now);
 
   const existing = await prisma.generation.findMany({
     where: {
       userId,
+      kind,
       publicId: { startsWith: prefix },
     },
     select: { publicId: true },

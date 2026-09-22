@@ -249,11 +249,13 @@ export type CombineSnapshot = {
   profileId: string;
   language: string;
   emphasis: string;
+  userInstruction?: string;
   companies: Array<{
     companyId: string;
     startDate: string;
     endDate: string;
     roleContext: string;
+    keywordContext?: string;
     experienceIds: string[];
   }>;
 };
@@ -603,6 +605,7 @@ export type GenerationStartResult = {
 export type GenerationListItem = {
   id: string;
   publicId: string;
+  kind: string;
   finalized: boolean;
   processedStep: string;
   doVerdict: boolean;
@@ -633,6 +636,7 @@ export type GenerationList = {
 export type GenerationDetail = {
   id: string;
   publicId: string;
+  kind: string;
   finalized: boolean;
   inputToken: number;
   outputToken: number;
@@ -667,6 +671,75 @@ export function startGeneration() {
   return request<GenerationStartResult>("/generations/start", {
     method: "POST",
   });
+}
+
+export type GeneralGenerationDetail = {
+  id: string;
+  publicId: string;
+  kind: string;
+  finalized: boolean;
+  inputToken: number;
+  outputToken: number;
+  tokenUsed: number;
+  activeStep: string;
+  combine: CombineSnapshot;
+  resume: import("@johel/resume").GeneratedResume | null;
+  evaluationMarkdown: string | null;
+  doEvaluate: boolean;
+  resumeLanguage: ResumeLanguage;
+  generatePrompt: string;
+  evaluatePrompt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GeneralGenerationUpdatePayload = {
+  activeStep: string;
+  combine: CombineSnapshot;
+  resume?: import("@johel/resume").GeneratedResume | null;
+  evaluationMarkdown?: string | null;
+  finalized?: boolean;
+};
+
+export function startGeneralGeneration() {
+  return request<GenerationStartResult>("/general-generations/start", {
+    method: "POST",
+  });
+}
+
+export function updateGeneralGeneration(
+  id: string,
+  payload: GeneralGenerationUpdatePayload,
+) {
+  return request<GeneralGenerationDetail>(`/general-generations/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getCurrentGeneralGeneration() {
+  return request<GeneralGenerationDetail | null>("/general-generations/current");
+}
+
+export type GeneralGenerationResumePayload = {
+  archive?: GeneralGenerationUpdatePayload & { generationId: string };
+};
+
+export function resumeGeneralGeneration(
+  publicId: string,
+  payload: GeneralGenerationResumePayload = {},
+) {
+  return request<GeneralGenerationDetail>(
+    `/general-generations/${publicId}/resume`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function getGeneralGeneration(publicId: string) {
+  return request<GeneralGenerationDetail>(`/general-generations/${publicId}`);
 }
 
 export function updateGeneration(id: string, payload: GenerationUpdatePayload) {

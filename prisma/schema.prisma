@@ -15,6 +15,8 @@ model User {
   sessionVersion Int        @default(0)
   currentGenerationId String?
   currentGeneration   Generation? @relation("UserCurrentGeneration", fields: [currentGenerationId], references: [id], onDelete: SetNull)
+  currentGeneralGenerationId String?
+  currentGeneralGeneration   Generation? @relation("UserCurrentGeneralGeneration", fields: [currentGeneralGenerationId], references: [id], onDelete: SetNull)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   setting      Setting?
@@ -146,6 +148,7 @@ model AiUsage {
 model Generation {
   id                 String                  @id @default(cuid())
   publicId           String
+  kind               String                  @default("jdResume")
   userId             String
   user               User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   finalized          Boolean                 @default(false)
@@ -168,6 +171,7 @@ model Generation {
   aiUsages           AiUsage[]
   jobEmbedding       GenerationJobEmbedding?
   currentForUsers    User[]                  @relation("UserCurrentGeneration")
+  currentForGeneralUsers User[]              @relation("UserCurrentGeneralGeneration")
 
   @@unique([userId, publicId])
   @@index([userId, createdAt])

@@ -299,6 +299,8 @@ function parseCombineSnapshot(value: unknown): CombineSnapshot {
     profileId: typeof raw.profileId === "string" ? raw.profileId : "",
     language: typeof raw.language === "string" ? raw.language : "en",
     emphasis: typeof raw.emphasis === "string" ? raw.emphasis : "",
+    userInstruction:
+      typeof raw.userInstruction === "string" ? raw.userInstruction : "",
     companies,
   };
 }

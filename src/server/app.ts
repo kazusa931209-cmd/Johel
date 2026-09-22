@@ -26,12 +26,14 @@ import { aiResumeRoutes } from "./routes/ai-resume";
 import { aiJdMetaRoutes } from "./routes/ai-jd-meta";
 import { aiVerdictRoutes } from "./routes/ai-verdict";
 import { aiCombineRecommendRoutes } from "./routes/ai-combine-recommend";
+import { aiGeneralCombineRecommendRoutes } from "./routes/ai-general-combine-recommend";
 import { resumeRoutes } from "./routes/resume";
 import { aiUsageRoutes } from "./routes/ai-usage";
 import { promptsRoutes } from "./routes/prompts";
 import { aiExperienceAdviseRoutes } from "./routes/ai-experience-advise";
 import { aiExperienceSplitRoutes } from "./routes/ai-experience-split";
 import { aiCheckOnExperiencesRoutes } from "./routes/ai-check-on-experiences";
+import { generalGenerationsRoutes } from "./routes/general-generations";
 import { generationsRoutes } from "./routes/generations";
 import { pceRoutes } from "./routes/pce";
 
@@ -110,11 +112,13 @@ export function createApp() {
   app.route("/ai-experience-advise", aiExperienceAdviseRoutes);
   app.route("/ai-experience-split", aiExperienceSplitRoutes);
   app.route("/ai-combine-recommend", aiCombineRecommendRoutes);
+  app.route("/ai-general-combine-recommend", aiGeneralCombineRecommendRoutes);
   app.route("/ai-check-on-experiences", aiCheckOnExperiencesRoutes);
   app.route("/resume", resumeRoutes);
   app.route("/ai-usage", aiUsageRoutes);
   app.route("/prompts", promptsRoutes);
   app.route("/generations", generationsRoutes);
+  app.route("/general-generations", generalGenerationsRoutes);
   app.route("/pce", pceRoutes);
 
   app.onError((err, c) => {

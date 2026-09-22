@@ -204,6 +204,7 @@ function HistoryPageContent() {
                   <td className="px-3 py-2">
                     <HistoryStepsCell
                       processedStep={row.processedStep}
+                      kind={row.kind}
                       doVerdict={row.doVerdict}
                       doEvaluate={row.doEvaluate}
                       finalized={row.finalized}

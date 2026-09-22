@@ -21,16 +21,26 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Drawer } from "@/components/shared/drawer";
 import { PlayIcon } from "@/components/shared/icons";
 import type { ResumeLanguage } from "@/lib/api";
-import type { CombineSnapshot } from "@/components/generate/combine-types";
+import {
+  EMPTY_COMBINE_SNAPSHOT,
+  type CombineSnapshot,
+} from "@/components/generate/combine-types";
 import {
   getGeneration,
+  updateGeneralGeneration,
   updateGeneration,
+  type GeneralGenerationDetail,
   type GenerationDetail,
 } from "@/lib/api";
 import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
 import type { GenerateJobState } from "@/lib/generate-session";
 import { loadMe, clearMeCache } from "@/lib/cached-settings";
+import { resumeGeneralGenerationFromHistory } from "@/lib/general-resume-persistence";
 import { resumeGenerationFromHistory } from "@/lib/generation-persistence";
+import {
+  normalizeResumeBuilderActiveStep,
+  RESUME_BUILDER_STEPS,
+} from "@/lib/resume-builder-steps";
 import {
   getGenerateCurrentPanelTitle,
   getGenerateSteps,
@@ -75,7 +85,7 @@ function parseJob(value: unknown): GenerateJobState {
 
 function parseCombine(value: unknown): CombineSnapshot {
   if (!value || typeof value !== "object") {
-    return { profileId: "", language: "en", emphasis: "", companies: [] };
+    return { ...EMPTY_COMBINE_SNAPSHOT };
   }
   const raw = value as Record<string, unknown>;
   const companies = Array.isArray(raw.companies)
@@ -108,8 +118,18 @@ function parseCombine(value: unknown): CombineSnapshot {
     profileId: typeof raw.profileId === "string" ? raw.profileId : "",
     language: typeof raw.language === "string" ? raw.language : "en",
     emphasis: typeof raw.emphasis === "string" ? raw.emphasis : "",
+    userInstruction:
+      typeof raw.userInstruction === "string" ? raw.userInstruction : "",
     companies,
   };
+}
+
+type HistoryGenerationDetail = GenerationDetail | GeneralGenerationDetail;
+
+function isGeneralHistoryDetail(
+  detail: HistoryGenerationDetail | null | undefined,
+): boolean {
+  return detail?.kind === "generalResume";
 }
 
 type GenerationHistoryDrawerProps = {
@@ -129,7 +149,7 @@ export function GenerationHistoryDrawer({
   const t = useT();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [detail, setDetail] = useState<GenerationDetail | null>(null);
+  const [detail, setDetail] = useState<HistoryGenerationDetail | null>(null);
   const [activeStep, setActiveStep] = useState<GenerateStep>("Job");
   const [userId, setUserId] = useState<string | null>(null);
   const [currentPublicId, setCurrentPublicId] = useState<string | null>(null);
@@ -176,11 +196,15 @@ export function GenerationHistoryDrawer({
       }
       setDetail(res.data);
       setActiveStep(
-        normalizeGenerateActiveStep(
-          res.data.activeStep as GenerateStep,
-          res.data.doEvaluate,
-          res.data.doVerdict,
-        ),
+        res.data.kind === "generalResume"
+          ? normalizeResumeBuilderActiveStep(
+              res.data.activeStep as GenerateStep,
+            )
+          : normalizeGenerateActiveStep(
+              res.data.activeStep as GenerateStep,
+              res.data.doEvaluate,
+              res.data.doVerdict,
+            ),
       );
     });
 
@@ -190,7 +214,12 @@ export function GenerationHistoryDrawer({
   }, [open, publicId, t, toast]);
 
   const job = useMemo(
-    () => (detail ? parseJob(detail.job) : parseJob(null)),
+    () =>
+      detail && isGeneralHistoryDetail(detail)
+        ? parseJob(null)
+        : detail
+          ? parseJob((detail as GenerationDetail).job)
+          : parseJob(null),
     [detail],
   );
   const combine = useMemo(
@@ -205,7 +234,12 @@ export function GenerationHistoryDrawer({
   const visibleSteps = useMemo(
     () =>
       detail
-        ? getGenerateSteps(detail.doEvaluate, detail.doVerdict)
+        ? isGeneralHistoryDetail(detail)
+          ? [...RESUME_BUILDER_STEPS]
+          : getGenerateSteps(
+              (detail as GenerationDetail).doEvaluate,
+              (detail as GenerationDetail).doVerdict,
+            )
         : (["Job"] as GenerateStep[]),
     [detail],
   );
@@ -213,11 +247,13 @@ export function GenerationHistoryDrawer({
   const normalizedActiveStep = useMemo(
     () =>
       detail
-        ? normalizeGenerateActiveStep(
-            activeStep,
-            detail.doEvaluate,
-            detail.doVerdict,
-          )
+        ? isGeneralHistoryDetail(detail)
+          ? normalizeResumeBuilderActiveStep(activeStep)
+          : normalizeGenerateActiveStep(
+              activeStep,
+              (detail as GenerationDetail).doEvaluate,
+              (detail as GenerationDetail).doVerdict,
+            )
         : activeStep,
     [activeStep, detail],
   );
@@ -233,13 +269,29 @@ export function GenerationHistoryDrawer({
 
   async function handleHistoryDownloaded() {
     if (!detail) return;
-    const res = await updateGeneration(detail.id, {
-      activeStep: detail.activeStep,
-      job: detail.job,
-      combine: detail.combine,
-      verdictMarkdown: detail.verdictMarkdown,
-      resume: detail.resume,
-      evaluationMarkdown: detail.evaluationMarkdown,
+    if (isGeneralHistoryDetail(detail)) {
+      const res = await updateGeneralGeneration(detail.id, {
+        activeStep: detail.activeStep,
+        combine: detail.combine,
+        resume: detail.resume,
+        evaluationMarkdown: detail.evaluationMarkdown,
+        finalized: true,
+      });
+      if (res.data) {
+        setDetail(res.data);
+        notifyGenerationFinalized(res.data.publicId);
+        onDetailUpdated?.();
+      }
+      return;
+    }
+    const jdDetail = detail as GenerationDetail;
+    const res = await updateGeneration(jdDetail.id, {
+      activeStep: jdDetail.activeStep,
+      job: jdDetail.job,
+      combine: jdDetail.combine,
+      verdictMarkdown: jdDetail.verdictMarkdown,
+      resume: jdDetail.resume,
+      evaluationMarkdown: jdDetail.evaluationMarkdown,
       finalized: true,
     });
     if (res.data) {
@@ -259,10 +311,10 @@ export function GenerationHistoryDrawer({
   async function confirmResume() {
     if (!detail || !userId) return;
     setResuming(true);
-    const result = await resumeGenerationFromHistory(
-      detail.publicId,
-      userId,
-    );
+    const isGeneral = isGeneralHistoryDetail(detail);
+    const result = isGeneral
+      ? await resumeGeneralGenerationFromHistory(detail.publicId)
+      : await resumeGenerationFromHistory(detail.publicId, userId);
     setResuming(false);
     if (result.error) {
       toast(result.error ?? t("toast.generationResumeFailed"), "error");
@@ -272,7 +324,7 @@ export function GenerationHistoryDrawer({
     setCurrentPublicId(detail.publicId);
     toast(t("toast.generationResumed"), "success");
     onClose();
-    router.push("/");
+    router.push(isGeneral ? "/resume-builder" : "/");
   }
 
   const resumeConfirmBody =
@@ -303,7 +355,10 @@ export function GenerationHistoryDrawer({
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
-      doVerdict: detail?.doVerdict ?? false,
+      doVerdict:
+        detail && !isGeneralHistoryDetail(detail)
+          ? (detail as GenerationDetail).doVerdict
+          : false,
       job,
       combine,
       resume,

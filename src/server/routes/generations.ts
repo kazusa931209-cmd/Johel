@@ -4,6 +4,7 @@ import { z } from "zod";
 import { deriveProcessedStep } from "../lib/generation-processed-step";
 import {
   allocateGenerationPublicId,
+  GENERATION_KIND_JD,
   incrementGenerationPublicId,
 } from "../lib/generation-public-id";
 import { findJobDuplicateMatch } from "../lib/job-embedding/duplicate-check";
@@ -54,6 +55,7 @@ const resumeSchema = z.object({
 type GenerationListRow = {
   id: string;
   publicId: string;
+  kind: string;
   finalized: boolean;
   activeStep: string;
   jobJson: string;
@@ -81,6 +83,7 @@ function toListItem(
   return {
     id: generation.id,
     publicId: generation.publicId,
+    kind: generation.kind,
     finalized: generation.finalized,
     processedStep: deriveProcessedStep(generation),
     doVerdict: generation.doVerdict,
@@ -139,6 +142,7 @@ async function loadProfileNamesById(
 function toDetailResponse(generation: {
   id: string;
   publicId: string;
+  kind: string;
   finalized: boolean;
   inputToken: number;
   outputToken: number;
@@ -182,6 +186,7 @@ function toDetailResponse(generation: {
   return {
     id: generation.id,
     publicId: generation.publicId,
+    kind: generation.kind,
     finalized: generation.finalized,
     inputToken: generation.inputToken,
     outputToken: generation.outputToken,
@@ -254,8 +259,10 @@ generationsRoutes.post("/start", async (c) => {
       profileId: "",
       language: settings.resumeLanguage,
       emphasis: "",
+      userInstruction: "",
       companies: [],
     }),
+    kind: GENERATION_KIND_JD,
     doVerdict: settings.doVerdict,
     doEvaluate: settings.doEvaluate,
     resumeLanguage: settings.resumeLanguage,
@@ -264,7 +271,7 @@ generationsRoutes.post("/start", async (c) => {
     evaluatePrompt: settings.evaluatePrompt,
   };
 
-  let publicId = await allocateGenerationPublicId(user.id);
+  let publicId = await allocateGenerationPublicId(user.id, GENERATION_KIND_JD);
 
   for (let attempt = 0; attempt < GENERATION_CREATE_MAX_ATTEMPTS; attempt += 1) {
     try {
@@ -293,7 +300,7 @@ generationsRoutes.post("/start", async (c) => {
         continue;
       }
 
-      publicId = await allocateGenerationPublicId(user.id);
+      publicId = await allocateGenerationPublicId(user.id, GENERATION_KIND_JD);
     }
   }
 
@@ -308,7 +315,7 @@ generationsRoutes.put("/:id", async (c) => {
 
   const id = c.req.param("id");
   const existing = await prisma.generation.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: user.id, kind: GENERATION_KIND_JD },
   });
   if (!existing) {
     return c.json({ error: "Generation not found." }, 404);

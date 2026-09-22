@@ -34,14 +34,18 @@ export const ko: MessageTree = {
       },
     },
     sidebar: {
+      foundation: "기반",
       workspace: "작업 공간",
-      run: "실행",
       settings: "설정",
       profiles: "프로필",
       companies: "회사",
       experiences: "경험",
-      generate: "생성",
-      history: "기록",
+      resumeBuilder: "이력서 빌더",
+      jdResumeBuilder: "JD-이력서 빌더",
+      applicationBuilder: "지원서 빌더",
+      applications: "지원",
+      compareAndChoose: "비교 및 선택",
+      resumes: "이력서",
       environment: "환경",
       generation: "생성",
       prompts: "프롬프트",
@@ -444,8 +448,14 @@ export const ko: MessageTree = {
       submitting: "재설정 중…",
     },
   },
+  resumeBuilder: {
+    title: "이력서 빌더",
+    steps: {
+      ariaLabel: "이력서 빌더 단계",
+    },
+  },
   generate: {
-    title: "생성",
+    title: "JD-이력서 빌더",
     description:
       "채용 공고를 준비한 뒤, 이번 실행에 사용할 프로필·회사·경험을 조합합니다.",
     new: "새로 만들기",

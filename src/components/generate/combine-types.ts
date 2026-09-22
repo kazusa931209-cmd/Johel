@@ -21,6 +21,8 @@ export type CombineSnapshot = {
   profileId: string;
   language: RunLanguage | string;
   emphasis: string;
+  /** General Resume (Resume Builder): per-run user instruction; not persisted in combine defaults. */
+  userInstruction: string;
   companies: CombineCompanyEntry[];
 };
 
@@ -28,6 +30,7 @@ export const EMPTY_COMBINE_SNAPSHOT: CombineSnapshot = {
   profileId: "",
   language: "en",
   emphasis: "",
+  userInstruction: "",
   companies: [],
 };
 

@@ -18,6 +18,7 @@ export const AI_GENERATE_TYPES = [
   "experienceAdvise",
   "experienceSplit",
   "combineRecommend",
+  "generalCombineRecommend",
   "checkOnExperiences",
   "embedding",
 ] as const;
