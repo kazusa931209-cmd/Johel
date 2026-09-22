@@ -912,7 +912,7 @@ export function isPdfDownloadAvailable(
 }
 
 async function downloadResumeExport(
-  path: "/backend/resume/docx" | "/backend/resume/pdf",
+  path: "/backend/resume/docx" | "/backend/resume/pdf" | "/backend/resume/zip",
   resume: import("@johel/resume").GeneratedResume,
   label: ResumeDownloadLabel | undefined,
   fallbackFileName: string,
