@@ -26,10 +26,10 @@ Open `http://127.0.0.1:4041` — register or log in. The UI and API share one Ne
 
 ## Production (Vercel + Turso)
 
-See **[docs/vercel-deploy.md](docs/vercel-deploy.md)** for the full environment variable checklist (Preview vs Production), project settings, and smoke tests.
+See **[docs/vercel-deploy.md](docs/vercel-deploy.md)** for Production environment variables, disabling Preview deployments, and smoke tests.
 
-- Set `DATABASE_URL` (`libsql://…`), `TURSO_AUTH_TOKEN`, `JWT_SECRET`, `ENCRYPTION_KEY`, `PUBLIC_DEPLOY=true`, `TRUST_PROXY=true`, and `PUBLIC_URL` on Vercel.
-- Build runs `prisma migrate deploy` (see `apps/web/package.json`).
+- Set `DATABASE_URL` (`libsql://…`), `TURSO_AUTH_TOKEN`, `JWT_SECRET`, `ENCRYPTION_KEY`, `PUBLIC_DEPLOY=true`, `TRUST_PROXY=true`, and `PUBLIC_URL` on Vercel (**Production** scope only).
+- Production build runs [`apps/web/scripts/build-web.ts`](apps/web/scripts/build-web.ts) (Turso migrations + `next build`).
 - Migrate existing SQLite data: backup → [`scripts/prepare-sqlite-for-turso-import.sh`](scripts/prepare-sqlite-for-turso-import.sh) → `turso db import`. Details in [`docs/technology.md`](docs/technology.md).
 
 ## Run with Docker Desktop (optional / LAN)

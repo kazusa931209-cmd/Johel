@@ -418,10 +418,10 @@ Phases are listed below as they are defined. Only the current/next Phase is full
 * [x] **Phase 91 — Remove Company Domain & Stack** — Companies no longer store or edit **Domain & Stack**; company scene for Generate and Combine Suggest uses **What this company is** only. Existing `domainAndStack` column data is dropped on migration.
   * **Outcome (2026-09-16):** `companies.domainAndStack` removed; Companies UI/API, markdown-on-save, resume assembly, and prompts updated. Details in [`docs/technology.md`](./technology.md).
 
-* [x] **Phase 93 — Next.js monolith + Turso** — Standalone Hono API removed; backend runs inside Next.js at `/backend/*`. Production database on **Turso** (libSQL); local development keeps a **SQLite file**. Vercel is the primary production deploy target.
+* [x] **Phase 93 — Next.js monolith + Turso** — Standalone Hono API removed; backend runs inside Next.js at `/backend/*`. Production database on **Turso** (libSQL); local development keeps a **SQLite file** (`pnpm dev:web`, no Docker required). **Vercel Production** is the live deploy target; **Vercel Preview** is not used.
   * **Outcome:** `apps/web/src/server`, `apps/web/prisma`, Turso adapter in `prisma.ts`, `vercel.json`, Turso import helper script. Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-22-phase-93-nextjs-turso-migration.md`](./plans/2026-09-22-phase-93-nextjs-turso-migration.md).
 
-* [x] **Phase 94 — CI/CD pipeline** — Every change is verified in **GitHub Actions** (web tests, lint, production build, workspace package tests, Docker image verify when relevant) before merge; **Vercel** delivers Preview and Production with documented env promotion, migration caution, rollback, and post-deploy smoke. No paid CI SaaS required.
+* [x] **Phase 94 — CI/CD pipeline** — Every change is verified in **GitHub Actions** (`web` + `packages`: tests, lint, production build) before merge; **Vercel Production** deploys from `main`. No Vercel Preview; no Docker job in CI. Local dev uses SQLite without Docker.
   * **Outcome (2026-09-22):** Multi-job `.github/workflows/ci.yml`, root `pnpm test` parity, [`docs/ci-cd.md`](./ci-cd.md), health `curl` in [`docs/vercel-deploy.md`](./vercel-deploy.md). Details in [`docs/technology.md`](./technology.md). Plan archived at [`docs/plans/2026-09-22-cicd-pipeline.md`](./plans/2026-09-22-cicd-pipeline.md).
 
 ## Cursor Rules (Documentation Governance)

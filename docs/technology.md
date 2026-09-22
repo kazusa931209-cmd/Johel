@@ -61,7 +61,7 @@ User browser (:4041 local, Vercel in prod)
 - **Phase 36:** `PromptOptimization` / `promptOptimizations` and `usePromptOptimizationAi` removed; AI routes use deterministic `compileInstruction` only (see `apps/api/src/lib/prompt-optimize/compile.ts`)
 - SQLite table names are case-insensitive, so PascalCase (`User`) cannot be renamed to single-word camelCase (`user`). Tables use plural / compound camelCase: `users`, `settings`, `generationProcess`, `workflows`, ...
 - **Convention:** all physical table names are camelCase via Prisma `@@map` (never PascalCase table names)
-- **Migrations:** under `apps/web/prisma/migrations/`. Local dev: `pnpm db:migrate`. Docker entrypoint and CI: `prisma migrate deploy` against a `file:` URL. **Vercel (Turso):** [`apps/web/scripts/migrate-deploy-turso.ts`](../apps/web/scripts/migrate-deploy-turso.ts) during `pnpm --filter web build` (see [`vercel-deploy.md`](./vercel-deploy.md)). Fresh Docker volume: `docker compose down -v` then `up` wipes `johel-data`.
+- **Migrations:** under `apps/web/prisma/migrations/`. Local dev: `pnpm db:migrate`. CI and Docker entrypoint: `prisma migrate deploy` against a `file:` URL. **Vercel (Turso):** [`apps/web/scripts/migrate-deploy-turso.ts`](../apps/web/scripts/migrate-deploy-turso.ts) during `pnpm --filter web build` (see [`vercel-deploy.md`](./vercel-deploy.md)). Fresh Docker volume: `docker compose down -v` then `up` wipes `johel-data`.
 - **Turso cutover:** backup SQLite → `scripts/prepare-sqlite-for-turso-import.sh` (sets `journal_mode=WAL`) → `turso db import`. Copy `JWT_SECRET` and `ENCRYPTION_KEY` from the source environment. Run `pnpm --filter web db:migrate-keys` once if plaintext API keys remain.
 
 ## Frontend (Phase 3)
@@ -336,14 +336,14 @@ User browser (:4041 local, Vercel in prod)
 
 ## CI/CD (Phase 94)
 
-- Workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): parallel **web**, **packages**, and conditional **docker** jobs; no Turso secrets in CI
-- CD: Vercel Preview (PR) and Production (`main`); pending migrations applied during Vercel build via [`migrate-deploy-turso.ts`](../apps/web/scripts/migrate-deploy-turso.ts) (not Prisma CLI against `libsql://`)
+- Workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): parallel **web** and **packages** jobs; no Turso secrets in CI; no Docker build in CI
+- CD: Vercel **Production** only (`main`); disable Preview deployments in Vercel Git settings; pending migrations applied during production build via [`migrate-deploy-turso.ts`](../apps/web/scripts/migrate-deploy-turso.ts) (not Prisma CLI against `libsql://`)
 - Operator runbook: [`ci-cd.md`](./ci-cd.md) (branch protection, rollback, local `pnpm test` parity)
 
 ## Vercel + Turso (Phase 93 — production)
 
 - **Deploy:** root `vercel.json`; build `pnpm --filter web build` (Turso migrate script or `prisma migrate deploy`, then `next build`)
-- **Env checklist (Preview vs Production):** [`vercel-deploy.md`](./vercel-deploy.md)
+- **Env checklist (Production):** [`vercel-deploy.md`](./vercel-deploy.md)
 - **SQLite → Turso:** `scripts/backup-db.sh` → `scripts/prepare-sqlite-for-turso-import.sh` → `turso db import`
 - **Plaintext API keys:** `pnpm --filter web db:migrate-keys` once after cutover if needed
 

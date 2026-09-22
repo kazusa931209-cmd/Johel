@@ -16,7 +16,7 @@ COPY packages/resume/package.json packages/resume/
 COPY packages/prompt-defaults/package.json packages/prompt-defaults/
 COPY packages/jd-meta/package.json packages/jd-meta/
 
-RUN pnpm install --frozen-lockfile --store-dir /pnpm/store
+RUN pnpm install --frozen-lockfile --store-dir /pnpm/store --ignore-scripts
 
 COPY apps/web apps/web
 COPY packages/resume packages/resume
@@ -26,7 +26,7 @@ COPY packages/jd-meta packages/jd-meta
 RUN pnpm --filter web exec prisma generate
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=file:/data/johel.db
+ENV DATABASE_URL=file:./prisma/docker-build.db
 ENV JWT_SECRET=docker-build-placeholder-min-32-chars
 RUN pnpm --filter web build
 
