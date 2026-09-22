@@ -32,9 +32,9 @@ CI uses **concurrency** to cancel in-progress runs on the same branch when new c
 | **Preview** | PR / branch deploy (project linked to GitHub) | Staging Turso (recommended) |
 | **Production** | Merge to production branch (`main`) | Production Turso |
 
-Build command runs `prisma migrate deploy` against the Turso URL in that environment’s Vercel variables. See [`vercel-deploy.md`](./vercel-deploy.md) for the full env checklist.
+Build command runs [`apps/web/scripts/build-web.ts`](../apps/web/scripts/build-web.ts): `prisma generate`, then **Turso** [`migrate-deploy-turso.ts`](../apps/web/scripts/migrate-deploy-turso.ts) when `DATABASE_URL` is remote libSQL, otherwise `prisma migrate deploy` (as in CI). See [`vercel-deploy.md`](./vercel-deploy.md) for the full env checklist.
 
-**Migration policy:** Ship backward-compatible Prisma migrations on `main`. Validate on a **Preview** build (PR) before merging so production’s `migrate deploy` does not surprise you. Breaking schema changes need a documented maintenance window or expand → deploy → contract release.
+**Migration policy:** Ship backward-compatible Prisma migrations on `main`. Validate on a **Preview** build (PR) so the Turso migrate script runs against staging before production. Breaking schema changes need a documented maintenance window or expand → deploy → contract release.
 
 **Rollback**
 

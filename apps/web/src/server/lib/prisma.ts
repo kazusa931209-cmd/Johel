@@ -1,18 +1,8 @@
 import { createRequire } from "node:module";
 import { PrismaClient } from "@prisma/client";
+import { isTursoDatabaseUrl } from "./database-url";
 
 const require = createRequire(import.meta.url);
-
-function isTursoDatabaseUrl(databaseUrl: string | undefined): boolean {
-  if (!databaseUrl) {
-    return false;
-  }
-  return (
-    databaseUrl.startsWith("libsql://") ||
-    databaseUrl.startsWith("https://") ||
-    Boolean(process.env.TURSO_AUTH_TOKEN?.trim())
-  );
-}
 
 function createPrismaClient(): PrismaClient {
   const databaseUrl = process.env.DATABASE_URL;

@@ -11,7 +11,7 @@ Related: [`technology.md`](./technology.md) (architecture), [`vercel.json`](../v
 | **Root Directory** | Repository root (default) — monorepo uses root `package.json` + `pnpm-workspace.yaml` |
 | **Framework Preset** | Next.js (also set in `vercel.json`) |
 | **Install Command** | `pnpm install --frozen-lockfile` |
-| **Build Command** | `pnpm --filter web build` (runs `prisma generate`, `prisma migrate deploy`, `next build`) |
+| **Build Command** | `pnpm --filter web build` (runs `prisma generate`, Turso migrate script **or** `prisma migrate deploy`, then `next build`) |
 | **Node.js** | 20.x (match root `engines`) |
 
 `vercel.json` sets **300s** `maxDuration` on [`apps/web/src/app/backend/[...path]/route.ts`](../apps/web/src/app/backend/[...path]/route.ts). Long AI/resume routes need a **Vercel plan** that allows 300s serverless duration (Pro or equivalent).
@@ -82,8 +82,16 @@ Use [`apps/web/.env`](../apps/web/.env) (from [`.env.example`](../apps/web/.env.
 | Turso database | Staging DB (import test snapshot) | Production DB |
 | `PUBLIC_URL` | Preview deployment URL | Custom domain |
 | Secrets after SQLite import | Match source env for `ENCRYPTION_KEY` | Match source env for `ENCRYPTION_KEY` |
-| `prisma migrate deploy` | Runs on every preview build | Runs on every production build |
+| Schema migrations at deploy | Turso migrate script on build (staging DB) | Turso migrate script on build (production DB) |
 | Data writes | Safe for QA | Live users |
+
+## Schema migrations on Turso
+
+Prisma CLI `migrate deploy` only accepts `file:` URLs. On Vercel, when `DATABASE_URL` is `libsql://` (or Turso HTTPS URL), the build runs [`apps/web/scripts/migrate-deploy-turso.ts`](../apps/web/scripts/migrate-deploy-turso.ts) instead: it applies any pending `prisma/migrations/*/migration.sql` to Turso via `@libsql/client` and updates `_prisma_migrations` (same checksums as Prisma).
+
+- **Author migrations locally:** `pnpm db:migrate` against `file:./prisma/dev.db`.
+- **Test against staging Turso from a laptop:** set `DATABASE_URL` + `TURSO_AUTH_TOKEN` in `apps/web/.env`, then `pnpm --filter web db:migrate-deploy`.
+- **After SQLite import:** `_prisma_migrations` is already populated; the Turso script applies nothing until a **new** migration lands in git.
 
 ## First deploy sequence
 
@@ -116,7 +124,9 @@ Expect JSON `{ "ok": true }`.
 
 | Symptom | Likely cause |
 | --- | --- |
-| Build fails on `prisma migrate deploy` | Wrong `DATABASE_URL` / token; or migration history mismatch vs imported DB |
+| Build fails with P1012 (`URL must start with file:`) | Outdated build script — current build must use Turso migrate script when `DATABASE_URL` is `libsql://` |
+| Build fails during Turso migrate script | Wrong `DATABASE_URL` / `TURSO_AUTH_TOKEN`; SQL error in a new migration; checksum mismatch if migration folder was edited after apply |
+| Build fails on `prisma migrate deploy` (CI / local file URL) | Wrong `DATABASE_URL`; migration history mismatch vs database |
 | 500 on every `/backend/*` with `PUBLIC_DEPLOY` message | Weak `JWT_SECRET`, missing `ENCRYPTION_KEY`, or `TRUST_PROXY` not `true` |
 | AI calls fail after Turso import | `ENCRYPTION_KEY` on Vercel ≠ key used when keys were saved in SQLite |
 | AI/resume times out at 60s | Plan limit; confirm `maxDuration: 300` in `vercel.json` and route `export const maxDuration = 300` |

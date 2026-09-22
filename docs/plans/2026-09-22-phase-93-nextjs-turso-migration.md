@@ -132,6 +132,8 @@ Add [`apps/web/.env.example`](apps/web/.env.example) (consolidate from [`apps/ap
 
 ### 2.3 Migrations on Vercel
 
+> **Correction (2026-09-22):** Prisma CLI `migrate deploy` cannot use `libsql://` URLs (P1012). Vercel builds use [`apps/web/scripts/migrate-deploy-turso.ts`](../../apps/web/scripts/migrate-deploy-turso.ts) via [`apps/web/scripts/build-web.ts`](../../apps/web/scripts/build-web.ts). CI and Docker still use `prisma migrate deploy` with a `file:` URL.
+
 Add to web `package.json`:
 
 ```json

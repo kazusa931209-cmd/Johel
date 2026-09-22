@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -H 127.0.0.1 -p 4041",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "tsx scripts/build-web.ts",
     "start": "next start -H 127.0.0.1 -p 4041",
     "lint": "eslint",
     "test": "vitest run",
     "postinstall": "prisma generate",
+    "db:migrate-deploy": "tsx --env-file=.env scripts/migrate-deploy-turso.ts",
     "db:migrate-keys": "tsx --env-file=.env scripts/migrate-plaintext-api-keys.ts",
     "prisma": "prisma"
   },
