@@ -198,16 +198,19 @@ export const ko: MessageTree = {
         generate: "생성",
         evaluate: "평가",
         refine: "다듬기",
+        generalEvaluate: "일반 평가",
       },
       fields: {
         verdictPrompt: "판정 프롬프트",
         generatePrompt: "생성 프롬프트",
         evaluatePrompt: "평가 프롬프트",
         refinePrompt: "다듬기 프롬프트",
+        generalEvaluatePrompt: "일반 평가 프롬프트",
         verdictExtension: "판정 확장",
         generateExtension: "생성 확장",
         evaluateExtension: "평가 확장",
         refineExtension: "다듬기 확장",
+        generalEvaluateExtension: "일반 평가 확장",
       },
       extensions: {
         description:
@@ -219,6 +222,7 @@ export const ko: MessageTree = {
         generate: "생성 프롬프트 편집",
         evaluate: "평가 프롬프트 편집",
         refine: "다듬기 프롬프트 편집",
+        generalEvaluate: "일반 평가 프롬프트 편집",
         dialogTitle: "{label} 편집",
         systemImpactNotice:
           "시스템 프롬프트 변경은 전체 시스템에 직접적인 영향을 줍니다. 적용 전에 신중히 검토해 주세요.",
@@ -472,6 +476,30 @@ export const ko: MessageTree = {
       description:
         "이 실행에 사용할 프로필과 포함할 회사·경험을 선택합니다. 이력서 언어는 설정 → 생성을 따릅니다.",
     },
+    evaluateStep: {
+      emptyHintNoHistory:
+        "아래에 사용자 프롬프트를 입력한 뒤 평가를 누르세요. 생성 단계의 실행은 설정 → 프롬프트 → 일반 평가로 미리 채울 수 있습니다.",
+      userPromptLabel: "사용자 프롬프트",
+      userPromptPlaceholder:
+        "이번 평가에서 집중할 내용. 답변은 여기에 쓴 언어(또는 프롬프트에 명시한 출력 언어)를 따릅니다.",
+      userPromptRequired: "사용자 프롬프트는 필수입니다.",
+      evaluateButton: "평가",
+      evaluatingButton: "평가 중…",
+      copyResult: "평가 복사",
+      clearHistoryConfirm: {
+        title: "기존 평가 결과를 지울까요?",
+        body: "이 실행의 평가 채팅 기록이 삭제됩니다. 이후 다시 평가할 수 있습니다.",
+        yes: "예",
+        no: "아니오",
+      },
+      prefillGeneralEvaluateConfirm: {
+        title: "정의된 일반 평가 프롬프트로 시작할까요?",
+        body:
+          "설정 → 프롬프트 → 일반 평가 프롬프트와 확장을 사용자 프롬프트 필드에 복사합니다. 평가를 누르기 전까지 실행되지 않습니다.",
+        yes: "예",
+        no: "아니오",
+      },
+    },
   },
   generate: {
     title: "JD-이력서 빌더",
@@ -701,6 +729,9 @@ export const ko: MessageTree = {
       referenceTabsAria: "판정, 조합, 다듬기",
       editMode: "편집",
       previewMode: "미리보기",
+      saveDraft: "저장",
+      savingDraft: "저장 중…",
+      cancelEdit: "취소",
       editHint:
         "마크다운으로 초안 이력서를 편집합니다. 섹션 제목과 경력 항목의 직함 — 회사 형식을 유지해 주세요.",
       parseError: "이력서를 해석할 수 없습니다: {error}",
@@ -709,10 +740,11 @@ export const ko: MessageTree = {
       refine: {
         tab: "다듬기",
         hint:
-          "선택 사항: 경험 및/또는 회사를 선택하면 작업 공간 자료를 초안에 반영합니다. 선택하지 않으면 프롬프트만 사용합니다.",
+          "회사를 선택하면 선택적으로 경험을 맥락에 추가할 수 있습니다. 회사를 선택하지 않으면 프롬프트만 사용됩니다.",
         promptLabel: "프롬프트",
         apply: "적용",
         applying: "적용 중…",
+        reset: "초기화",
         instructionTitle: "지시로 다듬기",
         instructionPlaceholder: "초안 이력서를 어떻게 수정할지 입력…",
         instructionRequired: "적용 전에 지시를 입력해 주세요.",
@@ -726,7 +758,7 @@ export const ko: MessageTree = {
         experiencesEmpty: "다듬기에 선택한 경험이 없습니다.",
         companyContextButton: "회사 맥락",
         companyContextSelected: "회사: {name}",
-        companyLabel: "회사 맥락 (선택)",
+        companyLabel: "회사 맥락",
         companyPlaceholder: "회사를 입력하거나 선택…",
         companyNoneOnResume:
           "이 이력서에 포함된 회사가 없습니다. 먼저 결합 단계에서 회사를 추가해 주세요.",
@@ -1024,6 +1056,10 @@ export const ko: MessageTree = {
       "기존 초안 이력서를 어떻게 업데이트할지(구조, 톤, 근거 규칙, JSON 출력) 정의해 주세요.",
     refinePromptResumeHint:
       "이력서 빌더의 생성 단계에서 초안을 다듬을 때 사용합니다. JD 이력서 빌더의 초안 다듬기는 생성 프롬프트를 사용합니다.",
+    generalEvaluatePromptPlaceholder:
+      "일반 이력서 평가 기준(ATS 관점, 1–10 점수, 수정할 부분)을 정의합니다.",
+    generalEvaluatePromptResumeHint:
+      "새 이력서 빌더 실행 시작 시 스냅샷됩니다. 평가 단계에서는 이 시스템 프롬프트와 이력서, 선택적 실행별 사용자 프롬프트가 전송됩니다.",
     company: {
       shared:
         "동일한 공유 경험이 여러 회사에 연결될 수 있으므로, 회사 설명에 개인 성과를 넣으면 같은 문장이 반복되거나 다른 회사 성과가 섞일 수 있습니다.",

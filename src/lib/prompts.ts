@@ -1,5 +1,6 @@
 export {
   DEFAULT_EVALUATE_PROMPT,
+  DEFAULT_GENERAL_EVALUATE_PROMPT,
   DEFAULT_GENERATE_PROMPT,
   DEFAULT_REFINE_PROMPT,
   DEFAULT_VERDICT_PROMPT,
@@ -9,7 +10,12 @@ import type { TranslateParams } from "@/messages/translate";
 
 export type PromptTranslateFn = (key: string, params?: TranslateParams) => string;
 
-export type PromptTabKind = "verdict" | "generate" | "evaluate" | "refine";
+export type PromptTabKind =
+  | "verdict"
+  | "generate"
+  | "evaluate"
+  | "refine"
+  | "generalEvaluate";
 
 export function getSystemPromptQualityNotice(t: PromptTranslateFn) {
   return t("guidance.systemPromptQualityNotice");
@@ -45,6 +51,14 @@ export function getRefinePromptPlaceholder(t: PromptTranslateFn) {
 
 export function getRefinePromptResumeHint(t: PromptTranslateFn) {
   return t("guidance.refinePromptResumeHint");
+}
+
+export function getGeneralEvaluatePromptPlaceholder(t: PromptTranslateFn) {
+  return t("guidance.generalEvaluatePromptPlaceholder");
+}
+
+export function getGeneralEvaluatePromptResumeHint(t: PromptTranslateFn) {
+  return t("guidance.generalEvaluatePromptResumeHint");
 }
 
 export function getAutoMarkdownFormatHint(t: PromptTranslateFn) {

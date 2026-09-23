@@ -196,16 +196,19 @@ export const en = {
         generate: "Generate",
         evaluate: "Evaluate",
         refine: "Refine",
+        generalEvaluate: "General Evaluate",
       },
       fields: {
         verdictPrompt: "Verdict Prompt",
         generatePrompt: "Generate Prompt",
         evaluatePrompt: "Evaluate Prompt",
         refinePrompt: "Refine Prompt",
+        generalEvaluatePrompt: "General Evaluate Prompt",
         verdictExtension: "Verdict extension",
         generateExtension: "Generate extension",
         evaluateExtension: "Evaluate extension",
         refineExtension: "Refine extension",
+        generalEvaluateExtension: "General Evaluate extension",
       },
       extensions: {
         description:
@@ -217,6 +220,7 @@ export const en = {
         generate: "Edit Generate Prompt",
         evaluate: "Edit Evaluate Prompt",
         refine: "Edit Refine Prompt",
+        generalEvaluate: "Edit General Evaluate Prompt",
         dialogTitle: "Edit {label}",
         systemImpactNotice:
           "Changes to system prompts directly affect the whole system. Review carefully before applying.",
@@ -470,6 +474,31 @@ export const en = {
       description:
         "Choose a profile and included companies and experiences for this run. Resume language follows Settings → Generation.",
     },
+    evaluateStep: {
+      emptyHintNoHistory:
+        "Add a user prompt below and click Evaluate. Run on Generate can prefill from Settings → Prompts → General Evaluate.",
+      userPromptLabel: "User prompt",
+      userPromptPlaceholder:
+        "What to focus on in this evaluation. Replies follow the language you write here (or a language you name explicitly).",
+      userPromptRequired: "User prompt is required.",
+      evaluateButton: "Evaluate",
+      evaluatingButton: "Evaluating…",
+      copyResult: "Copy evaluation",
+      clearHistoryConfirm: {
+        title: "Clear existing evaluation results?",
+        body:
+          "This removes the evaluation chat history for this run. You can evaluate again afterward.",
+        yes: "Yes",
+        no: "No",
+      },
+      prefillGeneralEvaluateConfirm: {
+        title: "Start with the defined General Evaluate prompt?",
+        body:
+          "This copies your Settings → Prompts → General Evaluate prompt and extension into the User prompt field. Nothing runs until you click Evaluate.",
+        yes: "Yes",
+        no: "No",
+      },
+    },
   },
   generate: {
     title: "JD-Resume Builder",
@@ -700,6 +729,9 @@ export const en = {
       referenceTabsAria: "Verdict, Combine, and Refine",
       editMode: "Edit",
       previewMode: "Preview",
+      saveDraft: "Save",
+      savingDraft: "Saving…",
+      cancelEdit: "Cancel",
       editHint:
         "Edit the draft resume in Markdown. Keep section headings and the Title — Company format for experience entries.",
       parseError: "Could not parse resume: {error}",
@@ -708,10 +740,11 @@ export const en = {
       refine: {
         tab: "Refine",
         hint:
-          "Optional: select experiences and/or a company to fold workspace materials into the draft. With none selected, only your prompt is used.",
+          "Choose a company to optionally add experiences for context. With no company, only your prompt is used.",
         promptLabel: "Prompt",
         apply: "Apply",
         applying: "Applying…",
+        reset: "Reset",
         instructionTitle: "Refine with instruction",
         instructionPlaceholder: "Describe how to update the draft resume…",
         instructionRequired: "Enter an instruction before applying.",
@@ -725,7 +758,7 @@ export const en = {
         experiencesEmpty: "No experiences selected for refine.",
         companyContextButton: "Company context",
         companyContextSelected: "Company: {name}",
-        companyLabel: "Company context (optional)",
+        companyLabel: "Company context",
         companyPlaceholder: "Type or choose a company…",
         companyNoneOnResume:
           "No companies on this resume. Add companies on the Combine step first.",
@@ -1022,6 +1055,10 @@ export const en = {
       "Define how the AI should update an existing draft resume (structure, tone, grounding rules, and output JSON expectations).",
     refinePromptResumeHint:
       "Used on the Generate step when refining a draft resume in Resume Builder. JD-Resume Builder draft refine uses the Generate Prompt instead.",
+    generalEvaluatePromptPlaceholder:
+      "Define how General Resume evaluation scores the draft (ATS viewpoint, 1–10 scores, issues to fix).",
+    generalEvaluatePromptResumeHint:
+      "Snapshotted when a new Resume Builder run starts. The Evaluate step sends this system prompt plus the resume and an optional per-run user prompt.",
     company: {
       shared:
         "Because the same shared experience can be linked to multiple companies, putting personal achievements in the company description leads to the same sentence repeating across companies, or achievements from other companies getting mixed in.",

@@ -24,7 +24,9 @@ type GeneratePreviousStepPanelProps = {
   combine: CombineSnapshot;
   resume: GeneratedResume | null;
   refinePanel?: ReactNode | null;
-  refineHeaderApply?: ReactNode | null;
+  refineFooterApply?: ReactNode | null;
+  /** Resume Builder Evaluate: left panel is resume-only (no reference tabs). */
+  evaluateResumeOnly?: boolean;
 };
 
 type GenerateReferenceView = "Verdict" | "Combine" | "Resume" | "Refine";
@@ -160,11 +162,13 @@ export function useGeneratePreviousStepPanel({
   combine,
   resume,
   refinePanel,
-  refineHeaderApply,
+  refineFooterApply,
+  evaluateResumeOnly = false,
 }: GeneratePreviousStepPanelProps): {
   previousTitle?: ReactNode;
   previousContent: ReactNode | null;
   previousHeaderRight?: ReactNode;
+  previousFooter?: ReactNode;
 } {
   const t = useT();
   const [referenceView, setReferenceView] =
@@ -205,7 +209,7 @@ export function useGeneratePreviousStepPanel({
   }, [currentStep, doVerdict]);
 
   const evaluateReferenceTabs = useMemo(() => {
-    if (currentStep !== "Evaluate") {
+    if (currentStep !== "Evaluate" || evaluateResumeOnly) {
       return null;
     }
     const tabs: GenerateReferenceView[] = [];
@@ -214,7 +218,7 @@ export function useGeneratePreviousStepPanel({
     }
     tabs.push("Combine", "Resume");
     return tabs;
-  }, [currentStep, doVerdict]);
+  }, [currentStep, doVerdict, evaluateResumeOnly]);
 
   const activeReferenceTabs =
     generateReferenceTabs ?? evaluateReferenceTabs ?? null;
@@ -242,11 +246,14 @@ export function useGeneratePreviousStepPanel({
     <span className="text-xs tabular-nums text-muted">
       {t("generate.job.filteredCharCountLabel", { count: filteredCharCount })}
     </span>
-  ) : currentStep === "Generate" &&
-      referenceView === "Refine" &&
-      refineHeaderApply
-    ? refineHeaderApply
-    : undefined;
+  ) : undefined;
+
+  const previousFooter =
+    currentStep === "Generate" &&
+    referenceView === "Refine" &&
+    refineFooterApply
+      ? refineFooterApply
+      : undefined;
 
   const previousContent = useMemo(() => {
     if (currentStep === "Job") {
@@ -314,5 +321,6 @@ export function useGeneratePreviousStepPanel({
     previousTitle,
     previousContent,
     previousHeaderRight,
+    previousFooter,
   };
 }

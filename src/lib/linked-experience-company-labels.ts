@@ -1,3 +1,4 @@
+import type { GeneratedResume } from "@johel/resume";
 import type { CompanyDetail } from "@/lib/company";
 
 type LinkedCompanyEntry = {
@@ -10,10 +11,42 @@ export type CombineReferencedCompany = Pick<
   "id" | "name" | "alias"
 >;
 
+function orderReferencedCompaniesByDraftResume(
+  companies: ReadonlyArray<CombineReferencedCompany>,
+  resume: GeneratedResume,
+): CombineReferencedCompany[] {
+  const byResumeCompanyName = new Map<string, CombineReferencedCompany>();
+  for (const company of companies) {
+    const key = company.name.trim();
+    if (!byResumeCompanyName.has(key)) {
+      byResumeCompanyName.set(key, company);
+    }
+  }
+
+  const ordered: CombineReferencedCompany[] = [];
+  const seenIds = new Set<string>();
+
+  for (const experience of resume.experiences) {
+    const match = byResumeCompanyName.get(experience.company.trim());
+    if (!match || seenIds.has(match.id)) continue;
+    seenIds.add(match.id);
+    ordered.push(match);
+  }
+
+  for (const company of companies) {
+    if (!seenIds.has(company.id)) {
+      ordered.push(company);
+    }
+  }
+
+  return ordered;
+}
+
 /** Companies included on the Combine step for the current generation. */
 export function getCombineReferencedCompanies(
   entries: ReadonlyArray<{ companyId: string }>,
   companies: ReadonlyArray<CombineReferencedCompany>,
+  resume?: GeneratedResume | null,
 ): CombineReferencedCompany[] {
   const seen = new Set<string>();
   const byId = new Map(companies.map((company) => [company.id, company]));
@@ -28,7 +61,11 @@ export function getCombineReferencedCompanies(
     }
   }
 
-  return result.sort((a, b) => a.alias.localeCompare(b.alias));
+  if (resume) {
+    return orderReferencedCompaniesByDraftResume(result, resume);
+  }
+
+  return [...result];
 }
 
 export function buildLinkedExperienceCompanyLabels(

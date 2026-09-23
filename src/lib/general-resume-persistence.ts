@@ -2,6 +2,11 @@ import type { GeneratedResume } from "@johel/resume";
 import type { GenerateStep } from "@/components/generate/GenerateTimeline";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import {
+  createGeneralEvaluationHistoryEntry,
+  type GeneralEvaluationHistoryEntry,
+  parseGeneralEvaluationHistory,
+} from "@/lib/general-evaluation-history";
+import {
   EMPTY_GENERATE_SESSION,
   EMPTY_JOB_STATE,
   parseGenerateSession,
@@ -21,6 +26,7 @@ export type GeneralResumeSnapshot = {
   combine: CombineSnapshot;
   resume: GeneratedResume | null;
   evaluationMarkdown: string | null;
+  evaluationHistory: GeneralEvaluationHistoryEntry[];
   finalized?: boolean;
 };
 
@@ -30,6 +36,7 @@ export function buildGeneralResumeUpdatePayload(snapshot: GeneralResumeSnapshot)
     combine: snapshot.combine,
     resume: snapshot.resume,
     evaluationMarkdown: snapshot.evaluationMarkdown,
+    evaluationHistory: snapshot.evaluationHistory,
     ...(snapshot.finalized === true ? { finalized: true } : {}),
   };
 }
@@ -65,6 +72,7 @@ export function generalGenerationDetailToSession(
       combine: detail.combine,
       resume: detail.resume,
       evaluationMarkdown: detail.evaluationMarkdown,
+      evaluationHistory: detail.evaluationHistory,
       finalized: detail.finalized,
     }) ?? {
       ...EMPTY_GENERATE_SESSION,
@@ -74,11 +82,27 @@ export function generalGenerationDetailToSession(
       job: EMPTY_JOB_STATE,
     };
 
+  let evaluationHistory = parseGeneralEvaluationHistory(
+    detail.evaluationHistory,
+  );
+  if (
+    evaluationHistory.length === 0 &&
+    detail.evaluationMarkdown?.trim()
+  ) {
+    evaluationHistory = [
+      createGeneralEvaluationHistoryEntry(
+        "",
+        detail.evaluationMarkdown.trim(),
+      ),
+    ];
+  }
+
   return {
     ...parsed,
     activeStep: (parsed.activeStep === "Job" || parsed.activeStep === "Verdict"
       ? "Combine"
       : parsed.activeStep) as GenerateStep,
+    evaluationHistory,
   };
 }
 
@@ -107,6 +131,7 @@ function sessionToSnapshot(
     combine: session.combine,
     resume: session.resume,
     evaluationMarkdown: session.evaluationMarkdown,
+    evaluationHistory: session.evaluationHistory,
     ...(finalized === true ? { finalized: true } : {}),
   };
 }

@@ -69,6 +69,7 @@ authRoutes.post("/register", async (c) => {
           generatePrompt: DEFAULT_PROMPTS.generatePrompt,
           evaluatePrompt: DEFAULT_PROMPTS.evaluatePrompt,
           refinePrompt: DEFAULT_PROMPTS.refinePrompt,
+          generalEvaluatePrompt: DEFAULT_PROMPTS.generalEvaluatePrompt,
         },
       },
     },

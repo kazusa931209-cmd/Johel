@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import type { CombineCompanyEntry } from "@/components/generate/combine-types";
 import { useDraftResumeRefinePanel } from "@/components/generate/useDraftResumeRefinePanel";
-import { useDraftResumeHistory } from "@/components/generate/useDraftResumeHistory";
 import { useDraftResumeRefine } from "@/components/generate/useDraftResumeRefine";
 import type { DraftRefineBuilderKind, ResumeLanguage } from "@/lib/api";
 import {
@@ -15,8 +14,8 @@ import { usePce } from "@/lib/pce";
 
 type UseGenerateDraftResumeSessionOptions = {
   resume: GeneratedResume | null;
-  generationInputKey: string | null;
   onResumeChange: (resume: GeneratedResume) => void;
+  onResumePersist: () => void | Promise<void>;
   builderKind: DraftRefineBuilderKind;
   generationId: string | null;
   resumeLanguage: ResumeLanguage;
@@ -25,8 +24,8 @@ type UseGenerateDraftResumeSessionOptions = {
 
 export function useGenerateDraftResumeSession({
   resume,
-  generationInputKey,
   onResumeChange,
+  onResumePersist,
   builderKind,
   generationId,
   resumeLanguage,
@@ -42,76 +41,43 @@ export function useGenerateDraftResumeSession({
     [combineCompanies, companies],
   );
   const refineCompanyOptions = useMemo(
-    () => getCombineReferencedCompanies(combineCompanies, companies),
-    [combineCompanies, companies],
-  );
-  const {
-    canUndo,
-    canRedo,
-    push: pushDraftHistory,
-    undo: undoDraftHistory,
-    redo: redoDraftHistory,
-    reset: resetDraftHistory,
-  } = useDraftResumeHistory(resume);
-  const lastResetKeyRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!resume || !generationInputKey) return;
-    if (lastResetKeyRef.current === generationInputKey) return;
-    lastResetKeyRef.current = generationInputKey;
-    resetDraftHistory(resume);
-  }, [generationInputKey, resetDraftHistory, resume]);
-
-  const onRefineSuccess = useCallback(
-    (next: GeneratedResume) => {
-      pushDraftHistory(next);
-      onResumeChange(next);
-    },
-    [onResumeChange, pushDraftHistory],
+    () => getCombineReferencedCompanies(combineCompanies, companies, resume),
+    [combineCompanies, companies, resume],
   );
 
-  const { refining, refineParseError, runRefine } = useDraftResumeRefine({
-    resume,
-    builderKind,
-    generationId,
-    resumeLanguage,
-    onRefineSuccess,
-  });
-
-  const handleUndo = useCallback(() => {
-    const previous = undoDraftHistory();
-    if (previous) {
-      onResumeChange(previous);
-    }
-  }, [onResumeChange, undoDraftHistory]);
-
-  const handleRedo = useCallback(() => {
-    const next = redoDraftHistory();
-    if (next) {
-      onResumeChange(next);
-    }
-  }, [onResumeChange, redoDraftHistory]);
-
-  const { panel: refinePanel, headerApply: refineHeaderApply } =
-    useDraftResumeRefinePanel({
-      disabled: !resume,
-      linkedExperienceIds,
-      linkedExperienceCompanyById,
-      refineCompanyOptions,
-      companiesLoading,
-      refining,
-      parseError: refineParseError,
-      onApply: (payload) => void runRefine(payload),
+  const { refining, refineParseError, runRefine, setRefineParseError } =
+    useDraftResumeRefine({
+      builderKind,
+      generationId,
+      resumeLanguage,
+      onRefineSuccess: onResumeChange,
+      onResumePersist,
     });
 
+  const {
+    panel: refinePanel,
+    footerApply: refineFooterApply,
+    resetRefineForm,
+  } = useDraftResumeRefinePanel({
+    disabled: !resume,
+    linkedExperienceIds,
+    linkedExperienceCompanyById,
+    refineCompanyOptions,
+    companiesLoading,
+    refining,
+    parseError: refineParseError,
+    onReset: () => setRefineParseError(undefined),
+    onApply: async (payload) => {
+      const ok = await runRefine(payload);
+      if (ok) {
+        resetRefineForm();
+      }
+    },
+  });
+
   return {
-    canUndo,
-    canRedo,
-    pushDraftHistory,
-    handleUndo,
-    handleRedo,
     refining,
     refinePanel,
-    refineHeaderApply,
+    refineFooterApply,
   };
 }

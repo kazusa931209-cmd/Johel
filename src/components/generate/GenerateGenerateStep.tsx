@@ -14,14 +14,11 @@ type GenerateGenerateStepProps = {
   resumeLanguage: ResumeLanguage;
   doEvaluate: boolean;
   generating: boolean;
-  canUndo: boolean;
-  canRedo: boolean;
-  onUndo: () => void;
-  onRedo: () => void;
-  onDraftCommitted: (resume: GeneratedResume) => void;
   onRun: () => void;
   onResumeChange: (resume: GeneratedResume) => void;
+  onResumePersist: () => void | Promise<void>;
   onHeaderRightChange?: (node: ReactNode | null) => void;
+  onFooterChange?: (node: ReactNode | null) => void;
   onDownloaded?: () => void | Promise<void>;
 };
 
@@ -31,14 +28,11 @@ export function GenerateGenerateStep({
   resumeLanguage,
   doEvaluate,
   generating,
-  canUndo,
-  canRedo,
-  onUndo,
-  onRedo,
-  onDraftCommitted,
   onRun,
   onResumeChange,
+  onResumePersist,
   onHeaderRightChange,
+  onFooterChange,
   onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
@@ -85,12 +79,9 @@ export function GenerateGenerateStep({
     <EditableResumePanel
       resume={resume}
       onResumeChange={onResumeChange}
-      onDraftCommitted={onDraftCommitted}
-      canUndo={canUndo}
-      canRedo={canRedo}
-      onUndo={onUndo}
-      onRedo={onRedo}
+      onResumePersist={onResumePersist}
       onHeaderRightChange={onHeaderRightChange}
+      onFooterChange={onFooterChange}
     />
   );
 }

@@ -160,6 +160,7 @@ model Generation {
   verdictMarkdown    String?
   resumeJson         String?
   evaluationMarkdown String?
+  evaluationHistoryJson String?
   doVerdict          Boolean
   doEvaluate         Boolean
   resumeLanguage     String
@@ -201,6 +202,8 @@ model Prompt {
   generateExtension   String   @default("")
   evaluateExtension   String   @default("")
   refineExtension     String   @default("")
+  generalEvaluatePrompt    String   @default("")
+  generalEvaluateExtension String   @default("")
   createdAt           DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

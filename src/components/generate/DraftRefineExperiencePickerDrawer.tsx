@@ -10,8 +10,6 @@ import { formatThousandsSeparated } from "@/lib/helper";
 import { matchesExperienceSearch } from "@/lib/experience-search";
 import { usePce } from "@/lib/pce";
 
-const MAX_SELECTION = 10;
-
 const LINKED_ROW_CLASS = "bg-surface-muted";
 
 type DraftRefineExperiencePickerDrawerProps = {
@@ -77,9 +75,6 @@ export function DraftRefineExperiencePickerDrawer({
       onSelectedIdsChange(selectedIds.filter((id) => id !== experienceId));
       return;
     }
-    if (selectedIds.length >= MAX_SELECTION) {
-      return;
-    }
     onSelectedIdsChange([...selectedIds, experienceId]);
   }
 
@@ -109,25 +104,24 @@ export function DraftRefineExperiencePickerDrawer({
           />
         }
         footer={
-          <button
-            type="button"
-            onClick={closePicker}
-            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
-          >
-            {t("generate.generateStep.refine.pickerConfirm")}
-          </button>
+          <div className="flex w-full min-w-0 items-center justify-between gap-3">
+            <p className="min-w-0 text-left text-sm text-muted">
+              {t("generate.generateStep.refine.selectedExperiences", {
+                count: formatThousandsSeparated(selectedIds.length),
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={closePicker}
+              className="shrink-0 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+            >
+              {t("generate.generateStep.refine.pickerConfirm")}
+            </button>
+          </div>
         }
       >
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           <div className="space-y-4 p-4">
-            {selectedIds.length >= MAX_SELECTION ? (
-              <p className="text-xs text-muted">
-                {t("generate.generateStep.refine.pickerMax", {
-                  max: formatThousandsSeparated(MAX_SELECTION),
-                })}
-              </p>
-            ) : null}
-
             {loading ? (
               <p className="text-sm text-muted">{t("shared.detail.loading")}</p>
             ) : filteredExperiences.length < 1 ? (
@@ -137,63 +131,61 @@ export function DraftRefineExperiencePickerDrawer({
                 {filteredExperiences.map((experience) => {
                   const checked = selectedSet.has(experience.id);
                   const linked = linkedSet.has(experience.id);
-                  const atMax = selectedIds.length >= MAX_SELECTION && !checked;
                   const linkedCompanyLabel = linked
                     ? linkedExperienceCompanyById.get(experience.id)
                     : undefined;
-                  const selectionBlocked = atMax && !checked;
                   return (
                     <li key={experience.id}>
                       <div
                         role="button"
-                        tabIndex={selectionBlocked ? -1 : 0}
+                        tabIndex={0}
                         aria-pressed={checked}
-                        aria-disabled={selectionBlocked}
-                        className={`flex items-center gap-2 rounded-md border border-border px-3 py-2 ${
+                        className={`flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 ${
                           linked ? LINKED_ROW_CLASS : ""
-                        } ${
-                          selectionBlocked
-                            ? "cursor-not-allowed opacity-60"
-                            : "cursor-pointer"
                         }`}
-                        onClick={() => {
-                          if (selectionBlocked) return;
-                          toggleExperience(experience.id);
-                        }}
                         onKeyDown={(event) => {
                           if (event.key !== "Enter" && event.key !== " ") {
                             return;
                           }
                           event.preventDefault();
-                          if (selectionBlocked) return;
                           toggleExperience(experience.id);
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          readOnly
-                          tabIndex={-1}
-                          aria-hidden
-                          className="h-4 w-4 shrink-0 rounded border-border"
-                        />
-                        <p className="min-w-0 flex-1 truncate text-left text-sm">
-                          {experience.category}
-                        </p>
                         <div
-                          className="flex shrink-0 cursor-default items-center gap-2"
-                          onClick={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}
+                          className="flex items-center gap-2 py-1.5"
+                          onClick={() => toggleExperience(experience.id)}
                         >
-                          {linked ? (
-                            <span className="max-w-[12rem] truncate text-xs text-muted">
-                              {linkedCompanyLabel ??
-                                t("generate.combine.alreadyLinked")}
-                            </span>
-                          ) : null}
-                          <ViewButton
-                            onClick={() => setViewExperience(experience)}
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            readOnly
+                            tabIndex={-1}
+                            aria-hidden
+                            className="h-4 w-4 shrink-0 rounded border-border"
                           />
+                          <span className="min-w-0 truncate text-left text-sm">
+                            {experience.category}
+                          </span>
+                        </div>
+                        <div
+                          className="flex flex-1 items-center justify-end"
+                          onClick={() => setViewExperience(experience)}
+                        >
+                          <div
+                            className="flex shrink-0 cursor-default items-center gap-2"
+                            onClick={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}
+                          >
+                            {linked ? (
+                              <span className="max-w-48 truncate text-xs text-muted">
+                                {linkedCompanyLabel ??
+                                  t("generate.combine.alreadyLinked")}
+                              </span>
+                            ) : null}
+                            <ViewButton
+                              onClick={() => setViewExperience(experience)}
+                            />
+                          </div>
                         </div>
                       </div>
                     </li>

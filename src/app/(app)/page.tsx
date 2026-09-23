@@ -106,6 +106,7 @@ export default function GeneratePage() {
   const [resettingJob, setResettingJob] = useState(false);
   const [generateHeaderRight, setGenerateHeaderRight] =
     useState<ReactNode | null>(null);
+  const [generateFooter, setGenerateFooter] = useState<ReactNode | null>(null);
   const pendingRunRef = useRef<(() => void) | null>(null);
   const {
     ready: sessionReady,
@@ -270,8 +271,16 @@ export default function GeneratePage() {
   useEffect(() => {
     if (normalizedActiveStep !== "Generate") {
       setGenerateHeaderRight(null);
+      setGenerateFooter(null);
     }
   }, [normalizedActiveStep]);
+
+  const persistDraftResume = useCallback(async () => {
+    const res = await saveSnapshot();
+    if (res?.error) {
+      toast(res.error, "error");
+    }
+  }, [saveSnapshot, toast]);
 
   const handleResumeDownloaded = useCallback(async () => {
     markFinalized();
@@ -294,6 +303,7 @@ export default function GeneratePage() {
       generationInputKey,
       evaluationMarkdown,
       evaluationInputKey,
+      evaluationHistory: [],
       finalized,
       jobDuplicateDismissedHash,
     }),
@@ -580,6 +590,7 @@ export default function GeneratePage() {
         setResumeResult(res.data.resume, inputKey);
         setTokenUsed(res.data.tokenUsed);
         await refreshTokenUsed();
+        await persistDraftResume();
         toast(t("toast.resumeGenerated"), "success");
       } finally {
         releaseAutoRun(autoRunKey);
@@ -598,6 +609,7 @@ export default function GeneratePage() {
     promptCacheContext,
     refreshTokenUsed,
     sessionSnapshot,
+    persistDraftResume,
     setResumeResult,
     setTokenUsed,
     t,
@@ -771,15 +783,15 @@ export default function GeneratePage() {
 
   const draftResumeSession = useGenerateDraftResumeSession({
     resume,
-    generationInputKey,
     onResumeChange: updateResume,
+    onResumePersist: persistDraftResume,
     builderKind: "jd",
     generationId,
     resumeLanguage: processSettings.resumeLanguage,
     combineCompanies: combine.companies,
   });
 
-  const { previousTitle, previousContent, previousHeaderRight } =
+  const { previousTitle, previousContent, previousHeaderRight, previousFooter } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps,
@@ -789,9 +801,9 @@ export default function GeneratePage() {
       resume,
       refinePanel:
         normalizedActiveStep === "Generate" ? draftResumeSession.refinePanel : null,
-      refineHeaderApply:
+      refineFooterApply:
         normalizedActiveStep === "Generate"
-          ? draftResumeSession.refineHeaderApply
+          ? draftResumeSession.refineFooterApply
           : null,
     });
 
@@ -832,7 +844,13 @@ export default function GeneratePage() {
             previousTitle={previousTitle}
             previous={previousContent}
             previousHeaderRight={previousHeaderRight}
+            previousFooter={previousFooter}
             currentTitle={getGenerateCurrentPanelTitle(normalizedActiveStep, t)}
+            currentFooter={
+              normalizedActiveStep === "Generate" && resume
+                ? generateFooter
+                : undefined
+            }
             currentHeaderRight={
               normalizedActiveStep === "Job" ? (
                 <button
@@ -892,14 +910,11 @@ export default function GeneratePage() {
                 resumeLanguage={processSettings.resumeLanguage}
                 doEvaluate={processSettings.doEvaluate}
                 generating={generatingResume}
-                canUndo={draftResumeSession.canUndo}
-                canRedo={draftResumeSession.canRedo}
-                onUndo={draftResumeSession.handleUndo}
-                onRedo={draftResumeSession.handleRedo}
-                onDraftCommitted={draftResumeSession.pushDraftHistory}
                 onRun={runFromGenerate}
                 onResumeChange={updateResume}
+                onResumePersist={persistDraftResume}
                 onHeaderRightChange={setGenerateHeaderRight}
+                onFooterChange={setGenerateFooter}
                 onDownloaded={handleResumeDownloaded}
               />
             ) : null}

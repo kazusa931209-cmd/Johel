@@ -181,17 +181,24 @@ export function saveGenerationProcess(payload: {
   });
 }
 
-export type PromptKind = "verdict" | "generate" | "evaluate" | "refine";
+export type PromptKind =
+  | "verdict"
+  | "generate"
+  | "evaluate"
+  | "refine"
+  | "generalEvaluate";
 
 export type PromptSettings = {
   verdictPrompt: string;
   generatePrompt: string;
   evaluatePrompt: string;
   refinePrompt: string;
+  generalEvaluatePrompt: string;
   verdictExtension: string;
   generateExtension: string;
   evaluateExtension: string;
   refineExtension: string;
+  generalEvaluateExtension: string;
 };
 
 export function getPrompts() {
@@ -206,7 +213,9 @@ export function savePrompt(kind: PromptKind, prompt: string) {
         ? { generatePrompt: prompt }
         : kind === "evaluate"
           ? { evaluatePrompt: prompt }
-          : { refinePrompt: prompt };
+          : kind === "refine"
+            ? { refinePrompt: prompt }
+            : { generalEvaluatePrompt: prompt };
   return request<PromptSettings>(`/prompts/${kind}`, {
     method: "PUT",
     body: JSON.stringify(body),
@@ -221,7 +230,9 @@ export function savePromptExtension(kind: PromptKind, extension: string) {
         ? { generateExtension: extension }
         : kind === "evaluate"
           ? { evaluateExtension: extension }
-          : { refineExtension: extension };
+          : kind === "refine"
+            ? { refineExtension: extension }
+            : { generalEvaluateExtension: extension };
   return request<PromptSettings>(`/prompts/${kind}`, {
     method: "PUT",
     body: JSON.stringify(body),
@@ -248,10 +259,15 @@ export function savePromptTab(
               evaluatePrompt: payload.prompt,
               evaluateExtension: payload.extension,
             }
-          : {
-              refinePrompt: payload.prompt,
-              refineExtension: payload.extension,
-            };
+          : kind === "refine"
+            ? {
+                refinePrompt: payload.prompt,
+                refineExtension: payload.extension,
+              }
+            : {
+                generalEvaluatePrompt: payload.prompt,
+                generalEvaluateExtension: payload.extension,
+              };
   return request<PromptSettings>(`/prompts/${kind}`, {
     method: "PUT",
     body: JSON.stringify(body),
@@ -589,7 +605,7 @@ export type DraftRefineBuilderKind = "jd" | "general";
 
 export type AiDraftRefineRequest = {
   builderKind: DraftRefineBuilderKind;
-  resume: import("@johel/resume").GeneratedResume;
+  generationId: string;
   language: ResumeLanguage;
   mode: "instruction" | "experiences";
   instruction?: string;
@@ -597,9 +613,7 @@ export type AiDraftRefineRequest = {
   companyId?: string;
 };
 
-export function runAiDraftRefine(
-  payload: AiDraftRefineRequest & GenerationScopedRequest,
-) {
+export function runAiDraftRefine(payload: AiDraftRefineRequest) {
   return request<AiResumeResult>("/ai-draft-refine", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -629,6 +643,9 @@ export function runAiEvaluate(
 
 export type AiGeneralEvaluateRequest = {
   resume: import("@johel/resume").GeneratedResume;
+  userPrompt: string;
+  /** Response language follows the user prompt (or explicit override in prompt). */
+  uiLocale?: "en" | "ko";
 };
 
 export function runAiGeneralEvaluate(
@@ -757,6 +774,7 @@ export type GeneralGenerationDetail = {
   combine: CombineSnapshot;
   resume: import("@johel/resume").GeneratedResume | null;
   evaluationMarkdown: string | null;
+  evaluationHistory: import("@/lib/general-evaluation-history").GeneralEvaluationHistoryEntry[];
   doEvaluate: boolean;
   resumeLanguage: ResumeLanguage;
   generatePrompt: string;
@@ -770,6 +788,7 @@ export type GeneralGenerationUpdatePayload = {
   combine: CombineSnapshot;
   resume?: import("@johel/resume").GeneratedResume | null;
   evaluationMarkdown?: string | null;
+  evaluationHistory?: import("@/lib/general-evaluation-history").GeneralEvaluationHistoryEntry[];
   finalized?: boolean;
 };
 

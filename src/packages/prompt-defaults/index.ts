@@ -224,14 +224,17 @@ You refine an existing resume draft. The user sends the current draft as structu
 ## Output
 Emit the full updated resume JSON. Preserve sections the user did not ask to change.`;
 
-export {
+import {
   DEFAULT_GENERAL_EVALUATE_PROMPT,
   DEFAULT_GENERAL_GENERATE_PROMPT,
 } from "./general-resume-prompts";
+
+export { DEFAULT_GENERAL_EVALUATE_PROMPT, DEFAULT_GENERAL_GENERATE_PROMPT };
 
 export const DEFAULT_PROMPTS = {
   verdictPrompt: DEFAULT_VERDICT_PROMPT,
   generatePrompt: DEFAULT_GENERATE_PROMPT,
   evaluatePrompt: DEFAULT_EVALUATE_PROMPT,
   refinePrompt: DEFAULT_REFINE_PROMPT,
+  generalEvaluatePrompt: DEFAULT_GENERAL_EVALUATE_PROMPT,
 } as const;

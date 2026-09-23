@@ -9,19 +9,19 @@ import type { DraftRefineBuilderKind, ResumeLanguage } from "@/lib/api";
 import { runAiDraftRefine } from "@/lib/api";
 
 type UseDraftResumeRefineOptions = {
-  resume: GeneratedResume | null;
   builderKind: DraftRefineBuilderKind;
   generationId: string | null;
   resumeLanguage: ResumeLanguage;
   onRefineSuccess: (resume: GeneratedResume) => void;
+  onResumePersist?: () => void | Promise<void>;
 };
 
 export function useDraftResumeRefine({
-  resume,
   builderKind,
   generationId,
   resumeLanguage,
   onRefineSuccess,
+  onResumePersist,
 }: UseDraftResumeRefineOptions) {
   const t = useT();
   const { toast } = useToast();
@@ -36,8 +36,8 @@ export function useDraftResumeRefine({
       instruction?: string;
       experienceIds?: string[];
       companyId?: string;
-    }) => {
-      if (!resume || refiningRef.current || !generationId) return;
+    }): Promise<boolean> => {
+      if (refiningRef.current || !generationId) return false;
       refiningRef.current = true;
       setRefining(true);
       setRefineParseError(undefined);
@@ -46,7 +46,6 @@ export function useDraftResumeRefine({
         const res = await runAiDraftRefine({
           builderKind,
           generationId,
-          resume,
           language: resumeLanguage,
           ...payload,
         });
@@ -55,14 +54,17 @@ export function useDraftResumeRefine({
           if (res.error) {
             setRefineParseError(res.error);
           }
-          return;
+          return false;
         }
 
         onRefineSuccess(res.data.resume);
+        await onResumePersist?.();
         await refreshTokenUsed();
         toast(t("toast.draftResumeRefined"), "success");
+        return true;
       } catch {
         toast(t("toast.draftResumeRefineFailed"), "error");
+        return false;
       } finally {
         refiningRef.current = false;
         setRefining(false);
@@ -72,8 +74,8 @@ export function useDraftResumeRefine({
       builderKind,
       generationId,
       onRefineSuccess,
+      onResumePersist,
       refreshTokenUsed,
-      resume,
       resumeLanguage,
       t,
       toast,

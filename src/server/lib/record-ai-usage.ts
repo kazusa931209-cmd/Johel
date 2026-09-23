@@ -2,6 +2,7 @@ import type { AiProviderId } from "./ai-provider";
 import { OPENAI_EMBEDDING_MODEL } from "./openai/embeddings";
 import {
   OPENAI_FORMAT_MODEL,
+  OPENAI_REASONING_MODEL,
   OPENAI_RESUME_MODEL,
   OPENAI_VERDICT_MODEL,
 } from "./openai/responses";
@@ -45,6 +46,9 @@ export function resolveAiModelName(
   }
   if (generateType === "embedding") {
     return OPENAI_EMBEDDING_MODEL;
+  }
+  if (generateType === "evaluate") {
+    return OPENAI_REASONING_MODEL;
   }
   return OPENAI_VERDICT_MODEL;
 }

@@ -49,6 +49,15 @@ const PROMPT_KIND_CONFIG = {
     label: "Refine Prompt",
     extensionLabel: "Refine extension",
   },
+  generalEvaluate: {
+    bodyKey: "generalEvaluatePrompt",
+    extensionKey: "generalEvaluateExtension",
+    dbKey: "generalEvaluatePrompt",
+    extensionDbKey: "generalEvaluateExtension",
+    formatKind: "evaluate",
+    label: "General Evaluate Prompt",
+    extensionLabel: "General Evaluate extension",
+  },
 } as const satisfies Record<
   string,
   {
@@ -58,12 +67,14 @@ const PROMPT_KIND_CONFIG = {
       | "verdictPrompt"
       | "generatePrompt"
       | "evaluatePrompt"
-      | "refinePrompt";
+      | "refinePrompt"
+      | "generalEvaluatePrompt";
     extensionDbKey:
       | "verdictExtension"
       | "generateExtension"
       | "evaluateExtension"
-      | "refineExtension";
+      | "refineExtension"
+      | "generalEvaluateExtension";
     formatKind: MarkdownFormatKind;
     label: string;
     extensionLabel: string;
@@ -77,22 +88,39 @@ function serializePrompts(prompts: {
   generatePrompt: string;
   evaluatePrompt: string;
   refinePrompt: string;
+  generalEvaluatePrompt: string;
   verdictExtension: string;
   generateExtension: string;
   evaluateExtension: string;
   refineExtension: string;
+  generalEvaluateExtension: string;
 }) {
   return {
     verdictPrompt: prompts.verdictPrompt,
     generatePrompt: prompts.generatePrompt,
     evaluatePrompt: prompts.evaluatePrompt,
     refinePrompt: prompts.refinePrompt,
+    generalEvaluatePrompt: prompts.generalEvaluatePrompt,
     verdictExtension: prompts.verdictExtension,
     generateExtension: prompts.generateExtension,
     evaluateExtension: prompts.evaluateExtension,
     refineExtension: prompts.refineExtension,
+    generalEvaluateExtension: prompts.generalEvaluateExtension,
   };
 }
+
+const EMPTY_SERIALIZED_PROMPTS = {
+  verdictPrompt: "",
+  generatePrompt: "",
+  evaluatePrompt: "",
+  refinePrompt: "",
+  generalEvaluatePrompt: "",
+  verdictExtension: "",
+  generateExtension: "",
+  evaluateExtension: "",
+  refineExtension: "",
+  generalEvaluateExtension: "",
+};
 
 async function savePromptKind(
   userId: string,
@@ -131,10 +159,15 @@ async function savePromptKind(
         config.dbKey === "refinePrompt"
           ? formatted.formatted
           : (existing?.refinePrompt ?? ""),
+      generalEvaluatePrompt:
+        config.dbKey === "generalEvaluatePrompt"
+          ? formatted.formatted
+          : (existing?.generalEvaluatePrompt ?? ""),
       verdictExtension: existing?.verdictExtension ?? "",
       generateExtension: existing?.generateExtension ?? "",
       evaluateExtension: existing?.evaluateExtension ?? "",
       refineExtension: existing?.refineExtension ?? "",
+      generalEvaluateExtension: existing?.generalEvaluateExtension ?? "",
     },
     update: {
       [config.dbKey]: formatted.formatted,
@@ -162,6 +195,7 @@ async function savePromptExtension(
       generatePrompt: existing?.generatePrompt ?? "",
       evaluatePrompt: existing?.evaluatePrompt ?? "",
       refinePrompt: existing?.refinePrompt ?? "",
+      generalEvaluatePrompt: existing?.generalEvaluatePrompt ?? "",
       verdictExtension:
         config.extensionDbKey === "verdictExtension"
           ? submitted
@@ -178,6 +212,10 @@ async function savePromptExtension(
         config.extensionDbKey === "refineExtension"
           ? submitted
           : (existing?.refineExtension ?? ""),
+      generalEvaluateExtension:
+        config.extensionDbKey === "generalEvaluateExtension"
+          ? submitted
+          : (existing?.generalEvaluateExtension ?? ""),
     },
     update: {
       [config.extensionDbKey]: submitted,
@@ -208,6 +246,8 @@ promptsRoutes.get("/", async (c) => {
     generateExtension: prompts?.generateExtension ?? "",
     evaluateExtension: prompts?.evaluateExtension ?? "",
     refineExtension: prompts?.refineExtension ?? "",
+    generalEvaluatePrompt: prompts?.generalEvaluatePrompt ?? "",
+    generalEvaluateExtension: prompts?.generalEvaluateExtension ?? "",
   });
 });
 
@@ -258,16 +298,7 @@ for (const [kind, config] of Object.entries(PROMPT_KIND_CONFIG) as [
           : serializePrompts(
               (await prisma.prompt.findUnique({
                 where: { userId: user.id },
-              })) ?? {
-                verdictPrompt: "",
-                generatePrompt: "",
-                evaluatePrompt: "",
-                refinePrompt: "",
-                verdictExtension: "",
-                generateExtension: "",
-                evaluateExtension: "",
-                refineExtension: "",
-              },
+              })) ?? EMPTY_SERIALIZED_PROMPTS,
             );
 
       if (extensionSubmitted !== undefined) {

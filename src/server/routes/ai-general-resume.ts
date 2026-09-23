@@ -10,6 +10,7 @@ import { recordAiUsage } from "../lib/record-ai-usage";
 import { resolveOwnedGenerationId } from "../lib/resolve-generation-id";
 import { withTokenUsed } from "../lib/ai-token-used-response";
 import { sumTokenUsed } from "../lib/sum-token-used";
+import { persistOwnedGenerationResume } from "../lib/persist-generation-resume";
 import { requireUser } from "../lib/session";
 
 const combineCompanySchema = z.object({
@@ -123,6 +124,18 @@ aiGeneralResumeRoutes.post("/", async (c) => {
       user.id,
       parsed.data.generationId,
     );
+
+    if (generationId) {
+      const persisted = await persistOwnedGenerationResume(
+        user.id,
+        generationId,
+        "general",
+        result.resume,
+      );
+      if (!persisted.ok) {
+        return c.json({ error: persisted.error }, persisted.status);
+      }
+    }
 
     await recordAiUsage({
       userId: user.id,

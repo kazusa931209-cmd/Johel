@@ -5,14 +5,14 @@ import type { AiProviderId } from "../ai-provider";
 import type { GeneratedResume } from "@johel/resume";
 import {
   buildGeneralAiEvaluateUserPrompt,
-  getGeneralAiEvaluateSystemPrompt,
+  getGeneralAiEvaluateUserPromptOnlySystemPrompt,
+  type GeneralEvaluateUiLocale,
 } from "./prompts";
 
 export type GeneralAiEvaluateRequest = {
   apiKey: string;
-  evaluatePrompt: string;
-  userInstruction: string;
-  platform: string;
+  userPrompt: string;
+  uiLocale: GeneralEvaluateUiLocale;
   resume: GeneratedResume;
 };
 
@@ -30,15 +30,12 @@ export async function runGeneralAiEvaluate(
   _provider: AiProviderId,
   input: GeneralAiEvaluateRequest,
 ): Promise<GeneralAiEvaluateResult> {
-  const instructions = getGeneralAiEvaluateSystemPrompt(
-    "openai",
-    input.evaluatePrompt,
-  );
+  const instructions = getGeneralAiEvaluateUserPromptOnlySystemPrompt("openai");
   const resumeMarkdown = resumeToMarkdown(input.resume);
   const user = buildGeneralAiEvaluateUserPrompt(
-    input.userInstruction,
-    input.platform,
+    input.userPrompt,
     resumeMarkdown,
+    input.uiLocale,
   );
 
   const response = await runOpenAiEvaluateResponse(

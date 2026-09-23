@@ -4,7 +4,6 @@ import { z } from "zod";
 import { isGeneralResumePublicId } from "../lib/generation-public-id";
 import { runGeneralAiEvaluate } from "../lib/ai-general-evaluate/index";
 import { getUserAiSettings } from "../lib/user-ai-settings";
-import { compileInstruction } from "../lib/prompt-optimize/index";
 import { prisma } from "../lib/prisma";
 import { recordAiUsage } from "../lib/record-ai-usage";
 import { resolveOwnedGenerationId } from "../lib/resolve-generation-id";
@@ -12,9 +11,13 @@ import { withTokenUsed } from "../lib/ai-token-used-response";
 import { sumTokenUsed } from "../lib/sum-token-used";
 import { requireUser } from "../lib/session";
 
+const USER_PROMPT_MAX = 10_000;
+
 const postSchema = z.object({
   resume: generatedResumeSchema,
   generationId: z.string().trim().min(1),
+  userPrompt: z.string().max(USER_PROMPT_MAX).optional().default(""),
+  uiLocale: z.enum(["en", "ko"]).optional().default("en"),
 });
 
 export const aiGeneralEvaluateRoutes = new Hono();
@@ -44,40 +47,19 @@ aiGeneralEvaluateRoutes.post("/", async (c) => {
     select: {
       id: true,
       publicId: true,
-      combineJson: true,
-      evaluatePrompt: true,
     },
   });
   if (!generation || !isGeneralResumePublicId(generation.publicId)) {
     return c.json({ error: "Generation was not found." }, 404);
   }
 
-  const evaluatePrompt = generation.evaluatePrompt?.trim() ?? "";
-  if (!evaluatePrompt) {
+  const userPrompt = parsed.data.userPrompt ?? "";
+  if (!userPrompt.trim()) {
     return c.json(
-      {
-        error: "Evaluate prompt is missing for this general resume run.",
-      },
+      { error: "A non-empty user prompt is required for this evaluation." },
       400,
     );
   }
-
-  let combineJson: unknown;
-  try {
-    combineJson = JSON.parse(generation.combineJson);
-  } catch {
-    return c.json({ error: "Combine snapshot is invalid." }, 400);
-  }
-
-  const userInstruction =
-    typeof (combineJson as { userInstruction?: string }).userInstruction ===
-    "string"
-      ? (combineJson as { userInstruction: string }).userInstruction.trim()
-      : "";
-  const platform =
-    typeof (combineJson as { platform?: string }).platform === "string"
-      ? (combineJson as { platform: string }).platform.trim()
-      : "";
 
   const aiSettings = await getUserAiSettings(user.id);
   if (!aiSettings) {
@@ -93,16 +75,10 @@ aiGeneralEvaluateRoutes.post("/", async (c) => {
   const provider = aiSettings.provider;
 
   try {
-    const compiledEvaluatePrompt = compileInstruction(
-      "evaluate",
-      evaluatePrompt,
-    );
-
     const result = await runGeneralAiEvaluate(provider, {
       apiKey: aiSettings.apiKey,
-      evaluatePrompt: compiledEvaluatePrompt,
-      userInstruction,
-      platform,
+      userPrompt,
+      uiLocale: parsed.data.uiLocale,
       resume: parsed.data.resume,
     });
 

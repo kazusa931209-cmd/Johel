@@ -1,10 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { Hono } from "hono";
 import { z } from "zod";
-import {
-  DEFAULT_GENERAL_EVALUATE_PROMPT,
-  DEFAULT_GENERAL_GENERATE_PROMPT,
-} from "@johel/prompt-defaults";
+import { DEFAULT_GENERAL_GENERATE_PROMPT } from "@johel/prompt-defaults";
+import { resolveGeneralEvaluatePromptSnapshot } from "../lib/general-evaluate-prompt";
+import { parseGeneralEvaluationHistoryJson } from "../../lib/general-evaluation-history";
 import {
   allocateGenerationPublicId,
   GENERATION_KIND_GENERAL,
@@ -21,13 +20,61 @@ import { requireUser } from "../lib/session";
 
 const GENERAL_GENERATION_STEPS = ["Combine", "Generate", "Evaluate"] as const;
 
+const evaluationHistoryEntrySchema = z.object({
+  id: z.string().trim().min(1),
+  userPrompt: z.string(),
+  markdown: z.string().min(1),
+  createdAt: z.string().trim().min(1),
+});
+
 const updateSchema = z.object({
   activeStep: z.enum(GENERAL_GENERATION_STEPS),
   combine: z.record(z.unknown()),
   resume: z.record(z.unknown()).nullable().optional(),
   evaluationMarkdown: z.string().nullable().optional(),
+  evaluationHistory: z.array(evaluationHistoryEntrySchema).optional(),
   finalized: z.boolean().optional(),
 });
+
+type GeneralGenerationUpdateBody = z.infer<typeof updateSchema>;
+
+/** Row fields read for snapshot updates (`evaluationHistoryJson` optional until Prisma client is regenerated). */
+type GenerationRowForSnapshotUpdate = {
+  resumeJson: string | null;
+  evaluationMarkdown: string | null;
+  evaluationHistoryJson?: string | null;
+};
+
+/** `evaluationHistoryJson` is on `Generation` in schema; extend until `prisma generate` refreshes IDE types. */
+type GenerationSnapshotUpdateData = Prisma.GenerationUpdateInput & {
+  evaluationHistoryJson?: string | null;
+};
+
+function buildGenerationSnapshotUpdateData(
+  parsed: GeneralGenerationUpdateBody,
+  existing: GenerationRowForSnapshotUpdate,
+  finalized: boolean,
+): GenerationSnapshotUpdateData {
+  return {
+    activeStep: parsed.activeStep,
+    combineJson: JSON.stringify(parsed.combine),
+    resumeJson:
+      parsed.resume !== undefined
+        ? parsed.resume
+          ? JSON.stringify(parsed.resume)
+          : null
+        : existing.resumeJson,
+    evaluationMarkdown:
+      parsed.evaluationMarkdown !== undefined
+        ? parsed.evaluationMarkdown
+        : existing.evaluationMarkdown,
+    evaluationHistoryJson:
+      parsed.evaluationHistory !== undefined
+        ? JSON.stringify(parsed.evaluationHistory)
+        : (existing.evaluationHistoryJson ?? null),
+    finalized,
+  };
+}
 
 const EMPTY_JOB_JSON = JSON.stringify({
   method: "manual",
@@ -50,6 +97,7 @@ function toDetailResponse(generation: {
   verdictMarkdown: string | null;
   resumeJson: string | null;
   evaluationMarkdown: string | null;
+  evaluationHistoryJson?: string | null;
   doVerdict: boolean;
   doEvaluate: boolean;
   resumeLanguage: string;
@@ -87,6 +135,9 @@ function toDetailResponse(generation: {
     combine,
     resume,
     evaluationMarkdown: generation.evaluationMarkdown,
+    evaluationHistory: parseGeneralEvaluationHistoryJson(
+      generation.evaluationHistoryJson ?? null,
+    ),
     doEvaluate: true,
     resumeLanguage: generation.resumeLanguage,
     generatePrompt: generation.generatePrompt,
@@ -101,12 +152,10 @@ export const generalGenerationsRoutes = new Hono();
 const GENERATION_CREATE_MAX_ATTEMPTS = 5;
 
 function isGenerationPublicIdConflict(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002" &&
-    Array.isArray(error.meta?.target) &&
-    error.meta.target.includes("publicId")
-  );
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  if (error.code !== "P2002") return false;
+  const target = error.meta?.target;
+  return Array.isArray(target) && target.includes("publicId");
 }
 
 async function loadResumeLanguage(userId: string): Promise<string> {
@@ -123,6 +172,7 @@ generalGenerationsRoutes.post("/start", async (c) => {
   }
 
   const resumeLanguage = await loadResumeLanguage(user.id);
+  const evaluatePrompt = await resolveGeneralEvaluatePromptSnapshot(user.id);
   const createData = {
     userId: user.id,
     kind: GENERATION_KIND_GENERAL,
@@ -141,7 +191,7 @@ generalGenerationsRoutes.post("/start", async (c) => {
     resumeLanguage,
     verdictPrompt: "",
     generatePrompt: DEFAULT_GENERAL_GENERATE_PROMPT,
-    evaluatePrompt: DEFAULT_GENERAL_EVALUATE_PROMPT,
+    evaluatePrompt,
   };
 
   let publicId = await allocateGenerationPublicId(
@@ -211,21 +261,11 @@ generalGenerationsRoutes.put("/:id", async (c) => {
 
   const generation = await prisma.generation.update({
     where: { id: existing.id },
-    data: {
-      activeStep: parsed.data.activeStep,
-      combineJson: JSON.stringify(parsed.data.combine),
-      resumeJson:
-        parsed.data.resume !== undefined
-          ? parsed.data.resume
-            ? JSON.stringify(parsed.data.resume)
-            : null
-          : existing.resumeJson,
-      evaluationMarkdown:
-        parsed.data.evaluationMarkdown !== undefined
-          ? parsed.data.evaluationMarkdown
-          : existing.evaluationMarkdown,
-      finalized: nextFinalized,
-    },
+    data: buildGenerationSnapshotUpdateData(
+      parsed.data,
+      existing,
+      nextFinalized,
+    ),
   });
 
   await setUserCurrentGeneralGeneration(user.id, generation.id);
@@ -292,21 +332,7 @@ generalGenerationsRoutes.post("/:publicId/resume", async (c) => {
     if (source) {
       await prisma.generation.update({
         where: { id: source.id },
-        data: {
-          activeStep: archive.data.activeStep,
-          combineJson: JSON.stringify(archive.data.combine),
-          resumeJson:
-            archive.data.resume !== undefined
-              ? archive.data.resume
-                ? JSON.stringify(archive.data.resume)
-                : null
-              : source.resumeJson,
-          evaluationMarkdown:
-            archive.data.evaluationMarkdown !== undefined
-              ? archive.data.evaluationMarkdown
-              : source.evaluationMarkdown,
-          finalized: true,
-        },
+        data: buildGenerationSnapshotUpdateData(archive.data, source, true),
       });
     }
   }

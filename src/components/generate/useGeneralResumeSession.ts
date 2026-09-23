@@ -25,7 +25,12 @@ import {
   persistCombineDefaultsFromSnapshot,
   seedCombineFromDefaults,
 } from "@/lib/combine-defaults";
+import {
+  createGeneralEvaluationHistoryEntry,
+  type GeneralEvaluationHistoryEntry,
+} from "@/lib/general-evaluation-history";
 import { usePersistSnapshotOnLeave } from "@/lib/use-persist-snapshot-on-leave";
+import { normalizeResumeBuilderActiveStep } from "@/lib/resume-builder-steps";
 
 function toSnapshot(
   session: GenerateSession,
@@ -34,10 +39,11 @@ function toSnapshot(
   if (!session.generationId) return null;
   return {
     generationId: session.generationId,
-    activeStep: session.activeStep,
+    activeStep: normalizeResumeBuilderActiveStep(session.activeStep),
     combine: session.combine,
     resume: session.resume,
     evaluationMarkdown: session.evaluationMarkdown,
+    evaluationHistory: session.evaluationHistory,
     ...(finalized === true ? { finalized: true } : {}),
   };
 }
@@ -191,6 +197,7 @@ export function useGeneralResumeSession() {
         generationInputKey,
         evaluationMarkdown: null,
         evaluationInputKey: null,
+        evaluationHistory: [],
       }));
     },
     [],
@@ -200,21 +207,64 @@ export function useGeneralResumeSession() {
     setSession((current) => ({
       ...current,
       resume,
-      evaluationMarkdown: null,
-      evaluationInputKey: null,
     }));
   }, []);
 
-  const setEvaluationResult = useCallback(
-    (evaluationMarkdown: string, evaluationInputKey: string) => {
-      setSession((current) => ({
-        ...current,
-        evaluationMarkdown,
-        evaluationInputKey,
-      }));
+  const appendEvaluationHistory = useCallback(
+    async (
+      generationId: string,
+      userPrompt: string,
+      markdown: string,
+    ): Promise<{ error?: string }> => {
+      const entry = createGeneralEvaluationHistoryEntry(userPrompt, markdown);
+      const next: GenerateSession = {
+        ...sessionRef.current,
+        generationId,
+        activeStep: normalizeResumeBuilderActiveStep(
+          sessionRef.current.activeStep,
+        ),
+        evaluationHistory: [...sessionRef.current.evaluationHistory, entry],
+      };
+      sessionRef.current = next;
+      setSession(next);
+      const snapshot = toSnapshot(next);
+      if (!snapshot) {
+        return { error: "General resume session is not ready." };
+      }
+      return persistGeneralResumeSnapshot(snapshot);
     },
     [],
   );
+
+  const setEvaluationHistory = useCallback(
+    (evaluationHistory: GeneralEvaluationHistoryEntry[]) => {
+      setSession((current) => {
+        const next = {
+          ...current,
+          evaluationHistory,
+          evaluationMarkdown: null,
+        };
+        sessionRef.current = next;
+        return next;
+      });
+    },
+    [],
+  );
+
+  const clearEvaluationHistory = useCallback(async (): Promise<{ error?: string }> => {
+    const next: GenerateSession = {
+      ...sessionRef.current,
+      evaluationHistory: [],
+      evaluationMarkdown: null,
+    };
+    sessionRef.current = next;
+    setSession(next);
+    const snapshot = toSnapshot(next);
+    if (!snapshot) {
+      return { error: "General resume session is not ready." };
+    }
+    return persistGeneralResumeSnapshot(snapshot);
+  }, []);
 
   const resetSession = useCallback(async (): Promise<{ error?: string }> => {
     allocationEpochRef.current += 1;
@@ -273,7 +323,10 @@ export function useGeneralResumeSession() {
     setResumeResult,
     updateResume,
     evaluationMarkdown: session.evaluationMarkdown,
-    setEvaluationResult,
+    evaluationHistory: session.evaluationHistory,
+    appendEvaluationHistory,
+    setEvaluationHistory,
+    clearEvaluationHistory,
     clearDownstreamFromGenerateSession,
     generationInputKey: session.generationInputKey,
     evaluationInputKey: session.evaluationInputKey,

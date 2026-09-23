@@ -1,6 +1,6 @@
+import { DEFAULT_REFINE_PROMPT } from "@johel/prompt-defaults";
 import { Hono } from "hono";
 import { z } from "zod";
-import { parseGeneratedResume } from "@johel/resume";
 import { runAiDraftRefine } from "../lib/ai-draft-refine/index";
 import {
   loadDraftRefineCompanyScene,
@@ -8,27 +8,33 @@ import {
 } from "../lib/ai-draft-refine/load-materials";
 import { getUserAiSettings } from "../lib/user-ai-settings";
 import { compileInstruction } from "../lib/prompt-optimize/index";
-import { prisma } from "../lib/prisma";
+import {
+  findDraftRefinePromptRow,
+  resolveDraftRefineBasePrompt,
+  resolveDraftRefineExtension,
+} from "../lib/user-prompts";
 import { recordAiUsage } from "../lib/record-ai-usage";
 import { resolveOwnedGenerationId } from "../lib/resolve-generation-id";
 import { withTokenUsed } from "../lib/ai-token-used-response";
 import { sumTokenUsed } from "../lib/sum-token-used";
+import {
+  loadOwnedGenerationResume,
+  persistOwnedGenerationResume,
+} from "../lib/persist-generation-resume";
 import { requireUser } from "../lib/session";
 
 const INSTRUCTION_MAX = 10_000;
-const MAX_EXPERIENCES = 10;
 
 const resumeLanguageSchema = z.enum(["en", "ja", "zh-TW", "zh-CN", "ko"]);
 
 const postSchema = z
   .object({
     builderKind: z.enum(["jd", "general"]),
-    generationId: z.string().trim().min(1).optional(),
-    resume: z.unknown(),
+    generationId: z.string().trim().min(1),
     language: resumeLanguageSchema,
     mode: z.enum(["instruction", "experiences"]),
     instruction: z.string().max(INSTRUCTION_MAX).optional(),
-    experienceIds: z.array(z.string().trim().min(1)).max(MAX_EXPERIENCES).optional(),
+    experienceIds: z.array(z.string().trim().min(1)).optional(),
     companyId: z.string().trim().min(1).optional(),
   })
   .superRefine((value, ctx) => {
@@ -74,22 +80,25 @@ aiDraftRefineRoutes.post("/", async (c) => {
     );
   }
 
-  const resumeParsed = parseGeneratedResume(parsed.data.resume);
-  if (!resumeParsed.success) {
-    return c.json({ error: resumeParsed.error }, 400);
+  const loaded = await loadOwnedGenerationResume(
+    user.id,
+    parsed.data.generationId,
+    parsed.data.builderKind,
+  );
+  if (!loaded.ok) {
+    return c.json({ error: loaded.error }, loaded.status);
   }
 
-  const prompts = await prisma.prompt.findUnique({
-    where: { userId: user.id },
-  });
+  const prompts = await findDraftRefinePromptRow(user.id);
 
-  const useRefinePrompt = parsed.data.builderKind === "general";
-  const basePrompt = useRefinePrompt
-    ? prompts?.refinePrompt?.trim() ?? ""
-    : prompts?.generatePrompt?.trim() ?? "";
-  const extension = useRefinePrompt
-    ? prompts?.refineExtension?.trim() ?? ""
-    : prompts?.generateExtension?.trim() ?? "";
+  const builderKind = parsed.data.builderKind;
+  const useRefinePrompt = builderKind === "general";
+  const basePrompt = resolveDraftRefineBasePrompt(
+    prompts,
+    builderKind,
+    DEFAULT_REFINE_PROMPT,
+  );
+  const extension = resolveDraftRefineExtension(prompts, builderKind);
 
   if (!basePrompt) {
     return c.json(
@@ -154,7 +163,7 @@ aiDraftRefineRoutes.post("/", async (c) => {
       systemPrompt: compiledPrompt,
       input: {
         language: parsed.data.language,
-        resume: resumeParsed.data,
+        resume: loaded.resume,
         mode: parsed.data.mode,
         instruction: parsed.data.instruction?.trim() || undefined,
         experiences,
@@ -166,6 +175,16 @@ aiDraftRefineRoutes.post("/", async (c) => {
       user.id,
       parsed.data.generationId,
     );
+
+    const persisted = await persistOwnedGenerationResume(
+      user.id,
+      parsed.data.generationId,
+      parsed.data.builderKind,
+      result.resume,
+    );
+    if (!persisted.ok) {
+      return c.json({ error: persisted.error }, persisted.status);
+    }
 
     await recordAiUsage({
       userId: user.id,

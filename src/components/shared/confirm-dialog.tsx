@@ -16,6 +16,8 @@ type ConfirmDialogProps = {
   onClose: () => void;
   onConfirm: () => void;
   confirmLabel: ReactNode;
+  /** When set, shows a secondary button that calls `onClose` (e.g. No / Cancel). */
+  cancelLabel?: ReactNode;
   children: ReactNode;
   confirmDisabled?: boolean;
   closeDisabled?: boolean;
@@ -34,6 +36,7 @@ export function ConfirmDialog({
   onClose,
   onConfirm,
   confirmLabel,
+  cancelLabel,
   children,
   confirmDisabled = false,
   closeDisabled = false,
@@ -103,7 +106,20 @@ export function ConfirmDialog({
     >
       <div className="space-y-3">
         {children}
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {cancelLabel ? (
+            <button
+              type="button"
+              disabled={closeDisabled}
+              onClick={() => {
+                if (closeDisabled) return;
+                onClose();
+              }}
+              className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-surface-muted disabled:opacity-60"
+            >
+              {cancelLabel}
+            </button>
+          ) : null}
           <button
             ref={confirmButtonRef}
             type="button"

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { useT } from "@/components/app/LocaleProvider";
 import { DraftRefineExperiencePickerDrawer } from "@/components/generate/DraftRefineExperiencePickerDrawer";
 import { SortableExperienceIdList } from "@/components/generate/SortableExperienceIdList";
+import { SettingsSelect } from "@/components/shared/settings-select";
 import type { CombineReferencedCompany } from "@/lib/linked-experience-company-labels";
 
 const outlineButtonClass =
@@ -53,35 +54,25 @@ export function DraftResumeRefinePanel({
 }: DraftResumeRefinePanelProps) {
   const t = useT();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [companyQuery, setCompanyQuery] = useState("");
-  const companyListId = useId();
 
-  useEffect(() => {
-    if (!companyId) {
-      setCompanyQuery("");
-      return;
+  function handleCompanyChange(nextCompanyId: string) {
+    onCompanyIdChange(nextCompanyId);
+    if (!nextCompanyId) {
+      onSelectedExperienceIdsChange([]);
+      setPickerOpen(false);
     }
-    const company = refineCompanyOptions.find((item) => item.id === companyId);
-    setCompanyQuery(company?.name ?? "");
-  }, [companyId, refineCompanyOptions]);
-
-  function resolveCompanyFromQuery(query: string) {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      onCompanyIdChange("");
-      return;
-    }
-    const match = refineCompanyOptions.find(
-      (company) => company.name === trimmed,
-    );
-    onCompanyIdChange(match?.id ?? "");
+    if (validationError) onClearValidationError();
   }
 
   function clearCompany() {
-    setCompanyQuery("");
-    onCompanyIdChange("");
-    if (validationError) onClearValidationError();
+    handleCompanyChange("");
   }
+
+  useEffect(() => {
+    if (!companyId) {
+      setPickerOpen(false);
+    }
+  }, [companyId]);
 
   function clearExperiences() {
     onSelectedExperienceIdsChange([]);
@@ -95,7 +86,7 @@ export function DraftResumeRefinePanel({
 
   const companyFieldDisabled =
     companiesLoading || refining || refineCompanyOptions.length === 0;
-  const canClearCompany = Boolean(companyId || companyQuery.trim());
+  const canClearCompany = Boolean(companyId);
   const canClearExperiences = selectedExperienceIds.length > 0;
 
   return (
@@ -105,28 +96,21 @@ export function DraftResumeRefinePanel({
       <label className="block space-y-1 text-sm">
         <span>{t("generate.generateStep.refine.companyLabel")}</span>
         <div className="flex items-center gap-2">
-          <input
-            type="text"
-            list={companyListId}
-            value={companyQuery}
-            onChange={(event) => {
-              const next = event.target.value;
-              setCompanyQuery(next);
-              const match = refineCompanyOptions.find(
-                (company) => company.name === next,
-              );
-              if (match) {
-                onCompanyIdChange(match.id);
-              } else if (!next.trim()) {
-                onCompanyIdChange("");
-              }
-              if (validationError) onClearValidationError();
-            }}
-            onBlur={() => resolveCompanyFromQuery(companyQuery)}
+          <SettingsSelect
+            value={companyId}
+            onChange={(event) => handleCompanyChange(event.target.value)}
             disabled={companyFieldDisabled}
-            placeholder={t("generate.generateStep.refine.companyPlaceholder")}
-            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-muted"
-          />
+            wrapperClassName="relative min-w-0 flex-1"
+          >
+            <option value="">
+              {t("generate.generateStep.refine.companyNone")}
+            </option>
+            {refineCompanyOptions.map((company) => (
+              <option key={company.id} value={company.id}>
+                {company.name}
+              </option>
+            ))}
+          </SettingsSelect>
           <button
             type="button"
             onClick={clearCompany}
@@ -136,11 +120,6 @@ export function DraftResumeRefinePanel({
             {t("generate.generateStep.refine.clear")}
           </button>
         </div>
-        <datalist id={companyListId}>
-          {refineCompanyOptions.map((company) => (
-            <option key={company.id} value={company.name} />
-          ))}
-        </datalist>
         {refineCompanyOptions.length === 0 && !companiesLoading ? (
           <p className="text-xs text-muted">
             {t("generate.generateStep.refine.companyNoneOnResume")}
@@ -148,38 +127,40 @@ export function DraftResumeRefinePanel({
         ) : null}
       </label>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm">
-            {t("generate.generateStep.refine.experiencesLabel")}
-          </span>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={clearExperiences}
-              disabled={refining || !canClearExperiences}
-              className={outlineButtonClass}
-            >
-              {t("generate.generateStep.refine.clear")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              disabled={refining}
-              className={outlineButtonClass}
-            >
-              {t("generate.generateStep.refine.select")}
-            </button>
+      {companyId ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm">
+              {t("generate.generateStep.refine.experiencesLabel")}
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={clearExperiences}
+                disabled={refining || !canClearExperiences}
+                className={outlineButtonClass}
+              >
+                {t("generate.generateStep.refine.clear")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                disabled={refining}
+                className={outlineButtonClass}
+              >
+                {t("generate.generateStep.refine.select")}
+              </button>
+            </div>
           </div>
-        </div>
 
-        <SortableExperienceIdList
-          experienceIds={selectedExperienceIds}
-          onChange={onSelectedExperienceIdsChange}
-          disabled={refining}
-          emptyLabel={t("generate.generateStep.refine.experiencesEmpty")}
-        />
-      </div>
+          <SortableExperienceIdList
+            experienceIds={selectedExperienceIds}
+            onChange={onSelectedExperienceIdsChange}
+            disabled={refining}
+            emptyLabel={t("generate.generateStep.refine.experiencesEmpty")}
+          />
+        </div>
+      ) : null}
 
       <label className="block space-y-1 text-sm">
         <span>{t("generate.generateStep.refine.promptLabel")}</span>
@@ -202,14 +183,16 @@ export function DraftResumeRefinePanel({
         </p>
       ) : null}
 
-      <DraftRefineExperiencePickerDrawer
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        linkedExperienceIds={linkedExperienceIds}
-        linkedExperienceCompanyById={linkedExperienceCompanyById}
-        selectedIds={selectedExperienceIds}
-        onSelectedIdsChange={onSelectedExperienceIdsChange}
-      />
+      {companyId ? (
+        <DraftRefineExperiencePickerDrawer
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          linkedExperienceIds={linkedExperienceIds}
+          linkedExperienceCompanyById={linkedExperienceCompanyById}
+          selectedIds={selectedExperienceIds}
+          onSelectedIdsChange={onSelectedExperienceIdsChange}
+        />
+      ) : null}
     </div>
   );
 }

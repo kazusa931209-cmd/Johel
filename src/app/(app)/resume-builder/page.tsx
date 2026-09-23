@@ -9,13 +9,14 @@ import {
   type ReactNode,
 } from "react";
 import { useAiUsage } from "@/components/app/AiUsageProvider";
-import { useT } from "@/components/app/LocaleProvider";
+import { useLocale, useT } from "@/components/app/LocaleProvider";
 import { useToast } from "@/components/app/ToastProvider";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { CombineTotalTenureHeader } from "@/components/generate/CombineTotalTenureHeader";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
-import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
+import { EditableResumePanel } from "@/components/generate/EditableResumePanel";
+import { GeneralResumeEvaluateStep } from "@/components/generate/GeneralResumeEvaluateStep";
 import { DraftResumeRefiningOverlay } from "@/components/generate/DraftResumeRefiningOverlay";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
 import { useGenerateDraftResumeSession } from "@/components/generate/useGenerateDraftResumeSession";
@@ -33,18 +34,15 @@ import {
   GenerateStepNavRunButton,
 } from "@/components/generate/GenerateStepNav";
 import { useGeneralResumeSession } from "@/components/generate/useGeneralResumeSession";
-import { loadGenerationProcess } from "@/lib/cached-settings";
+import { loadGenerationProcess, loadPrompts } from "@/lib/cached-settings";
+import { buildGeneralEvaluateUserPrefill } from "@/lib/general-evaluate-prefill";
 import {
-  canReuseStoredEvaluation,
   canReuseStoredResume,
   EMPTY_JOB_STATE,
   hasStaleDownstreamForRun,
   type GenerateSession,
 } from "@/lib/generate-session";
-import {
-  claimAutoRun,
-  releaseAutoRun,
-} from "@/lib/generate-auto-run";
+import { claimAutoRun, releaseAutoRun } from "@/lib/generate-auto-run";
 import { notifyGenerationFinalized } from "@/lib/generation-finalized-events";
 import type { ResumeLanguage } from "@/lib/api";
 import {
@@ -52,10 +50,7 @@ import {
   runAiGeneralEvaluate,
   runAiGeneralResume,
 } from "@/lib/api";
-import {
-  buildGeneralEvaluationInputKey,
-  buildGeneralGenerationInputKey,
-} from "@/lib/general-resume-input-keys";
+import { buildGeneralGenerationInputKey } from "@/lib/general-resume-input-keys";
 import {
   getAdjacentGenerateStep,
   getGenerateCurrentPanelTitle,
@@ -68,6 +63,7 @@ import {
 
 export default function ResumeBuilderPage() {
   const t = useT();
+  const { locale: uiLocale } = useLocale();
   const { toast } = useToast();
   const { refreshTokenUsed, setTokenUsed } = useAiUsage();
   const [newConfirmOpen, setNewConfirmOpen] = useState(false);
@@ -81,6 +77,21 @@ export default function ResumeBuilderPage() {
   const [resumeLanguage, setResumeLanguage] = useState<ResumeLanguage>("en");
   const [generateHeaderRight, setGenerateHeaderRight] =
     useState<ReactNode | null>(null);
+  const [generateFooter, setGenerateFooter] = useState<ReactNode | null>(null);
+  const [evaluateHeaderRight, setEvaluateHeaderRight] =
+    useState<ReactNode | null>(null);
+  const [evaluateResumeFooter, setEvaluateResumeFooter] =
+    useState<ReactNode | null>(null);
+  const [evaluatePanelFooter, setEvaluatePanelFooter] =
+    useState<ReactNode | null>(null);
+  const [evaluateDraftUserPrompt, setEvaluateDraftUserPrompt] = useState("");
+  const [evaluateUserPromptError, setEvaluateUserPromptError] = useState<
+    string | null
+  >(null);
+  const [clearEvaluationConfirmOpen, setClearEvaluationConfirmOpen] =
+    useState(false);
+  const [prefillGeneralEvaluateConfirmOpen, setPrefillGeneralEvaluateConfirmOpen] =
+    useState(false);
   const userInstructionFlushRef = useRef<
     (() => GeneralResumeUserInstructionFlushResult | null) | null
   >(null);
@@ -96,11 +107,11 @@ export default function ResumeBuilderPage() {
     generationId,
     generationPublicId,
     generationInputKey,
-    evaluationInputKey,
-    evaluationMarkdown,
+    evaluationHistory,
     setResumeResult,
     updateResume,
-    setEvaluationResult,
+    appendEvaluationHistory,
+    clearEvaluationHistory,
     clearDownstreamFromGenerateSession,
     saveSnapshot,
     resetSession,
@@ -140,6 +151,30 @@ export default function ResumeBuilderPage() {
     setCombine({ ...combine, language: resumeLanguage });
   }, [combine, resumeLanguage, sessionReady, setCombine]);
 
+  useEffect(() => {
+    if (normalizedActiveStep !== "Generate") {
+      setGenerateHeaderRight(null);
+      setGenerateFooter(null);
+    }
+  }, [normalizedActiveStep]);
+
+  useEffect(() => {
+    if (normalizedActiveStep !== "Evaluate") {
+      setEvaluateHeaderRight(null);
+      setEvaluateResumeFooter(null);
+      setEvaluatePanelFooter(null);
+      setClearEvaluationConfirmOpen(false);
+      setPrefillGeneralEvaluateConfirmOpen(false);
+    }
+  }, [normalizedActiveStep]);
+
+  const persistDraftResume = useCallback(async () => {
+    const res = await saveSnapshot();
+    if (res?.error) {
+      toast(res.error, "error");
+    }
+  }, [saveSnapshot, toast]);
+
   const sessionSnapshot = useMemo<GenerateSession>(
     () => ({
       generationId,
@@ -151,15 +186,15 @@ export default function ResumeBuilderPage() {
       resume,
       resumeAiSnapshot,
       generationInputKey,
-      evaluationMarkdown,
-      evaluationInputKey,
+      evaluationMarkdown: null,
+      evaluationInputKey: null,
+      evaluationHistory,
       finalized: false,
       jobDuplicateDismissedHash: null,
     }),
     [
       combine,
-      evaluationInputKey,
-      evaluationMarkdown,
+      evaluationHistory,
       generationId,
       generationInputKey,
       generationPublicId,
@@ -199,15 +234,20 @@ export default function ResumeBuilderPage() {
 
   const draftResumeSession = useGenerateDraftResumeSession({
     resume,
-    generationInputKey,
     onResumeChange: updateResume,
+    onResumePersist: persistDraftResume,
     builderKind: "general",
     generationId,
     resumeLanguage,
     combineCompanies: combine.companies,
   });
 
-  const { previousTitle: panelPreviousTitle, previousContent, previousHeaderRight } =
+  const {
+    previousTitle: panelPreviousTitle,
+    previousContent,
+    previousHeaderRight,
+    previousFooter,
+  } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
       visibleSteps: RESUME_BUILDER_STEPS,
@@ -217,10 +257,11 @@ export default function ResumeBuilderPage() {
       resume,
       refinePanel:
         normalizedActiveStep === "Generate" ? draftResumeSession.refinePanel : null,
-      refineHeaderApply:
+      refineFooterApply:
         normalizedActiveStep === "Generate"
-          ? draftResumeSession.refineHeaderApply
+          ? draftResumeSession.refineFooterApply
           : null,
+      evaluateResumeOnly: isEvaluateStep,
     });
 
   const onSaveBeforeSuggest = useCallback(
@@ -277,6 +318,7 @@ export default function ResumeBuilderPage() {
           setResumeResult(res.data.resume, inputKey);
           setTokenUsed(res.data.tokenUsed);
           await refreshTokenUsed();
+          await persistDraftResume();
           toast(t("toast.resumeGenerated"), "success");
         } finally {
           releaseAutoRun(autoRunKey);
@@ -291,6 +333,7 @@ export default function ResumeBuilderPage() {
     [
       combine,
       generationId,
+      persistDraftResume,
       refreshTokenUsed,
       sessionSnapshot,
       setResumeResult,
@@ -313,68 +356,51 @@ export default function ResumeBuilderPage() {
     setActiveStep,
   ]);
 
-  const runEvaluation = useCallback(async () => {
+  const runUserEvaluation = useCallback(async () => {
     if (evaluatingRef.current || !generationId) return;
+    if (!resume) {
+      toast(t("toast.noResumeForEvaluate"), "error");
+      return;
+    }
+
+    const trimmed = evaluateDraftUserPrompt.trim();
+    if (!trimmed) {
+      setEvaluateUserPromptError(
+        t("resumeBuilder.evaluateStep.userPromptRequired"),
+      );
+      return;
+    }
+    setEvaluateUserPromptError(null);
+
     evaluatingRef.current = true;
     setEvaluating(true);
 
     try {
-      if (!resume || !generationInputKey) {
-        toast(t("toast.noResumeForEvaluate"), "error");
-        return;
-      }
-
-      const fingerprintRes = await getCombineGenerationFingerprint(combine);
-      if (!fingerprintRes.data?.fingerprint) {
-        toast(
-          fingerprintRes.error ?? t("toast.evaluationFingerprintFailed"),
-          "error",
-        );
-        return;
-      }
-
-      const currentInputKey = buildGeneralGenerationInputKey(
-        generationId,
-        combine,
-        fingerprintRes.data.fingerprint,
-      );
-      if (currentInputKey !== generationInputKey) {
-        toast(t("toast.combineContentChanged"), "error");
-        return;
-      }
-
-      const nextEvaluationInputKey = buildGeneralEvaluationInputKey(
-        generationId,
-        combine,
-        fingerprintRes.data.fingerprint,
+      const res = await runAiGeneralEvaluate({
         resume,
+        generationId,
+        userPrompt: trimmed,
+        uiLocale,
+      });
+      if (!res.data) {
+        toast(res.error ?? t("toast.evaluateFailed"), "error");
+        return;
+      }
+
+      const persistRes = await appendEvaluationHistory(
+        generationId,
+        trimmed,
+        res.data.markdown,
       );
-      if (canReuseStoredEvaluation(sessionSnapshot, nextEvaluationInputKey)) {
+      if (persistRes?.error) {
+        toast(persistRes.error, "error");
         return;
       }
 
-      const autoRunKey = `general:generate:evaluate:${nextEvaluationInputKey}`;
-      if (!claimAutoRun(autoRunKey)) {
-        return;
-      }
-
-      try {
-        const res = await runAiGeneralEvaluate({
-          resume,
-          generationId,
-        });
-        if (!res.data) {
-          toast(res.error ?? t("toast.evaluateFailed"), "error");
-          return;
-        }
-
-        setEvaluationResult(res.data.markdown, nextEvaluationInputKey);
-        setTokenUsed(res.data.tokenUsed);
-        await refreshTokenUsed();
-        toast(t("toast.resumeEvaluated"), "success");
-      } finally {
-        releaseAutoRun(autoRunKey);
-      }
+      setEvaluateDraftUserPrompt("");
+      setTokenUsed(res.data.tokenUsed);
+      await refreshTokenUsed();
+      toast(t("toast.resumeEvaluated"), "success");
     } catch {
       toast(t("toast.evaluateFailed"), "error");
     } finally {
@@ -382,28 +408,69 @@ export default function ResumeBuilderPage() {
       setEvaluating(false);
     }
   }, [
-    combine,
+    appendEvaluationHistory,
+    evaluateDraftUserPrompt,
     generationId,
-    generationInputKey,
     refreshTokenUsed,
     resume,
-    sessionSnapshot,
-    setEvaluationResult,
     setTokenUsed,
     t,
     toast,
+    uiLocale,
   ]);
 
+  const openPrefillGeneralEvaluateConfirm = useCallback(() => {
+    setPrefillGeneralEvaluateConfirmOpen(true);
+  }, []);
+
+  const confirmClearEvaluation = useCallback(async () => {
+    setClearEvaluationConfirmOpen(false);
+    const res = await clearEvaluationHistory();
+    if (res?.error) {
+      toast(res.error, "error");
+    }
+    openPrefillGeneralEvaluateConfirm();
+  }, [clearEvaluationHistory, openPrefillGeneralEvaluateConfirm, toast]);
+
+  const skipClearEvaluation = useCallback(() => {
+    setClearEvaluationConfirmOpen(false);
+    openPrefillGeneralEvaluateConfirm();
+  }, [openPrefillGeneralEvaluateConfirm]);
+
+  const confirmPrefillGeneralEvaluate = useCallback(async () => {
+    setPrefillGeneralEvaluateConfirmOpen(false);
+    const promptsRes = await loadPrompts();
+    if (!promptsRes.data) {
+      toast(promptsRes.error ?? t("toast.evaluateFailed"), "error");
+      return;
+    }
+    const prefill = buildGeneralEvaluateUserPrefill(
+      promptsRes.data.generalEvaluatePrompt,
+      promptsRes.data.generalEvaluateExtension,
+    );
+    setEvaluateDraftUserPrompt(prefill);
+    setEvaluateUserPromptError(null);
+  }, [t, toast]);
+
   const runFromGenerate = useCallback(() => {
-    requestRun("Generate", async () => {
-      if (!resume) {
-        toast(t("toast.noResumeForEvaluate"), "error");
-        return;
-      }
-      setActiveStep("Evaluate");
-      await runEvaluation();
-    });
-  }, [requestRun, resume, runEvaluation, setActiveStep, t, toast]);
+    if (!resume) {
+      toast(t("toast.noResumeForEvaluate"), "error");
+      return;
+    }
+    setActiveStep("Evaluate");
+    if (evaluationHistory.length > 0) {
+      setClearEvaluationConfirmOpen(true);
+    } else {
+      openPrefillGeneralEvaluateConfirm();
+    }
+  }, [
+    evaluationHistory.length,
+    openPrefillGeneralEvaluateConfirm,
+    resume,
+    setActiveStep,
+    t,
+    toast,
+  ]);
 
   const downloadLabel = useMemo(
     () => ({
@@ -497,10 +564,20 @@ export default function ResumeBuilderPage() {
             previousTitle={
               isCombineStep
                 ? t("resumeBuilder.combine.userInstructionTitle")
-                : panelPreviousTitle ?? previousTitle
+                : isEvaluateStep && resume
+                  ? t("generate.previous.resumeTitle")
+                  : panelPreviousTitle ?? previousTitle
             }
             previous={
-              isCombineStep ? (
+              isEvaluateStep && resume ? (
+                <EditableResumePanel
+                  resume={resume}
+                  onResumeChange={updateResume}
+                  onResumePersist={persistDraftResume}
+                  onHeaderRightChange={setEvaluateHeaderRight}
+                  onFooterChange={setEvaluateResumeFooter}
+                />
+              ) : isCombineStep ? (
                 <GeneralResumeUserInstructionPanel
                   userInstruction={combine.userInstruction}
                   platform={combine.platform}
@@ -523,22 +600,43 @@ export default function ResumeBuilderPage() {
                 <span className="text-xs tabular-nums text-muted">
                   {userInstructionCharCount}
                 </span>
+              ) : isEvaluateStep ? (
+                evaluateHeaderRight
               ) : (
                 previousHeaderRight
               )
+            }
+            previousFooter={
+              isCombineStep
+                ? undefined
+                : isEvaluateStep
+                  ? evaluateResumeFooter
+                  : previousFooter
             }
             currentTitle={getGenerateCurrentPanelTitle(
               normalizedActiveStep,
               t,
             )}
+            currentFooter={
+              isEvaluateStep
+                ? evaluatePanelFooter
+                : isGenerateStep && resume
+                  ? generateFooter
+                  : undefined
+            }
             currentHeaderRight={
               isCombineStep ? (
                 <CombineTotalTenureHeader combine={combine} />
-              ) : isGenerateStep && resume ? (
-                generateHeaderRight
-              ) : undefined
+              ) : isEvaluateStep
+                ? undefined
+                : isGenerateStep && resume
+                  ? generateHeaderRight
+                  : undefined
             }
-            currentFill={isGenerateStep && Boolean(resume)}
+            currentFill={
+              (isGenerateStep && Boolean(resume)) ||
+              (isEvaluateStep && Boolean(resume))
+            }
           >
             {isCombineStep ? (
               <GenerateCombineStep
@@ -563,25 +661,31 @@ export default function ResumeBuilderPage() {
                 resumeLanguage={resumeLanguage}
                 doEvaluate={true}
                 generating={generatingResume}
-                canUndo={draftResumeSession.canUndo}
-                canRedo={draftResumeSession.canRedo}
-                onUndo={draftResumeSession.handleUndo}
-                onRedo={draftResumeSession.handleRedo}
-                onDraftCommitted={draftResumeSession.pushDraftHistory}
                 onRun={runFromGenerate}
                 onResumeChange={updateResume}
+                onResumePersist={persistDraftResume}
                 onHeaderRightChange={setGenerateHeaderRight}
+                onFooterChange={setGenerateFooter}
                 onDownloaded={handleResumeDownloaded}
               />
             ) : null}
             {isEvaluateStep ? (
-              <GenerateEvaluateStep
-                generationId={generationId}
+              <GeneralResumeEvaluateStep
                 resume={resume}
                 downloadLabel={downloadLabel}
                 resumeLanguage={resumeLanguage}
-                evaluationMarkdown={evaluationMarkdown}
+                history={evaluationHistory}
                 evaluating={evaluating}
+                draftUserPrompt={evaluateDraftUserPrompt}
+                userPromptError={evaluateUserPromptError}
+                onDraftUserPromptChange={(value) => {
+                  setEvaluateDraftUserPrompt(value);
+                  if (evaluateUserPromptError) {
+                    setEvaluateUserPromptError(null);
+                  }
+                }}
+                onEvaluate={runUserEvaluation}
+                onFooterChange={setEvaluatePanelFooter}
                 onDownloaded={handleResumeDownloaded}
               />
             ) : null}
@@ -615,6 +719,38 @@ export default function ResumeBuilderPage() {
           confirmLabel={t("generate.runConfirm.confirm")}
         >
           <p className="text-muted">{t("generate.runConfirm.body")}</p>
+        </ConfirmDialog>
+      ) : null}
+
+      {clearEvaluationConfirmOpen ? (
+        <ConfirmDialog
+          title={t("resumeBuilder.evaluateStep.clearHistoryConfirm.title")}
+          cancelLabel={t("resumeBuilder.evaluateStep.clearHistoryConfirm.no")}
+          onClose={skipClearEvaluation}
+          onConfirm={() => void confirmClearEvaluation()}
+          confirmLabel={t("resumeBuilder.evaluateStep.clearHistoryConfirm.yes")}
+        >
+          <p className="text-muted">
+            {t("resumeBuilder.evaluateStep.clearHistoryConfirm.body")}
+          </p>
+        </ConfirmDialog>
+      ) : null}
+
+      {prefillGeneralEvaluateConfirmOpen ? (
+        <ConfirmDialog
+          title={t("resumeBuilder.evaluateStep.prefillGeneralEvaluateConfirm.title")}
+          cancelLabel={t(
+            "resumeBuilder.evaluateStep.prefillGeneralEvaluateConfirm.no",
+          )}
+          onClose={() => setPrefillGeneralEvaluateConfirmOpen(false)}
+          onConfirm={() => void confirmPrefillGeneralEvaluate()}
+          confirmLabel={t(
+            "resumeBuilder.evaluateStep.prefillGeneralEvaluateConfirm.yes",
+          )}
+        >
+          <p className="text-muted">
+            {t("resumeBuilder.evaluateStep.prefillGeneralEvaluateConfirm.body")}
+          </p>
         </ConfirmDialog>
       ) : null}
 

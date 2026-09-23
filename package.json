@@ -14,9 +14,8 @@
     "postinstall": "prisma generate",
     "db:backup": "sh scripts/backup-db.sh",
     "db:restore": "sh scripts/restore-db.sh",
-    "db:export-turso": "sh scripts/export-turso-to-dev.sh",
     "db:migrate": "prisma migrate dev",
-    "db:migrate-deploy": "tsx --env-file=.env scripts/migrate-deploy-turso.ts",
+    "db:migrate-deploy": "prisma migrate deploy",
     "db:migrate-keys": "tsx --env-file=.env scripts/migrate-plaintext-api-keys.ts",
     "prisma": "prisma"
   },
@@ -50,6 +49,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {

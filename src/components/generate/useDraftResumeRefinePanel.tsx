@@ -15,12 +15,13 @@ type UseDraftResumeRefinePanelOptions = {
   companiesLoading: boolean;
   refining: boolean;
   parseError?: string;
+  onReset?: () => void;
   onApply: (input: {
     mode: "instruction" | "experiences";
     instruction?: string;
     experienceIds?: string[];
     companyId?: string;
-  }) => void;
+  }) => void | Promise<void>;
 };
 
 export function useDraftResumeRefinePanel({
@@ -31,10 +32,12 @@ export function useDraftResumeRefinePanel({
   companiesLoading,
   refining,
   parseError,
+  onReset,
   onApply,
 }: UseDraftResumeRefinePanelOptions): {
   panel: ReactNode;
-  headerApply: ReactNode | null;
+  footerApply: ReactNode | null;
+  resetRefineForm: () => void;
 } {
   const t = useT();
   const [instruction, setInstruction] = useState("");
@@ -44,6 +47,14 @@ export function useDraftResumeRefinePanel({
   );
   const [companyId, setCompanyId] = useState("");
 
+  const resetRefineForm = useCallback(() => {
+    setInstruction("");
+    setValidationError(undefined);
+    setSelectedExperienceIds([]);
+    setCompanyId("");
+    onReset?.();
+  }, [onReset]);
+
   useEffect(() => {
     if (!companyId) return;
     if (!refineCompanyOptions.some((company) => company.id === companyId)) {
@@ -52,30 +63,31 @@ export function useDraftResumeRefinePanel({
   }, [companyId, refineCompanyOptions]);
 
   const handleApply = useCallback(() => {
-    const trimmedInstruction = instruction.trim();
-    const hasCompany = Boolean(companyId.trim());
-    const hasExperiences = selectedExperienceIds.length > 0;
-    const usesExperiencesMode = hasCompany || hasExperiences;
+    void (async () => {
+      const trimmedInstruction = instruction.trim();
+      const hasCompany = Boolean(companyId.trim());
 
-    if (!usesExperiencesMode) {
-      if (!trimmedInstruction) {
-        setValidationError(
-          t("generate.generateStep.refine.instructionRequired"),
-        );
+      if (!hasCompany) {
+        if (!trimmedInstruction) {
+          setValidationError(
+            t("generate.generateStep.refine.instructionRequired"),
+          );
+          return;
+        }
+        setValidationError(undefined);
+        await onApply({ mode: "instruction", instruction: trimmedInstruction });
         return;
       }
-      setValidationError(undefined);
-      onApply({ mode: "instruction", instruction: trimmedInstruction });
-      return;
-    }
 
-    setValidationError(undefined);
-    onApply({
-      mode: "experiences",
-      experienceIds: hasExperiences ? selectedExperienceIds : [],
-      companyId: companyId.trim() || undefined,
-      instruction: trimmedInstruction || undefined,
-    });
+      setValidationError(undefined);
+      await onApply({
+        mode: "experiences",
+        experienceIds:
+          selectedExperienceIds.length > 0 ? selectedExperienceIds : [],
+        companyId: companyId.trim(),
+        instruction: trimmedInstruction || undefined,
+      });
+    })();
   }, [
     companyId,
     instruction,
@@ -120,20 +132,30 @@ export function useDraftResumeRefinePanel({
     ],
   );
 
-  const headerApply = disabled
+  const footerApply = disabled
     ? null
     : (
-        <button
-          type="button"
-          onClick={handleApply}
-          disabled={refining}
-          className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
-        >
-          {refining
-            ? t("generate.generateStep.refine.applying")
-            : t("generate.generateStep.refine.apply")}
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={resetRefineForm}
+            disabled={refining}
+            className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-muted disabled:opacity-40"
+          >
+            {t("generate.generateStep.refine.reset")}
+          </button>
+          <button
+            type="button"
+            onClick={handleApply}
+            disabled={refining}
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+          >
+            {refining
+              ? t("generate.generateStep.refine.applying")
+              : t("generate.generateStep.refine.apply")}
+          </button>
+        </>
       );
 
-  return { panel, headerApply };
+  return { panel, footerApply, resetRefineForm };
 }

@@ -21,24 +21,8 @@ import {
   setGenerationProcessCache,
 } from "@/lib/cached-settings";
 import type { ResumeLanguage } from "@/lib/api";
+import { SettingsSelect } from "@/components/shared/settings-select";
 import { clearGenerateSessionLocalOverlay } from "@/lib/generate-session";
-
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
 
 const POOL_DEPTH_OPTIONS: ExperienceAdvisePoolDepth[] = [
   "compact",
@@ -268,22 +252,18 @@ export default function GenerationSettingsPage() {
           ) : (
             <label className="block max-w-xs space-y-1 text-sm">
               <span>{t("settings.generation.resumeLanguage.label")}</span>
-              <div className="relative">
-                <select
-                  value={resumeLanguage}
-                  onChange={(e) =>
-                    setResumeLanguage(e.target.value as RunLanguage)
-                  }
-                  className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
-                >
-                  {RUN_LANGUAGES.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
-              </div>
+              <SettingsSelect
+                value={resumeLanguage}
+                onChange={(e) =>
+                  setResumeLanguage(e.target.value as RunLanguage)
+                }
+              >
+                {RUN_LANGUAGES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </SettingsSelect>
             </label>
           )}
         </div>
@@ -304,26 +284,22 @@ export default function GenerationSettingsPage() {
               <span>
                 {t("settings.generation.experienceAdvisePoolDepth.label")}
               </span>
-              <div className="relative">
-                <select
-                  value={experienceAdvisePoolDepth}
-                  onChange={(e) =>
-                    setExperienceAdvisePoolDepth(
-                      e.target.value as ExperienceAdvisePoolDepth,
-                    )
-                  }
-                  className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
-                >
-                  {POOL_DEPTH_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {t(
-                        `settings.generation.experienceAdvisePoolDepth.options.${option}`,
-                      )}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
-              </div>
+              <SettingsSelect
+                value={experienceAdvisePoolDepth}
+                onChange={(e) =>
+                  setExperienceAdvisePoolDepth(
+                    e.target.value as ExperienceAdvisePoolDepth,
+                  )
+                }
+              >
+                {POOL_DEPTH_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {t(
+                      `settings.generation.experienceAdvisePoolDepth.options.${option}`,
+                    )}
+                  </option>
+                ))}
+              </SettingsSelect>
             </label>
           )}
         </div>
@@ -349,29 +325,25 @@ export default function GenerationSettingsPage() {
                     "settings.generation.combineExperiencesPerCompanyMax.minLabel",
                   )}
                 </span>
-                <div className="relative">
-                  <select
-                    value={combineExperiencesPerCompanyMin}
-                    onChange={(e) =>
-                      setCombineExperiencesPerCompanyMin(Number(e.target.value))
-                    }
-                    className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
-                  >
-                    {COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS.map((option) => (
-                      <option
-                        key={option}
-                        value={option}
-                        disabled={option > combineExperiencesPerCompanyMax}
-                      >
-                        {t(
-                          "settings.generation.combineExperiencesPerCompanyMax.option",
-                          { count: formatThousandsSeparated(option) },
-                        )}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
-                </div>
+                <SettingsSelect
+                  value={combineExperiencesPerCompanyMin}
+                  onChange={(e) =>
+                    setCombineExperiencesPerCompanyMin(Number(e.target.value))
+                  }
+                >
+                  {COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS.map((option) => (
+                    <option
+                      key={option}
+                      value={option}
+                      disabled={option > combineExperiencesPerCompanyMax}
+                    >
+                      {t(
+                        "settings.generation.combineExperiencesPerCompanyMax.option",
+                        { count: formatThousandsSeparated(option) },
+                      )}
+                    </option>
+                  ))}
+                </SettingsSelect>
               </label>
               <label className="block space-y-1 text-sm">
                 <span>
@@ -379,29 +351,25 @@ export default function GenerationSettingsPage() {
                     "settings.generation.combineExperiencesPerCompanyMax.label",
                   )}
                 </span>
-                <div className="relative">
-                  <select
-                    value={combineExperiencesPerCompanyMax}
-                    onChange={(e) => {
-                      const nextMax = Number(e.target.value);
-                      setCombineExperiencesPerCompanyMax(nextMax);
-                      if (combineExperiencesPerCompanyMin > nextMax) {
-                        setCombineExperiencesPerCompanyMin(nextMax);
-                      }
-                    }}
-                    className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
-                  >
-                    {COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {t(
-                          "settings.generation.combineExperiencesPerCompanyMax.option",
-                          { count: formatThousandsSeparated(option) },
-                        )}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
-                </div>
+                <SettingsSelect
+                  value={combineExperiencesPerCompanyMax}
+                  onChange={(e) => {
+                    const nextMax = Number(e.target.value);
+                    setCombineExperiencesPerCompanyMax(nextMax);
+                    if (combineExperiencesPerCompanyMin > nextMax) {
+                      setCombineExperiencesPerCompanyMin(nextMax);
+                    }
+                  }}
+                >
+                  {COMBINE_EXPERIENCES_PER_COMPANY_MAX_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {t(
+                        "settings.generation.combineExperiencesPerCompanyMax.option",
+                        { count: formatThousandsSeparated(option) },
+                      )}
+                    </option>
+                  ))}
+                </SettingsSelect>
               </label>
             </div>
           )}
@@ -423,26 +391,22 @@ export default function GenerationSettingsPage() {
               <span>
                 {t("settings.generation.experienceJdTierDecayPercent.label")}
               </span>
-              <div className="relative">
-                <select
-                  value={experienceJdTierDecayPercent}
-                  onChange={(e) =>
-                    setExperienceJdTierDecayPercent(
-                      Number(e.target.value) as ExperienceJdTierDecayPercent,
-                    )
-                  }
-                  className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
-                >
-                  {EXPERIENCE_JD_TIER_DECAY_PERCENT_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {t(
-                        `settings.generation.experienceJdTierDecayPercent.options.${option}`,
-                      )}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
-              </div>
+              <SettingsSelect
+                value={experienceJdTierDecayPercent}
+                onChange={(e) =>
+                  setExperienceJdTierDecayPercent(
+                    Number(e.target.value) as ExperienceJdTierDecayPercent,
+                  )
+                }
+              >
+                {EXPERIENCE_JD_TIER_DECAY_PERCENT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {t(
+                      `settings.generation.experienceJdTierDecayPercent.options.${option}`,
+                    )}
+                  </option>
+                ))}
+              </SettingsSelect>
             </label>
           )}
         </div>
@@ -463,26 +427,22 @@ export default function GenerationSettingsPage() {
               <span>
                 {t("settings.generation.experienceDimensionMode.label")}
               </span>
-              <div className="relative">
-                <select
-                  value={experienceDimensionMode}
-                  onChange={(e) =>
-                    setExperienceDimensionMode(
-                      e.target.value as ExperienceDimensionMode,
-                    )
-                  }
-                  className="w-full appearance-none rounded-md border border-border bg-background py-2 pr-9 pl-3 outline-none focus:border-muted"
-                >
-                  {EXPERIENCE_DIMENSION_MODE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {t(
-                        `settings.generation.experienceDimensionMode.options.${option}`,
-                      )}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-muted" />
-              </div>
+              <SettingsSelect
+                value={experienceDimensionMode}
+                onChange={(e) =>
+                  setExperienceDimensionMode(
+                    e.target.value as ExperienceDimensionMode,
+                  )
+                }
+              >
+                {EXPERIENCE_DIMENSION_MODE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {t(
+                      `settings.generation.experienceDimensionMode.options.${option}`,
+                    )}
+                  </option>
+                ))}
+              </SettingsSelect>
             </label>
           )}
         </div>
