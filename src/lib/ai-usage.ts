@@ -41,6 +41,38 @@ export function formatAiUsageDate(iso: string, locale?: Locale): string {
   return new Date(iso).toLocaleString(locale);
 }
 
+export function prettifyJsonForAiUsageDisplay(raw: string): {
+  displayText: string;
+  isJson: boolean;
+} {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { displayText: raw, isJson: false };
+  }
+
+  const candidates = [trimmed];
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fenced) {
+    candidates.push(fenced[1].trim());
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const parsed: unknown = JSON.parse(candidate);
+      if (parsed !== null && typeof parsed === "object") {
+        return {
+          displayText: JSON.stringify(parsed, null, 2),
+          isJson: true,
+        };
+      }
+    } catch {
+      // not JSON — try next candidate or fall back to markdown
+    }
+  }
+
+  return { displayText: raw, isJson: false };
+}
+
 export function buildAiUsageGroupKey(group: { generationId: string }): string {
   return `generation:${group.generationId}`;
 }
