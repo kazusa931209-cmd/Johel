@@ -5,6 +5,7 @@ export type MarkdownFormatKind =
   | "verdict"
   | "generate"
   | "evaluate"
+  | "refine"
   | "companyWhatItIs"
   | "experienceProblem"
   | "experienceActions"

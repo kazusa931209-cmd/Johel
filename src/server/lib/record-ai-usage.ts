@@ -11,6 +11,7 @@ export const AI_GENERATE_TYPES = [
   "verdict",
   "jdMeta",
   "generate",
+  "draftRefine",
   "evaluate",
   "workflowRecommend",
   "markdownFormat",
@@ -36,7 +37,7 @@ export function resolveAiModelName(
   _provider: AiProviderId,
   generateType: AiGenerateType,
 ): string {
-  if (generateType === "generate") {
+  if (generateType === "generate" || generateType === "draftRefine") {
     return OPENAI_RESUME_MODEL;
   }
   if (generateType === "markdownFormat") {

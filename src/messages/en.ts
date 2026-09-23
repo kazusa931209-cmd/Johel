@@ -189,20 +189,23 @@ export const en = {
       title: "Prompts",
       loading: "Loading…",
       description:
-        "Configure system prompts and optional extensions for checking Job Descriptions, generating resumes, and evaluating resumes. Each tab saves independently.",
+        "Configure system prompts and optional extensions for checking Job Descriptions, generating resumes, refining draft resumes, and evaluating resumes. Each tab saves independently.",
       tablistAria: "Prompt types",
       tabs: {
         verdict: "Verdict",
         generate: "Generate",
         evaluate: "Evaluate",
+        refine: "Refine",
       },
       fields: {
         verdictPrompt: "Verdict Prompt",
         generatePrompt: "Generate Prompt",
         evaluatePrompt: "Evaluate Prompt",
+        refinePrompt: "Refine Prompt",
         verdictExtension: "Verdict extension",
         generateExtension: "Generate extension",
         evaluateExtension: "Evaluate extension",
+        refineExtension: "Refine extension",
       },
       extensions: {
         description:
@@ -213,6 +216,7 @@ export const en = {
         verdict: "Edit Verdict Prompt",
         generate: "Edit Generate Prompt",
         evaluate: "Edit Evaluate Prompt",
+        refine: "Edit Refine Prompt",
         dialogTitle: "Edit {label}",
         systemImpactNotice:
           "Changes to system prompts directly affect the whole system. Review carefully before applying.",
@@ -690,24 +694,60 @@ export const en = {
     },
     generateStep: {
       noResume:
-        "No generated resume is available for this session. Go back to Combine and run resume generation again.",
+        "No draft resume is available for this session. Go back to Combine and run resume generation again.",
       pending: "Generating your resume…",
-      title: "Generated Resume",
-      referenceTabsAria: "Verdict and Combine reference",
+      title: "Draft resume",
+      referenceTabsAria: "Verdict, Combine, and Refine",
       editMode: "Edit",
       previewMode: "Preview",
       editHint:
-        "Edit the resume in Markdown. Keep section headings and the Title — Company format for experience entries.",
+        "Edit the draft resume in Markdown. Keep section headings and the Title — Company format for experience entries.",
       parseError: "Could not parse resume: {error}",
-      revertToAi: "Revert to AI version",
-      revertToAiSuccess: "Restored the AI-generated resume.",
+      undo: "Undo",
+      redo: "Redo",
+      refine: {
+        tab: "Refine",
+        hint:
+          "Optional: select experiences and/or a company to fold workspace materials into the draft. With none selected, only your prompt is used.",
+        promptLabel: "Prompt",
+        apply: "Apply",
+        applying: "Applying…",
+        instructionTitle: "Refine with instruction",
+        instructionPlaceholder: "Describe how to update the draft resume…",
+        instructionRequired: "Enter an instruction before applying.",
+        applyInstruction: "Apply instruction",
+        experiencesTitle: "Refine with experiences",
+        selectExperiences: "Select experiences",
+        select: "Select",
+        clear: "Clear",
+        experiencesLabel: "Experiences (optional)",
+        selectedExperiences: "{count} selected",
+        experiencesEmpty: "No experiences selected for refine.",
+        companyContextButton: "Company context",
+        companyContextSelected: "Company: {name}",
+        companyLabel: "Company context (optional)",
+        companyPlaceholder: "Type or choose a company…",
+        companyNoneOnResume:
+          "No companies on this resume. Add companies on the Combine step first.",
+        companyNone: "No company",
+        experienceInstructionPlaceholder: "Optional instruction for these experiences…",
+        applyExperiences: "Apply with experiences",
+        experiencesRequired: "Select at least one experience.",
+        pickerTitle: "Select experiences for refine",
+        pickerConfirm: "Done",
+        pickerMax: "You can select at most {max} experiences.",
+      },
+      refining: {
+        title: "Refining draft resume…",
+        description: "Please wait while the AI updates your draft.",
+      },
       generating: {
         title: "Generating Resume…",
         description: "Please wait while the AI tailors your resume to the job.",
       },
     },
     evaluateStep: {
-      referenceTabsAria: "Verdict, Combine, and Generated resume reference",
+      referenceTabsAria: "Verdict, Combine, and Draft resume reference",
       noEvaluation:
         "No evaluation is available for this session. Go back to Generate and run evaluation again.",
       pending: "Evaluating your resume…",
@@ -826,6 +866,7 @@ export const en = {
     generateTypes: {
       verdict: "Verdict",
       generate: "Generate",
+      draftRefine: "Draft refine",
       evaluate: "Evaluate",
       embedding: "Embedding",
       workflowRecommend: "Workflow Recommend",
@@ -895,6 +936,8 @@ export const en = {
       "AI Verdict result is missing. Go back to Verdict and run analysis first.",
     resumeGenerateFailed: "AI Resume generation failed.",
     resumeGenerated: "Resume generated.",
+    draftResumeRefined: "Draft resume updated.",
+    draftResumeRefineFailed: "Draft resume refine failed.",
     noResumeForEvaluate: "No generated resume is available. Go back to Workflow and run generation first.",
     evaluationFingerprintFailed: "Failed to load workflow content for evaluation.",
     evaluateFailed: "AI Evaluate failed.",
@@ -975,6 +1018,10 @@ export const en = {
       "Define evaluation criteria against Verdict dimensions (Role, Technical Requirements, Final Verdict), scoring, and Markdown output structure.",
     evaluatePromptJobHint:
       "Resume evaluation uses the same job context as generation: AI Verdict Markdown when Do Verdict is enabled; otherwise the noise-filtered job description. The model receives labeled Job context and Resume Markdown.",
+    refinePromptPlaceholder:
+      "Define how the AI should update an existing draft resume (structure, tone, grounding rules, and output JSON expectations).",
+    refinePromptResumeHint:
+      "Used on the Generate step when refining a draft resume in Resume Builder. JD-Resume Builder draft refine uses the Generate Prompt instead.",
     company: {
       shared:
         "Because the same shared experience can be linked to multiple companies, putting personal achievements in the company description leads to the same sentence repeating across companies, or achievements from other companies getting mixed in.",

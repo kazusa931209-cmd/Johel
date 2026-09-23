@@ -1,20 +1,24 @@
 "use client";
 
+import { type ReactNode } from "react";
 import { useRegisterGenerateStepNav } from "@/components/generate/GenerateStepNav";
 import { EditableResumePanel } from "@/components/generate/EditableResumePanel";
 import { useResumeDownload } from "@/components/generate/useResumeDownload";
+import { useT } from "@/components/app/LocaleProvider";
 import type { ResumeDownloadLabel, ResumeLanguage } from "@/lib/api";
 import type { GeneratedResume } from "@johel/resume";
-import { useT } from "@/components/app/LocaleProvider";
-import type { ReactNode } from "react";
 
 type GenerateGenerateStepProps = {
   resume: GeneratedResume | null;
-  aiResumeSnapshot: GeneratedResume | null;
   downloadLabel?: ResumeDownloadLabel;
   resumeLanguage: ResumeLanguage;
   doEvaluate: boolean;
   generating: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  onDraftCommitted: (resume: GeneratedResume) => void;
   onRun: () => void;
   onResumeChange: (resume: GeneratedResume) => void;
   onHeaderRightChange?: (node: ReactNode | null) => void;
@@ -23,17 +27,22 @@ type GenerateGenerateStepProps = {
 
 export function GenerateGenerateStep({
   resume,
-  aiResumeSnapshot,
   downloadLabel,
   resumeLanguage,
   doEvaluate,
   generating,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
+  onDraftCommitted,
   onRun,
   onResumeChange,
   onHeaderRightChange,
   onDownloaded,
 }: GenerateGenerateStepProps) {
   const t = useT();
+
   const { downloadAs, downloadAsZip, downloading, pdfDisabled } =
     useResumeDownload(resume, downloadLabel, {
       resumeLanguage,
@@ -64,42 +73,24 @@ export function GenerateGenerateStep({
 
   if (!resume) {
     return (
-      <>
-        <div className="rounded-md border border-border bg-background px-4 py-6 text-sm text-muted">
-          {generating
-            ? t("generate.generateStep.pending")
-            : t("generate.generateStep.noResume")}
-        </div>
-
-        {generating ? (
-          <div
-            className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
-            role="status"
-            aria-live="polite"
-            aria-busy="true"
-          >
-            <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
-              <p className="text-sm font-medium">
-                {t("generate.generateStep.generating.title")}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                {t("generate.generateStep.generating.description")}
-              </p>
-            </div>
-          </div>
-        ) : null}
-      </>
+      <div className="rounded-md border border-border bg-background px-4 py-6 text-sm text-muted">
+        {generating
+          ? t("generate.generateStep.pending")
+          : t("generate.generateStep.noResume")}
+      </div>
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <EditableResumePanel
-        resume={resume}
-        aiResumeSnapshot={aiResumeSnapshot}
-        onResumeChange={onResumeChange}
-        onHeaderRightChange={onHeaderRightChange}
-      />
-    </div>
+    <EditableResumePanel
+      resume={resume}
+      onResumeChange={onResumeChange}
+      onDraftCommitted={onDraftCommitted}
+      canUndo={canUndo}
+      canRedo={canRedo}
+      onUndo={onUndo}
+      onRedo={onRedo}
+      onHeaderRightChange={onHeaderRightChange}
+    />
   );
 }

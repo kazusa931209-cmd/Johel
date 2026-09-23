@@ -15,6 +15,7 @@ import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 import {
   DEFAULT_EVALUATE_PROMPT,
   DEFAULT_GENERATE_PROMPT,
+  DEFAULT_REFINE_PROMPT,
   DEFAULT_VERDICT_PROMPT,
   getAutoMarkdownFormatHint,
   getEvaluatePromptJobHint,
@@ -24,6 +25,8 @@ import {
   getPromptEditLabel,
   getPromptFieldLabel,
   getPromptTabLabel,
+  getRefinePromptPlaceholder,
+  getRefinePromptResumeHint,
   getSystemPromptQualityNotice,
   getVerdictPromptPlaceholder,
   getVerdictPromptResumeHint,
@@ -53,6 +56,7 @@ const PROMPT_TAB_CONFIGS: PromptFieldConfig[] = [
   { kind: "verdict", rows: 24 },
   { kind: "generate", rows: 24 },
   { kind: "evaluate", rows: 24 },
+  { kind: "refine", rows: 24 },
 ];
 
 const PROMPT_TAB_IDS = new Set(PROMPT_TAB_CONFIGS.map((tab) => tab.kind));
@@ -61,6 +65,7 @@ const DEFAULT_PROMPT_BY_KIND: Record<PromptTab, string> = {
   verdict: DEFAULT_VERDICT_PROMPT,
   generate: DEFAULT_GENERATE_PROMPT,
   evaluate: DEFAULT_EVALUATE_PROMPT,
+  refine: DEFAULT_REFINE_PROMPT,
 };
 
 function parsePromptTab(value: string | null): PromptTab {
@@ -82,9 +87,11 @@ type PromptValues = {
   verdictPrompt: string;
   generatePrompt: string;
   evaluatePrompt: string;
+  refinePrompt: string;
   verdictExtension: string;
   generateExtension: string;
   evaluateExtension: string;
+  refineExtension: string;
 };
 
 type StoredPromptValues = PromptValues;
@@ -93,9 +100,11 @@ const EMPTY_PROMPTS: PromptValues = {
   verdictPrompt: "",
   generatePrompt: "",
   evaluatePrompt: "",
+  refinePrompt: "",
   verdictExtension: "",
   generateExtension: "",
   evaluateExtension: "",
+  refineExtension: "",
 };
 
 function PromptsPageFallback() {
@@ -137,13 +146,17 @@ function PromptsPageContent() {
             ? getVerdictPromptPlaceholder(t)
             : tab.kind === "generate"
               ? getGeneratePromptPlaceholder(t)
-              : getEvaluatePromptPlaceholder(t),
+              : tab.kind === "evaluate"
+                ? getEvaluatePromptPlaceholder(t)
+                : getRefinePromptPlaceholder(t),
         resumeHint:
           tab.kind === "verdict"
             ? getVerdictPromptResumeHint(t)
             : tab.kind === "generate"
               ? getGeneratePromptJobContextHint(t)
-              : getEvaluatePromptJobHint(t),
+              : tab.kind === "evaluate"
+                ? getEvaluatePromptJobHint(t)
+                : getRefinePromptResumeHint(t),
       })),
     [t],
   );

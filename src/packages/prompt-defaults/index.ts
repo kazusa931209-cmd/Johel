@@ -211,6 +211,19 @@ Which Critical JD Terminology appear in the resume, and which Required terms are
 ### Suggested improvements
 (bullet list, actionable, resume-side only)`;
 
+export const DEFAULT_REFINE_PROMPT = `## Role
+You refine an existing resume draft. The user sends the current draft as structured JSON and optional instructions or experience materials.
+
+## Rules
+- Apply only the requested changes. Keep employers, dates, education, and contact consistent with the input draft unless the user explicitly asks to change them.
+- Do not invent employers, dates, tools, metrics, or jobs that are not supported by the current draft or by supplied experience materials.
+- When experience materials are provided, you may add or rewrite bullets to incorporate those STAR facts. Ground tools and metrics in the materials.
+- Output language must follow the requested resume language.
+- Return only valid JSON matching the resume schema (no markdown fences, no commentary).
+
+## Output
+Emit the full updated resume JSON. Preserve sections the user did not ask to change.`;
+
 export {
   DEFAULT_GENERAL_EVALUATE_PROMPT,
   DEFAULT_GENERAL_GENERATE_PROMPT,
@@ -220,4 +233,5 @@ export const DEFAULT_PROMPTS = {
   verdictPrompt: DEFAULT_VERDICT_PROMPT,
   generatePrompt: DEFAULT_GENERATE_PROMPT,
   evaluatePrompt: DEFAULT_EVALUATE_PROMPT,
+  refinePrompt: DEFAULT_REFINE_PROMPT,
 } as const;

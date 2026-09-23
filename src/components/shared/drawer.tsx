@@ -13,6 +13,8 @@ type DrawerProps = {
   children: ReactNode;
   /** Primary actions (Save, Suggest, Apply, pagination, etc.) pinned below scrollable body. */
   footer?: ReactNode;
+  /** Controls in the header row, immediately left of the close button. */
+  headerTrailing?: ReactNode;
   widthClass?: string;
   zIndex?: number;
   closeOnEscape?: boolean;
@@ -32,6 +34,7 @@ export function Drawer({
   onClose,
   children,
   footer,
+  headerTrailing,
   widthClass = "w-[min(64rem,92vw)]",
   zIndex = 50,
   closeOnEscape = true,
@@ -107,9 +110,14 @@ export function Drawer({
         className={`${panelSideClass} absolute top-0 flex h-full flex-col bg-surface shadow-xl ${widthClass}${entered ? " drawer-open" : ""}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <CloseButton onClick={onClose} />
+        <div className="shrink-0 border-b border-border px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="min-w-0 flex-1 text-lg font-semibold">{title}</h2>
+            <div className="flex shrink-0 items-center gap-2">
+              {headerTrailing}
+              <CloseButton onClick={onClose} />
+            </div>
+          </div>
         </div>
         {footer ? (
           <>

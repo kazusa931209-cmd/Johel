@@ -9,6 +9,7 @@ const AI_PROVIDER_KEYS: Record<string, string> = {
 const GENERATE_TYPE_KEYS: Record<string, string> = {
   verdict: "aiUsage.generateTypes.verdict",
   generate: "aiUsage.generateTypes.generate",
+  draftRefine: "aiUsage.generateTypes.draftRefine",
   evaluate: "aiUsage.generateTypes.evaluate",
   workflowRecommend: "aiUsage.generateTypes.workflowRecommend",
   authorAdvise: "aiUsage.generateTypes.authorAdvise",

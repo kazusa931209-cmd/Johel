@@ -16,7 +16,9 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { CombineTotalTenureHeader } from "@/components/generate/CombineTotalTenureHeader";
 import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
+import { DraftResumeRefiningOverlay } from "@/components/generate/DraftResumeRefiningOverlay";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
+import { useGenerateDraftResumeSession } from "@/components/generate/useGenerateDraftResumeSession";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
 import {
   GeneratePrerequisites,
@@ -767,6 +769,16 @@ export default function GeneratePage() {
     action?.();
   }
 
+  const draftResumeSession = useGenerateDraftResumeSession({
+    resume,
+    generationInputKey,
+    onResumeChange: updateResume,
+    builderKind: "jd",
+    generationId,
+    resumeLanguage: processSettings.resumeLanguage,
+    combineCompanies: combine.companies,
+  });
+
   const { previousTitle, previousContent, previousHeaderRight } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
@@ -775,6 +787,12 @@ export default function GeneratePage() {
       job,
       combine,
       resume,
+      refinePanel:
+        normalizedActiveStep === "Generate" ? draftResumeSession.refinePanel : null,
+      refineHeaderApply:
+        normalizedActiveStep === "Generate"
+          ? draftResumeSession.refineHeaderApply
+          : null,
     });
 
   if (loading || !sessionReady) {
@@ -870,11 +888,15 @@ export default function GeneratePage() {
             {normalizedActiveStep === "Generate" ? (
               <GenerateGenerateStep
                 resume={resume}
-                aiResumeSnapshot={resumeAiSnapshot}
                 downloadLabel={downloadLabel}
                 resumeLanguage={processSettings.resumeLanguage}
                 doEvaluate={processSettings.doEvaluate}
                 generating={generatingResume}
+                canUndo={draftResumeSession.canUndo}
+                canRedo={draftResumeSession.canRedo}
+                onUndo={draftResumeSession.handleUndo}
+                onRedo={draftResumeSession.handleRedo}
+                onDraftCommitted={draftResumeSession.pushDraftHistory}
                 onRun={runFromGenerate}
                 onResumeChange={updateResume}
                 onHeaderRightChange={setGenerateHeaderRight}
@@ -926,6 +948,27 @@ export default function GeneratePage() {
         >
           <p className="text-muted">{t("generate.runConfirm.body")}</p>
         </ConfirmDialog>
+      ) : null}
+
+      {normalizedActiveStep === "Generate" && draftResumeSession.refining ? (
+        <DraftResumeRefiningOverlay />
+      ) : null}
+      {normalizedActiveStep === "Generate" && generatingResume && !resume ? (
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
+            <p className="text-sm font-medium">
+              {t("generate.generateStep.generating.title")}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              {t("generate.generateStep.generating.description")}
+            </p>
+          </div>
+        </div>
       ) : null}
 
       {jobDuplicateChecking ? (

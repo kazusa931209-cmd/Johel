@@ -16,7 +16,9 @@ import type { CombineSnapshot } from "@/components/generate/combine-types";
 import { CombineTotalTenureHeader } from "@/components/generate/CombineTotalTenureHeader";
 import { GenerateCombineStep } from "@/components/generate/GenerateCombineStep";
 import { GenerateEvaluateStep } from "@/components/generate/GenerateEvaluateStep";
+import { DraftResumeRefiningOverlay } from "@/components/generate/DraftResumeRefiningOverlay";
 import { GenerateGenerateStep } from "@/components/generate/GenerateGenerateStep";
+import { useGenerateDraftResumeSession } from "@/components/generate/useGenerateDraftResumeSession";
 import { GenerateStepLayout } from "@/components/generate/GenerateStepLayout";
 import { GenerateTimeline } from "@/components/generate/GenerateTimeline";
 import { useGeneratePreviousStepPanel } from "@/components/generate/GeneratePreviousStepPanel";
@@ -195,6 +197,16 @@ export default function ResumeBuilderPage() {
     ? getGenerateCurrentPanelTitle(previousStep, t)
     : undefined;
 
+  const draftResumeSession = useGenerateDraftResumeSession({
+    resume,
+    generationInputKey,
+    onResumeChange: updateResume,
+    builderKind: "general",
+    generationId,
+    resumeLanguage,
+    combineCompanies: combine.companies,
+  });
+
   const { previousTitle: panelPreviousTitle, previousContent, previousHeaderRight } =
     useGeneratePreviousStepPanel({
       currentStep: normalizedActiveStep,
@@ -203,6 +215,12 @@ export default function ResumeBuilderPage() {
       job: EMPTY_JOB_STATE,
       combine,
       resume,
+      refinePanel:
+        normalizedActiveStep === "Generate" ? draftResumeSession.refinePanel : null,
+      refineHeaderApply:
+        normalizedActiveStep === "Generate"
+          ? draftResumeSession.refineHeaderApply
+          : null,
     });
 
   const onSaveBeforeSuggest = useCallback(
@@ -541,11 +559,15 @@ export default function ResumeBuilderPage() {
             {isGenerateStep ? (
               <GenerateGenerateStep
                 resume={resume}
-                aiResumeSnapshot={resumeAiSnapshot}
                 downloadLabel={downloadLabel}
                 resumeLanguage={resumeLanguage}
                 doEvaluate={true}
                 generating={generatingResume}
+                canUndo={draftResumeSession.canUndo}
+                canRedo={draftResumeSession.canRedo}
+                onUndo={draftResumeSession.handleUndo}
+                onRedo={draftResumeSession.handleRedo}
+                onDraftCommitted={draftResumeSession.pushDraftHistory}
                 onRun={runFromGenerate}
                 onResumeChange={updateResume}
                 onHeaderRightChange={setGenerateHeaderRight}
@@ -594,6 +616,27 @@ export default function ResumeBuilderPage() {
         >
           <p className="text-muted">{t("generate.runConfirm.body")}</p>
         </ConfirmDialog>
+      ) : null}
+
+      {isGenerateStep && draftResumeSession.refining ? (
+        <DraftResumeRefiningOverlay />
+      ) : null}
+      {isGenerateStep && generatingResume && !resume ? (
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="rounded-lg border border-border bg-surface px-6 py-5 text-center shadow-lg">
+            <p className="text-sm font-medium">
+              {t("generate.generateStep.generating.title")}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              {t("generate.generateStep.generating.description")}
+            </p>
+          </div>
+        </div>
       ) : null}
     </GenerateStepNavProvider>
   );

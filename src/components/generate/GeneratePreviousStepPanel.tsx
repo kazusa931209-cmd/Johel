@@ -23,9 +23,11 @@ type GeneratePreviousStepPanelProps = {
   job: GenerateJobState;
   combine: CombineSnapshot;
   resume: GeneratedResume | null;
+  refinePanel?: ReactNode | null;
+  refineHeaderApply?: ReactNode | null;
 };
 
-type GenerateReferenceView = "Verdict" | "Combine" | "Resume";
+type GenerateReferenceView = "Verdict" | "Combine" | "Resume" | "Refine";
 
 const PREVIOUS_STEP_TITLE_KEYS: Record<GenerateStep, string> = {
   Job: "generate.previous.jobTitle",
@@ -39,6 +41,7 @@ const REFERENCE_TAB_LABEL_KEYS: Record<GenerateReferenceView, string> = {
   Verdict: "generate.steps.verdict",
   Combine: "generate.steps.combine",
   Resume: "generate.previous.resumeTitle",
+  Refine: "generate.generateStep.refine.tab",
 };
 
 function GenerateReferenceTabs({
@@ -135,6 +138,7 @@ function renderReferenceViewContent(
   job: GenerateJobState,
   combine: CombineSnapshot,
   resume: GeneratedResume | null,
+  refinePanel: ReactNode | null | undefined,
 ): ReactNode {
   switch (view) {
     case "Verdict":
@@ -143,6 +147,8 @@ function renderReferenceViewContent(
       return <GenerateCombineSummary combine={combine} />;
     case "Resume":
       return <ResumeReferenceContent resume={resume} />;
+    case "Refine":
+      return refinePanel ?? null;
   }
 }
 
@@ -153,6 +159,8 @@ export function useGeneratePreviousStepPanel({
   job,
   combine,
   resume,
+  refinePanel,
+  refineHeaderApply,
 }: GeneratePreviousStepPanelProps): {
   previousTitle?: ReactNode;
   previousContent: ReactNode | null;
@@ -160,11 +168,11 @@ export function useGeneratePreviousStepPanel({
 } {
   const t = useT();
   const [referenceView, setReferenceView] =
-    useState<GenerateReferenceView>("Combine");
+    useState<GenerateReferenceView>("Refine");
 
   useEffect(() => {
     if (currentStep === "Generate") {
-      setReferenceView("Combine");
+      setReferenceView("Refine");
       return;
     }
     if (currentStep === "Evaluate") {
@@ -187,10 +195,13 @@ export function useGeneratePreviousStepPanel({
     currentStep === "Job" || previousStep === "Job";
 
   const generateReferenceTabs = useMemo(() => {
-    if (currentStep !== "Generate" || !doVerdict) {
+    if (currentStep !== "Generate") {
       return null;
     }
-    return ["Verdict", "Combine"] as const;
+    if (doVerdict) {
+      return ["Verdict", "Combine", "Refine"] as const;
+    }
+    return ["Combine", "Refine"] as const;
   }, [currentStep, doVerdict]);
 
   const evaluateReferenceTabs = useMemo(() => {
@@ -231,7 +242,11 @@ export function useGeneratePreviousStepPanel({
     <span className="text-xs tabular-nums text-muted">
       {t("generate.job.filteredCharCountLabel", { count: filteredCharCount })}
     </span>
-  ) : undefined;
+  ) : currentStep === "Generate" &&
+      referenceView === "Refine" &&
+      refineHeaderApply
+    ? refineHeaderApply
+    : undefined;
 
   const previousContent = useMemo(() => {
     if (currentStep === "Job") {
@@ -248,7 +263,13 @@ export function useGeneratePreviousStepPanel({
     if (activeReferenceTabs) {
       return (
         <ReferenceTabPanel active={referenceView}>
-          {renderReferenceViewContent(referenceView, job, combine, resume)}
+          {renderReferenceViewContent(
+            referenceView,
+            job,
+            combine,
+            resume,
+            refinePanel,
+          )}
         </ReferenceTabPanel>
       );
     }
@@ -284,6 +305,7 @@ export function useGeneratePreviousStepPanel({
     job,
     previousStep,
     referenceView,
+    refinePanel,
     resume,
     t,
   ]);

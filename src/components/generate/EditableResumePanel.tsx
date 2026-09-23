@@ -14,7 +14,6 @@ import {
   type GeneratedResume,
 } from "@johel/resume";
 import { useT } from "@/components/app/LocaleProvider";
-import { useToast } from "@/components/app/ToastProvider";
 import { GeneratePanelHeaderActions } from "@/components/generate/GeneratePanelHeaderActions";
 import { ResumeMarkdown } from "@/components/shared/ResumeMarkdown";
 import { hashResumeForCache } from "@/lib/generate-session";
@@ -23,8 +22,12 @@ type EditableResumeMode = "edit" | "preview";
 
 type EditableResumePanelProps = {
   resume: GeneratedResume;
-  aiResumeSnapshot: GeneratedResume | null;
   onResumeChange: (resume: GeneratedResume) => void;
+  onDraftCommitted?: (resume: GeneratedResume) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
   onHeaderRightChange?: (node: ReactNode | null) => void;
 };
 
@@ -35,22 +38,20 @@ function FieldError({ message }: { message?: string }) {
 
 export function EditableResumePanel({
   resume,
-  aiResumeSnapshot,
   onResumeChange,
+  onDraftCommitted,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
   onHeaderRightChange,
 }: EditableResumePanelProps) {
   const t = useT();
-  const { toast } = useToast();
   const [mode, setMode] = useState<EditableResumeMode>("preview");
   const [draft, setDraft] = useState(() => resumeToMarkdown(resume));
   const [parseError, setParseError] = useState<string | undefined>();
   const resumeHashRef = useRef(hashResumeForCache(resume));
   const debounceRef = useRef<number | null>(null);
-
-  const matchesAiSnapshot = useMemo(() => {
-    if (!aiResumeSnapshot) return true;
-    return hashResumeForCache(resume) === hashResumeForCache(aiResumeSnapshot);
-  }, [aiResumeSnapshot, resume]);
 
   useEffect(() => {
     const nextHash = hashResumeForCache(resume);
@@ -72,9 +73,10 @@ export function EditableResumePanel({
       if (nextHash !== resumeHashRef.current) {
         resumeHashRef.current = nextHash;
         onResumeChange(parsed.data);
+        onDraftCommitted?.(parsed.data);
       }
     },
-    [onResumeChange],
+    [onDraftCommitted, onResumeChange],
   );
 
   useEffect(() => {
@@ -95,21 +97,30 @@ export function EditableResumePanel({
     };
   }, [commitDraft, draft, mode]);
 
-  const handleRevert = useCallback(() => {
-    if (!aiResumeSnapshot || matchesAiSnapshot) return;
-    resumeHashRef.current = hashResumeForCache(aiResumeSnapshot);
-    setDraft(resumeToMarkdown(aiResumeSnapshot));
-    setParseError(undefined);
-    onResumeChange(aiResumeSnapshot);
-    toast(t("generate.generateStep.revertToAiSuccess"), "success");
-  }, [aiResumeSnapshot, matchesAiSnapshot, onResumeChange, t, toast]);
-
   const headerNode = useMemo(
     () => (
       <GeneratePanelHeaderActions
         text={draft}
         trailing={
           <>
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo}
+              className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
+              aria-label={t("generate.generateStep.undo")}
+            >
+              {t("generate.generateStep.undo")}
+            </button>
+            <button
+              type="button"
+              onClick={onRedo}
+              disabled={!canRedo}
+              className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
+              aria-label={t("generate.generateStep.redo")}
+            >
+              {t("generate.generateStep.redo")}
+            </button>
             <button
               type="button"
               onClick={() =>
@@ -121,34 +132,25 @@ export function EditableResumePanel({
                 ? t("generate.generateStep.previewMode")
                 : t("generate.generateStep.editMode")}
             </button>
-            <button
-              type="button"
-              onClick={handleRevert}
-              disabled={!aiResumeSnapshot || matchesAiSnapshot}
-              className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted disabled:opacity-40"
-            >
-              {t("generate.generateStep.revertToAi")}
-            </button>
           </>
         }
       />
     ),
-    [
-      aiResumeSnapshot,
-      draft,
-      handleRevert,
-      matchesAiSnapshot,
-      mode,
-      t,
-    ],
+    [canRedo, canUndo, draft, mode, onRedo, onUndo, t],
   );
 
+  const onHeaderRightChangeRef = useRef(onHeaderRightChange);
+  onHeaderRightChangeRef.current = onHeaderRightChange;
+
   useEffect(() => {
-    onHeaderRightChange?.(headerNode);
+    onHeaderRightChangeRef.current?.(headerNode);
+  }, [headerNode]);
+
+  useEffect(() => {
     return () => {
-      onHeaderRightChange?.(null);
+      onHeaderRightChangeRef.current?.(null);
     };
-  }, [headerNode, onHeaderRightChange]);
+  }, []);
 
   if (mode === "preview") {
     return (

@@ -28,6 +28,7 @@ import { aiVerdictRoutes } from "./routes/ai-verdict";
 import { aiCombineRecommendRoutes } from "./routes/ai-combine-recommend";
 import { aiGeneralCombineRecommendRoutes } from "./routes/ai-general-combine-recommend";
 import { aiGeneralResumeRoutes } from "./routes/ai-general-resume";
+import { aiDraftRefineRoutes } from "./routes/ai-draft-refine";
 import { aiGeneralEvaluateRoutes } from "./routes/ai-general-evaluate";
 import { resumeRoutes } from "./routes/resume";
 import { aiUsageRoutes } from "./routes/ai-usage";
@@ -98,6 +99,7 @@ export function createApp() {
   app.use("/ai-jd-meta/*", aiRoutes);
   app.use("/ai-resume/*", aiRoutes);
   app.use("/ai-general-resume/*", aiRoutes);
+  app.use("/ai-draft-refine/*", aiRoutes);
   app.use("/ai-evaluate/*", aiRoutes);
   app.use("/ai-general-evaluate/*", aiRoutes);
   app.use("/ai-experience-advise/*", aiRoutes);
@@ -111,6 +113,7 @@ export function createApp() {
   app.route("/experiences", experiencesRoutes);
   app.route("/ai-resume", aiResumeRoutes);
   app.route("/ai-general-resume", aiGeneralResumeRoutes);
+  app.route("/ai-draft-refine", aiDraftRefineRoutes);
   app.route("/ai-verdict", aiVerdictRoutes);
   app.route("/ai-jd-meta", aiJdMetaRoutes);
   app.route("/ai-evaluate", aiEvaluateRoutes);

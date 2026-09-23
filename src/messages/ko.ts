@@ -191,20 +191,23 @@ export const ko: MessageTree = {
       title: "프롬프트",
       loading: "불러오는 중…",
       description:
-        "채용 공고 검토, 이력서 생성, 이력서 평가에 사용되는 시스템 프롬프트와 선택 확장을 설정합니다. 각 탭은 독립적으로 저장됩니다.",
+        "채용 공고 검토, 이력서 생성, 초안 이력서 다듬기, 이력서 평가에 사용되는 시스템 프롬프트와 선택 확장을 설정합니다. 각 탭은 독립적으로 저장됩니다.",
       tablistAria: "프롬프트 유형",
       tabs: {
         verdict: "판정",
         generate: "생성",
         evaluate: "평가",
+        refine: "다듬기",
       },
       fields: {
         verdictPrompt: "판정 프롬프트",
         generatePrompt: "생성 프롬프트",
         evaluatePrompt: "평가 프롬프트",
+        refinePrompt: "다듬기 프롬프트",
         verdictExtension: "판정 확장",
         generateExtension: "생성 확장",
         evaluateExtension: "평가 확장",
+        refineExtension: "다듬기 확장",
       },
       extensions: {
         description:
@@ -215,6 +218,7 @@ export const ko: MessageTree = {
         verdict: "판정 프롬프트 편집",
         generate: "생성 프롬프트 편집",
         evaluate: "평가 프롬프트 편집",
+        refine: "다듬기 프롬프트 편집",
         dialogTitle: "{label} 편집",
         systemImpactNotice:
           "시스템 프롬프트 변경은 전체 시스템에 직접적인 영향을 줍니다. 적용 전에 신중히 검토해 주세요.",
@@ -691,24 +695,60 @@ export const ko: MessageTree = {
     },
     generateStep: {
       noResume:
-        "이 세션에 생성된 이력서가 없습니다. 조합 단계로 돌아가 이력서 생성을 다시 실행해 주세요.",
+        "이 세션에 초안 이력서가 없습니다. 조합 단계로 돌아가 이력서 생성을 다시 실행해 주세요.",
       pending: "이력서 생성 중…",
-      title: "생성된 이력서",
-      referenceTabsAria: "판정 및 조합 참고",
+      title: "초안 이력서",
+      referenceTabsAria: "판정, 조합, 다듬기",
       editMode: "편집",
       previewMode: "미리보기",
       editHint:
-        "마크다운으로 이력서를 편집합니다. 섹션 제목과 경력 항목의 직함 — 회사 형식을 유지해 주세요.",
+        "마크다운으로 초안 이력서를 편집합니다. 섹션 제목과 경력 항목의 직함 — 회사 형식을 유지해 주세요.",
       parseError: "이력서를 해석할 수 없습니다: {error}",
-      revertToAi: "AI 버전으로 되돌리기",
-      revertToAiSuccess: "AI가 생성한 이력서로 복원했습니다.",
+      undo: "실행 취소",
+      redo: "다시 실행",
+      refine: {
+        tab: "다듬기",
+        hint:
+          "선택 사항: 경험 및/또는 회사를 선택하면 작업 공간 자료를 초안에 반영합니다. 선택하지 않으면 프롬프트만 사용합니다.",
+        promptLabel: "프롬프트",
+        apply: "적용",
+        applying: "적용 중…",
+        instructionTitle: "지시로 다듬기",
+        instructionPlaceholder: "초안 이력서를 어떻게 수정할지 입력…",
+        instructionRequired: "적용 전에 지시를 입력해 주세요.",
+        applyInstruction: "지시 적용",
+        experiencesTitle: "경험으로 다듬기",
+        selectExperiences: "경험 선택",
+        select: "선택",
+        clear: "지우기",
+        experiencesLabel: "경험 (선택)",
+        selectedExperiences: "{count}개 선택",
+        experiencesEmpty: "다듬기에 선택한 경험이 없습니다.",
+        companyContextButton: "회사 맥락",
+        companyContextSelected: "회사: {name}",
+        companyLabel: "회사 맥락 (선택)",
+        companyPlaceholder: "회사를 입력하거나 선택…",
+        companyNoneOnResume:
+          "이 이력서에 포함된 회사가 없습니다. 먼저 결합 단계에서 회사를 추가해 주세요.",
+        companyNone: "회사 없음",
+        experienceInstructionPlaceholder: "선택한 경험에 대한 선택 지시…",
+        applyExperiences: "경험으로 적용",
+        experiencesRequired: "경험을 하나 이상 선택해 주세요.",
+        pickerTitle: "다듬기용 경험 선택",
+        pickerConfirm: "완료",
+        pickerMax: "최대 {max}개까지 선택할 수 있습니다.",
+      },
+      refining: {
+        title: "초안 이력서 다듬는 중…",
+        description: "AI가 초안을 업데이트하는 중입니다.",
+      },
       generating: {
         title: "이력서 생성 중…",
         description: "AI가 채용 공고에 맞춰 이력서를 작성하는 중입니다.",
       },
     },
     evaluateStep: {
-      referenceTabsAria: "판정, 조합, 생성된 이력서 참고",
+      referenceTabsAria: "판정, 조합, 초안 이력서 참고",
       noEvaluation:
         "이 세션에 평가 결과가 없습니다. 생성 단계로 돌아가 평가를 다시 실행해 주세요.",
       pending: "이력서 평가 중…",
@@ -827,6 +867,7 @@ export const ko: MessageTree = {
     generateTypes: {
       verdict: "판정",
       generate: "생성",
+      draftRefine: "초안 다듬기",
       evaluate: "평가",
       embedding: "임베딩",
       workflowRecommend: "워크플로 추천",
@@ -897,6 +938,8 @@ export const ko: MessageTree = {
       "AI 판정 결과가 없습니다. 판정 단계로 돌아가 분석을 실행해 주세요.",
     resumeGenerateFailed: "AI 이력서 생성에 실패했습니다.",
     resumeGenerated: "이력서를 생성했습니다.",
+    draftResumeRefined: "초안 이력서를 업데이트했습니다.",
+    draftResumeRefineFailed: "초안 이력서 다듬기에 실패했습니다.",
     noResumeForEvaluate:
       "생성된 이력서가 없습니다. 조합 단계로 돌아가 생성을 실행해 주세요.",
     evaluationFingerprintFailed: "평가용 조합 내용을 불러오지 못했습니다.",
@@ -977,6 +1020,10 @@ export const ko: MessageTree = {
       "판정 기준(Role, Technical Requirements, Final Verdict 등)에 따른 평가 기준, 점수, 서식화된 출력 구조를 정의해 주세요.",
     evaluatePromptJobHint:
       "이력서 평가는 생성과 동일한 job context를 사용합니다. 판정 실행이 켜져 있으면 AI 판정 결과를, 아니면 노이즈 제거된 채용 공고입니다.",
+    refinePromptPlaceholder:
+      "기존 초안 이력서를 어떻게 업데이트할지(구조, 톤, 근거 규칙, JSON 출력) 정의해 주세요.",
+    refinePromptResumeHint:
+      "이력서 빌더의 생성 단계에서 초안을 다듬을 때 사용합니다. JD 이력서 빌더의 초안 다듬기는 생성 프롬프트를 사용합니다.",
     company: {
       shared:
         "동일한 공유 경험이 여러 회사에 연결될 수 있으므로, 회사 설명에 개인 성과를 넣으면 같은 문장이 반복되거나 다른 회사 성과가 섞일 수 있습니다.",

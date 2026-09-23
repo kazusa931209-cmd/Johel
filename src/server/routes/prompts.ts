@@ -40,16 +40,30 @@ const PROMPT_KIND_CONFIG = {
     label: "Evaluate Prompt",
     extensionLabel: "Evaluate extension",
   },
+  refine: {
+    bodyKey: "refinePrompt",
+    extensionKey: "refineExtension",
+    dbKey: "refinePrompt",
+    extensionDbKey: "refineExtension",
+    formatKind: "refine",
+    label: "Refine Prompt",
+    extensionLabel: "Refine extension",
+  },
 } as const satisfies Record<
   string,
   {
     bodyKey: string;
     extensionKey: string;
-    dbKey: "verdictPrompt" | "generatePrompt" | "evaluatePrompt";
+    dbKey:
+      | "verdictPrompt"
+      | "generatePrompt"
+      | "evaluatePrompt"
+      | "refinePrompt";
     extensionDbKey:
       | "verdictExtension"
       | "generateExtension"
-      | "evaluateExtension";
+      | "evaluateExtension"
+      | "refineExtension";
     formatKind: MarkdownFormatKind;
     label: string;
     extensionLabel: string;
@@ -62,17 +76,21 @@ function serializePrompts(prompts: {
   verdictPrompt: string;
   generatePrompt: string;
   evaluatePrompt: string;
+  refinePrompt: string;
   verdictExtension: string;
   generateExtension: string;
   evaluateExtension: string;
+  refineExtension: string;
 }) {
   return {
     verdictPrompt: prompts.verdictPrompt,
     generatePrompt: prompts.generatePrompt,
     evaluatePrompt: prompts.evaluatePrompt,
+    refinePrompt: prompts.refinePrompt,
     verdictExtension: prompts.verdictExtension,
     generateExtension: prompts.generateExtension,
     evaluateExtension: prompts.evaluateExtension,
+    refineExtension: prompts.refineExtension,
   };
 }
 
@@ -109,9 +127,14 @@ async function savePromptKind(
         config.dbKey === "evaluatePrompt"
           ? formatted.formatted
           : (existing?.evaluatePrompt ?? ""),
+      refinePrompt:
+        config.dbKey === "refinePrompt"
+          ? formatted.formatted
+          : (existing?.refinePrompt ?? ""),
       verdictExtension: existing?.verdictExtension ?? "",
       generateExtension: existing?.generateExtension ?? "",
       evaluateExtension: existing?.evaluateExtension ?? "",
+      refineExtension: existing?.refineExtension ?? "",
     },
     update: {
       [config.dbKey]: formatted.formatted,
@@ -138,6 +161,7 @@ async function savePromptExtension(
       verdictPrompt: existing?.verdictPrompt ?? "",
       generatePrompt: existing?.generatePrompt ?? "",
       evaluatePrompt: existing?.evaluatePrompt ?? "",
+      refinePrompt: existing?.refinePrompt ?? "",
       verdictExtension:
         config.extensionDbKey === "verdictExtension"
           ? submitted
@@ -150,6 +174,10 @@ async function savePromptExtension(
         config.extensionDbKey === "evaluateExtension"
           ? submitted
           : (existing?.evaluateExtension ?? ""),
+      refineExtension:
+        config.extensionDbKey === "refineExtension"
+          ? submitted
+          : (existing?.refineExtension ?? ""),
     },
     update: {
       [config.extensionDbKey]: submitted,
@@ -175,9 +203,11 @@ promptsRoutes.get("/", async (c) => {
     verdictPrompt: prompts?.verdictPrompt ?? "",
     generatePrompt: prompts?.generatePrompt ?? "",
     evaluatePrompt: prompts?.evaluatePrompt ?? "",
+    refinePrompt: prompts?.refinePrompt ?? "",
     verdictExtension: prompts?.verdictExtension ?? "",
     generateExtension: prompts?.generateExtension ?? "",
     evaluateExtension: prompts?.evaluateExtension ?? "",
+    refineExtension: prompts?.refineExtension ?? "",
   });
 });
 
@@ -232,9 +262,11 @@ for (const [kind, config] of Object.entries(PROMPT_KIND_CONFIG) as [
                 verdictPrompt: "",
                 generatePrompt: "",
                 evaluatePrompt: "",
+                refinePrompt: "",
                 verdictExtension: "",
                 generateExtension: "",
                 evaluateExtension: "",
+                refineExtension: "",
               },
             );
 

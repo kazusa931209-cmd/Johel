@@ -196,9 +196,11 @@ model Prompt {
   verdictPrompt       String
   generatePrompt      String   @default("")
   evaluatePrompt      String   @default("")
+  refinePrompt        String   @default("")
   verdictExtension    String   @default("")
   generateExtension   String   @default("")
   evaluateExtension   String   @default("")
+  refineExtension     String   @default("")
   createdAt           DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
