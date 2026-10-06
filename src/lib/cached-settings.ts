@@ -5,6 +5,7 @@ import {
   getMe,
   getPrompts,
   getSettings,
+  listGeneralResumePlatformSuggestions,
   type AiSettings,
   type GenerationProcessSettings,
   type PromptSettings,
@@ -54,6 +55,9 @@ const aiSettingsCache = createCachedLoader(() => getSettings());
 const generationProcessCache = createCachedLoader(() => getGenerationProcess());
 const promptsCache = createCachedLoader(() => getPrompts());
 const meCache = createCachedLoader(() => getMe());
+const generalResumePlatformSuggestionsCache = createCachedLoader(() =>
+  listGeneralResumePlatformSuggestions(),
+);
 
 export const loadSettings = aiSettingsCache.load;
 export const setSettingsCache = (value: AiSettings) => aiSettingsCache.set(value);
@@ -72,9 +76,15 @@ export const loadMe = meCache.load;
 export const setMeCache = (value: User) => meCache.set(value);
 export const clearMeCache = () => meCache.clear();
 
+export const loadGeneralResumePlatformSuggestions =
+  generalResumePlatformSuggestionsCache.load;
+export const clearGeneralResumePlatformSuggestionsCache = () =>
+  generalResumePlatformSuggestionsCache.clear();
+
 export function clearAllSettingsCaches() {
   aiSettingsCache.clear();
   generationProcessCache.clear();
   promptsCache.clear();
   meCache.clear();
+  generalResumePlatformSuggestionsCache.clear();
 }

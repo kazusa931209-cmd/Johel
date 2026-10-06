@@ -2,7 +2,7 @@ export const PROMPT_COMPILER_VERSION = "2";
 
 export const PROMPT_SECTION_SEPARATOR = "----------------------------------------";
 
-export type PromptInstructionKind = "verdict" | "generate" | "evaluate";
+export type PromptInstructionKind = "verdict" | "generate" | "evaluate" | "refine";
 
 export function compileInstruction(
   _kind: PromptInstructionKind,

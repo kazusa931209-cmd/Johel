@@ -2,6 +2,7 @@ import type { AiProviderId } from "./ai-provider";
 import { OPENAI_EMBEDDING_MODEL } from "./openai/embeddings";
 import {
   OPENAI_FORMAT_MODEL,
+  OPENAI_REASONING_MODEL,
   OPENAI_RESUME_MODEL,
   OPENAI_VERDICT_MODEL,
 } from "./openai/responses";
@@ -11,6 +12,7 @@ export const AI_GENERATE_TYPES = [
   "verdict",
   "jdMeta",
   "generate",
+  "draftRefine",
   "evaluate",
   "workflowRecommend",
   "markdownFormat",
@@ -18,6 +20,7 @@ export const AI_GENERATE_TYPES = [
   "experienceAdvise",
   "experienceSplit",
   "combineRecommend",
+  "generalCombineRecommend",
   "checkOnExperiences",
   "embedding",
 ] as const;
@@ -35,7 +38,7 @@ export function resolveAiModelName(
   _provider: AiProviderId,
   generateType: AiGenerateType,
 ): string {
-  if (generateType === "generate") {
+  if (generateType === "generate" || generateType === "draftRefine") {
     return OPENAI_RESUME_MODEL;
   }
   if (generateType === "markdownFormat") {
@@ -43,6 +46,9 @@ export function resolveAiModelName(
   }
   if (generateType === "embedding") {
     return OPENAI_EMBEDDING_MODEL;
+  }
+  if (generateType === "evaluate") {
+    return OPENAI_REASONING_MODEL;
   }
   return OPENAI_VERDICT_MODEL;
 }

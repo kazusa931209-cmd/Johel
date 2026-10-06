@@ -67,6 +67,11 @@ export const CombineProfilePicker = memo(function CombineProfilePicker({
           cell: (row) => row.email ?? "",
         },
         {
+          header: t("crud.profiles.form.residence"),
+          className: "max-w-[160px] truncate text-muted",
+          cell: (row) => row.residence ?? "",
+        },
+        {
           header: t("crud.profiles.form.university"),
           className: "max-w-[160px] truncate text-muted",
           cell: (row) => row.university ?? "",

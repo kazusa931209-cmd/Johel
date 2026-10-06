@@ -32,14 +32,18 @@ export const en = {
       },
     },
     sidebar: {
+      foundation: "Foundation",
       workspace: "Workspace",
-      run: "Run",
       settings: "Settings",
       profiles: "Profiles",
       companies: "Companies",
       experiences: "Experiences",
-      generate: "Generate",
-      history: "History",
+      resumeBuilder: "Resume Builder",
+      jdResumeBuilder: "JD-Resume Builder",
+      applicationBuilder: "Application Builder",
+      applications: "Applications",
+      compareAndChoose: "Compare & Choose",
+      resumes: "Resumes",
       environment: "Environment",
       generation: "Generation",
       prompts: "Prompts",
@@ -150,8 +154,9 @@ export const en = {
       combineExperiencesPerCompanyMax: {
         title: "Combine experiences per company",
         description:
-          "Maximum experience cards the AI may link to each included company when you Suggest experiences on Generate / Combine. The advisor still prefers fewer cards when job overlap is thin.",
+          "Minimum and maximum experience cards the AI should link to each included company when you Suggest experiences on Generate / Combine (JD and General Resume). The advisor may return fewer cards when overlap with the job or user instruction is thin.",
         label: "Max per company",
+        minLabel: "Min per company",
         option: "{count} cards",
       },
       experienceJdTierDecayPercent: {
@@ -184,20 +189,26 @@ export const en = {
       title: "Prompts",
       loading: "Loading…",
       description:
-        "Configure system prompts and optional extensions for checking Job Descriptions, generating resumes, and evaluating resumes. Each tab saves independently.",
+        "Configure system prompts and optional extensions for checking Job Descriptions, generating resumes, refining draft resumes, and evaluating resumes. Each tab saves independently.",
       tablistAria: "Prompt types",
       tabs: {
         verdict: "Verdict",
         generate: "Generate",
         evaluate: "Evaluate",
+        refine: "Refine",
+        generalEvaluate: "General Evaluate",
       },
       fields: {
         verdictPrompt: "Verdict Prompt",
         generatePrompt: "Generate Prompt",
         evaluatePrompt: "Evaluate Prompt",
+        refinePrompt: "Refine Prompt",
+        generalEvaluatePrompt: "General Evaluate Prompt",
         verdictExtension: "Verdict extension",
         generateExtension: "Generate extension",
         evaluateExtension: "Evaluate extension",
+        refineExtension: "Refine extension",
+        generalEvaluateExtension: "General Evaluate extension",
       },
       extensions: {
         description:
@@ -208,6 +219,8 @@ export const en = {
         verdict: "Edit Verdict Prompt",
         generate: "Edit Generate Prompt",
         evaluate: "Edit Evaluate Prompt",
+        refine: "Edit Refine Prompt",
+        generalEvaluate: "Edit General Evaluate Prompt",
         dialogTitle: "Edit {label}",
         systemImpactNotice:
           "Changes to system prompts directly affect the whole system. Review carefully before applying.",
@@ -442,8 +455,53 @@ export const en = {
       submitting: "Resetting…",
     },
   },
+  resumeBuilder: {
+    title: "Resume Builder",
+    steps: {
+      ariaLabel: "Resume Builder steps",
+    },
+    combine: {
+      userInstructionTitle: "User Instruction",
+      userInstructionFieldLabel: "User instruction",
+      platformLabel: "Platform",
+      platformHint:
+        "Optional label for this run. Suggestions come from Platform values used on your Resumes (General Resume runs).",
+      platformPlaceholder: "e.g. LinkedIn · Senior backend",
+      userInstructionHint:
+        "Steering for this General Resume run. Suggest experiences and generation follow this strongly, together with your profile, companies, and experiences.",
+      userInstructionPlaceholder:
+        "e.g. Target senior backend roles; emphasize platform reliability and on-call leadership; keep the resume to one page.",
+      description:
+        "Choose a profile and included companies and experiences for this run. Resume language follows Settings → Generation.",
+    },
+    evaluateStep: {
+      emptyHintNoHistory:
+        "Add a user prompt below and click Evaluate. Run on Generate can prefill from Settings → Prompts → General Evaluate.",
+      userPromptLabel: "User prompt",
+      userPromptPlaceholder:
+        "What to focus on in this evaluation. Replies follow the language you write here (or a language you name explicitly).",
+      userPromptRequired: "User prompt is required.",
+      evaluateButton: "Evaluate",
+      evaluatingButton: "Evaluating…",
+      copyResult: "Copy evaluation",
+      clearHistoryConfirm: {
+        title: "Clear existing evaluation results?",
+        body:
+          "This removes the evaluation chat history for this run. You can evaluate again afterward.",
+        yes: "Yes",
+        no: "No",
+      },
+      prefillGeneralEvaluateConfirm: {
+        title: "Start with the defined General Evaluate prompt?",
+        body:
+          "This copies your Settings → Prompts → General Evaluate prompt and extension into the User prompt field. Nothing runs until you click Evaluate.",
+        yes: "Yes",
+        no: "No",
+      },
+    },
+  },
   generate: {
-    title: "Generate",
+    title: "JD-Resume Builder",
     description: "Prepare the Job Description, then compose profile, companies, and experiences for this run.",
     new: "New",
     newConfirm: {
@@ -592,6 +650,9 @@ export const en = {
       companiesAndExperiences: "Companies & Experiences",
       companiesAndExperiencesHint:
         "Toggle companies to include, set periods and context, link capability cards per company, or use Suggest experiences.",
+      companiesAndExperiencesReadOnlyHint:
+        "Included companies and linked experiences for this run. Click an experience row to view details.",
+      readOnlyContextEmpty: "—",
       resetCompanies: "Reset",
       resetCompaniesAria: "Deselect all companies",
       selectProfileFirst: "Select a profile before choosing companies.",
@@ -662,24 +723,64 @@ export const en = {
     },
     generateStep: {
       noResume:
-        "No generated resume is available for this session. Go back to Combine and run resume generation again.",
+        "No draft resume is available for this session. Go back to Combine and run resume generation again.",
       pending: "Generating your resume…",
-      title: "Generated Resume",
-      referenceTabsAria: "Verdict and Combine reference",
+      title: "Draft resume",
+      referenceTabsAria: "Verdict, Combine, and Refine",
       editMode: "Edit",
       previewMode: "Preview",
+      saveDraft: "Save",
+      savingDraft: "Saving…",
+      cancelEdit: "Cancel",
       editHint:
-        "Edit the resume in Markdown. Keep section headings and the Title — Company format for experience entries.",
+        "Edit the draft resume in Markdown. Keep section headings and the Title — Company format for experience entries.",
       parseError: "Could not parse resume: {error}",
-      revertToAi: "Revert to AI version",
-      revertToAiSuccess: "Restored the AI-generated resume.",
+      undo: "Undo",
+      redo: "Redo",
+      refine: {
+        tab: "Refine",
+        hint:
+          "Choose a company to optionally add experiences for context. With no company, only your prompt is used.",
+        promptLabel: "Prompt",
+        apply: "Apply",
+        applying: "Applying…",
+        reset: "Reset",
+        instructionTitle: "Refine with instruction",
+        instructionPlaceholder: "Describe how to update the draft resume…",
+        instructionRequired: "Enter an instruction before applying.",
+        applyInstruction: "Apply instruction",
+        experiencesTitle: "Refine with experiences",
+        selectExperiences: "Select experiences",
+        select: "Select",
+        clear: "Clear",
+        experiencesLabel: "Experiences (optional)",
+        selectedExperiences: "{count} selected",
+        experiencesEmpty: "No experiences selected for refine.",
+        companyContextButton: "Company context",
+        companyContextSelected: "Company: {name}",
+        companyLabel: "Company context",
+        companyPlaceholder: "Type or choose a company…",
+        companyNoneOnResume:
+          "No companies on this resume. Add companies on the Combine step first.",
+        companyNone: "No company",
+        experienceInstructionPlaceholder: "Optional instruction for these experiences…",
+        applyExperiences: "Apply with experiences",
+        experiencesRequired: "Select at least one experience.",
+        pickerTitle: "Select experiences for refine",
+        pickerConfirm: "Done",
+        pickerMax: "You can select at most {max} experiences.",
+      },
+      refining: {
+        title: "Refining draft resume…",
+        description: "Please wait while the AI updates your draft.",
+      },
       generating: {
         title: "Generating Resume…",
         description: "Please wait while the AI tailors your resume to the job.",
       },
     },
     evaluateStep: {
-      referenceTabsAria: "Verdict, Combine, and Generated resume reference",
+      referenceTabsAria: "Verdict, Combine, and Draft resume reference",
       noEvaluation:
         "No evaluation is available for this session. Go back to Generate and run evaluation again.",
       pending: "Evaluating your resume…",
@@ -798,6 +899,7 @@ export const en = {
     generateTypes: {
       verdict: "Verdict",
       generate: "Generate",
+      draftRefine: "Draft refine",
       evaluate: "Evaluate",
       embedding: "Embedding",
       workflowRecommend: "Workflow Recommend",
@@ -805,6 +907,7 @@ export const en = {
       experienceAdvise: "Experience advisor",
       experienceSplit: "Experience Split",
       combineRecommend: "Combine recommend",
+      generalCombineRecommend: "General Resume Combine Recommend",
       promptHelper: "Prompt Helper",
       markdownFormat: "Markdown Format",
       checkOnExperiences: "Check on Experiences",
@@ -866,6 +969,8 @@ export const en = {
       "AI Verdict result is missing. Go back to Verdict and run analysis first.",
     resumeGenerateFailed: "AI Resume generation failed.",
     resumeGenerated: "Resume generated.",
+    draftResumeRefined: "Draft resume updated.",
+    draftResumeRefineFailed: "Draft resume refine failed.",
     noResumeForEvaluate: "No generated resume is available. Go back to Workflow and run generation first.",
     evaluationFingerprintFailed: "Failed to load workflow content for evaluation.",
     evaluateFailed: "AI Evaluate failed.",
@@ -946,6 +1051,14 @@ export const en = {
       "Define evaluation criteria against Verdict dimensions (Role, Technical Requirements, Final Verdict), scoring, and Markdown output structure.",
     evaluatePromptJobHint:
       "Resume evaluation uses the same job context as generation: AI Verdict Markdown when Do Verdict is enabled; otherwise the noise-filtered job description. The model receives labeled Job context and Resume Markdown.",
+    refinePromptPlaceholder:
+      "Define how the AI should update an existing draft resume (structure, tone, grounding rules, and output JSON expectations).",
+    refinePromptResumeHint:
+      "Used on the Generate step when refining a draft resume in Resume Builder. JD-Resume Builder draft refine uses the Generate Prompt instead.",
+    generalEvaluatePromptPlaceholder:
+      "Define how General Resume evaluation scores the draft (ATS viewpoint, 1–10 scores, issues to fix).",
+    generalEvaluatePromptResumeHint:
+      "Snapshotted when a new Resume Builder run starts. The Evaluate step sends this system prompt plus the resume and an optional per-run user prompt.",
     company: {
       shared:
         "Because the same shared experience can be linked to multiple companies, putting personal achievements in the company description leads to the same sentence repeating across companies, or achievements from other companies getting mixed in.",

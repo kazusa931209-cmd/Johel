@@ -44,7 +44,9 @@ type CombineCompanyCardsProps = {
   job: GenerateJobState;
   doVerdict: boolean;
   generationId?: string | null;
-  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
+  onSaveBeforeSuggest: (
+    snapshot: CombineSnapshot,
+  ) => Promise<{ error?: string }>;
   companies: CombineCompanyEntry[];
   onChange: (companies: CombineCompanyEntry[]) => void;
   disabled?: boolean;
@@ -52,6 +54,7 @@ type CombineCompanyCardsProps = {
   error?: string;
   onClearError?: () => void;
   onRegisterContextFlush?: (flush: () => void) => void;
+  suggestVariant?: "jd" | "general";
 };
 
 function normalizeIncludedEntries(
@@ -76,6 +79,7 @@ export function CombineCompanyCards({
   error,
   onClearError,
   onRegisterContextFlush,
+  suggestVariant = "jd",
 }: CombineCompanyCardsProps) {
   const t = useT();
   const { locale } = useLocale();
@@ -112,6 +116,7 @@ export function CombineCompanyCards({
     profileGraduation,
     generationId,
     onSaveBeforeSuggest,
+    suggestVariant,
   });
 
   const cardsDisabled = disabled || profileGraduation == null;

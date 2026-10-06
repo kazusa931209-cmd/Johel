@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   normalizeCombineExperiencesPerCompanyMax,
+  normalizeCombineExperiencesPerCompanyMin,
   resolveCombineExperiencesPerCompanyRange,
 } from "../combine-experiences-per-company";
 
@@ -25,5 +26,17 @@ describe("combine-experiences-per-company", () => {
       maxPerCompany: 1,
       thinOverlapMaxPerCompany: 1,
     });
+  });
+
+  it("uses an explicit min when provided", () => {
+    expect(resolveCombineExperiencesPerCompanyRange(5, 1)).toEqual({
+      minPerCompany: 1,
+      maxPerCompany: 5,
+      thinOverlapMaxPerCompany: 2,
+    });
+  });
+
+  it("clamps min to max", () => {
+    expect(normalizeCombineExperiencesPerCompanyMin(9, 3)).toBe(3);
   });
 });

@@ -7,6 +7,7 @@ import { AiVerdictMarkdown } from "@/components/shared/AiVerdictMarkdown";
 import { CopyButton } from "@/components/shared/action-icon-buttons";
 import { Drawer } from "@/components/shared/drawer";
 import type { AiUsageDetail } from "@/lib/api";
+import { prettifyJsonForAiUsageDisplay } from "@/lib/ai-usage";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 type AiUsageDetailTab = "input" | "output";
@@ -31,6 +32,7 @@ function AiUsageDetailPanel({
   }, [detail.id]);
 
   const rawText = activeTab === "input" ? detail.input : detail.output;
+  const { displayText, isJson } = prettifyJsonForAiUsageDisplay(rawText);
   const tabPanelId = `ai-usage-detail-${activeTab}`;
 
   return (
@@ -65,7 +67,7 @@ function AiUsageDetailPanel({
         </div>
         <CopyButton
           disabled={!rawText.trim()}
-          onClick={() => onCopy(rawText)}
+          onClick={() => onCopy(displayText)}
         />
       </div>
       <div
@@ -75,7 +77,13 @@ function AiUsageDetailPanel({
         className="min-h-0 flex-1 overflow-auto p-3"
       >
         {rawText.trim() ? (
-          <AiVerdictMarkdown markdown={rawText} />
+          isJson ? (
+            <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground">
+              {displayText}
+            </pre>
+          ) : (
+            <AiVerdictMarkdown markdown={rawText} />
+          )
         ) : (
           <p className="text-sm text-muted">{t("crud.common.emDash")}</p>
         )}

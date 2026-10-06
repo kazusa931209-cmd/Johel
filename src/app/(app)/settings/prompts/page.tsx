@@ -14,16 +14,22 @@ import { loadPrompts, setPromptsCache } from "@/lib/cached-settings";
 import { needsMarkdownFormatOnSave } from "@/lib/markdown-format";
 import {
   DEFAULT_EVALUATE_PROMPT,
+  DEFAULT_GENERAL_EVALUATE_PROMPT,
   DEFAULT_GENERATE_PROMPT,
+  DEFAULT_REFINE_PROMPT,
   DEFAULT_VERDICT_PROMPT,
   getAutoMarkdownFormatHint,
   getEvaluatePromptJobHint,
   getEvaluatePromptPlaceholder,
+  getGeneralEvaluatePromptPlaceholder,
+  getGeneralEvaluatePromptResumeHint,
   getGeneratePromptJobContextHint,
   getGeneratePromptPlaceholder,
   getPromptEditLabel,
   getPromptFieldLabel,
   getPromptTabLabel,
+  getRefinePromptPlaceholder,
+  getRefinePromptResumeHint,
   getSystemPromptQualityNotice,
   getVerdictPromptPlaceholder,
   getVerdictPromptResumeHint,
@@ -53,6 +59,8 @@ const PROMPT_TAB_CONFIGS: PromptFieldConfig[] = [
   { kind: "verdict", rows: 24 },
   { kind: "generate", rows: 24 },
   { kind: "evaluate", rows: 24 },
+  { kind: "refine", rows: 24 },
+  { kind: "generalEvaluate", rows: 24 },
 ];
 
 const PROMPT_TAB_IDS = new Set(PROMPT_TAB_CONFIGS.map((tab) => tab.kind));
@@ -61,6 +69,8 @@ const DEFAULT_PROMPT_BY_KIND: Record<PromptTab, string> = {
   verdict: DEFAULT_VERDICT_PROMPT,
   generate: DEFAULT_GENERATE_PROMPT,
   evaluate: DEFAULT_EVALUATE_PROMPT,
+  refine: DEFAULT_REFINE_PROMPT,
+  generalEvaluate: DEFAULT_GENERAL_EVALUATE_PROMPT,
 };
 
 function parsePromptTab(value: string | null): PromptTab {
@@ -82,9 +92,13 @@ type PromptValues = {
   verdictPrompt: string;
   generatePrompt: string;
   evaluatePrompt: string;
+  refinePrompt: string;
+  generalEvaluatePrompt: string;
   verdictExtension: string;
   generateExtension: string;
   evaluateExtension: string;
+  refineExtension: string;
+  generalEvaluateExtension: string;
 };
 
 type StoredPromptValues = PromptValues;
@@ -93,22 +107,21 @@ const EMPTY_PROMPTS: PromptValues = {
   verdictPrompt: "",
   generatePrompt: "",
   evaluatePrompt: "",
+  refinePrompt: "",
+  generalEvaluatePrompt: "",
   verdictExtension: "",
   generateExtension: "",
   evaluateExtension: "",
+  refineExtension: "",
+  generalEvaluateExtension: "",
 };
 
 function PromptsPageFallback() {
   const t = useT();
 
   return (
-    <section className="mx-auto w-full max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("settings.prompts.title")}
-        </h1>
-        <p className="text-muted">{t("settings.prompts.loading")}</p>
-      </div>
+    <section className="w-full space-y-6">
+      <p className="text-muted">{t("settings.prompts.loading")}</p>
     </section>
   );
 }
@@ -142,13 +155,21 @@ function PromptsPageContent() {
             ? getVerdictPromptPlaceholder(t)
             : tab.kind === "generate"
               ? getGeneratePromptPlaceholder(t)
-              : getEvaluatePromptPlaceholder(t),
+              : tab.kind === "evaluate"
+                ? getEvaluatePromptPlaceholder(t)
+                : tab.kind === "generalEvaluate"
+                  ? getGeneralEvaluatePromptPlaceholder(t)
+                  : getRefinePromptPlaceholder(t),
         resumeHint:
           tab.kind === "verdict"
             ? getVerdictPromptResumeHint(t)
             : tab.kind === "generate"
               ? getGeneratePromptJobContextHint(t)
-              : getEvaluatePromptJobHint(t),
+              : tab.kind === "evaluate"
+                ? getEvaluatePromptJobHint(t)
+                : tab.kind === "generalEvaluate"
+                  ? getGeneralEvaluatePromptResumeHint(t)
+                  : getRefinePromptResumeHint(t),
       })),
     [t],
   );
@@ -243,16 +264,10 @@ function PromptsPageContent() {
   const saveBusy = savingKind === activeTab;
 
   return (
-    <section className="mx-auto w-full max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("settings.prompts.title")}
-        </h1>
-        <p className="text-muted">{t("settings.prompts.description")}</p>
-        <p className="text-sm text-foreground">
-          {getSystemPromptQualityNotice(t)}
-        </p>
-      </div>
+    <section className="w-full space-y-6">
+      <p className="text-sm text-foreground">
+        {getSystemPromptQualityNotice(t)}
+      </p>
 
       <div
         className="flex gap-1 border-b border-border"

@@ -12,7 +12,7 @@ import {
   PROMPT_SECTION_SEPARATOR,
 } from "../prompt-optimize/index";
 
-const JSON_SCHEMA_DESCRIPTION = `{
+export const RESUME_JSON_SCHEMA_DESCRIPTION = `{
   "header": {
     "name": "string (required)",
     "title": "string (optional)",
@@ -71,7 +71,7 @@ ${getCompanySceneGenerateRules()}
 - Return ONLY valid JSON matching the schema below. Do NOT output Markdown. Do NOT wrap the answer in a code fence.
 
 Required JSON schema:
-${JSON_SCHEMA_DESCRIPTION}`;
+${RESUME_JSON_SCHEMA_DESCRIPTION}`;
 }
 
 const OPENAI_PROVIDER_NOTES = `Provider notes (OpenAI):
@@ -100,7 +100,7 @@ function formatKeywordContext(keywordContext?: string): string {
     : "(none — match from job context only)";
 }
 
-function formatProfileSection(input: ResumeGenerationInput): string {
+export function formatProfileSection(input: ResumeGenerationInput): string {
   const { profile } = input;
   const lines = [
     `- Name: ${profile.firstName} ${profile.lastName}`.trim(),

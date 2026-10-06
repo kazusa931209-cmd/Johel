@@ -5,6 +5,7 @@ const KIND_LABELS: Record<MarkdownFormatKind, string> = {
   verdict: "Verdict Prompt (used when checking Job Descriptions)",
   generate: "Generate Prompt (used when generating resumes)",
   evaluate: "Evaluate Prompt (used when evaluating resumes)",
+  refine: "Refine Prompt (used when refining draft resumes on the Generate step)",
   companyWhatItIs:
     "What this company is (used when generating resumes from workflow data)",
   experienceProblem:
@@ -19,6 +20,7 @@ const PROMPT_INSTRUCTION_KINDS = new Set<MarkdownFormatKind>([
   "verdict",
   "generate",
   "evaluate",
+  "refine",
 ]);
 
 const STRUCTURED_LIST_KINDS = new Set<MarkdownFormatKind>([
@@ -53,7 +55,7 @@ Rules:
 
 export function isPromptInstructionKind(
   kind: MarkdownFormatKind,
-): kind is "verdict" | "generate" | "evaluate" {
+): kind is "verdict" | "generate" | "evaluate" | "refine" {
   return PROMPT_INSTRUCTION_KINDS.has(kind);
 }
 

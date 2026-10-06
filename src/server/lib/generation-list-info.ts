@@ -16,6 +16,17 @@ export function parseGenerationJobJson(jobJson: string): ParsedJob {
   }
 }
 
+export function parseGenerationCombinePlatform(combineJson: string): string {
+  try {
+    const parsed = JSON.parse(combineJson) as Record<string, unknown>;
+    const platform =
+      typeof parsed.platform === "string" ? parsed.platform.trim() : "";
+    return platform;
+  } catch {
+    return "";
+  }
+}
+
 export function parseGenerationCombineProfileId(
   combineJson: string,
 ): string | null {
@@ -39,6 +50,17 @@ export function formatGenerationInformation(parts: {
     parts.jdCompanyName?.trim(),
     parts.jdJobRole?.trim(),
   ].filter(Boolean);
+
+  return segments.length > 0 ? segments.join(" · ") : "—";
+}
+
+export function formatGeneralResumeInformation(parts: {
+  platform?: string;
+  profileName?: string | null;
+}): string {
+  const segments = [parts.platform?.trim(), parts.profileName?.trim()].filter(
+    Boolean,
+  );
 
   return segments.length > 0 ? segments.join(" · ") : "—";
 }

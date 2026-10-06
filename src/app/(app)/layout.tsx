@@ -9,7 +9,6 @@ import { useT } from "@/components/app/LocaleProvider";
 import { StudioBottomFabCluster } from "@/components/app/StudioBottomFabCluster";
 import { StudioHeader } from "@/components/app/StudioHeader";
 import { StudioSidebar } from "@/components/app/StudioSidebar";
-import { StudioTokenMetricsFloater } from "@/components/app/StudioTokenMetricsFloater";
 import type { User } from "@/lib/api";
 import { loadMe } from "@/lib/cached-settings";
 import { getStoredSidebar, persistSidebar } from "@/lib/sidebar";
@@ -55,7 +54,6 @@ function AppShell({
           <main className="min-h-0 flex-1 overflow-y-auto p-6">{children}</main>
         </div>
         <StudioBottomFabCluster />
-        <StudioTokenMetricsFloater />
       </div>
     </AiAssistantProvider>
   );

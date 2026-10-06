@@ -288,14 +288,16 @@ LAN deployment (`docker compose up`) does not require `ENCRYPTION_KEY` for a fre
 
 ## Database backup and restore
 
-Scripts live under `scripts/`:
+From the repository root (pnpm or shell):
 
 ```bash
 # Backup (Docker container name defaults to app-johel)
-./scripts/backup-db.sh
+pnpm db:backup
+# same as: ./scripts/backup-db.sh
 
 # Restore — prompts for RESTORE confirmation
-./scripts/restore-db.sh ./backups/johel-20260911-030000.db
+pnpm db:restore ./backups/johel-20260911-030000.db
+# same as: ./scripts/restore-db.sh ./backups/johel-20260911-030000.db
 ```
 
 Environment overrides:

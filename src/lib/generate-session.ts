@@ -8,6 +8,10 @@ import {
 } from "@/components/generate/combine-types";
 import { noiseFilter } from "@/lib/jobNoiseFilter";
 import { hashPromptForCache } from "@/lib/prompt-hash";
+import {
+  type GeneralEvaluationHistoryEntry,
+  parseGeneralEvaluationHistory,
+} from "@/lib/general-evaluation-history";
 
 export type GenerateJobInputMethod = "url" | "file" | "manual";
 
@@ -34,6 +38,7 @@ export type GenerateSession = {
   generationInputKey: string | null;
   evaluationMarkdown: string | null;
   evaluationInputKey: string | null;
+  evaluationHistory: GeneralEvaluationHistoryEntry[];
   finalized: boolean;
   /** Filtered JD hash; duplicate dialog skipped until Job text changes. */
   jobDuplicateDismissedHash: string | null;
@@ -75,6 +80,7 @@ export const EMPTY_GENERATE_SESSION: GenerateSession = {
   generationInputKey: null,
   evaluationMarkdown: null,
   evaluationInputKey: null,
+  evaluationHistory: [],
   finalized: false,
   jobDuplicateDismissedHash: null,
 };
@@ -299,6 +305,9 @@ function parseCombineSnapshot(value: unknown): CombineSnapshot {
     profileId: typeof raw.profileId === "string" ? raw.profileId : "",
     language: typeof raw.language === "string" ? raw.language : "en",
     emphasis: typeof raw.emphasis === "string" ? raw.emphasis : "",
+    userInstruction:
+      typeof raw.userInstruction === "string" ? raw.userInstruction : "",
+    platform: typeof raw.platform === "string" ? raw.platform : "",
     companies,
   };
 }
@@ -463,6 +472,7 @@ export function clearDownstreamFromVerdict(
     generationInputKey: null,
     evaluationMarkdown: null,
     evaluationInputKey: null,
+    evaluationHistory: [],
   };
 }
 
@@ -480,9 +490,15 @@ export function hasStaleDownstreamForRun(
   switch (fromStep) {
     case "Job":
     case "Combine":
-      return Boolean(session.resume || session.evaluationMarkdown);
+      return Boolean(
+        session.resume ||
+          session.evaluationMarkdown ||
+          session.evaluationHistory.length > 0,
+      );
     case "Generate":
-      return Boolean(session.evaluationMarkdown);
+      return Boolean(
+        session.evaluationMarkdown || session.evaluationHistory.length > 0,
+      );
     default:
       return false;
   }
@@ -533,6 +549,7 @@ export function parseGenerateSession(value: unknown): GenerateSession | null {
       typeof raw.evaluationInputKey === "string"
         ? raw.evaluationInputKey
         : null,
+    evaluationHistory: parseGeneralEvaluationHistory(raw.evaluationHistory),
     finalized: raw.finalized === true,
     jobDuplicateDismissedHash:
       typeof raw.jobDuplicateDismissedHash === "string"

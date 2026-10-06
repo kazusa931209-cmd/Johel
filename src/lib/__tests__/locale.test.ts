@@ -60,11 +60,16 @@ describe("locale storage", () => {
 
 describe("translate", () => {
   it("returns English strings by default", () => {
-    expect(translate("en", "nav.sidebar.generate")).toBe("Generate");
+    expect(translate("en", "nav.sidebar.jdResumeBuilder")).toBe(
+      "JD-Resume Builder",
+    );
+    expect(translate("en", "resumeBuilder.title")).toBe("Resume Builder");
   });
 
   it("returns Korean strings when locale is ko", () => {
-    expect(translate("ko", "nav.sidebar.generate")).toBe("생성");
+    expect(translate("ko", "nav.sidebar.jdResumeBuilder")).toBe(
+      "JD-이력서 빌더",
+    );
   });
 
   it("interpolates parameters", () => {

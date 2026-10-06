@@ -1,9 +1,11 @@
 import type OpenAI from "openai";
 import { createOpenAiClient, extractOpenAiTokenUsage, mapOpenAiError } from "./client";
 
-export const OPENAI_VERDICT_MODEL = "gpt-5.6-luna";
-export const OPENAI_RESUME_MODEL = "gpt-5.6-terra";
-export const OPENAI_FORMAT_MODEL = "gpt-5.6-sol";
+export const OPENAI_VERDICT_MODEL = "gpt-6-luna";
+export const OPENAI_RESUME_MODEL = "gpt-6-astra";
+export const OPENAI_FORMAT_MODEL = "gpt-6-luna";
+/** Resume evaluation (JD + General); strong reasoning. */
+export const OPENAI_REASONING_MODEL = "gpt-6-astra";
 
 type ReasoningEffort = "low" | "medium" | "high";
 
@@ -97,10 +99,10 @@ export async function runOpenAiEvaluateResponse(
   input: string,
 ): Promise<OpenAiTextResponse> {
   return createTextResponse(apiKey, {
-    model: OPENAI_VERDICT_MODEL,
+    model: OPENAI_REASONING_MODEL,
     instructions,
     input,
-    reasoningEffort: "low",
+    reasoningEffort: "high",
   });
 }
 

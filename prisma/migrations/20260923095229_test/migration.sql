@@ -1,0 +1,1 @@
+-- No-op (legacy migration). User/FK changes live in `20260923100000_generation_kind`.

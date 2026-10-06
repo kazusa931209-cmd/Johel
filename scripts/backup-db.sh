@@ -23,8 +23,6 @@ else
   fi
 fi
 
-# After backup, prepare for Turso: scripts/prepare-sqlite-for-turso-import.sh "$OUT_FILE"
-
 find "$BACKUP_DIR" -type f -name 'johel-*.db' -mtime +"$RETENTION_DAYS" -delete
 
 echo "Backup written to $OUT_FILE"

@@ -23,9 +23,13 @@ type GeneratePreviousStepPanelProps = {
   job: GenerateJobState;
   combine: CombineSnapshot;
   resume: GeneratedResume | null;
+  refinePanel?: ReactNode | null;
+  refineFooterApply?: ReactNode | null;
+  /** Resume Builder Evaluate: left panel is resume-only (no reference tabs). */
+  evaluateResumeOnly?: boolean;
 };
 
-type GenerateReferenceView = "Verdict" | "Combine" | "Resume";
+type GenerateReferenceView = "Verdict" | "Combine" | "Resume" | "Refine";
 
 const PREVIOUS_STEP_TITLE_KEYS: Record<GenerateStep, string> = {
   Job: "generate.previous.jobTitle",
@@ -39,6 +43,7 @@ const REFERENCE_TAB_LABEL_KEYS: Record<GenerateReferenceView, string> = {
   Verdict: "generate.steps.verdict",
   Combine: "generate.steps.combine",
   Resume: "generate.previous.resumeTitle",
+  Refine: "generate.generateStep.refine.tab",
 };
 
 function GenerateReferenceTabs({
@@ -135,6 +140,7 @@ function renderReferenceViewContent(
   job: GenerateJobState,
   combine: CombineSnapshot,
   resume: GeneratedResume | null,
+  refinePanel: ReactNode | null | undefined,
 ): ReactNode {
   switch (view) {
     case "Verdict":
@@ -143,6 +149,8 @@ function renderReferenceViewContent(
       return <GenerateCombineSummary combine={combine} />;
     case "Resume":
       return <ResumeReferenceContent resume={resume} />;
+    case "Refine":
+      return refinePanel ?? null;
   }
 }
 
@@ -153,18 +161,22 @@ export function useGeneratePreviousStepPanel({
   job,
   combine,
   resume,
+  refinePanel,
+  refineFooterApply,
+  evaluateResumeOnly = false,
 }: GeneratePreviousStepPanelProps): {
   previousTitle?: ReactNode;
   previousContent: ReactNode | null;
   previousHeaderRight?: ReactNode;
+  previousFooter?: ReactNode;
 } {
   const t = useT();
   const [referenceView, setReferenceView] =
-    useState<GenerateReferenceView>("Combine");
+    useState<GenerateReferenceView>("Refine");
 
   useEffect(() => {
     if (currentStep === "Generate") {
-      setReferenceView("Combine");
+      setReferenceView("Refine");
       return;
     }
     if (currentStep === "Evaluate") {
@@ -187,14 +199,17 @@ export function useGeneratePreviousStepPanel({
     currentStep === "Job" || previousStep === "Job";
 
   const generateReferenceTabs = useMemo(() => {
-    if (currentStep !== "Generate" || !doVerdict) {
+    if (currentStep !== "Generate") {
       return null;
     }
-    return ["Verdict", "Combine"] as const;
+    if (doVerdict) {
+      return ["Verdict", "Combine", "Refine"] as const;
+    }
+    return ["Combine", "Refine"] as const;
   }, [currentStep, doVerdict]);
 
   const evaluateReferenceTabs = useMemo(() => {
-    if (currentStep !== "Evaluate") {
+    if (currentStep !== "Evaluate" || evaluateResumeOnly) {
       return null;
     }
     const tabs: GenerateReferenceView[] = [];
@@ -203,7 +218,7 @@ export function useGeneratePreviousStepPanel({
     }
     tabs.push("Combine", "Resume");
     return tabs;
-  }, [currentStep, doVerdict]);
+  }, [currentStep, doVerdict, evaluateResumeOnly]);
 
   const activeReferenceTabs =
     generateReferenceTabs ?? evaluateReferenceTabs ?? null;
@@ -233,6 +248,13 @@ export function useGeneratePreviousStepPanel({
     </span>
   ) : undefined;
 
+  const previousFooter =
+    currentStep === "Generate" &&
+    referenceView === "Refine" &&
+    refineFooterApply
+      ? refineFooterApply
+      : undefined;
+
   const previousContent = useMemo(() => {
     if (currentStep === "Job") {
       return (
@@ -248,7 +270,13 @@ export function useGeneratePreviousStepPanel({
     if (activeReferenceTabs) {
       return (
         <ReferenceTabPanel active={referenceView}>
-          {renderReferenceViewContent(referenceView, job, combine, resume)}
+          {renderReferenceViewContent(
+            referenceView,
+            job,
+            combine,
+            resume,
+            refinePanel,
+          )}
         </ReferenceTabPanel>
       );
     }
@@ -284,6 +312,7 @@ export function useGeneratePreviousStepPanel({
     job,
     previousStep,
     referenceView,
+    refinePanel,
     resume,
     t,
   ]);
@@ -292,5 +321,6 @@ export function useGeneratePreviousStepPanel({
     previousTitle,
     previousContent,
     previousHeaderRight,
+    previousFooter,
   };
 }

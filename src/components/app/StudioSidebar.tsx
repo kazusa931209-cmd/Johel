@@ -49,8 +49,19 @@ export function StudioSidebar({
     pathname.startsWith("/prompts/") ||
     pathname === "/verdict" ||
     pathname.startsWith("/verdict/");
-  const generateActive = pathname === "/";
-  const historyActive =
+  const resumeBuilderActive =
+    pathname === "/resume-builder" ||
+    pathname.startsWith("/resume-builder/");
+  const jdResumeBuilderActive = pathname === "/";
+  const applicationBuilderActive =
+    pathname === "/application-builder" ||
+    pathname.startsWith("/application-builder/");
+  const applicationsActive =
+    pathname === "/applications" || pathname.startsWith("/applications/");
+  const compareAndChooseActive =
+    pathname === "/compare-choose" ||
+    pathname.startsWith("/compare-choose/");
+  const resumesActive =
     pathname === "/history" || pathname.startsWith("/history/");
 
   return (
@@ -102,7 +113,7 @@ export function StudioSidebar({
       >
         <nav className="studio-sidebar-inner h-full overflow-y-auto">
           <div className="flex flex-col gap-1 p-3">
-            <div className={sectionLabelClass()}>{t("nav.sidebar.workspace")}</div>
+            <div className={sectionLabelClass()}>{t("nav.sidebar.foundation")}</div>
             <Link href="/profiles" className={navLinkClass(profilesActive)}>
               {t("nav.sidebar.profiles")}
             </Link>
@@ -114,13 +125,34 @@ export function StudioSidebar({
             </Link>
 
             <div className={`${sectionLabelClass()} mt-2`}>
-              {t("nav.sidebar.run")}
+              {t("nav.sidebar.workspace")}
             </div>
-            <Link href="/" className={navLinkClass(generateActive)}>
-              {t("nav.sidebar.generate")}
+            <Link
+              href="/resume-builder"
+              className={navLinkClass(resumeBuilderActive)}
+            >
+              {t("nav.sidebar.resumeBuilder")}
             </Link>
-            <Link href="/history" className={navLinkClass(historyActive)}>
-              {t("nav.sidebar.history")}
+            <Link href="/" className={navLinkClass(jdResumeBuilderActive)}>
+              {t("nav.sidebar.jdResumeBuilder")}
+            </Link>
+            <Link
+              href="/application-builder"
+              className={navLinkClass(applicationBuilderActive)}
+            >
+              {t("nav.sidebar.applicationBuilder")}
+            </Link>
+            <Link
+              href="/compare-choose"
+              className={navLinkClass(compareAndChooseActive)}
+            >
+              {t("nav.sidebar.compareAndChoose")}
+            </Link>
+            <Link href="/history" className={navLinkClass(resumesActive)}>
+              {t("nav.sidebar.resumes")}
+            </Link>
+            <Link href="/applications" className={navLinkClass(applicationsActive)}>
+              {t("nav.sidebar.applications")}
             </Link>
 
             <div className={`${sectionLabelClass()} mt-2`}>

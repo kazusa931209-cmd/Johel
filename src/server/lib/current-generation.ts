@@ -1,4 +1,5 @@
 import type { Generation } from "@prisma/client";
+import { GENERATION_KIND_JD } from "./generation-public-id";
 import { prisma } from "./prisma";
 
 export async function setUserCurrentGeneration(
@@ -23,7 +24,11 @@ export async function getUserCurrentGeneration(
   }
 
   const generation = await prisma.generation.findFirst({
-    where: { id: user.currentGenerationId, userId },
+    where: {
+      id: user.currentGenerationId,
+      userId,
+      kind: GENERATION_KIND_JD,
+    },
   });
   if (generation) {
     return generation;
