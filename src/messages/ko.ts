@@ -87,7 +87,7 @@ export const ko: MessageTree = {
       language: {
         title: "언어",
         english: "English",
-        korean: "한국어",
+        japanese: "일본어",
       },
       fabDrawerPosition: {
         title: "FAB·Drawer 위치",
