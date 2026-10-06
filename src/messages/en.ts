@@ -85,7 +85,7 @@ export const en = {
       language: {
         title: "Language",
         english: "English",
-        korean: "Korean",
+        japanese: "Japanese",
       },
       fabDrawerPosition: {
         title: "FAB & Drawer Position",

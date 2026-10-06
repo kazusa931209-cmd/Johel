@@ -13,7 +13,7 @@ import type { Theme } from "@/lib/theme";
 
 const LANGUAGE_OPTIONS: { value: Locale; labelKey: string }[] = [
   { value: "en", labelKey: "settings.environment.language.english" },
-  { value: "ko", labelKey: "settings.environment.language.korean" },
+  { value: "ja", labelKey: "settings.environment.language.japanese" },
 ];
 
 const DRAWER_POSITION_OPTIONS: {

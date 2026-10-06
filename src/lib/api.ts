@@ -645,7 +645,7 @@ export type AiGeneralEvaluateRequest = {
   resume: import("@johel/resume").GeneratedResume;
   userPrompt: string;
   /** Response language follows the user prompt (or explicit override in prompt). */
-  uiLocale?: "en" | "ko";
+  uiLocale?: "en" | "ja";
 };
 
 export function runAiGeneralEvaluate(

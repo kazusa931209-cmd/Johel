@@ -39,9 +39,15 @@ describe("locale storage", () => {
     expect(getStoredLocale()).toBe(DEFAULT_LOCALE);
   });
 
-  it("reads Korean from storage", () => {
+  it("reads Japanese from storage", () => {
+    localStorage.setItem(LOCALE_STORAGE_KEY, "ja");
+    expect(getStoredLocale()).toBe("ja");
+  });
+
+  it("migrates hidden Korean locale to English", () => {
     localStorage.setItem(LOCALE_STORAGE_KEY, "ko");
-    expect(getStoredLocale()).toBe("ko");
+    expect(getStoredLocale()).toBe("en");
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("en");
   });
 
   it("falls back to English for unknown values", () => {
@@ -50,9 +56,9 @@ describe("locale storage", () => {
   });
 
   it("persists locale and sets document lang", () => {
-    persistLocale("ko");
-    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("ko");
-    expect(document.documentElement.lang).toBe("ko");
+    persistLocale("ja");
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("ja");
+    expect(document.documentElement.lang).toBe("ja");
     applyLocale("en");
     expect(document.documentElement.lang).toBe("en");
   });
@@ -66,9 +72,9 @@ describe("translate", () => {
     expect(translate("en", "resumeBuilder.title")).toBe("Resume Builder");
   });
 
-  it("returns Korean strings when locale is ko", () => {
-    expect(translate("ko", "nav.sidebar.jdResumeBuilder")).toBe(
-      "JD-이력서 빌더",
+  it("returns Japanese strings when locale is ja", () => {
+    expect(translate("ja", "nav.sidebar.jdResumeBuilder")).toBe(
+      "JD-履歴書ビルダー",
     );
   });
 
@@ -82,7 +88,7 @@ describe("translate", () => {
   });
 
   it("falls back to English for missing keys", () => {
-    expect(translate("ko", "nonexistent.key.path")).toBe("nonexistent.key.path");
+    expect(translate("ja", "nonexistent.key.path")).toBe("nonexistent.key.path");
     expect(translate("en", "nonexistent.key.path")).toBe("nonexistent.key.path");
   });
 });

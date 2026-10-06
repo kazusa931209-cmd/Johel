@@ -1,6 +1,6 @@
 import type { Locale } from "@/lib/locale";
 import { en } from "./en";
-import { ko } from "./ko";
+import { ja } from "./ja";
 
 type DeepStringify<T> = T extends readonly string[]
   ? readonly string[]
@@ -10,7 +10,7 @@ type DeepStringify<T> = T extends readonly string[]
 
 export type MessageTree = DeepStringify<typeof en>;
 
-const catalogs: Record<Locale, MessageTree> = { en, ko };
+const catalogs: Record<Locale, MessageTree> = { en, ja };
 
 function resolvePath(tree: unknown, parts: string[]): unknown {
   let current: unknown = tree;

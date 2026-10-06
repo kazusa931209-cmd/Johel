@@ -7,8 +7,8 @@ import {
 
 describe("buildGeneralEvaluateResponseLanguageSection", () => {
   it("uses UI locale when user prompt is empty", () => {
-    const section = buildGeneralEvaluateResponseLanguageSection("", "ko");
-    expect(section).toContain("Korean");
+    const section = buildGeneralEvaluateResponseLanguageSection("", "ja");
+    expect(section).toContain("Japanese");
     expect(section).toContain("did not add a custom prompt");
   });
 

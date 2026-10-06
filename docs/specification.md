@@ -222,7 +222,7 @@ Aligned with the product flow above:
 * **Settings**
   * **Environment** (`/settings/environment`) — centered in a readable column; `/settings` redirects here
   * Theme (Dark / Light)
-  * **Language** (English / Korean; English default; applies immediately and is remembered per browser)
+  * **Language** (English / Japanese; English default; applies immediately and is remembered per browser)
   * **AI Agent**: provider (**Cursor AI Agent** or **OpenAI**) and the user’s **API key**
   * A saved API key is shown only in part (first and last four characters), never in full
   * **Generation** (`/settings/generation`) — centered in a readable column; sidebar between Environment and Prompts

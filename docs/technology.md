@@ -352,12 +352,12 @@ User browser (:4041 local, Vercel in prod)
 
 ## UI locale (Phase 50)
 
-- **Storage:** `johel-locale` in `localStorage`; values `en` (default) or `ko`
+- **Storage:** `johel-locale` in `localStorage`; values `en` (default) or `ja`. Legacy `ko` is migrated to `en` on read.
 - **Bootstrap:** `LOCALE_BOOTSTRAP_SCRIPT` in root layout `<head>` sets `document.documentElement.lang` before paint (alongside theme bootstrap)
 - **Provider:** `LocaleProvider` (`components/app/LocaleProvider.tsx`) exposes `locale`, `setLocale`, `t`, `tLines`
-- **Catalogs:** `src/messages/en.ts` (source of key shape), `ko.ts` (`MessageTree` via `DeepStringify<typeof en>`), `translate.ts` (`translate`, `translateLines`)
+- **Catalogs:** `src/messages/en.ts` (source of key shape), `ja.ts` (`MessageTree` via `DeepStringify<typeof en>`), `translate.ts` (`translate`, `translateLines`). `ko.ts` remains in the repo but is not wired to the UI locale selector.
 - **Settings:** `/settings/environment` Language section after Theme; toggles apply immediately (no Save)
-- **Korean typography:** when `document.documentElement.lang` is `ko`, UI sans-serif uses bundled **KP CheonRiMa** (`src/fonts/KP-CheonRiMa-Medium.ttf` via `next/font/local` in `lib/ko-font.ts`); English keeps Geist Sans
+- **Japanese / English typography:** UI sans-serif uses Geist Sans for `en` and `ja`. Legacy Korean font rules in `globals.css` apply only if `lang="ko"` (no longer selectable).
 - **Scope:** All JoHEL UI strings including login/register; not resume output language (Settings Generation) or server/API error text
 
 ## Architecture refactor (Phases 54–60, 2026-09-09)

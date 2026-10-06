@@ -17,7 +17,7 @@ const postSchema = z.object({
   resume: generatedResumeSchema,
   generationId: z.string().trim().min(1),
   userPrompt: z.string().max(USER_PROMPT_MAX).optional().default(""),
-  uiLocale: z.enum(["en", "ko"]).optional().default("en"),
+  uiLocale: z.enum(["en", "ja"]).optional().default("en"),
 });
 
 export const aiGeneralEvaluateRoutes = new Hono();
