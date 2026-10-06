@@ -21,14 +21,9 @@ export function GeneratePrerequisites({ missing }: GeneratePrerequisitesProps) {
         role="alert"
         className="w-full max-w-lg space-y-4 rounded-lg border border-border bg-surface p-6 shadow-lg"
       >
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight">
-            {t("generate.prerequisites.title")}
-          </h1>
-          <p className="text-sm text-muted">
-            {t("generate.prerequisites.description")}
-          </p>
-        </div>
+        <h2 className="text-xl font-semibold tracking-tight">
+          {t("generate.prerequisites.title")}
+        </h2>
         <ul className="space-y-2 text-sm">
           {missing.map((item) => (
             <li

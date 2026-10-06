@@ -23,10 +23,12 @@ type GenerateStepLayoutProps = {
   previousTitle?: ReactNode;
   previous?: ReactNode;
   previousHeaderRight?: ReactNode;
+  previousFooter?: ReactNode;
   currentTitle?: string;
   currentHeaderRight?: ReactNode;
   currentFooter?: ReactNode;
   swapColumns?: boolean;
+  previousFill?: boolean;
   currentFill?: boolean;
   children: ReactNode;
 };
@@ -70,7 +72,7 @@ function StepPanel({
       {footer ? (
         <>
           <div className={bodyClassName}>{children}</div>
-          <div className="flex shrink-0 items-center border-t border-border px-4 py-3">
+          <div className="flex w-full shrink-0 items-center justify-end gap-2 border-t border-border px-4 py-3">
             {footer}
           </div>
         </>
@@ -184,10 +186,12 @@ export function GenerateStepLayout({
   previousTitle,
   previous,
   previousHeaderRight,
+  previousFooter,
   currentTitle,
   currentHeaderRight,
   currentFooter,
   swapColumns = false,
+  previousFill = false,
   currentFill = false,
   children,
 }: GenerateStepLayoutProps) {
@@ -209,7 +213,12 @@ export function GenerateStepLayout({
   }, []);
 
   const previousPanel = (
-    <StepPanel title={previousTitle} headerRight={previousHeaderRight}>
+    <StepPanel
+      title={previousTitle}
+      headerRight={previousHeaderRight}
+      footer={previousFooter}
+      fill={previousFill}
+    >
       {previous ?? (
         <span className="sr-only">{t("generate.layout.emptyPrevious")}</span>
       )}

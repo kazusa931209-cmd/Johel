@@ -17,7 +17,11 @@ import {
   mergeExperienceSuggestions,
   mergeExperienceSuggestionsForCompany,
 } from "@/lib/combine-experience-suggest";
-import { runAiCombineRecommend, type CombineRecommendResult } from "@/lib/api";
+import {
+  runAiCombineRecommend,
+  runAiGeneralCombineRecommend,
+  type CombineRecommendResult,
+} from "@/lib/api";
 import { buildLinkedExperienceRevision } from "@/lib/experience";
 import { usePce } from "@/lib/pce";
 import type { ProfileGraduation } from "@/lib/profile";
@@ -30,7 +34,10 @@ type UseCombineExperienceSuggestOptions = {
   doVerdict: boolean;
   profileGraduation: ProfileGraduation | null;
   generationId?: string | null;
-  onSaveBeforeSuggest: () => Promise<{ error?: string }>;
+  onSaveBeforeSuggest: (
+    snapshot: CombineSnapshot,
+  ) => Promise<{ error?: string }>;
+  suggestVariant?: "jd" | "general";
 };
 
 export function useCombineExperienceSuggest({
@@ -42,6 +49,7 @@ export function useCombineExperienceSuggest({
   profileGraduation,
   generationId,
   onSaveBeforeSuggest,
+  suggestVariant = "jd",
 }: UseCombineExperienceSuggestOptions) {
   const t = useT();
   const { toast } = useToast();
@@ -142,7 +150,7 @@ export function useCombineExperienceSuggest({
 
       setSuggesting(true);
       setSuggestingCompanyId(companyId ?? null);
-      const saveRes = await onSaveBeforeSuggest();
+      const saveRes = await onSaveBeforeSuggest(snapshot);
       if (saveRes.error) {
         setSuggesting(false);
         setSuggestingCompanyId(null);
@@ -150,10 +158,16 @@ export function useCombineExperienceSuggest({
         return false;
       }
 
-      const res = await runAiCombineRecommend({
-        generationId,
-        companyId,
-      });
+      const res =
+        suggestVariant === "general"
+          ? await runAiGeneralCombineRecommend({
+              generationId,
+              companyId,
+            })
+          : await runAiCombineRecommend({
+              generationId,
+              companyId,
+            });
       setSuggesting(false);
       setSuggestingCompanyId(null);
 
@@ -176,6 +190,7 @@ export function useCombineExperienceSuggest({
       onSaveBeforeSuggest,
       refreshTokenUsed,
       setTokenUsed,
+      suggestVariant,
       t,
       toast,
     ],
@@ -192,14 +207,16 @@ export function useCombineExperienceSuggest({
       return false;
     }
 
-    const filteredJob = noiseFilter(job.jobText.trim()).text;
-    if (!filteredJob) {
-      setSuggestError(t("validation.jobDescriptionRequired"));
-      return false;
-    }
-    if (doVerdict && !job.acceptedMarkdown?.trim()) {
-      setSuggestError(t("generate.combine.suggestVerdictRequired"));
-      return false;
+    if (suggestVariant === "jd") {
+      const filteredJob = noiseFilter(job.jobText.trim()).text;
+      if (!filteredJob) {
+        setSuggestError(t("validation.jobDescriptionRequired"));
+        return false;
+      }
+      if (doVerdict && !job.acceptedMarkdown?.trim()) {
+        setSuggestError(t("generate.combine.suggestVerdictRequired"));
+        return false;
+      }
     }
 
     return runSuggestRequest(snapshot);
@@ -211,6 +228,7 @@ export function useCombineExperienceSuggest({
     profileGraduation,
     resolveCombineSnapshot,
     runSuggestRequest,
+    suggestVariant,
     suggesting,
     t,
   ]);
@@ -233,14 +251,16 @@ export function useCombineExperienceSuggest({
         return false;
       }
 
-      const filteredJob = noiseFilter(job.jobText.trim()).text;
-      if (!filteredJob) {
-        setSuggestError(t("validation.jobDescriptionRequired"));
-        return false;
-      }
-      if (doVerdict && !job.acceptedMarkdown?.trim()) {
-        setSuggestError(t("generate.combine.suggestVerdictRequired"));
-        return false;
+      if (suggestVariant === "jd") {
+        const filteredJob = noiseFilter(job.jobText.trim()).text;
+        if (!filteredJob) {
+          setSuggestError(t("validation.jobDescriptionRequired"));
+          return false;
+        }
+        if (doVerdict && !job.acceptedMarkdown?.trim()) {
+          setSuggestError(t("generate.combine.suggestVerdictRequired"));
+          return false;
+        }
       }
 
       return runSuggestRequest(snapshot, companyId);
@@ -253,6 +273,7 @@ export function useCombineExperienceSuggest({
       profileGraduation,
       resolveCombineSnapshot,
       runSuggestRequest,
+      suggestVariant,
       suggesting,
       t,
     ],

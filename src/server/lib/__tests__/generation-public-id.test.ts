@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   incrementGenerationPublicId,
   nextGenerationPublicId,
+  publicIdPrefixForKind,
 } from "../generation-public-id";
 
 describe("nextGenerationPublicId", () => {
@@ -34,5 +35,13 @@ describe("nextGenerationPublicId", () => {
     expect(incrementGenerationPublicId("GEN-20260911-007")).toBe(
       "GEN-20260911-008",
     );
+  });
+});
+
+describe("publicIdPrefixForKind", () => {
+  it("uses GEN for general resume and JDR for JD resume", () => {
+    const date = new Date("2026-09-11T12:00:00Z");
+    expect(publicIdPrefixForKind("generalResume", date)).toBe("GEN-20260911-");
+    expect(publicIdPrefixForKind("jdResume", date)).toBe("JDR-20260911-");
   });
 });

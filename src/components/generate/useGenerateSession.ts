@@ -28,8 +28,10 @@ import {
   allocateNewGeneration,
   fetchCurrentGenerationSession,
   persistGenerationSnapshot,
+  persistGenerationSnapshotKeepalive,
   type GenerationSnapshot,
 } from "@/lib/generation-persistence";
+import { usePersistSnapshotOnLeave } from "@/lib/use-persist-snapshot-on-leave";
 
 function withoutResume(session: GenerateSession): GenerateSession {
   return {
@@ -357,6 +359,23 @@ export function useGenerateSession() {
       job: EMPTY_JOB_STATE,
     });
   }, [session]);
+
+  const saveKeepalive = useCallback(() => {
+    const current = sessionRef.current;
+    const snapshot = toGenerationSnapshot(
+      current,
+      current.finalized ? true : undefined,
+    );
+    if (!snapshot) return;
+    persistGenerationSnapshotKeepalive(snapshot);
+  }, []);
+
+  usePersistSnapshotOnLeave({
+    enabled: ready && Boolean(session.generationId),
+    saveSnapshot,
+    finalized: session.finalized,
+    saveKeepalive,
+  });
 
   return {
     ready,

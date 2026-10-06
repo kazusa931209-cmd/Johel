@@ -86,7 +86,7 @@ export function DetailField({
       <div className="text-xs font-medium tracking-wide text-muted uppercase">
         {label}
       </div>
-      <div className="whitespace-pre-wrap break-words text-foreground">
+      <div className="whitespace-pre-wrap wrap-break-words text-foreground">
         {value === null || value === undefined || value === "" ? "—" : value}
       </div>
     </div>

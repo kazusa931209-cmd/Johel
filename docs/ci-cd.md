@@ -48,11 +48,11 @@ After `pnpm install`, Husky installs a **pre-push** hook that runs `pnpm typeche
 
 | Trigger | What happens |
 | --- | --- |
-| Merge (or push) to **production branch** (`main`) | Vercel Production build → Turso migrate script → deploy live app |
+| Merge (or push) to **production branch** (`main`) | Vercel Production build → `prisma migrate deploy` → deploy live app |
 
 Disable **Preview Deployments** in Vercel Git settings so PRs do not create branch deployments ([`vercel-deploy.md`](./vercel-deploy.md)).
 
-Production build runs [`scripts/build-web.ts`](../scripts/build-web.ts): `prisma generate` → [`migrate-deploy-turso.ts`](../scripts/migrate-deploy-turso.ts) → `next build`.
+Production build runs [`scripts/build-web.ts`](../scripts/build-web.ts): `prisma generate` → `prisma migrate deploy` → `next build`.
 
 **Migration policy:** Ship backward-compatible Prisma migrations on `main`. CI proves they apply to SQLite before merge; the production Vercel build applies pending SQL to **production Turso**. Breaking schema changes need a documented maintenance window or expand → deploy → contract release.
 

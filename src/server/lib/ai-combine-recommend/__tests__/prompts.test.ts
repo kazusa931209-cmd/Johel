@@ -16,6 +16,11 @@ describe("getCombineRecommendSystemPrompt", () => {
     expect(prompt).not.toContain("2–5");
   });
 
+  it("uses the configured min in the pick rule", () => {
+    const prompt = getCombineRecommendSystemPrompt(5, "technical_facet", 80, 1);
+    expect(prompt).toContain("Pick 1–5 experience cards per company when possible");
+  });
+
   it("includes JD tier, company scene, and dimension mode rules", () => {
     const prompt = getCombineRecommendSystemPrompt(5, "star_axis", 80);
     expect(prompt).toContain("Company scene fit");

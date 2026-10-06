@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAiUsageGroupKey,
   formatGenerateType,
+  prettifyJsonForAiUsageDisplay,
   sortAiUsageGroupsByLatest,
   sortAiUsageItemsByCreatedAt,
 } from "../ai-usage";
@@ -19,6 +20,42 @@ describe("formatGenerateType", () => {
 
   it("labels legacy checkGaps rows for AI Usage History", () => {
     expect(formatGenerateType("checkGaps")).toBe("Check on Experiences");
+  });
+
+  it("labels generalCombineRecommend for AI Usage History", () => {
+    expect(formatGenerateType("generalCombineRecommend")).toBe(
+      "General Resume Combine Recommend",
+    );
+  });
+});
+
+describe("prettifyJsonForAiUsageDisplay", () => {
+  it("pretty-prints minified JSON objects", () => {
+    const { displayText, isJson } = prettifyJsonForAiUsageDisplay(
+      '{"companies":[],"warnings":[]}',
+    );
+    expect(isJson).toBe(true);
+    expect(displayText).toBe(
+      `{
+  "companies": [],
+  "warnings": []
+}`,
+    );
+  });
+
+  it("pretty-prints JSON inside a markdown code fence", () => {
+    const { isJson, displayText } = prettifyJsonForAiUsageDisplay(
+      '```json\n{"ok":true}\n```',
+    );
+    expect(isJson).toBe(true);
+    expect(displayText).toContain('"ok": true');
+  });
+
+  it("leaves non-JSON text unchanged", () => {
+    const text = "## Verdict\n\nSome markdown";
+    const result = prettifyJsonForAiUsageDisplay(text);
+    expect(result.isJson).toBe(false);
+    expect(result.displayText).toBe(text);
   });
 });
 

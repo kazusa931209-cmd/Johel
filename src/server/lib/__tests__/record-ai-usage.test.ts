@@ -3,6 +3,7 @@ import { resolveAiModelName } from "../record-ai-usage";
 import { OPENAI_EMBEDDING_MODEL } from "../openai/embeddings";
 import {
   OPENAI_FORMAT_MODEL,
+  OPENAI_REASONING_MODEL,
   OPENAI_RESUME_MODEL,
   OPENAI_VERDICT_MODEL,
 } from "../openai/responses";
@@ -14,7 +15,7 @@ describe("resolveAiModelName", () => {
 
   it("returns verdict model for OpenAI non-generate types", () => {
     expect(resolveAiModelName("openai", "verdict")).toBe(OPENAI_VERDICT_MODEL);
-    expect(resolveAiModelName("openai", "evaluate")).toBe(OPENAI_VERDICT_MODEL);
+    expect(resolveAiModelName("openai", "evaluate")).toBe(OPENAI_REASONING_MODEL);
     expect(resolveAiModelName("openai", "workflowRecommend")).toBe(
       OPENAI_VERDICT_MODEL,
     );

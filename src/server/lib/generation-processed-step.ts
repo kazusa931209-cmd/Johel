@@ -49,6 +49,7 @@ function jobHasContent(jobJson: string): boolean {
 }
 
 export function deriveProcessedStep(generation: {
+  kind?: string;
   activeStep: string;
   jobJson: string;
   combineJson: string;
@@ -56,6 +57,8 @@ export function deriveProcessedStep(generation: {
   resumeJson: string | null;
   evaluationMarkdown: string | null;
 }): GenerationProcessedStep {
+  const isGeneral = generation.kind === "generalResume";
+
   if (generation.evaluationMarkdown?.trim()) {
     return "Evaluate";
   }
@@ -65,10 +68,10 @@ export function deriveProcessedStep(generation: {
   if (combineHasProgress(generation.combineJson)) {
     return "Combine";
   }
-  if (generation.verdictMarkdown?.trim()) {
+  if (!isGeneral && generation.verdictMarkdown?.trim()) {
     return "Verdict";
   }
-  if (jobHasContent(generation.jobJson)) {
+  if (!isGeneral && jobHasContent(generation.jobJson)) {
     return "Job";
   }
   return normalizeStep(generation.activeStep);

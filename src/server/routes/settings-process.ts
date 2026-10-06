@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { normalizeCombineExperiencesPerCompanyMax } from "../lib/combine-experiences-per-company";
+import {
+  normalizeCombineExperiencesPerCompanyMax,
+  normalizeCombineExperiencesPerCompanyMin,
+} from "../lib/combine-experiences-per-company";
 import { EXPERIENCE_ADVISE_POOL_DEPTHS } from "../lib/experience-embedding/pool-depth";
 import {
   DEFAULT_EXPERIENCE_DIMENSION_MODE,
@@ -22,6 +25,7 @@ const putSchema = z.object({
   downloadFormat: z.enum(DOWNLOAD_FORMATS),
   experienceAdvisePoolDepth: z.enum(EXPERIENCE_ADVISE_POOL_DEPTHS),
   combineExperiencesPerCompanyMax: z.number().int().min(1).max(10),
+  combineExperiencesPerCompanyMin: z.number().int().min(1).max(10),
   experienceDimensionMode: z.enum(EXPERIENCE_DIMENSION_MODES),
   experienceJdTierDecayPercent: z.union([
     z.literal(30),
@@ -38,6 +42,7 @@ export const DEFAULT_GENERATION_PROCESS = {
   downloadFormat: "docx",
   experienceAdvisePoolDepth: "normal",
   combineExperiencesPerCompanyMax: 5,
+  combineExperiencesPerCompanyMin: 2,
   experienceDimensionMode: DEFAULT_EXPERIENCE_DIMENSION_MODE,
   experienceJdTierDecayPercent: DEFAULT_EXPERIENCE_JD_TIER_DECAY_PERCENT,
 } as const;
@@ -64,6 +69,7 @@ function toProcessResponse(
     downloadFormat?: string;
     experienceAdvisePoolDepth: string;
     combineExperiencesPerCompanyMax?: number | null;
+    combineExperiencesPerCompanyMin?: number | null;
     experienceDimensionMode?: string | null;
     experienceJdTierDecayPercent?: number | null;
   } | null,
@@ -92,6 +98,12 @@ function toProcessResponse(
       : DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
     combineExperiencesPerCompanyMax: normalizeCombineExperiencesPerCompanyMax(
       process?.combineExperiencesPerCompanyMax,
+    ),
+    combineExperiencesPerCompanyMin: normalizeCombineExperiencesPerCompanyMin(
+      process?.combineExperiencesPerCompanyMin,
+      normalizeCombineExperiencesPerCompanyMax(
+        process?.combineExperiencesPerCompanyMax,
+      ),
     ),
     experienceDimensionMode: normalizeExperienceDimensionMode(
       process?.experienceDimensionMode,
@@ -134,6 +146,14 @@ settingsProcessRoutes.put("/", async (c) => {
     parsed.data.downloadFormat,
   );
 
+  const combineExperiencesPerCompanyMax = normalizeCombineExperiencesPerCompanyMax(
+    parsed.data.combineExperiencesPerCompanyMax,
+  );
+  const combineExperiencesPerCompanyMin = normalizeCombineExperiencesPerCompanyMin(
+    parsed.data.combineExperiencesPerCompanyMin,
+    combineExperiencesPerCompanyMax,
+  );
+
   const process = await prisma.generationProcess.upsert({
     where: { userId: user.id },
     create: {
@@ -143,7 +163,8 @@ settingsProcessRoutes.put("/", async (c) => {
       resumeLanguage: parsed.data.resumeLanguage,
       downloadFormat,
       experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
-      combineExperiencesPerCompanyMax: parsed.data.combineExperiencesPerCompanyMax,
+      combineExperiencesPerCompanyMax,
+      combineExperiencesPerCompanyMin,
       experienceDimensionMode: parsed.data.experienceDimensionMode,
       experienceJdTierDecayPercent: parsed.data.experienceJdTierDecayPercent,
     },
@@ -153,7 +174,8 @@ settingsProcessRoutes.put("/", async (c) => {
       resumeLanguage: parsed.data.resumeLanguage,
       downloadFormat,
       experienceAdvisePoolDepth: parsed.data.experienceAdvisePoolDepth,
-      combineExperiencesPerCompanyMax: parsed.data.combineExperiencesPerCompanyMax,
+      combineExperiencesPerCompanyMax,
+      combineExperiencesPerCompanyMin,
       experienceDimensionMode: parsed.data.experienceDimensionMode,
       experienceJdTierDecayPercent: parsed.data.experienceJdTierDecayPercent,
     },

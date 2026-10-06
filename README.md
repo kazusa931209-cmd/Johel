@@ -27,10 +27,9 @@ pnpm dev               # http://127.0.0.1:4041
 ```bash
 pnpm db:backup                              # local prisma/dev.db or Docker → ./backups/
 pnpm db:restore ./backups/johel-....db      # type RESTORE to confirm
-pnpm db:export-turso                        # Turso prod → prisma/dev.db (overwrites)
 ```
 
-Details: [docker.md](docs/docker.md) (backup/restore), [vercel-deploy.md](docs/vercel-deploy.md) (Turso export).
+Details: [docker.md](docs/docker.md) (backup/restore), [vercel-deploy.md](docs/vercel-deploy.md) (production deploy).
 
 Optional: `pnpm install` enables a Husky **pre-push** `typecheck` (see [CI/CD](docs/ci-cd.md)). Merge still requires green GitHub **ci** on the PR.
 
@@ -41,8 +40,7 @@ Open `http://127.0.0.1:4041` — register or log in. The UI and API share one Ne
 See **[docs/vercel-deploy.md](docs/vercel-deploy.md)** for Production environment variables, disabling Preview deployments, and smoke tests.
 
 - Set `DATABASE_URL` (`libsql://…`), `TURSO_AUTH_TOKEN`, `JWT_SECRET`, `ENCRYPTION_KEY`, `PUBLIC_DEPLOY=true`, `TRUST_PROXY=true`, and `PUBLIC_URL` on Vercel (**Production** scope only).
-- Production build runs [`scripts/build-web.ts`](scripts/build-web.ts) (Turso migrations + `next build`).
-- Migrate existing SQLite data: backup → [`scripts/prepare-sqlite-for-turso-import.sh`](scripts/prepare-sqlite-for-turso-import.sh) → `turso db import`. Details in [`docs/technology.md`](docs/technology.md).
+- Production build runs [`scripts/build-web.ts`](scripts/build-web.ts) (`prisma migrate deploy` + `next build`).
 
 ## Run with Docker Desktop (optional / LAN)
 

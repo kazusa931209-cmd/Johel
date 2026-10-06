@@ -155,6 +155,7 @@ export type GenerationProcessSettings = {
   downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
   combineExperiencesPerCompanyMax: number;
+  combineExperiencesPerCompanyMin: number;
   experienceDimensionMode: ExperienceDimensionMode;
   experienceJdTierDecayPercent: ExperienceJdTierDecayPercent;
 };
@@ -170,6 +171,7 @@ export function saveGenerationProcess(payload: {
   downloadFormat: DownloadFormat;
   experienceAdvisePoolDepth: ExperienceAdvisePoolDepth;
   combineExperiencesPerCompanyMax: number;
+  combineExperiencesPerCompanyMin: number;
   experienceDimensionMode: ExperienceDimensionMode;
   experienceJdTierDecayPercent: ExperienceJdTierDecayPercent;
 }) {
@@ -179,15 +181,24 @@ export function saveGenerationProcess(payload: {
   });
 }
 
-export type PromptKind = "verdict" | "generate" | "evaluate";
+export type PromptKind =
+  | "verdict"
+  | "generate"
+  | "evaluate"
+  | "refine"
+  | "generalEvaluate";
 
 export type PromptSettings = {
   verdictPrompt: string;
   generatePrompt: string;
   evaluatePrompt: string;
+  refinePrompt: string;
+  generalEvaluatePrompt: string;
   verdictExtension: string;
   generateExtension: string;
   evaluateExtension: string;
+  refineExtension: string;
+  generalEvaluateExtension: string;
 };
 
 export function getPrompts() {
@@ -200,7 +211,11 @@ export function savePrompt(kind: PromptKind, prompt: string) {
       ? { verdictPrompt: prompt }
       : kind === "generate"
         ? { generatePrompt: prompt }
-        : { evaluatePrompt: prompt };
+        : kind === "evaluate"
+          ? { evaluatePrompt: prompt }
+          : kind === "refine"
+            ? { refinePrompt: prompt }
+            : { generalEvaluatePrompt: prompt };
   return request<PromptSettings>(`/prompts/${kind}`, {
     method: "PUT",
     body: JSON.stringify(body),
@@ -213,7 +228,11 @@ export function savePromptExtension(kind: PromptKind, extension: string) {
       ? { verdictExtension: extension }
       : kind === "generate"
         ? { generateExtension: extension }
-        : { evaluateExtension: extension };
+        : kind === "evaluate"
+          ? { evaluateExtension: extension }
+          : kind === "refine"
+            ? { refineExtension: extension }
+            : { generalEvaluateExtension: extension };
   return request<PromptSettings>(`/prompts/${kind}`, {
     method: "PUT",
     body: JSON.stringify(body),
@@ -235,10 +254,20 @@ export function savePromptTab(
             generatePrompt: payload.prompt,
             generateExtension: payload.extension,
           }
-        : {
-            evaluatePrompt: payload.prompt,
-            evaluateExtension: payload.extension,
-          };
+        : kind === "evaluate"
+          ? {
+              evaluatePrompt: payload.prompt,
+              evaluateExtension: payload.extension,
+            }
+          : kind === "refine"
+            ? {
+                refinePrompt: payload.prompt,
+                refineExtension: payload.extension,
+              }
+            : {
+                generalEvaluatePrompt: payload.prompt,
+                generalEvaluateExtension: payload.extension,
+              };
   return request<PromptSettings>(`/prompts/${kind}`, {
     method: "PUT",
     body: JSON.stringify(body),
@@ -249,11 +278,14 @@ export type CombineSnapshot = {
   profileId: string;
   language: string;
   emphasis: string;
+  userInstruction?: string;
+  platform?: string;
   companies: Array<{
     companyId: string;
     startDate: string;
     endDate: string;
     roleContext: string;
+    keywordContext?: string;
     experienceIds: string[];
   }>;
 };
@@ -288,6 +320,14 @@ export type GenerationScopedRequest = {
 
 export function runAiCombineRecommend(payload: CombineRecommendRequest) {
   return request<CombineRecommendResult>("/ai-combine-recommend", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export function runAiGeneralCombineRecommend(payload: CombineRecommendRequest) {
+  return request<CombineRecommendResult>("/ai-general-combine-recommend", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,
@@ -547,6 +587,40 @@ export function runAiResume(
   });
 }
 
+export type AiGeneralResumeRequest = {
+  combine: CombineSnapshot;
+};
+
+export function runAiGeneralResume(
+  payload: AiGeneralResumeRequest & GenerationScopedRequest,
+) {
+  return request<AiResumeResult>("/ai-general-resume", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export type DraftRefineBuilderKind = "jd" | "general";
+
+export type AiDraftRefineRequest = {
+  builderKind: DraftRefineBuilderKind;
+  generationId: string;
+  language: ResumeLanguage;
+  mode: "instruction" | "experiences";
+  instruction?: string;
+  experienceIds?: string[];
+  companyId?: string;
+};
+
+export function runAiDraftRefine(payload: AiDraftRefineRequest) {
+  return request<AiResumeResult>("/ai-draft-refine", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
 export type AiEvaluateRequest = {
   jobContext: string;
   resume: import("@johel/resume").GeneratedResume;
@@ -561,6 +635,23 @@ export function runAiEvaluate(
   payload: AiEvaluateRequest & GenerationScopedRequest,
 ) {
   return request<AiEvaluateResult>("/ai-evaluate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    timeoutMs: AI_API_TIMEOUT_MS,
+  });
+}
+
+export type AiGeneralEvaluateRequest = {
+  resume: import("@johel/resume").GeneratedResume;
+  userPrompt: string;
+  /** Response language follows the user prompt (or explicit override in prompt). */
+  uiLocale?: "en" | "ko";
+};
+
+export function runAiGeneralEvaluate(
+  payload: AiGeneralEvaluateRequest & GenerationScopedRequest,
+) {
+  return request<AiEvaluateResult>("/ai-general-evaluate", {
     method: "POST",
     body: JSON.stringify(payload),
     timeoutMs: AI_API_TIMEOUT_MS,
@@ -603,6 +694,7 @@ export type GenerationStartResult = {
 export type GenerationListItem = {
   id: string;
   publicId: string;
+  kind: string;
   finalized: boolean;
   processedStep: string;
   doVerdict: boolean;
@@ -633,6 +725,7 @@ export type GenerationList = {
 export type GenerationDetail = {
   id: string;
   publicId: string;
+  kind: string;
   finalized: boolean;
   inputToken: number;
   outputToken: number;
@@ -667,6 +760,83 @@ export function startGeneration() {
   return request<GenerationStartResult>("/generations/start", {
     method: "POST",
   });
+}
+
+export type GeneralGenerationDetail = {
+  id: string;
+  publicId: string;
+  kind: string;
+  finalized: boolean;
+  inputToken: number;
+  outputToken: number;
+  tokenUsed: number;
+  activeStep: string;
+  combine: CombineSnapshot;
+  resume: import("@johel/resume").GeneratedResume | null;
+  evaluationMarkdown: string | null;
+  evaluationHistory: import("@/lib/general-evaluation-history").GeneralEvaluationHistoryEntry[];
+  doEvaluate: boolean;
+  resumeLanguage: ResumeLanguage;
+  generatePrompt: string;
+  evaluatePrompt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GeneralGenerationUpdatePayload = {
+  activeStep: string;
+  combine: CombineSnapshot;
+  resume?: import("@johel/resume").GeneratedResume | null;
+  evaluationMarkdown?: string | null;
+  evaluationHistory?: import("@/lib/general-evaluation-history").GeneralEvaluationHistoryEntry[];
+  finalized?: boolean;
+};
+
+export function startGeneralGeneration() {
+  return request<GenerationStartResult>("/general-generations/start", {
+    method: "POST",
+  });
+}
+
+export function updateGeneralGeneration(
+  id: string,
+  payload: GeneralGenerationUpdatePayload,
+) {
+  return request<GeneralGenerationDetail>(`/general-generations/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getCurrentGeneralGeneration() {
+  return request<GeneralGenerationDetail | null>("/general-generations/current");
+}
+
+export function listGeneralResumePlatformSuggestions() {
+  return request<{ platforms: string[] }>(
+    "/general-generations/platform-suggestions",
+  );
+}
+
+export type GeneralGenerationResumePayload = {
+  archive?: GeneralGenerationUpdatePayload & { generationId: string };
+};
+
+export function resumeGeneralGeneration(
+  publicId: string,
+  payload: GeneralGenerationResumePayload = {},
+) {
+  return request<GeneralGenerationDetail>(
+    `/general-generations/${publicId}/resume`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function getGeneralGeneration(publicId: string) {
+  return request<GeneralGenerationDetail>(`/general-generations/${publicId}`);
 }
 
 export function updateGeneration(id: string, payload: GenerationUpdatePayload) {

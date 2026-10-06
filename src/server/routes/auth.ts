@@ -55,6 +55,8 @@ authRoutes.post("/register", async (c) => {
             DEFAULT_GENERATION_PROCESS.experienceAdvisePoolDepth,
           combineExperiencesPerCompanyMax:
             DEFAULT_GENERATION_PROCESS.combineExperiencesPerCompanyMax,
+          combineExperiencesPerCompanyMin:
+            DEFAULT_GENERATION_PROCESS.combineExperiencesPerCompanyMin,
           experienceDimensionMode:
             DEFAULT_GENERATION_PROCESS.experienceDimensionMode,
           experienceJdTierDecayPercent:
@@ -66,6 +68,8 @@ authRoutes.post("/register", async (c) => {
           verdictPrompt: DEFAULT_PROMPTS.verdictPrompt,
           generatePrompt: DEFAULT_PROMPTS.generatePrompt,
           evaluatePrompt: DEFAULT_PROMPTS.evaluatePrompt,
+          refinePrompt: DEFAULT_PROMPTS.refinePrompt,
+          generalEvaluatePrompt: DEFAULT_PROMPTS.generalEvaluatePrompt,
         },
       },
     },
