@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import type { GeneratedResume } from "@johel/resume";
 import type { CombineCompanyEntry } from "@/components/generate/combine-types";
 import { useDraftResumeRefinePanel } from "@/components/generate/useDraftResumeRefinePanel";

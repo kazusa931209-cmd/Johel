@@ -33,7 +33,7 @@ describe("buildGeneralAiEvaluateUserPrompt", () => {
 
 describe("getGeneralAiEvaluateUserPromptOnlySystemPrompt", () => {
   it("does not include General Evaluate instructions placeholder", () => {
-    const instructions = getGeneralAiEvaluateUserPromptOnlySystemPrompt("openai");
+    const instructions = getGeneralAiEvaluateUserPromptOnlySystemPrompt();
     expect(instructions).toContain("User prompt");
     expect(instructions).not.toContain("Instructions above");
   });

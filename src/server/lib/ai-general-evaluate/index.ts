@@ -30,7 +30,7 @@ export async function runGeneralAiEvaluate(
   _provider: AiProviderId,
   input: GeneralAiEvaluateRequest,
 ): Promise<GeneralAiEvaluateResult> {
-  const instructions = getGeneralAiEvaluateUserPromptOnlySystemPrompt("openai");
+  const instructions = getGeneralAiEvaluateUserPromptOnlySystemPrompt();
   const resumeMarkdown = resumeToMarkdown(input.resume);
   const user = buildGeneralAiEvaluateUserPrompt(
     input.userPrompt,

@@ -52,9 +52,7 @@ const USER_PROMPT_ONLY_EXECUTION_RULES = `- You are an AI assistant that evaluat
 - Obey the **Response language** section in the user message for the language of your entire answer.
 - Score and critique the resume text only—do not invent job requirements or employers.`;
 
-export function getGeneralAiEvaluateUserPromptOnlySystemPrompt(
-  _provider: AiProviderId,
-): string {
+export function getGeneralAiEvaluateUserPromptOnlySystemPrompt(): string {
   return `# Execution rules\n\n${USER_PROMPT_ONLY_EXECUTION_RULES}\n\n${PROMPT_SECTION_SEPARATOR}\n\n${OPENAI_PROVIDER_NOTES}`;
 }
 
